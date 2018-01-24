@@ -27,9 +27,7 @@
 #include <vector>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
-#ifdef __APPLE__
-#include <iostream>
-#endif
+
 template<class Key, class T> class SwappedMap {
 private:
   struct Descriptor {
