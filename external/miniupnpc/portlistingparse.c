@@ -1,4 +1,4 @@
-/* $Id: portlistingparse.c,v 1.7 2014/11/01 10:37:32 nanard Exp $ */
+/* $Id: portlistingparse.c,v 1.6 2012/05/29 10:26:51 nanard Exp $ */
 /* MiniUPnP project
  * http://miniupnp.free.fr/ or http://miniupnp.tuxfamily.org/
  * (c) 2011 Thomas Bernard
@@ -62,8 +62,7 @@ startelt(void * d, const char * name, int l)
 	{
 		struct PortMapping * pm;
 		pm = calloc(1, sizeof(struct PortMapping));
-		pm->l_next = pdata->l_head;	/* insert in list */
-		pdata->l_head = pm;
+		LIST_INSERT_HEAD( &(pdata->head), pm, entries);
 	}
 }
 
@@ -83,7 +82,7 @@ data(void * d, const char * data, int l)
 {
 	struct PortMapping * pm;
 	struct PortMappingParserData * pdata = (struct PortMappingParserData *)d;
-	pm = pdata->l_head;
+	pm = pdata->head.lh_first;
 	if(!pm)
 		return;
 	if(l > 63)
@@ -135,6 +134,7 @@ ParsePortListing(const char * buffer, int bufsize,
 	struct xmlparser parser;
 
 	memset(pdata, 0, sizeof(struct PortMappingParserData));
+	LIST_INIT(&(pdata->head));
 	/* init xmlparser */
 	parser.xmlstart = buffer;
 	parser.xmlsize = bufsize;
@@ -150,10 +150,9 @@ void
 FreePortListing(struct PortMappingParserData * pdata)
 {
 	struct PortMapping * pm;
-	while((pm = pdata->l_head) != NULL)
+	while((pm = pdata->head.lh_first) != NULL)
 	{
-		/* remove from list */
-		pdata->l_head = pm->l_next;
+		LIST_REMOVE(pm, entries);
 		free(pm);
 	}
 }

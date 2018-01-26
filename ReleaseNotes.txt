@@ -1,0 +1,200 @@
+Release notes 2.1.2
+
+- Updated crawler public key
+- Daemon stability improvements
+
+Release notes 2.1.1
+
+- Updated RocksDB to release 4.11.2
+- Added two more seed nodes
+
+Release notes 2.1.0
+
+- Transaction pool issue fixes
+- Daemon synchronization improvements
+
+Release notes 2.0.7
+
+- Wallet synchronization enhancements
+- Daemon synchronization issue fix
+- Daemon stability enhancements
+
+Release notes 2.0.6
+
+- Wallet synchronization enhancements
+- Correct application closing
+- Daemon stability enhancements
+
+Release notes 2.0.5
+
+- Fixed Bytecoin RPC Wallet hang issue
+
+Release notes 2.0.4
+
+- Fixed an issue where some users experienced daemon hanging
+- Fixed block difficulty calculation issue
+
+Release notes 2.0.3
+
+- Stability enhancement
+- Various improvements
+
+Release notes 2.0.2
+
+- Security algorithm enhancement
+- Daemon synchronization issue fix
+- Wallet minor bug fixes
+- Bytecoin RPC Wallet log optimization
+
+Release notes 2.0.1
+
+- Bytecoin RPC Wallet API improvements
+
+Release notes 2.0.0
+
+- Completely revamped CryptoNote core
+- Blockchain storage changed to DB
+
+Release notes 1.0.11
+
+- New Bytecoin Wallet file format
+- Daemon loading optimization
+
+Release notes 1.0.10
+
+- Blocksize increase
+- Fusion transactions for Bytecoin RPC Wallet
+- Bytecoin RPC Wallet API improvements
+
+Release notes 1.0.9
+
+- New API for Bytecoin RPC Wallet
+- Various improvements
+
+Release notes 1.0.8
+
+- Fusion transactions for Bytecoin Wallet
+- IWallet high-level API update
+- JSON RPC improvements
+- Synchronization improvements for OS X
+
+Release notes 1.0.7
+
+- Fusion transactions support
+- Various simplewallet improvements
+
+Release notes 1.0.6
+
+- High-level API update
+- Aggregate multi-addresses for Bytecoin RPC Wallet
+- Wallet synchronization speed increase
+
+Release notes 1.0.5
+
+- High-level API for blockchain explorer
+- Full network layer refactoring
+- Transactions pool synchronization
+- list_transactions method for RPC Wallet
+- Various improvements
+
+Release notes 1.0.4
+
+- Bytecoin RPC Wallet
+- New multithreading library
+- Improved console logging
+- Further optimizations
+
+Release notes 1.0.3
+
+- Multisignature API
+- Low level API
+- High level API improvements
+- Instant transaction pool notifications
+- Fully refactored simplewallet
+
+Release notes 1.0.2
+
+- Transaction history for simplewallet
+- Reset command for simplewallet
+- Various simplewallet improvements
+
+Release notes 1.0.1
+
+- Fix transfers in simplewallet
+
+Release notes 1.0.0
+
+- Multi-signatures
+- Updated block reward scheme
+- Further optimization in daemon RAM consumption
+- Faster wallet refresh
+- Transaction priority based on tx fee
+- Transactions are returned from tx pools after 24 hours
+- Dynamic maximum block size limit
+- Reduced default transaction fee 
+- Various network health updates
+
+Release notes 0.8.11
+
+- Increased minimum transaction fee
+- Transaction pool optimizations
+- High level API implementation
+- CryptoNight hash function optimization
+- Improvements for wallet JSON RPC API
+
+Release notes 0.8.10
+
+- Optimized blockchain storage memory usage
+- Various code improvements
+
+Release notes 0.8.9
+
+- JSON RPC v2.0 compatibility
+- JSON RPC over TCP added
+- Further optimizations
+
+Release notes 0.8.8
+
+- Fixed a bug with checkpoints behavior
+- UI improvements for daemon
+- Various updates from our forks
+
+Release notes 0.8.7
+
+- OSX support
+- Further optimizations
+
+Release notes 0.8.6
+
+- Simplwallet can set extra for transfers
+- Improvements in JSON RPC for wallet
+- UX improvements in simplewallet
+- Win32 compilation
+
+Release notes 0.8.5
+
+- Port mapping for daemon using UPnP
+- Improvements for daemon JSON RPC API
+
+Release notes 0.8.4
+
+- Formalization of high level API
+- Improvements for wallet JSON RPC API
+
+Release notes 0.8.3
+
+- JSON RPC for wallet
+- fixed bug with blockchain storing
+- fixed bug with correct display of transfer's change 
+- bug fix in simple wallet
+
+Release notes 0.8.2
+
+- now wallet is still working when daemon stores blockchain and can't serve clients; 
+- no-console option for a daemon; 
+- fixed problem with network synchronization; 
+- major bug fix in simple wallet. 
+
+Release notes 0.8.1
+
+Bytecoin project is moved to GitHub

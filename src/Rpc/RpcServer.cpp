@@ -552,7 +552,6 @@ bool RpcServer::f_on_blocks_list_json(const F_COMMAND_RPC_GET_BLOCKS_LIST::reque
     f_block_short_response block_short;
     block_short.cumul_size = blkDetails.blockSize;
     block_short.timestamp = blk.timestamp;
-    block_short.difficulty = blkDetails.difficulty;
     block_short.height = i;
     block_short.hash = Common::podToHex(block_hash);
     block_short.tx_count = blk.transactionHashes.size() + 1;
@@ -570,7 +569,6 @@ bool RpcServer::f_on_blocks_list_json(const F_COMMAND_RPC_GET_BLOCKS_LIST::reque
 bool RpcServer::f_on_block_json(const F_COMMAND_RPC_GET_BLOCK_DETAILS::request& req, F_COMMAND_RPC_GET_BLOCK_DETAILS::response& res) {
   // check if blockchain explorer RPC is enabled
   if (m_core.getCurrency().isBlockexplorer() == false) {
-    // NOTE I think this should set a log error
     return false;
   }
 

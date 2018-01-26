@@ -507,7 +507,7 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
 
     m_stopEvent.wait();
 
-    logger(INFO) << "Stopping NodeServer and it's " << m_connections.size() << " connections...";
+    logger(INFO) << "Stopping NodeServer and it's" << m_connections.size() << " connections...";
     safeInterrupt(m_workingContextGroup);
     m_workingContextGroup.wait();
 
