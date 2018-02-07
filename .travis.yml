@@ -1,0 +1,21 @@
+language: cpp
+compiler: gcc
+dist: trusty
+sudo: required
+
+env:
+  - CXXFLAGS="-std=gnu++11"
+
+before_install:
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo add-apt-repository -y ppa:ethcore/ethcore
+  - sudo add-apt-repository -y universe
+  - sudo apt-get update -qq
+
+install:
+  - sudo apt-get install -y -qq librocksdb-dev build-essential gcc-4.9 g++-4.9 cmake python-dev libboost1.55-all-dev 
+
+script: 
+  # Build and run this project
+  - mkdir build 
+  - cd build && cmake .. && make
