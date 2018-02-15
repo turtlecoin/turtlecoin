@@ -18,8 +18,6 @@
 #include "Account.h"
 #include "CryptoNoteSerialization.h"
 #include "crypto/keccak.c"
-#include "crypto/crypto-ops.c"
-#include "Common/StringTools.h"
 
 namespace CryptoNote {
 //-----------------------------------------------------------------
