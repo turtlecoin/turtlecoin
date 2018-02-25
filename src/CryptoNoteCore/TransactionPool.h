@@ -30,7 +30,7 @@
 #include <Logging/LoggerMessage.h>
 #include <Logging/LoggerRef.h>
 
-#include "CryptoNoteConfig."
+#include "CryptoNoteConfig.h"
 #include "ITransactionPool.h"
 #include "TransactionValidatiorState.h"
 
