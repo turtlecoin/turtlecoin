@@ -27,9 +27,11 @@
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 
-#include "ITransactionPool.h"
 #include <Logging/LoggerMessage.h>
 #include <Logging/LoggerRef.h>
+
+#include "CryptoNoteConfig."
+#include "ITransactionPool.h"
 #include "TransactionValidatiorState.h"
 
 namespace CryptoNote {
@@ -109,7 +111,7 @@ private:
   TransactionsContainer::index<TransactionHashTag>::type& transactionHashIndex;
   TransactionsContainer::index<TransactionCostTag>::type& transactionCostIndex;
   TransactionsContainer::index<PaymentIdTag>::type& paymentIdIndex;
-  
+
   Logging::LoggerRef logger;
 };
 
