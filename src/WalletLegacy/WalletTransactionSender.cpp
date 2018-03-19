@@ -83,7 +83,7 @@ WalletTransactionSender::WalletTransactionSender(const Currency& currency, Walle
   m_isStoping(false),
   m_keys(keys),
   m_transferDetails(transfersContainer),
-  m_upperTransactionSizeLimit(parameters::CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_CURRENT * 125 / 100 - m_currency.minerTxBlobReservedSize()) {
+  m_upperTransactionSizeLimit(parameters::MAX_TRANSACTION_SIZE_LIMIT) {
 }
 
 void WalletTransactionSender::stop() {
@@ -143,7 +143,7 @@ std::shared_ptr<WalletRequest> WalletTransactionSender::makeGetRandomOutsRequest
 
 void WalletTransactionSender::sendTransactionRandomOutsByAmount(std::shared_ptr<SendTransactionContext> context, std::deque<std::shared_ptr<WalletLegacyEvent>>& events,
     boost::optional<std::shared_ptr<WalletRequest> >& nextRequest, std::error_code ec) {
-  
+
   if (m_isStoping) {
     ec = make_error_code(error::TX_CANCELLED);
   }
@@ -153,7 +153,7 @@ void WalletTransactionSender::sendTransactionRandomOutsByAmount(std::shared_ptr<
     return;
   }
 
-  auto scanty_it = std::find_if(context->outs.begin(), context->outs.end(), 
+  auto scanty_it = std::find_if(context->outs.begin(), context->outs.end(),
     [&] (COMMAND_RPC_GET_RANDOM_OUTPUTS_FOR_AMOUNTS::outs_for_amount& out) {return out.outs.size() < context->mixIn;});
 
   if (scanty_it != context->outs.end()) {
@@ -195,7 +195,7 @@ std::shared_ptr<WalletRequest> WalletTransactionSender::doSendTransaction(std::s
     m_transactionsCache.updateTransaction(context->transactionId, tx, totalAmount, context->selectedTransfers);
 
     notifyBalanceChanged(events);
-   
+
     return std::make_shared<WalletRelayTransactionRequest>(tx, std::bind(&WalletTransactionSender::relayTransactionCallback, this, context,
         std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
   }

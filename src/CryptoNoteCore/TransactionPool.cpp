@@ -68,7 +68,7 @@ bool TransactionPool::pushTransaction(CachedTransaction&& transaction, Transacti
   auto pendingTx = PendingTransactionInfo{static_cast<uint64_t>(time(nullptr)), std::move(transaction)};
 
   Crypto::Hash paymentId;
-  if(getPaymentIdFromTxExtra(pendingTx.cachedTransaction.getTransaction().extra, paymentId)) {
+  if (getPaymentIdFromTxExtra(pendingTx.cachedTransaction.getTransaction().extra, paymentId)) {
     pendingTx.paymentId = paymentId;
   }
 
@@ -79,6 +79,11 @@ bool TransactionPool::pushTransaction(CachedTransaction&& transaction, Transacti
 
   if (hasIntersections(poolState, transactionState)) {
     logger(Logging::DEBUGGING) << "pushTransaction: failed to merge states, some keys already used";
+    return false;
+  }
+
+  if (pendingTx.cachedTransaction.getTransaction().inputs.size() > parameters::MAX_TRANSACTION_SIZE_LIMIT) {
+    logger(Logging::DEBUGGING) << "pushTransaction: transaction input size exceeds maximum allowed, expected: " << parameters::MAX_TRANSACTION_SIZE_LIMIT;
     return false;
   }
 
