@@ -132,7 +132,7 @@ const uint64_t P2P_DEFAULT_INVOKE_TIMEOUT                    = 60 * 2 * 1000; //
 const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          // 5 seconds
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "";
 
-const char* const SEED_NODES[] = { "104.236.227.176:11897", "46.101.132.184:11897", "163.172.147.52:11897", "51.15.138.214:11897", "51.15.137.77:11897", "174.138.68.141:11897", "145.239.88.119:11999" };
+const char* const SEED_NODES[] = { "104.236.227.176:11897", "46.101.132.184:11897", "163.172.147.52:11897", "51.15.138.214:11897", "51.15.137.77:11897", "174.138.68.141:11897", "145.239.88.119:11999", "public.turtlenode.io:11897" };
 
 
 struct CheckpointData {
