@@ -689,7 +689,8 @@ m_maxTxSize(currency.m_maxTxSize),
 m_publicAddressBase58Prefix(currency.m_publicAddressBase58Prefix),
 m_minedMoneyUnlockWindow(currency.m_minedMoneyUnlockWindow),
 m_timestampCheckWindow(currency.m_timestampCheckWindow),
-m_blockFutureTimeLimit(currency.m_blockFutureTimeLimit),
+m_blockFutureTimeLimitV1(currency.m_blockFutureTimeLimitV1),
+m_blockFutureTimeLimitV2(currency.m_blockFutureTimeLimitV2),
 m_moneySupply(currency.m_moneySupply),
 m_emissionSpeedFactor(currency.m_emissionSpeedFactor),
 m_rewardBlocksWindow(currency.m_rewardBlocksWindow),
@@ -741,7 +742,8 @@ CurrencyBuilder::CurrencyBuilder(Logging::ILogger& log) : m_currency(log) {
   minedMoneyUnlockWindow(parameters::CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW);
 
   timestampCheckWindow(parameters::BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW);
-  blockFutureTimeLimit(parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT);
+  blockFutureTimeLimitV1(parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1);
+  blockFutureTimeLimitV2(parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2);
 
   moneySupply(parameters::MONEY_SUPPLY);
   emissionSpeedFactor(parameters::EMISSION_SPEED_FACTOR);

@@ -31,7 +31,6 @@ const size_t   CRYPTONOTE_MAX_TX_SIZE                        = 1000000000;
 const size_t   CRYPTONOTE_MAX_SAFE_TX_SIZE                   = 115000;
 const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX       = 3914525;
 const uint32_t CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 40;
-const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
 
 const size_t   BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW             = 60;
 
@@ -68,6 +67,10 @@ const size_t   DIFFICULTY_LAG                                = 0;  // !!!
 const size_t   DIFFICULTY_LAG_V1                             = 15;
 const size_t   DIFFICULTY_LAG_V2                             = 15;
 static_assert(2 * DIFFICULTY_CUT <= DIFFICULTY_WINDOW - 2, "Bad DIFFICULTY_WINDOW or DIFFICULTY_CUT");
+
+const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V1                 = 60 * 60 * 2;
+const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2                 = 7 * DIFFICULTY_TARGET;
+const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2_UPGRADE_HEIGHT  = 368000;
 
 const size_t   MAX_BLOCK_SIZE_INITIAL                        = 100000;
 const uint64_t MAX_BLOCK_SIZE_GROWTH_SPEED_NUMERATOR         = 100 * 1024;

@@ -200,7 +200,7 @@ bool gen_block_ts_in_future_rejected::generate(std::vector<test_event_entry>& ev
   BlockTemplate blk_1;
   generator.constructBlockManually(blk_1, blk_0, miner_account,
                                    test_generator::bf_major_ver | test_generator::bf_timestamp, m_blockMajorVersion, 0,
-                                   time(NULL) + 60 * 60 + m_currency->blockFutureTimeLimit());
+                                   time(NULL) + 60 * 60 + m_currency->blockFutureTimeLimit(-1));
   events.push_back(blk_1);
 
   DO_CALLBACK(events, "check_block_purged");
@@ -214,7 +214,7 @@ bool gen_block_ts_in_future_accepted::generate(std::vector<test_event_entry>& ev
   BlockTemplate blk_1;
   generator.constructBlockManually(blk_1, blk_0, miner_account,
                                    test_generator::bf_major_ver | test_generator::bf_timestamp, m_blockMajorVersion, 0,
-                                   time(NULL) - 60 + m_currency->blockFutureTimeLimit());
+                                   time(NULL) - 60 + m_currency->blockFutureTimeLimit(-1));
   events.push_back(blk_1);
 
   DO_CALLBACK(events, "check_block_accepted");
