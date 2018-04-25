@@ -1199,13 +1199,15 @@ void printOutgoingTransfer(CryptoNote::WalletTransaction t,
               << WarningMsg("Fee: " + formatAmount(t.fee))
               << std::endl
               << WarningMsg("Total Spent: " + formatAmount(-t.totalAmount))
-              << std::endl << std::endl;
+              << std::endl;
 
     /* Couldn't get timestamp, maybe old node or turtlecoind closed */
     if (blockTime != "")
     {
         std::cout << WarningMsg("Timestamp: " + blockTime) << std::endl;
     }
+    
+    std::cout << std::endl;
 }
 
 void printIncomingTransfer(CryptoNote::WalletTransaction t,
@@ -1216,13 +1218,15 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
     std::cout << SuccessMsg("Incoming transfer: " + Common::podToHex(t.hash))
               << std::endl
               << SuccessMsg("Amount: " + formatAmount(t.totalAmount))
-              << std::endl << std::endl;
+              << std::endl;
 
     /* Couldn't get timestamp, maybe old node or turtlecoind closed */
     if (blockTime != "")
     {
         std::cout << SuccessMsg("Timestamp: " + blockTime) << std::endl;
     }
+    
+    std::cout << std::endl;
 }
 
 void listTransfers(bool incoming, bool outgoing, 
