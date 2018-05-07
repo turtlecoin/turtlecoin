@@ -61,10 +61,10 @@ TableBuilder* NewTableBuilder(
 
 Status BuildTable(
     const std::string& dbname, Env* env, const ImmutableCFOptions& ioptions,
-    const MutableCFOptions& mutable_cf_options, const EnvOptions& env_options,
-    TableCache* table_cache, InternalIterator* iter,
-    std::unique_ptr<InternalIterator> range_del_iter, FileMetaData* meta,
-    const InternalKeyComparator& internal_comparator,
+    const MutableCFOptions& /*mutable_cf_options*/,
+    const EnvOptions& env_options, TableCache* table_cache,
+    InternalIterator* iter, std::unique_ptr<InternalIterator> range_del_iter,
+    FileMetaData* meta, const InternalKeyComparator& internal_comparator,
     const std::vector<std::unique_ptr<IntTblPropCollectorFactory>>*
         int_tbl_prop_collector_factories,
     uint32_t column_family_id, const std::string& column_family_name,
@@ -92,7 +92,7 @@ Status BuildTable(
     return s;
   }
 
-  std::string fname = TableFileName(ioptions.db_paths, meta->fd.GetNumber(),
+  std::string fname = TableFileName(ioptions.cf_paths, meta->fd.GetNumber(),
                                     meta->fd.GetPathId());
 #ifndef ROCKSDB_LITE
   EventHelpers::NotifyTableFileCreationStarted(

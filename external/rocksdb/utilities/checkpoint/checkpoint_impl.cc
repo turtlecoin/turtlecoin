@@ -37,8 +37,8 @@ Status Checkpoint::Create(DB* db, Checkpoint** checkpoint_ptr) {
   return Status::OK();
 }
 
-Status Checkpoint::CreateCheckpoint(const std::string& checkpoint_dir,
-                                    uint64_t log_size_for_flush) {
+Status Checkpoint::CreateCheckpoint(const std::string& /*checkpoint_dir*/,
+                                    uint64_t /*log_size_for_flush*/) {
   return Status::NotSupported("");
 }
 
@@ -222,9 +222,7 @@ Status CheckpointImpl::CreateCustomCheckpoint(
 
     TEST_SYNC_POINT("CheckpointImpl::CreateCheckpoint:SavedLiveFiles1");
     TEST_SYNC_POINT("CheckpointImpl::CreateCheckpoint:SavedLiveFiles2");
-    if (db_options.manual_wal_flush) {
-      db_->FlushWAL(false /* sync */);
-    }
+    db_->FlushWAL(false /* sync */);
   }
   // if we have more than one column family, we need to also get WAL files
   if (s.ok()) {

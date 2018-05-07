@@ -46,11 +46,18 @@ struct IngestedFileInfo {
   // FileDescriptor for the file inside the DB
   FileDescriptor fd;
   // file path that we picked for file inside the DB
-  std::string internal_file_path = "";
+  std::string internal_file_path;
   // Global sequence number that we picked for the file inside the DB
   SequenceNumber assigned_seqno = 0;
   // Level inside the DB we picked for the external file.
   int picked_level = 0;
+  // Whether to copy or link the external sst file. copy_file will be set to
+  // false if ingestion_options.move_files is true and underlying FS
+  // supports link operation. Need to provide a default value to make the
+  // undefined-behavior sanity check of llvm happy. Since
+  // ingestion_options.move_files is false by default, thus copy_file is true
+  // by default.
+  bool copy_file = true;
 
   InternalKey smallest_internal_key() const {
     return InternalKey(smallest_user_key, assigned_seqno,
@@ -132,17 +139,6 @@ class ExternalSstFileIngestionJob {
   // Set the file global sequence number to `seqno`
   Status AssignGlobalSeqnoForIngestedFile(IngestedFileInfo* file_to_ingest,
                                           SequenceNumber seqno);
-
-  // Check if `file_to_ingest` key range overlap with the range `iter` represent
-  // REQUIRES: Mutex held
-  Status IngestedFileOverlapWithIteratorRange(
-      const IngestedFileInfo* file_to_ingest, InternalIterator* iter,
-      bool* overlap);
-
-  // Check if `file_to_ingest` key range overlap with level
-  // REQUIRES: Mutex held
-  Status IngestedFileOverlapWithLevel(SuperVersion* sv,
-    IngestedFileInfo* file_to_ingest, int lvl, bool* overlap_with_level);
 
   // Check if `file_to_ingest` can fit in level `level`
   // REQUIRES: Mutex held

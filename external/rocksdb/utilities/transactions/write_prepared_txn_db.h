@@ -6,6 +6,11 @@
 #pragma once
 #ifndef ROCKSDB_LITE
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+
+#include <inttypes.h>
 #include <mutex>
 #include <queue>
 #include <set>
@@ -20,6 +25,7 @@
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
 #include "rocksdb/utilities/transaction_db.h"
+#include "util/set_comparator.h"
 #include "util/string_util.h"
 #include "utilities/transactions/pessimistic_transaction.h"
 #include "utilities/transactions/pessimistic_transaction_db.h"
@@ -108,20 +114,145 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
 
   virtual void ReleaseSnapshot(const Snapshot* snapshot) override;
 
-  // Check whether the transaction that wrote the value with seqeunce number seq
-  // is visible to the snapshot with sequence number snapshot_seq
-  bool IsInSnapshot(uint64_t seq, uint64_t snapshot_seq) const;
-  // Add the trasnaction with prepare sequence seq to the prepared list
+  // Check whether the transaction that wrote the value with sequence number seq
+  // is visible to the snapshot with sequence number snapshot_seq.
+  // Returns true if commit_seq <= snapshot_seq
+  inline bool IsInSnapshot(uint64_t prep_seq, uint64_t snapshot_seq,
+                           uint64_t min_uncommitted = 0) const {
+    ROCKS_LOG_DETAILS(info_log_,
+                      "IsInSnapshot %" PRIu64 " in %" PRIu64
+                      " min_uncommitted %" PRIu64,
+                      prep_seq, snapshot_seq, min_uncommitted);
+    // Here we try to infer the return value without looking into prepare list.
+    // This would help avoiding synchronization over a shared map.
+    // TODO(myabandeh): optimize this. This sequence of checks must be correct
+    // but not necessary efficient
+    if (prep_seq == 0) {
+      // Compaction will output keys to bottom-level with sequence number 0 if
+      // it is visible to the earliest snapshot.
+      ROCKS_LOG_DETAILS(
+          info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+          prep_seq, snapshot_seq, 1);
+      return true;
+    }
+    if (snapshot_seq < prep_seq) {
+      // snapshot_seq < prep_seq <= commit_seq => snapshot_seq < commit_seq
+      ROCKS_LOG_DETAILS(
+          info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+          prep_seq, snapshot_seq, 0);
+      return false;
+    }
+    if (!delayed_prepared_empty_.load(std::memory_order_acquire)) {
+      // We should not normally reach here
+      WPRecordTick(TXN_PREPARE_MUTEX_OVERHEAD);
+      ReadLock rl(&prepared_mutex_);
+      ROCKS_LOG_WARN(info_log_, "prepared_mutex_ overhead %" PRIu64,
+                     static_cast<uint64_t>(delayed_prepared_.size()));
+      if (delayed_prepared_.find(prep_seq) != delayed_prepared_.end()) {
+        // Then it is not committed yet
+        ROCKS_LOG_DETAILS(info_log_,
+                          "IsInSnapshot %" PRIu64 " in %" PRIu64
+                          " returns %" PRId32,
+                          prep_seq, snapshot_seq, 0);
+        return false;
+      }
+    }
+    // Note: since min_uncommitted does not include the delayed_prepared_ we
+    // should check delayed_prepared_ first before applying this optimization.
+    // TODO(myabandeh): include delayed_prepared_ in min_uncommitted
+    if (prep_seq < min_uncommitted) {
+      ROCKS_LOG_DETAILS(info_log_,
+                        "IsInSnapshot %" PRIu64 " in %" PRIu64
+                        " returns %" PRId32
+                        " because of min_uncommitted %" PRIu64,
+                        prep_seq, snapshot_seq, 1, min_uncommitted);
+      return true;
+    }
+    auto indexed_seq = prep_seq % COMMIT_CACHE_SIZE;
+    CommitEntry64b dont_care;
+    CommitEntry cached;
+    bool exist = GetCommitEntry(indexed_seq, &dont_care, &cached);
+    if (exist && prep_seq == cached.prep_seq) {
+      // It is committed and also not evicted from commit cache
+      ROCKS_LOG_DETAILS(
+          info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+          prep_seq, snapshot_seq, cached.commit_seq <= snapshot_seq);
+      return cached.commit_seq <= snapshot_seq;
+    }
+    // else it could be committed but not inserted in the map which could happen
+    // after recovery, or it could be committed and evicted by another commit,
+    // or never committed.
+
+    // At this point we dont know if it was committed or it is still prepared
+    auto max_evicted_seq = max_evicted_seq_.load(std::memory_order_acquire);
+    // max_evicted_seq_ when we did GetCommitEntry <= max_evicted_seq now
+    if (max_evicted_seq < prep_seq) {
+      // Not evicted from cache and also not present, so must be still prepared
+      ROCKS_LOG_DETAILS(
+          info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+          prep_seq, snapshot_seq, 0);
+      return false;
+    }
+    // When advancing max_evicted_seq_, we move older entires from prepared to
+    // delayed_prepared_. Also we move evicted entries from commit cache to
+    // old_commit_map_ if it overlaps with any snapshot. Since prep_seq <=
+    // max_evicted_seq_, we have three cases: i) in delayed_prepared_, ii) in
+    // old_commit_map_, iii) committed with no conflict with any snapshot. Case
+    // (i) delayed_prepared_ is checked above
+    if (max_evicted_seq < snapshot_seq) {  // then (ii) cannot be the case
+      // only (iii) is the case: committed
+      // commit_seq <= max_evicted_seq_ < snapshot_seq => commit_seq <
+      // snapshot_seq
+      ROCKS_LOG_DETAILS(
+          info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+          prep_seq, snapshot_seq, 1);
+      return true;
+    }
+    // else (ii) might be the case: check the commit data saved for this
+    // snapshot. If there was no overlapping commit entry, then it is committed
+    // with a commit_seq lower than any live snapshot, including snapshot_seq.
+    if (old_commit_map_empty_.load(std::memory_order_acquire)) {
+      ROCKS_LOG_DETAILS(
+          info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+          prep_seq, snapshot_seq, 1);
+      return true;
+    }
+    {
+      // We should not normally reach here unless sapshot_seq is old. This is a
+      // rare case and it is ok to pay the cost of mutex ReadLock for such old,
+      // reading transactions.
+      WPRecordTick(TXN_OLD_COMMIT_MAP_MUTEX_OVERHEAD);
+      ROCKS_LOG_WARN(info_log_, "old_commit_map_mutex_ overhead");
+      ReadLock rl(&old_commit_map_mutex_);
+      auto prep_set_entry = old_commit_map_.find(snapshot_seq);
+      bool found = prep_set_entry != old_commit_map_.end();
+      if (found) {
+        auto& vec = prep_set_entry->second;
+        found = std::binary_search(vec.begin(), vec.end(), prep_seq);
+      }
+      if (!found) {
+        ROCKS_LOG_DETAILS(info_log_,
+                          "IsInSnapshot %" PRIu64 " in %" PRIu64
+                          " returns %" PRId32,
+                          prep_seq, snapshot_seq, 1);
+        return true;
+      }
+    }
+    // (ii) it the case: it is committed but after the snapshot_seq
+    ROCKS_LOG_DETAILS(
+        info_log_, "IsInSnapshot %" PRIu64 " in %" PRIu64 " returns %" PRId32,
+        prep_seq, snapshot_seq, 0);
+    return false;
+  }
+
+  // Add the transaction with prepare sequence seq to the prepared list
   void AddPrepared(uint64_t seq);
-  // Rollback a prepared txn identified with prep_seq. rollback_seq is the seq
-  // with which the additional data is written to cancel the txn effect. It can
-  // be used to idenitfy the snapshots that overlap with the rolled back txn.
-  void RollbackPrepared(uint64_t prep_seq, uint64_t rollback_seq);
+  // Remove the transaction with prepare sequence seq from the prepared list
+  void RemovePrepared(const uint64_t seq, const size_t batch_cnt = 1);
   // Add the transaction with prepare sequence prepare_seq and commit sequence
-  // commit_seq to the commit map. prepare_skipped is set if the prpeare phase
-  // is skipped for this commit. loop_cnt is to detect infinite loops.
+  // commit_seq to the commit map. loop_cnt is to detect infinite loops.
   void AddCommitted(uint64_t prepare_seq, uint64_t commit_seq,
-                    bool prepare_skipped = false, uint8_t loop_cnt = 0);
+                    uint8_t loop_cnt = 0);
 
   struct CommitEntry {
     uint64_t prep_seq;
@@ -157,7 +288,7 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   };
 
   // Prepare Seq (64 bits) = PAD ... PAD PREP PREP ... PREP INDEX INDEX ...
-  // INDEX Detal Seq (64 bits)   = 0 0 0 0 0 0 0 0 0  0 0 0 DELTA DELTA ...
+  // INDEX Delta Seq (64 bits)   = 0 0 0 0 0 0 0 0 0  0 0 0 DELTA DELTA ...
   // DELTA DELTA Encoded Value         = PREP PREP .... PREP PREP DELTA DELTA
   // ... DELTA DELTA PAD: first bits of a seq that is reserved for tagging and
   // hence ignored PREP/INDEX: the used bits in a prepare seq number INDEX: the
@@ -216,12 +347,17 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   // Struct to hold ownership of snapshot and read callback for cleanup.
   struct IteratorState;
 
-  std::map<uint32_t, const Comparator*>* GetCFComparatorMap() {
-    return cf_map_.load();
+  std::shared_ptr<std::map<uint32_t, const Comparator*>> GetCFComparatorMap() {
+    return cf_map_;
+  }
+  std::shared_ptr<std::map<uint32_t, ColumnFamilyHandle*>> GetCFHandleMap() {
+    return handle_map_;
   }
   void UpdateCFComparatorMap(
       const std::vector<ColumnFamilyHandle*>& handles) override;
-  void UpdateCFComparatorMap(const ColumnFamilyHandle* handle) override;
+  void UpdateCFComparatorMap(ColumnFamilyHandle* handle) override;
+
+  virtual const Snapshot* GetSnapshot() override;
 
  protected:
   virtual Status VerifyCFOptions(
@@ -238,14 +374,21 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   friend class PreparedHeap_BasicsTest_Test;
   friend class PreparedHeap_EmptyAtTheEnd_Test;
   friend class PreparedHeap_Concurrent_Test;
+  friend class WritePreparedTxn;
   friend class WritePreparedTxnDBMock;
   friend class WritePreparedTransactionTest_AdvanceMaxEvictedSeqBasicTest_Test;
+  friend class
+      WritePreparedTransactionTest_AdvanceMaxEvictedSeqWithDuplicatesTest_Test;
   friend class WritePreparedTransactionTest_BasicRecoveryTest_Test;
   friend class WritePreparedTransactionTest_IsInSnapshotEmptyMapTest_Test;
   friend class WritePreparedTransactionTest_OldCommitMapGC_Test;
   friend class WritePreparedTransactionTest_RollbackTest_Test;
 
   void Init(const TransactionDBOptions& /* unused */);
+
+  void WPRecordTick(uint32_t ticker_type) const {
+    RecordTick(db_impl_->immutable_db_options_.statistics.get(), ticker_type);
+  }
 
   // A heap with the amortized O(1) complexity for erase. It uses one extra heap
   // to keep track of erased entries that are not yet on top of the main heap.
@@ -273,12 +416,13 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
       while (!heap_.empty() && !erased_heap_.empty() &&
              // heap_.top() > erased_heap_.top() could happen if we have erased
              // a non-existent entry. Ideally the user should not do that but we
-             // should be resiliant againt it.
+             // should be resilient against it.
              heap_.top() >= erased_heap_.top()) {
         if (heap_.top() == erased_heap_.top()) {
           heap_.pop();
         }
-        auto erased __attribute__((__unused__)) = erased_heap_.top();
+        uint64_t erased __attribute__((__unused__));
+        erased = erased_heap_.top();
         erased_heap_.pop();
         // No duplicate prepare sequence numbers
         assert(erased_heap_.empty() || erased_heap_.top() != erased);
@@ -328,9 +472,36 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   // the time of updating the max. Thread-safety: this function can be called
   // concurrently. The concurrent invocations of this function is equivalent to
   // a serial invocation in which the last invocation is the one with the
-  // largetst new_max value.
+  // largest new_max value.
   void AdvanceMaxEvictedSeq(const SequenceNumber& prev_max,
                             const SequenceNumber& new_max);
+
+  inline SequenceNumber SmallestUnCommittedSeq() {
+    // Since we update the prepare_heap always from the main write queue via
+    // PreReleaseCallback, the prepared_txns_.top() indicates the smallest
+    // prepared data in 2pc transactions. For non-2pc transactions that are
+    // written in two steps, we also update prepared_txns_ at the first step
+    // (via the same mechanism) so that their uncommitted data is reflected in
+    // SmallestUnCommittedSeq.
+    ReadLock rl(&prepared_mutex_);
+    // Since we are holding the mutex, and GetLatestSequenceNumber is updated
+    // after prepared_txns_ are, the value of GetLatestSequenceNumber would
+    // reflect any uncommitted data that is not added to prepared_txns_ yet.
+    // Otherwise, if there is no concurrent txn, this value simply reflects that
+    // latest value in the memtable.
+    if (prepared_txns_.empty()) {
+      return db_impl_->GetLatestSequenceNumber() + 1;
+    } else {
+      return std::min(prepared_txns_.top(),
+                      db_impl_->GetLatestSequenceNumber() + 1);
+    }
+  }
+  // Enhance the snapshot object by recording in it the smallest uncommitted seq
+  inline void EnhanceSnapshot(SnapshotImpl* snapshot,
+                              SequenceNumber min_uncommitted) {
+    assert(snapshot);
+    snapshot->min_uncommitted_ = min_uncommitted;
+  }
 
   virtual const std::vector<SequenceNumber> GetSnapshotListFromDB(
       SequenceNumber max);
@@ -340,9 +511,9 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   void ReleaseSnapshotInternal(const SequenceNumber snap_seq);
 
   // Update the list of snapshots corresponding to the soon-to-be-updated
-  // max_eviceted_seq_. Thread-safety: this function can be called concurrently.
+  // max_evicted_seq_. Thread-safety: this function can be called concurrently.
   // The concurrent invocations of this function is equivalent to a serial
-  // invocation in which the last invocation is the one with the largetst
+  // invocation in which the last invocation is the one with the largest
   // version value.
   void UpdateSnapshots(const std::vector<SequenceNumber>& snapshots,
                        const SequenceNumber& version);
@@ -381,14 +552,14 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   // Thread-safety is provided with snapshots_mutex_.
   std::vector<SequenceNumber> snapshots_;
   // The version of the latest list of snapshots. This can be used to avoid
-  // rewrittiing a list that is concurrently updated with a more recent version.
+  // rewriting a list that is concurrently updated with a more recent version.
   SequenceNumber snapshots_version_ = 0;
 
   // A heap of prepared transactions. Thread-safety is provided with
   // prepared_mutex_.
   PreparedHeap prepared_txns_;
-  // 2m entry, 16MB size
-  static const size_t DEF_COMMIT_CACHE_BITS = static_cast<size_t>(21);
+  // 8m entry, 64MB size
+  static const size_t DEF_COMMIT_CACHE_BITS = static_cast<size_t>(23);
   const size_t COMMIT_CACHE_BITS;
   const size_t COMMIT_CACHE_SIZE;
   const CommitEntry64bFormat FORMAT;
@@ -406,7 +577,7 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   // maintenance work under the lock.
   size_t INC_STEP_FOR_MAX_EVICTED = 1;
   // A map from old snapshots (expected to be used by a few read-only txns) to
-  // prpared sequence number of the evicted entries from commit_cache_ that
+  // prepared sequence number of the evicted entries from commit_cache_ that
   // overlaps with such snapshot. These are the prepared sequence numbers that
   // the snapshot, to which they are mapped, cannot assume to be committed just
   // because it is no longer in the commit_cache_. The vector must be sorted
@@ -427,25 +598,57 @@ class WritePreparedTxnDB : public PessimisticTransactionDB {
   mutable port::RWMutex commit_cache_mutex_;
   mutable port::RWMutex snapshots_mutex_;
   // A cache of the cf comparators
-  std::atomic<std::map<uint32_t, const Comparator*>*> cf_map_;
-  // GC of the object above
-  std::unique_ptr<std::map<uint32_t, const Comparator*>> cf_map_gc_;
+  // Thread safety: since it is a const it is safe to read it concurrently
+  std::shared_ptr<std::map<uint32_t, const Comparator*>> cf_map_;
+  // A cache of the cf handles
+  // Thread safety: since the handle is read-only object it is a const it is
+  // safe to read it concurrently
+  std::shared_ptr<std::map<uint32_t, ColumnFamilyHandle*>> handle_map_;
 };
 
 class WritePreparedTxnReadCallback : public ReadCallback {
  public:
-  WritePreparedTxnReadCallback(WritePreparedTxnDB* db, SequenceNumber snapshot)
-      : db_(db), snapshot_(snapshot) {}
+  WritePreparedTxnReadCallback(WritePreparedTxnDB* db, SequenceNumber snapshot,
+                               SequenceNumber min_uncommitted)
+      : db_(db), snapshot_(snapshot), min_uncommitted_(min_uncommitted) {}
 
   // Will be called to see if the seq number accepted; if not it moves on to the
   // next seq number.
-  virtual bool IsCommitted(SequenceNumber seq) override {
-    return db_->IsInSnapshot(seq, snapshot_);
+  inline virtual bool IsCommitted(SequenceNumber seq) override {
+    return db_->IsInSnapshot(seq, snapshot_, min_uncommitted_);
   }
 
  private:
   WritePreparedTxnDB* db_;
   SequenceNumber snapshot_;
+  SequenceNumber min_uncommitted_;
+};
+
+class AddPreparedCallback : public PreReleaseCallback {
+ public:
+  AddPreparedCallback(WritePreparedTxnDB* db, size_t sub_batch_cnt,
+                      bool two_write_queues)
+      : db_(db),
+        sub_batch_cnt_(sub_batch_cnt),
+        two_write_queues_(two_write_queues) {
+    (void)two_write_queues_;  // to silence unused private field warning
+  }
+  virtual Status Callback(SequenceNumber prepare_seq,
+                          bool is_mem_disabled) override {
+#ifdef NDEBUG
+    (void)is_mem_disabled;
+#endif
+    assert(!two_write_queues_ || !is_mem_disabled);  // implies the 1st queue
+    for (size_t i = 0; i < sub_batch_cnt_; i++) {
+      db_->AddPrepared(prepare_seq + i);
+    }
+    return Status::OK();
+  }
+
+ private:
+  WritePreparedTxnDB* db_;
+  size_t sub_batch_cnt_;
+  bool two_write_queues_;
 };
 
 class WritePreparedCommitEntryPreReleaseCallback : public PreReleaseCallback {
@@ -457,40 +660,44 @@ class WritePreparedCommitEntryPreReleaseCallback : public PreReleaseCallback {
                                              SequenceNumber prep_seq,
                                              size_t prep_batch_cnt,
                                              size_t data_batch_cnt = 0,
-                                             bool prep_heap_skipped = false)
+                                             bool publish_seq = true)
       : db_(db),
         db_impl_(db_impl),
         prep_seq_(prep_seq),
         prep_batch_cnt_(prep_batch_cnt),
         data_batch_cnt_(data_batch_cnt),
-        prep_heap_skipped_(prep_heap_skipped),
-        includes_data_(data_batch_cnt_ > 0) {
+        includes_data_(data_batch_cnt_ > 0),
+        publish_seq_(publish_seq) {
     assert((prep_batch_cnt_ > 0) != (prep_seq == kMaxSequenceNumber));  // xor
     assert(prep_batch_cnt_ > 0 || data_batch_cnt_ > 0);
   }
 
-  virtual Status Callback(SequenceNumber commit_seq) override {
+  virtual Status Callback(SequenceNumber commit_seq,
+                          bool is_mem_disabled) override {
+#ifdef NDEBUG
+    (void)is_mem_disabled;
+#endif
     assert(includes_data_ || prep_seq_ != kMaxSequenceNumber);
     const uint64_t last_commit_seq = LIKELY(data_batch_cnt_ <= 1)
                                          ? commit_seq
                                          : commit_seq + data_batch_cnt_ - 1;
     if (prep_seq_ != kMaxSequenceNumber) {
       for (size_t i = 0; i < prep_batch_cnt_; i++) {
-        db_->AddCommitted(prep_seq_ + i, last_commit_seq, prep_heap_skipped_);
+        db_->AddCommitted(prep_seq_ + i, last_commit_seq);
       }
     }  // else there was no prepare phase
     if (includes_data_) {
       assert(data_batch_cnt_);
-      // Commit the data that is accompnaied with the commit request
-      const bool PREPARE_SKIPPED = true;
+      // Commit the data that is accompanied with the commit request
       for (size_t i = 0; i < data_batch_cnt_; i++) {
         // For commit seq of each batch use the commit seq of the last batch.
         // This would make debugging easier by having all the batches having
         // the same sequence number.
-        db_->AddCommitted(commit_seq + i, last_commit_seq, PREPARE_SKIPPED);
+        db_->AddCommitted(commit_seq + i, last_commit_seq);
       }
     }
-    if (db_impl_->immutable_db_options().two_write_queues) {
+    if (db_impl_->immutable_db_options().two_write_queues && publish_seq_) {
+      assert(is_mem_disabled);  // implies the 2nd queue
       // Publish the sequence number. We can do that here assuming the callback
       // is invoked only from one write queue, which would guarantee that the
       // publish sequence numbers will be in order, i.e., once a seq is
@@ -509,27 +716,13 @@ class WritePreparedCommitEntryPreReleaseCallback : public PreReleaseCallback {
   SequenceNumber prep_seq_;
   size_t prep_batch_cnt_;
   size_t data_batch_cnt_;
-  // An optimization that indicates that there is no need to update the prepare
-  // heap since the prepare sequence number was not added to it.
-  bool prep_heap_skipped_;
   // Either because it is commit without prepare or it has a
   // CommitTimeWriteBatch
   bool includes_data_;
+  // Should the callback also publishes the commit seq number
+  bool publish_seq_;
 };
 
-// A wrapper around Comparator to make it usable in std::set
-struct SetComparator {
-  explicit SetComparator() : user_comparator_(BytewiseComparator()) {}
-  explicit SetComparator(const Comparator* user_comparator)
-      : user_comparator_(user_comparator ? user_comparator
-                                         : BytewiseComparator()) {}
-  bool operator()(const Slice& lhs, const Slice& rhs) const {
-    return user_comparator_->Compare(lhs, rhs) < 0;
-  }
-
- private:
-  const Comparator* user_comparator_;
-};
 // Count the number of sub-batches inside a batch. A sub-batch does not have
 // duplicate keys.
 struct SubBatchCounter : public WriteBatch::Handler {
@@ -541,6 +734,7 @@ struct SubBatchCounter : public WriteBatch::Handler {
   size_t batches_;
   size_t BatchCount() { return batches_; }
   void AddKey(const uint32_t cf, const Slice& key);
+  void InitWithComp(const uint32_t cf);
   Status MarkNoop(bool) override { return Status::OK(); }
   Status MarkEndPrepare(const Slice&) override { return Status::OK(); }
   Status MarkCommit(const Slice&) override { return Status::OK(); }
