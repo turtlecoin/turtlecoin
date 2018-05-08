@@ -146,7 +146,6 @@ WalletGreen::WalletGreen(System::Dispatcher& dispatcher, const Currency& currenc
   m_pendingBalance(0),
   m_transactionSoftLockTime(transactionSoftLockTime)
 {
-  m_upperTransactionSizeLimit = parameters::CRYPTONOTE_MAX_SAFE_TX_SIZE;
   m_readyEvent.set();
 }
 
@@ -1617,7 +1616,7 @@ size_t WalletGreen::getTxSize(const TransactionParameters &sendingTransaction)
 
 bool WalletGreen::txIsTooLarge(const TransactionParameters& sendingTransaction)
 {
-  return getTxSize(sendingTransaction) > m_upperTransactionSizeLimit;
+  return getTxSize(sendingTransaction) > getMaxTxSize();
 }
 
 size_t WalletGreen::makeTransaction(const TransactionParameters& sendingTransaction) {
@@ -2144,9 +2143,11 @@ void WalletGreen::sendTransaction(const CryptoNote::Transaction& cryptoNoteTrans
 size_t WalletGreen::validateSaveAndSendTransaction(const ITransactionReader& transaction, const std::vector<WalletTransfer>& destinations, bool isFusion, bool send) {
   BinaryArray transactionData = transaction.getTransactionData();
 
-  if (transactionData.size() > m_upperTransactionSizeLimit) {
+  size_t maxTxSize = getMaxTxSize();
+
+  if (transactionData.size() > maxTxSize) {
     m_logger(ERROR, BRIGHT_RED) << "Transaction is too big. Transaction hash " << transaction.getTransactionHash() <<
-      ", size " << transactionData.size() << ", size limit " << m_upperTransactionSizeLimit;
+      ", size " << transactionData.size() << ", size limit " << maxTxSize;
     throw std::system_error(make_error_code(error::TRANSACTION_SIZE_TOO_BIG));
   }
 
@@ -3470,6 +3471,52 @@ void WalletGreen::deleteFromUncommitedTransactions(const std::vector<size_t>& de
   for (auto transactionId: deletedTransactions) {
     m_uncommitedTransactions.erase(transactionId);
   }
+}
+
+/* The formula for the block size is as follows. Calculate the
+   maxBlockCumulativeSize. This is equal to:
+   100,000 + ((height * 102,400) / 1,051,200)
+   At a block height of 400k, this gives us a size of 138,964.
+   The constants this calculation arise from can be seen below, or in
+   src/CryptoNoteCore/Currency.cpp::maxBlockCumulativeSize(). Call this value
+   x.
+
+   Next, calculate the median size of the last 100 blocks. Take the max of
+   this value, and 100,000. Multiply this value by 1.25. Call this value y.
+
+   Finally, return the minimum of x and y.
+
+   Or, in short: min(140k (slowly rising), max(125k, median(last 100 blocks size)))
+   Block size will always be 125k or greater (Assuming non testnet)
+
+   To get the max transaction size, remove 600 from this value, for the
+   reserved miner transaction.
+
+   We are going to ignore the median(last 100 blocks size), as it is possible
+   for a transaction to be valid for inclusion in a block when it is submitted,
+   but not when it actually comes to be mined, for example if the median
+   block size suddenly decreases. This gives a bit of a lower cap of max
+   tx sizes, but prevents anything getting stuck in the pool.
+
+*/
+size_t WalletGreen::getMaxTxSize()
+{
+    uint32_t currentHeight = m_node.getLastKnownBlockHeight();
+
+    size_t growth = (currentHeight * CryptoNote
+                                   ::parameters
+                                   ::MAX_BLOCK_SIZE_GROWTH_SPEED_NUMERATOR) /
+
+                    CryptoNote
+                  ::parameters
+                  ::MAX_BLOCK_SIZE_GROWTH_SPEED_DENOMINATOR;
+
+    size_t x = CryptoNote::parameters::MAX_BLOCK_SIZE_INITIAL + growth;
+
+    size_t y = 125000;
+
+    return std::min(x, y) - CryptoNote::parameters
+                                      ::CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE;
 }
 
 } //namespace CryptoNote

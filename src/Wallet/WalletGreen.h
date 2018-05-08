@@ -88,6 +88,7 @@ public:
   virtual void rollbackUncommitedTransaction(size_t) override;
   bool txIsTooLarge(const TransactionParameters& sendingTransaction);
   size_t getTxSize(const TransactionParameters &sendingTransaction);
+  size_t getMaxTxSize();
   void updateInternalCache();
   void clearCaches(bool clearTransactions, bool clearCachedData);
   void clearCacheAndShutdown();
@@ -375,7 +376,6 @@ protected:
   uint64_t m_actualBalance;
   uint64_t m_pendingBalance;
 
-  uint64_t m_upperTransactionSizeLimit;
   uint32_t m_transactionSoftLockTime;
 
   BlockHashesContainer m_blockchain;

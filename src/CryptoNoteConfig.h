@@ -28,7 +28,6 @@ namespace parameters {
 const uint32_t CRYPTONOTE_MAX_BLOCK_NUMBER                   = 500000000;
 const size_t   CRYPTONOTE_MAX_BLOCK_BLOB_SIZE                = 500000000;
 const size_t   CRYPTONOTE_MAX_TX_SIZE                        = 1000000000;
-const size_t   CRYPTONOTE_MAX_SAFE_TX_SIZE                   = 115000;
 const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX       = 3914525;
 const uint32_t CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 40;
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
@@ -53,7 +52,12 @@ const size_t   CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE        = 600;
 const size_t   CRYPTONOTE_DISPLAY_DECIMAL_POINT              = 2;
 const uint64_t MINIMUM_FEE                                   = UINT64_C(10);
 const uint16_t DEFAULT_MIXIN                                 = 5;
-const uint16_t MINIMUM_MIXIN                                 = 3;
+/* minimum_mixin = enforced for deamon
+   minimum_mixin_no_dust = enforced for simplewallet, when dust is not present
+   if dust is present, 0 mixin allowed. Possibly later disabled, or relegated to sweep_unmixable */
+const uint16_t MINIMUM_MIXIN_NO_DUST                         = 3;
+const uint16_t MINIMUM_MIXIN                                 = 0;
+const uint16_t MAXIMUM_MIXIN                                 = 100;
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(10);
 
 const uint64_t DIFFICULTY_TARGET                             = 30; // seconds

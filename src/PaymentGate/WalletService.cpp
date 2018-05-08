@@ -282,6 +282,18 @@ void validateAddresses(const std::vector<std::string>& addresses, const CryptoNo
   }
 }
 
+void validateMixin(const uint32_t mixin, Logging::LoggerRef logger) {
+  if (mixin < CryptoNote::parameters::MINIMUM_MIXIN) {
+    logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Mixin " << mixin
+      << " under minimum threshold " << CryptoNote::parameters::MINIMUM_MIXIN;
+    throw std::system_error(make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD));
+  } else if (mixin > CryptoNote::parameters::MAXIMUM_MIXIN) {
+    logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Mixin " << mixin
+      << " above maximum threshold " << CryptoNote::parameters::MAXIMUM_MIXIN;
+    throw std::system_error(make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD));
+  }
+}
+
 std::string getValidatedTransactionExtraString(const std::string& extraString) {
   std::vector<uint8_t> binary;
   if (!Common::fromHex(extraString, binary)) {
@@ -916,6 +928,8 @@ std::error_code WalletService::sendTransaction(const SendTransaction::Request& r
     if (!request.changeAddress.empty()) {
       validateAddresses({ request.changeAddress }, currency, logger);
     }
+
+    validateMixin(request.anonymity, logger);
 
     CryptoNote::TransactionParameters sendParams;
     if (!request.paymentId.empty()) {

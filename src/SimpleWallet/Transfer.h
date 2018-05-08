@@ -22,7 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
 
-#include <SimpleWallet/Tools.h>
+#include <SimpleWallet/Fusion.h>
 
 #include <Wallet/WalletGreen.h>
 
@@ -61,9 +61,6 @@ void doTransfer(uint16_t mixin, std::string address, uint64_t amount,
                 uint64_t fee, std::string extra,
                 std::shared_ptr<WalletInfo> walletInfo);
 
-void fusionTX(CryptoNote::WalletGreen &wallet, 
-              CryptoNote::TransactionParameters p);
-
 void sendMultipleTransactions(CryptoNote::WalletGreen &wallet,
                               std::vector<CryptoNote::TransactionParameters>
                               transfers);
@@ -71,14 +68,8 @@ void sendMultipleTransactions(CryptoNote::WalletGreen &wallet,
 void splitTx(CryptoNote::WalletGreen &wallet,
              CryptoNote::TransactionParameters p);
 
-void quickOptimize(CryptoNote::WalletGreen &wallet);
-
-void fullOptimize(CryptoNote::WalletGreen &wallet);
-
 bool confirmTransaction(CryptoNote::TransactionParameters t,
                         std::shared_ptr<WalletInfo> walletInfo);
-
-bool optimize(CryptoNote::WalletGreen &wallet, uint64_t threshold);
 
 bool parseAmount(std::string amountString);
 
@@ -97,6 +88,3 @@ Maybe<uint64_t> getFee();
 Maybe<uint64_t> getTransferAmount();
 
 Maybe<uint16_t> getMixin();
-
-size_t makeFusionTransaction(CryptoNote::WalletGreen &wallet, 
-                             uint64_t threshold);
