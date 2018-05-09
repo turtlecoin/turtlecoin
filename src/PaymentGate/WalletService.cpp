@@ -283,13 +283,13 @@ void validateAddresses(const std::vector<std::string>& addresses, const CryptoNo
 }
 
 void validateMixin(const uint32_t mixin, Logging::LoggerRef logger) {
-  if (mixin < CryptoNote::parameters::MINIMUM_MIXIN) {
+  if (mixin < CryptoNote::parameters::MINIMUM_MIXIN_V1) {
     logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Mixin " << mixin
-      << " under minimum threshold " << CryptoNote::parameters::MINIMUM_MIXIN;
+      << " under minimum threshold " << CryptoNote::parameters::MINIMUM_MIXIN_V1;
     throw std::system_error(make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD));
-  } else if (mixin > CryptoNote::parameters::MAXIMUM_MIXIN) {
+  } else if (mixin > CryptoNote::parameters::MAXIMUM_MIXIN_V1) {
     logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Mixin " << mixin
-      << " above maximum threshold " << CryptoNote::parameters::MAXIMUM_MIXIN;
+      << " above maximum threshold " << CryptoNote::parameters::MAXIMUM_MIXIN_V1;
     throw std::system_error(make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD));
   }
 }

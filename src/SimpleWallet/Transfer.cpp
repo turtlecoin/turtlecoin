@@ -874,9 +874,9 @@ bool parseMixin(std::string mixinString)
            will allow them to use 0 mixin. */
         uint16_t minMixin = std::max(CryptoNote::parameters
                                                ::MINIMUM_MIXIN_NO_DUST,
-                                     CryptoNote::parameters::MINIMUM_MIXIN);
+                                     CryptoNote::parameters::MINIMUM_MIXIN_V1);
 
-        uint16_t maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN;
+        uint16_t maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;
 
         if (mixin < minMixin)
         {
