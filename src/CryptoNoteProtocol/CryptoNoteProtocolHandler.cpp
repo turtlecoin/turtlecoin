@@ -592,7 +592,18 @@ bool CryptoNoteProtocolHandler::on_connection_synchronized() {
       logger(INFO, WHITE) << " If you need more assistance, visit the #HELP channel in the TurtleCoin Discord Chat - https://chat.turtlecoin.lol" << ENDL ;
       logger(INFO, BRIGHT_MAGENTA) << "===================================================" << ENDL << ENDL ;
 
+
       logger(INFO, BRIGHT_GREEN) <<
+
+      /* Windows is UTF-8 challenged :( */
+      #ifdef _WIN32
+      "\n _______         _   _       _____      _        \n"
+              "|__   __|       | | | |     / ____|    (_)      \n"
+              "   | |_   _ _ __| |_| | ___| |     ___  _ _ __  \n"
+              "   | | | | | '__| __| |/ _ \\ |    / _ \\| | '_ \\ \n"
+              "   | | |_| | |  | |_| |  __/ |___| (_) | | | | |\n"
+      "   |_|\\__ _|_|   \\__|_|\\___|\\_____\\___/|_|_| |_|\n" << ENDL;
+      #else
       "\n                                                                            \n"
         "████████╗██╗  ██╗██████╗ ████████╗██╗    ██████╗ █████╗ █████╗ ██╗███╗   ██╗\n"
         "╚══██╔══╝██║  ██║██╔══██╗╚══██╔══╝██║    ██╔═══╝██╔═══╝██╔══██╗██║████╗  ██║\n"
@@ -600,6 +611,7 @@ bool CryptoNoteProtocolHandler::on_connection_synchronized() {
         "   ██║   ██║  ██║██╔══██╗   ██║   ██║    ██╔═╝  ██║    ██║  ██║██║██║╚██╗██║\n"
         "   ██║   ╚█████╔╝██║  ██║   ██║   ██████╗██████╗╚█████╗╚█████╔╝██║██║ ╚████║\n"
         "   ╚═╝    ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝╚═════╝ ╚════╝ ╚════╝ ╚═╝╚═╝  ╚═══╝\n" << ENDL;
+      #endif
 
     m_observerManager.notify(&ICryptoNoteProtocolObserver::blockchainSynchronized, m_core.getTopBlockIndex());
   }
