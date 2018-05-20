@@ -475,10 +475,6 @@ Difficulty Currency::nextDifficultyV3(std::vector<uint64_t> timestamps, std::vec
         cumulative_difficulties.resize(N+1);
     }
 
-    /* To get an average solvetime to within +/- ~0.1%, use an adjustment factor.
-       adjust=0.998 for N = 60 */
-    const double adjust = 0.998;
-
     /* The divisor k normalizes the LWMA sum to a standard LWMA. */
     const double k = N * (N + 1) / 2;
 
@@ -506,7 +502,7 @@ Difficulty Currency::nextDifficultyV3(std::vector<uint64_t> timestamps, std::vec
         LWMA = static_cast<double>(T / 4);
     }
 
-    nextDifficulty = harmonic_mean_D * T / LWMA * adjust;
+    nextDifficulty = harmonic_mean_D * T / LWMA;
 
     next_difficulty = static_cast<uint64_t>(nextDifficulty);
     return next_difficulty;
