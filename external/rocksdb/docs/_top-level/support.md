@@ -19,4 +19,4 @@ Use the [RocksDB Facebook group](https://www.facebook.com/groups/rocksdb.dev/) f
 
 ### FAQ
 
-Check out a list of [commonly asked questions](/docs/support/faq) about RocksDB.
+Check out a list of [commonly asked questions](https://github.com/turtlecoin/turtlecoin/blob/15602e0e2f69bc88c2414797bf2ec040ec7adce5/external/rocksdb/docs/_docs/faq.md) about RocksDB.
