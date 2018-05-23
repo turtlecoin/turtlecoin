@@ -66,6 +66,7 @@ class TransactionTestBase : public ::testing::Test {
     txn_db_options.transaction_lock_timeout = 0;
     txn_db_options.default_lock_timeout = 0;
     txn_db_options.write_policy = write_policy;
+    txn_db_options.rollback_merge_operands = true;
     Status s;
     if (use_stackable_db == false) {
       s = TransactionDB::Open(options, txn_db_options, dbname, &db);
@@ -101,6 +102,27 @@ class TransactionTestBase : public ::testing::Test {
     return s;
   }
 
+  Status ReOpenNoDelete(std::vector<ColumnFamilyDescriptor>& cfs,
+                        std::vector<ColumnFamilyHandle*>* handles) {
+    for (auto h : *handles) {
+      delete h;
+    }
+    handles->clear();
+    delete db;
+    db = nullptr;
+    env->AssertNoOpenFile();
+    env->DropUnsyncedFileData();
+    env->ResetState();
+    Status s;
+    if (use_stackable_db_ == false) {
+      s = TransactionDB::Open(options, txn_db_options, dbname, cfs, handles,
+                              &db);
+    } else {
+      s = OpenWithStackableDB(cfs, handles);
+    }
+    return s;
+  }
+
   Status ReOpen() {
     delete db;
     DestroyDB(dbname, options);
@@ -109,6 +131,24 @@ class TransactionTestBase : public ::testing::Test {
       s = TransactionDB::Open(options, txn_db_options, dbname, &db);
     } else {
       s = OpenWithStackableDB();
+    }
+    return s;
+  }
+
+  Status OpenWithStackableDB(std::vector<ColumnFamilyDescriptor>& cfs,
+                             std::vector<ColumnFamilyHandle*>* handles) {
+    std::vector<size_t> compaction_enabled_cf_indices;
+    TransactionDB::PrepareWrap(&options, &cfs, &compaction_enabled_cf_indices);
+    DB* root_db;
+    Options options_copy(options);
+    const bool use_seq_per_batch =
+        txn_db_options.write_policy == WRITE_PREPARED;
+    Status s = DBImpl::Open(options_copy, dbname, cfs, handles, &root_db,
+                            use_seq_per_batch);
+    if (s.ok()) {
+      s = TransactionDB::WrapStackableDB(
+          new StackableDB(root_db), txn_db_options,
+          compaction_enabled_cf_indices, *handles, &db);
     }
     return s;
   }
@@ -319,12 +359,8 @@ class TransactionTestBase : public ::testing::Test {
           WriteBatch wb;
           committed_kvs[k] = v;
           wb.Put(k, v);
-          // TODO(myabandeh): remove this when we supprot duplicate keys in
-          // db->Write method
-          if (false) {
-            committed_kvs[k] = v2;
-            wb.Put(k, v2);
-          }
+          committed_kvs[k] = v2;
+          wb.Put(k, v2);
           s = db->Write(write_options, &wb);
           ASSERT_OK(s);
         } break;
@@ -336,12 +372,8 @@ class TransactionTestBase : public ::testing::Test {
           committed_kvs[k] = v;
           s = txn->Put(k, v);
           ASSERT_OK(s);
-          // TODO(myabandeh): remove this when we supprot duplicate keys in
-          // db->Write method
-          if (false) {
-            committed_kvs[k] = v2;
-            s = txn->Put(k, v2);
-          }
+          committed_kvs[k] = v2;
+          s = txn->Put(k, v2);
           ASSERT_OK(s);
           if (type == 3) {
             s = txn->Prepare();

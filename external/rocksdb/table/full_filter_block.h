@@ -43,8 +43,9 @@ class FullFilterBlockBuilder : public FilterBlockBuilder {
   ~FullFilterBlockBuilder() {}
 
   virtual bool IsBlockBased() override { return false; }
-  virtual void StartBlock(uint64_t block_offset) override {}
+  virtual void StartBlock(uint64_t /*block_offset*/) override {}
   virtual void Add(const Slice& key) override;
+  virtual size_t NumAdded() const override { return num_added_; }
   virtual Slice Finish(const BlockHandle& tmp, Status* status) override;
   using FilterBlockBuilder::Finish;
 
@@ -58,6 +59,10 @@ class FullFilterBlockBuilder : public FilterBlockBuilder {
   // should NOT dereference them.
   const SliceTransform* prefix_extractor_;
   bool whole_key_filtering_;
+  bool last_whole_key_recorded_;
+  std::string last_whole_key_str_;
+  bool last_prefix_recorded_;
+  std::string last_prefix_str_;
 
   uint32_t num_added_;
   std::unique_ptr<const char[]> filter_data_;

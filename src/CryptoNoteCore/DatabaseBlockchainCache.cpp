@@ -302,6 +302,11 @@ public:
   void increment() {
     ++globalOutputIndex;
   }
+  
+  void decrement() {
+    // DO NOTHING
+    //--globalOutputIndex;
+  }
 
   void decrement() {
     --globalOutputIndex;

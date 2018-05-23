@@ -20,7 +20,9 @@ namespace rocksdb {
 class CountingLogger : public Logger {
  public:
   using Logger::Logv;
-  virtual void Logv(const char* format, va_list ap) override { log_count++; }
+  virtual void Logv(const char* /*format*/, va_list /*ap*/) override {
+    log_count++;
+  }
   size_t log_count;
 };
 
@@ -57,7 +59,7 @@ class CompactionPickerTest : public testing::Test {
         vstorage_(nullptr) {
     fifo_options_.max_table_files_size = 1;
     mutable_cf_options_.RefreshDerivedOptions(ioptions_);
-    ioptions_.db_paths.emplace_back("dummy",
+    ioptions_.cf_paths.emplace_back("dummy",
                                     std::numeric_limits<uint64_t>::max());
   }
 

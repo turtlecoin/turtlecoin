@@ -80,7 +80,7 @@ Status DBImpl::TEST_CompactRange(int level, const Slice* begin,
        cfd->ioptions()->compaction_style == kCompactionStyleFIFO)
           ? level
           : level + 1;
-  return RunManualCompaction(cfd, level, output_level, 0, begin, end, true,
+  return RunManualCompaction(cfd, level, output_level, 0, 0, begin, end, true,
                              disallow_trivial_move);
 }
 
@@ -117,7 +117,7 @@ Status DBImpl::TEST_WaitForFlushMemTable(ColumnFamilyHandle* column_family) {
   return WaitForFlushMemTable(cfd);
 }
 
-Status DBImpl::TEST_WaitForCompact() {
+Status DBImpl::TEST_WaitForCompact(bool wait_unscheduled) {
   // Wait until the compaction completes
 
   // TODO: a bug here. This function actually does not necessarily
@@ -126,7 +126,8 @@ Status DBImpl::TEST_WaitForCompact() {
 
   InstrumentedMutexLock l(&mutex_);
   while ((bg_bottom_compaction_scheduled_ || bg_compaction_scheduled_ ||
-          bg_flush_scheduled_) &&
+          bg_flush_scheduled_ ||
+          (wait_unscheduled && unscheduled_compactions_)) &&
          bg_error_.ok()) {
     bg_cv_.Wait();
   }
@@ -183,11 +184,21 @@ Status DBImpl::TEST_GetAllImmutableCFOptions(
 }
 
 uint64_t DBImpl::TEST_FindMinLogContainingOutstandingPrep() {
-  return FindMinLogContainingOutstandingPrep();
+  return logs_with_prep_tracker_.FindMinLogContainingOutstandingPrep();
+}
+
+size_t DBImpl::TEST_PreparedSectionCompletedSize() {
+  return logs_with_prep_tracker_.TEST_PreparedSectionCompletedSize();
+}
+
+size_t DBImpl::TEST_LogsWithPrepSize() {
+  return logs_with_prep_tracker_.TEST_LogsWithPrepSize();
 }
 
 uint64_t DBImpl::TEST_FindMinPrepLogReferencedByMemTable() {
-  return FindMinPrepLogReferencedByMemTable();
+  autovector<MemTable*> empty_list;
+  return FindMinPrepLogReferencedByMemTable(versions_.get(), nullptr,
+                                            empty_list);
 }
 
 Status DBImpl::TEST_GetLatestMutableCFOptions(

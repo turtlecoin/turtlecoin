@@ -69,9 +69,15 @@ class ColumnFamilyTest : public testing::Test {
   }
 
   ~ColumnFamilyTest() {
+    std::vector<ColumnFamilyDescriptor> column_families;
+    for (auto h : handles_) {
+      ColumnFamilyDescriptor cfdescriptor;
+      h->GetDescriptor(&cfdescriptor);
+      column_families.push_back(cfdescriptor);
+    }
     Close();
     rocksdb::SyncPoint::GetInstance()->DisableProcessing();
-    Destroy();
+    Destroy(column_families);
     delete env_;
   }
 
@@ -236,9 +242,11 @@ class ColumnFamilyTest : public testing::Test {
 #endif  // !ROCKSDB_LITE
   }
 
-  void Destroy() {
+  void Destroy(const std::vector<ColumnFamilyDescriptor>& column_families =
+                  std::vector<ColumnFamilyDescriptor>()) {
     Close();
-    ASSERT_OK(DestroyDB(dbname_, Options(db_options_, column_family_options_)));
+    ASSERT_OK(DestroyDB(dbname_, Options(db_options_, column_family_options_),
+                        column_families));
   }
 
   void CreateColumnFamilies(
@@ -383,6 +391,9 @@ class ColumnFamilyTest : public testing::Test {
   void AssertFilesPerLevel(const std::string& value, int cf) {
 #ifndef ROCKSDB_LITE
     ASSERT_EQ(value, FilesPerLevel(cf));
+#else
+    (void) value;
+    (void) cf;
 #endif
   }
 
@@ -397,6 +408,8 @@ class ColumnFamilyTest : public testing::Test {
   void AssertCountLiveFiles(int expected_value) {
 #ifndef ROCKSDB_LITE
     ASSERT_EQ(expected_value, CountLiveFiles());
+#else
+    (void) expected_value;
 #endif
   }
 
@@ -445,6 +458,8 @@ class ColumnFamilyTest : public testing::Test {
   void AssertCountLiveLogFiles(int value) {
 #ifndef ROCKSDB_LITE  // GetSortedWalFiles is not supported
     ASSERT_EQ(value, CountLiveLogFiles());
+#else
+    (void) value;
 #endif  // !ROCKSDB_LITE
   }
 
@@ -481,6 +496,12 @@ class ColumnFamilyTest : public testing::Test {
       size -= slice.size();
     }
     ASSERT_OK(destfile->Close());
+  }
+
+  int GetSstFileCount(std::string path) {
+    std::vector<std::string> files;
+    DBTestBase::GetSstFiles(env_, path, &files);
+    return static_cast<int>(files.size());
   }
 
   std::vector<ColumnFamilyHandle*> handles_;
@@ -1168,13 +1189,14 @@ TEST_F(ColumnFamilyTest, MemtableNotSupportSnapshot) {
 #endif  // !ROCKSDB_LITE
 
 class TestComparator : public Comparator {
-  int Compare(const rocksdb::Slice& a, const rocksdb::Slice& b) const override {
+  int Compare(const rocksdb::Slice& /*a*/,
+              const rocksdb::Slice& /*b*/) const override {
     return 0;
   }
   const char* Name() const override { return "Test"; }
-  void FindShortestSeparator(std::string* start,
-                             const rocksdb::Slice& limit) const override {}
-  void FindShortSuccessor(std::string* key) const override {}
+  void FindShortestSeparator(std::string* /*start*/,
+                             const rocksdb::Slice& /*limit*/) const override {}
+  void FindShortSuccessor(std::string* /*key*/) const override {}
 };
 
 static TestComparator third_comparator;
@@ -1346,7 +1368,7 @@ TEST_F(ColumnFamilyTest, MultipleManualCompactions) {
        {"ColumnFamilyTest::MultiManual:2", "ColumnFamilyTest::MultiManual:5"},
        {"ColumnFamilyTest::MultiManual:2", "ColumnFamilyTest::MultiManual:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           TEST_SYNC_POINT("ColumnFamilyTest::MultiManual:4");
           cf_1_1 = false;
@@ -1439,7 +1461,7 @@ TEST_F(ColumnFamilyTest, AutomaticAndManualCompactions) {
        {"ColumnFamilyTest::AutoManual:2", "ColumnFamilyTest::AutoManual:5"},
        {"ColumnFamilyTest::AutoManual:2", "ColumnFamilyTest::AutoManual:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           cf_1_1 = false;
           TEST_SYNC_POINT("ColumnFamilyTest::AutoManual:4");
@@ -1540,7 +1562,7 @@ TEST_F(ColumnFamilyTest, ManualAndAutomaticCompactions) {
        {"ColumnFamilyTest::ManualAuto:5", "ColumnFamilyTest::ManualAuto:2"},
        {"ColumnFamilyTest::ManualAuto:2", "ColumnFamilyTest::ManualAuto:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           TEST_SYNC_POINT("ColumnFamilyTest::ManualAuto:4");
           cf_1_1 = false;
@@ -1633,7 +1655,7 @@ TEST_F(ColumnFamilyTest, SameCFManualManualCompactions) {
        {"ColumnFamilyTest::ManualManual:1",
         "ColumnFamilyTest::ManualManual:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           TEST_SYNC_POINT("ColumnFamilyTest::ManualManual:4");
           cf_1_1 = false;
@@ -1731,7 +1753,7 @@ TEST_F(ColumnFamilyTest, SameCFManualAutomaticCompactions) {
        {"ColumnFamilyTest::ManualAuto:1", "ColumnFamilyTest::ManualAuto:2"},
        {"ColumnFamilyTest::ManualAuto:1", "ColumnFamilyTest::ManualAuto:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           TEST_SYNC_POINT("ColumnFamilyTest::ManualAuto:4");
           cf_1_1 = false;
@@ -1823,7 +1845,7 @@ TEST_F(ColumnFamilyTest, SameCFManualAutomaticCompactionsLevel) {
         "ColumnFamilyTest::ManualAuto:3"},
        {"ColumnFamilyTest::ManualAuto:1", "ColumnFamilyTest::ManualAuto:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           TEST_SYNC_POINT("ColumnFamilyTest::ManualAuto:4");
           cf_1_1 = false;
@@ -1910,7 +1932,7 @@ TEST_F(ColumnFamilyTest, SameCFAutomaticManualCompactions) {
        {"CompactionPicker::CompactRange:Conflict",
         "ColumnFamilyTest::AutoManual:3"}});
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:NonTrivial:AfterRun", [&](void* /*arg*/) {
         if (cf_1_1) {
           TEST_SYNC_POINT("ColumnFamilyTest::AutoManual:4");
           cf_1_1 = false;
@@ -2357,7 +2379,7 @@ TEST_F(ColumnFamilyTest, CreateAndDropRace) {
   auto main_thread_id = std::this_thread::get_id();
 
   rocksdb::SyncPoint::GetInstance()->SetCallBack("PersistRocksDBOptions:start",
-                                                 [&](void* arg) {
+                                                 [&](void* /*arg*/) {
     auto current_thread_id = std::this_thread::get_id();
     // If it's the main thread hitting this sync-point, then it
     // will be blocked until some other thread update the test_stage.
@@ -2370,7 +2392,7 @@ TEST_F(ColumnFamilyTest, CreateAndDropRace) {
   });
 
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "WriteThread::EnterUnbatched:Wait", [&](void* arg) {
+      "WriteThread::EnterUnbatched:Wait", [&](void* /*arg*/) {
         // This means a thread doing DropColumnFamily() is waiting for
         // other thread to finish persisting options.
         // In such case, we update the test_stage to unblock the main thread.
@@ -2790,6 +2812,18 @@ TEST_F(ColumnFamilyTest, CompactionSpeedupTwoColumnFamilies) {
   ASSERT_EQ(1, dbfull()->TEST_BGCompactionsAllowed());
 }
 
+TEST_F(ColumnFamilyTest, CreateAndDestoryOptions) {
+  std::unique_ptr<ColumnFamilyOptions> cfo(new ColumnFamilyOptions());
+  ColumnFamilyHandle* cfh;
+  Open();
+  ASSERT_OK(db_->CreateColumnFamily(*(cfo.get()), "yoyo", &cfh));
+  cfo.reset();
+  ASSERT_OK(db_->Put(WriteOptions(), cfh, "foo", "bar"));
+  ASSERT_OK(db_->Flush(FlushOptions(), cfh));
+  ASSERT_OK(db_->DropColumnFamily(cfh));
+  ASSERT_OK(db_->DestroyColumnFamilyHandle(cfh));
+}
+
 #ifndef ROCKSDB_LITE
 TEST_F(ColumnFamilyTest, FlushCloseWALFiles) {
   SpecialEnv env(Env::Default());
@@ -3115,6 +3149,58 @@ TEST_F(ColumnFamilyTest, DISABLED_LogTruncationTest) {
 
   // cleanup
   env_->DeleteDir(backup_logs);
+}
+
+TEST_F(ColumnFamilyTest, DefaultCfPathsTest) {
+  Open();
+  // Leave cf_paths for one column families to be empty.
+  // Files should be generated according to db_paths for that
+  // column family.
+  ColumnFamilyOptions cf_opt1, cf_opt2;
+  cf_opt1.cf_paths.emplace_back(dbname_ + "_one_1",
+                                std::numeric_limits<uint64_t>::max());
+  CreateColumnFamilies({"one", "two"}, {cf_opt1, cf_opt2});
+  Reopen({ColumnFamilyOptions(), cf_opt1, cf_opt2});
+
+  // Fill Column family 1.
+  PutRandomData(1, 100, 100);
+  Flush(1);
+
+  ASSERT_EQ(1, GetSstFileCount(cf_opt1.cf_paths[0].path));
+  ASSERT_EQ(0, GetSstFileCount(dbname_));
+
+  // Fill column family 2
+  PutRandomData(2, 100, 100);
+  Flush(2);
+
+  // SST from Column family 2 should be generated in
+  // db_paths which is dbname_ in this case.
+  ASSERT_EQ(1, GetSstFileCount(dbname_));
+}
+
+TEST_F(ColumnFamilyTest, MultipleCFPathsTest) {
+  Open();
+  // Configure Column family specific paths.
+  ColumnFamilyOptions cf_opt1, cf_opt2;
+  cf_opt1.cf_paths.emplace_back(dbname_ + "_one_1",
+                                std::numeric_limits<uint64_t>::max());
+  cf_opt2.cf_paths.emplace_back(dbname_ + "_two_1",
+                                std::numeric_limits<uint64_t>::max());
+  CreateColumnFamilies({"one", "two"}, {cf_opt1, cf_opt2});
+  Reopen({ColumnFamilyOptions(), cf_opt1, cf_opt2});
+
+  PutRandomData(1, 100, 100);
+  Flush(1);
+
+  // Check that files are generated in appropriate paths.
+  ASSERT_EQ(1, GetSstFileCount(cf_opt1.cf_paths[0].path));
+  ASSERT_EQ(0, GetSstFileCount(dbname_));
+
+  PutRandomData(2, 100, 100);
+  Flush(2);
+
+  ASSERT_EQ(1, GetSstFileCount(cf_opt2.cf_paths[0].path));
+  ASSERT_EQ(0, GetSstFileCount(dbname_));
 }
 }  // namespace rocksdb
 

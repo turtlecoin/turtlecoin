@@ -94,7 +94,8 @@ Status ExternalSstFileIngestionJob::Prepare(
 
     const std::string path_outside_db = f.external_file_path;
     const std::string path_inside_db =
-        TableFileName(db_options_.db_paths, f.fd.GetNumber(), f.fd.GetPathId());
+        TableFileName(cfd_->ioptions()->cf_paths, f.fd.GetNumber(),
+                      f.fd.GetPathId());
 
     if (ingestion_options_.move_files) {
       status = env_->LinkFile(path_outside_db, path_inside_db);
@@ -102,12 +103,16 @@ Status ExternalSstFileIngestionJob::Prepare(
         // Original file is on a different FS, use copy instead of hard linking
         status = CopyFile(env_, path_outside_db, path_inside_db, 0,
                           db_options_.use_fsync);
+        f.copy_file = true;
+      } else {
+        f.copy_file = false;
       }
     } else {
       status = CopyFile(env_, path_outside_db, path_inside_db, 0,
                         db_options_.use_fsync);
+      f.copy_file = true;
     }
-    TEST_SYNC_POINT("DBImpl::AddFile:FileCopied");
+    TEST_SYNC_POINT("ExternalSstFileIngestionJob::Prepare:FileAdded");
     if (!status.ok()) {
       break;
     }
@@ -117,7 +122,7 @@ Status ExternalSstFileIngestionJob::Prepare(
   if (!status.ok()) {
     // We failed, remove all files that we copied into the db
     for (IngestedFileInfo& f : files_to_ingest_) {
-      if (f.internal_file_path == "") {
+      if (f.internal_file_path.empty()) {
         break;
       }
       Status s = env_->DeleteFile(f.internal_file_path);
@@ -217,9 +222,17 @@ void ExternalSstFileIngestionJob::UpdateStats() {
   uint64_t total_l0_files = 0;
   uint64_t total_time = env_->NowMicros() - job_start_time_;
   for (IngestedFileInfo& f : files_to_ingest_) {
-    InternalStats::CompactionStats stats(1);
+    InternalStats::CompactionStats stats(CompactionReason::kExternalSstIngestion, 1);
     stats.micros = total_time;
-    stats.bytes_written = f.fd.GetFileSize();
+    // If actual copy occured for this file, then we need to count the file
+    // size as the actual bytes written. If the file was linked, then we ignore
+    // the bytes written for file metadata.
+    // TODO (yanqin) maybe account for file metadata bytes for exact accuracy?
+    if (f.copy_file) {
+      stats.bytes_written = f.fd.GetFileSize();
+    } else {
+      stats.bytes_moved = f.fd.GetFileSize();
+    }
     stats.num_output_files = 1;
     cfd_->internal_stats()->AddCompactionStats(f.picked_level, stats);
     cfd_->internal_stats()->AddCFStats(InternalStats::BYTES_INGESTED_ADD_FILE,
@@ -407,8 +420,9 @@ Status ExternalSstFileIngestionJob::AssignLevelAndSeqnoForIngestedFile(
 
     if (vstorage->NumLevelFiles(lvl) > 0) {
       bool overlap_with_level = false;
-      status = IngestedFileOverlapWithLevel(sv, file_to_ingest, lvl,
-        &overlap_with_level);
+      status = sv->current->OverlapWithLevelIterator(ro, env_options_,
+          file_to_ingest->smallest_user_key, file_to_ingest->largest_user_key,
+          lvl, &overlap_with_level);
       if (!status.ok()) {
         return status;
       }
@@ -518,34 +532,6 @@ Status ExternalSstFileIngestionJob::AssignGlobalSeqnoForIngestedFile(
   return status;
 }
 
-Status ExternalSstFileIngestionJob::IngestedFileOverlapWithIteratorRange(
-    const IngestedFileInfo* file_to_ingest, InternalIterator* iter,
-    bool* overlap) {
-  auto* vstorage = cfd_->current()->storage_info();
-  auto* ucmp = vstorage->InternalComparator()->user_comparator();
-  InternalKey range_start(file_to_ingest->smallest_user_key, kMaxSequenceNumber,
-                          kValueTypeForSeek);
-  iter->Seek(range_start.Encode());
-  if (!iter->status().ok()) {
-    return iter->status();
-  }
-
-  *overlap = false;
-  if (iter->Valid()) {
-    ParsedInternalKey seek_result;
-    if (!ParseInternalKey(iter->key(), &seek_result)) {
-      return Status::Corruption("DB have corrupted keys");
-    }
-
-    if (ucmp->Compare(seek_result.user_key, file_to_ingest->largest_user_key) <=
-        0) {
-      *overlap = true;
-    }
-  }
-
-  return iter->status();
-}
-
 bool ExternalSstFileIngestionJob::IngestedFileFitInLevel(
     const IngestedFileInfo* file_to_ingest, int level) {
   if (level == 0) {
@@ -572,38 +558,6 @@ bool ExternalSstFileIngestionJob::IngestedFileFitInLevel(
 
   // File did not overlap with level files, our compaction output
   return true;
-}
-
-Status ExternalSstFileIngestionJob::IngestedFileOverlapWithLevel(
-    SuperVersion* sv, IngestedFileInfo* file_to_ingest, int lvl,
-    bool* overlap_with_level) {
-  Arena arena;
-  ReadOptions ro;
-  ro.total_order_seek = true;
-  MergeIteratorBuilder merge_iter_builder(&cfd_->internal_comparator(),
-                                          &arena);
-  // Files are opened lazily when the iterator needs them, thus range deletions
-  // are also added lazily to the aggregator. We need to check for range
-  // deletion overlap only in the case where there's no point-key overlap. Then,
-  // we've already opened the file with range containing the ingested file's
-  // begin key, and iterated through all files until the one containing the
-  // ingested file's end key. So any files maybe containing range deletions
-  // overlapping the ingested file must have been opened and had their range
-  // deletions added to the aggregator.
-  RangeDelAggregator range_del_agg(cfd_->internal_comparator(),
-                                   {} /* snapshots */,
-                                   false /* collapse_deletions */);
-  sv->current->AddIteratorsForLevel(ro, env_options_, &merge_iter_builder, lvl,
-                                    &range_del_agg);
-  ScopedArenaIterator level_iter(merge_iter_builder.Finish());
-  Status status = IngestedFileOverlapWithIteratorRange(
-      file_to_ingest, level_iter.get(), overlap_with_level);
-  if (status.ok() && *overlap_with_level == false &&
-      range_del_agg.IsRangeOverlapped(file_to_ingest->smallest_user_key,
-                                      file_to_ingest->largest_user_key)) {
-    *overlap_with_level = true;
-  }
-  return status;
 }
 
 }  // namespace rocksdb

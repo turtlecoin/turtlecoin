@@ -109,7 +109,7 @@ struct ImmutableCFOptions {
 
   bool preserve_deletes;
 
-  // A vector of EventListeners which call-back functions will be called
+  // A vector of EventListeners which callback functions will be called
   // when specific RocksDB event happens.
   std::vector<std::shared_ptr<EventListener>> listeners;
 
@@ -118,6 +118,10 @@ struct ImmutableCFOptions {
   uint32_t max_subcompactions;
 
   const SliceTransform* memtable_insert_with_hint_prefix_extractor;
+
+  uint64_t ttl;
+
+  std::vector<DbPath> cf_paths;
 };
 
 struct MutableCFOptions {
@@ -188,8 +192,6 @@ struct MutableCFOptions {
     RefreshDerivedOptions(ioptions.num_levels, ioptions.compaction_style);
   }
 
-  // Get the max file size in a given level.
-  uint64_t MaxFileSizeForLevel(int level) const;
   int MaxBytesMultiplerAdditional(int level) const {
     if (level >=
         static_cast<int>(max_bytes_for_level_multiplier_additional.size())) {
@@ -238,4 +240,8 @@ struct MutableCFOptions {
 
 uint64_t MultiplyCheckOverflow(uint64_t op1, double op2);
 
+// Get the max file size in a given level.
+uint64_t MaxFileSizeForLevel(const MutableCFOptions& cf_options,
+    int level, CompactionStyle compaction_style, int base_level = 1,
+    bool level_compaction_dynamic_level_bytes = false);
 }  // namespace rocksdb
