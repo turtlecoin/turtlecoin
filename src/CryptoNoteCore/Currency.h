@@ -41,7 +41,14 @@ public:
   uint32_t minedMoneyUnlockWindow() const { return m_minedMoneyUnlockWindow; }
 
   size_t timestampCheckWindow() const { return m_timestampCheckWindow; }
-  uint64_t blockFutureTimeLimit() const { return m_blockFutureTimeLimit; }
+  uint64_t blockFutureTimeLimit(uint32_t height) const { 
+    if (height < parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V2_UPGRADE_HEIGHT) {
+      return m_blockFutureTimeLimitV1; 
+    }
+    else {
+      return m_blockFutureTimeLimitV2;
+    }
+  }
 
   uint64_t moneySupply() const { return m_moneySupply; }
   unsigned int emissionSpeedFactor() const { return m_emissionSpeedFactor; }
@@ -152,7 +159,8 @@ private:
   uint32_t m_minedMoneyUnlockWindow;
 
   size_t m_timestampCheckWindow;
-  uint64_t m_blockFutureTimeLimit;
+  uint64_t m_blockFutureTimeLimitV1;
+  uint64_t m_blockFutureTimeLimitV2;
 
   uint64_t m_moneySupply;
   unsigned int m_emissionSpeedFactor;
@@ -236,7 +244,8 @@ public:
   CurrencyBuilder& minedMoneyUnlockWindow(uint32_t val) { m_currency.m_minedMoneyUnlockWindow = val; return *this; }
 
   CurrencyBuilder& timestampCheckWindow(size_t val) { m_currency.m_timestampCheckWindow = val; return *this; }
-  CurrencyBuilder& blockFutureTimeLimit(uint64_t val) { m_currency.m_blockFutureTimeLimit = val; return *this; }
+  CurrencyBuilder& blockFutureTimeLimitV1(uint64_t val) { m_currency.m_blockFutureTimeLimitV1 = val; return *this; }
+  CurrencyBuilder& blockFutureTimeLimitV2(uint64_t val) { m_currency.m_blockFutureTimeLimitV2 = val; return *this; }
 
   CurrencyBuilder& moneySupply(uint64_t val) { m_currency.m_moneySupply = val; return *this; }
   CurrencyBuilder& emissionSpeedFactor(unsigned int val);
