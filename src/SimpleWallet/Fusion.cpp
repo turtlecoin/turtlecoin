@@ -37,12 +37,11 @@ size_t makeFusionTransaction(CryptoNote::WalletGreen &wallet,
        gave us the most amount of optimizable amounts */
     while (threshold > CryptoNote::parameters::MINIMUM_FEE)
     {
-        CryptoNote::IFusionManager::EstimateResult r 
-            = wallet.estimate(threshold);
+        auto fusionReadyCount = wallet.estimate(threshold).fusionReadyCount;
 
-        if (r.fusionReadyCount > optimizable)
+        if (fusionReadyCount > optimizable)
         {
-            optimizable = r.fusionReadyCount;
+            optimizable = fusionReadyCount;
             bestThreshold = threshold;
         }
 
