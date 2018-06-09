@@ -111,6 +111,8 @@ void help(bool viewWallet)
                   << "Show outgoing transfers" << std::endl
                   << SuccessMsg("list_transfers", 25)
                   << "Show all transfers" << std::endl
+                  << SuccessMsg("save_csv", 25)
+                  << "Save all wallet transactions to CSV file" << std::endl
                   << SuccessMsg("optimize", 25)
                   << "Optimize your wallet to send large amounts"
                   << std::endl
