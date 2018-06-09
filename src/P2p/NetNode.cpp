@@ -89,7 +89,7 @@ void addPortMapping(Logging::LoggerRef& logger, uint32_t port) {
     } else if (result == 2) {
       logger(INFO) << "IGD was found but reported as not connected.";
     } else if (result == 3) {
-      logger(INFO) << "UPnP device was found but not recoginzed as IGD.";
+      logger(INFO) << "UPnP device was found but not recognized as IGD.";
     } else {
       logger(ERROR) << "UPNP_GetValidIGD returned an unknown result code.";
     }

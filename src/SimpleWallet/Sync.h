@@ -31,6 +31,8 @@ void printOutgoingTransfer(CryptoNote::WalletTransaction t,
 void printIncomingTransfer(CryptoNote::WalletTransaction t,
                            CryptoNote::INode &node);
 
+void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node);
+
 void syncWallet(CryptoNote::INode &node,
                 std::shared_ptr<WalletInfo> &walletInfo);
 
