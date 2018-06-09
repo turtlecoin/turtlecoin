@@ -23,12 +23,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height);
 
-void transfer(std::shared_ptr<WalletInfo> walletInfo,
-              std::vector<std::string> args, uint32_t height);
-
-void doTransfer(uint16_t mixin, std::string address, uint64_t amount,
-                uint64_t fee, std::string extra,
-                std::shared_ptr<WalletInfo> walletInfo, uint32_t height);
+void doTransfer(std::string address, uint64_t amount, uint64_t fee,
+                std::string extra, std::shared_ptr<WalletInfo> walletInfo,
+                uint32_t height);
 
 void sendMultipleTransactions(CryptoNote::WalletGreen &wallet,
                               std::vector<CryptoNote::TransactionParameters>
@@ -42,8 +39,6 @@ bool confirmTransaction(CryptoNote::TransactionParameters t,
 
 bool parseAmount(std::string amountString);
 
-bool parseMixin(std::string mixinString);
-
 bool parseAddress(std::string address);
 
 bool parseFee(std::string feeString);
@@ -55,5 +50,3 @@ Maybe<std::string> getDestinationAddress();
 Maybe<uint64_t> getFee();
 
 Maybe<uint64_t> getTransferAmount();
-
-Maybe<uint16_t> getMixin();

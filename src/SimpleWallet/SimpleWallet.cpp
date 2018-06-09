@@ -447,12 +447,6 @@ void inputLoop(std::shared_ptr<WalletInfo> &walletInfo, CryptoNote::INode &node)
 
         std::string command = getInputAndDoWorkWhileIdle(walletInfo);
 
-        /* Split into args to support legacy transfer command, for example
-           transfer 5 TRTLxyz... 100, sends 100 TRTL to TRTLxyz... with a mixin
-           of 5 */
-        std::vector<std::string> words;
-        words = boost::split(words, command, ::isspace);
-
         if (command == "")
         {
             // no-op
@@ -513,12 +507,14 @@ void inputLoop(std::shared_ptr<WalletInfo> &walletInfo, CryptoNote::INode &node)
             {
                 transfer(walletInfo, node.getLastKnownBlockHeight());
             }
-            else if (words[0] == "transfer")
+            /* String starts with transfer, old transfer syntax */
+            else if (command.find("transfer") == 0)
             {
-                /* remove the first item from words - this is the "transfer"
-                   command, leaving us just the transfer arguments. */
-                words.erase(words.begin());
-                transfer(walletInfo, words, node.getLastKnownBlockHeight());
+                std::cout << "This transfer syntax has been removed."
+                          << std::endl
+                          << "Run just the " << SuggestionMsg("transfer")
+                          << " command for a walk through guide to "
+                          << "transferring." << std::endl;
             }
             else if (command == "quick_optimize")
             {

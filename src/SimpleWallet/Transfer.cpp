@@ -106,19 +106,18 @@ bool confirmTransaction(CryptoNote::TransactionParameters t,
 
     std::cout << "You are sending "
               << SuccessMsg(formatAmount(t.destinations[0].amount))
-              << ", with a fee of " << SuccessMsg(formatAmount(t.fee))
-              << ", " << std::endl;
+              << ", with a fee of " << SuccessMsg(formatAmount(t.fee));
 
     std::string paymentID = getPaymentID(t.extra);
 
     if (paymentID != "")
     {
-        std::cout << "A mixin of " << SuccessMsg(std::to_string(t.mixIn))
-                  << " and a Payment ID of " << SuccessMsg(paymentID);
+        std::cout << ", " << std::endl
+                  << "and a Payment ID of " << SuccessMsg(paymentID);
     }
     else
     {
-        std::cout << "And a mixin of " << SuccessMsg(std::to_string(t.mixIn));
+        std::cout << "." << std::endl;
     }
     
     std::cout << std::endl << std::endl
@@ -288,103 +287,6 @@ void splitTx(CryptoNote::WalletGreen &wallet,
     }
 }
 
-void transfer(std::shared_ptr<WalletInfo> walletInfo,
-              std::vector<std::string> args, uint32_t height)
-{
-    uint16_t mixin;
-    std::string address;
-    uint64_t amount;
-    uint64_t fee = CryptoNote::parameters::MINIMUM_FEE;
-    std::string extra;
-
-    /* Check we have enough args for the default required parameters */
-    if (args.size() >= 3)
-    {
-        if (parseMixin(args[0]) && parseAddress(args[1])
-         && parseAmount(args[2]))
-        {
-            mixin = std::stoi(args[0]);
-            address = args[1];
-            parseAmount(args[2], amount);
-        }
-        else
-        {
-            return;
-        }
-    }
-    else
-    {
-        std::cout << WarningMsg("Not enough arguments given!") << std::endl
-                  << "Try running just " << SuggestionMsg("transfer")
-                  << " for a walk through guide to transferring." << std::endl;
-        return;
-    }
-
-    for (size_t i = 0; i < args.size(); i++)
-    {
-        if (args[i] == "-f")
-        {
-            if (i+1 < args.size())
-            {
-                if (parseFee(args[i+1]))
-                {
-                    parseAmount(args[i+1], fee);
-                }
-                else
-                {
-                    return;
-                }
-            }
-            else
-            {
-                std::cout << WarningMsg("Fee flag given but no fee follows!")
-                          << std::endl;
-                return;
-            }
-        }
-        else if (args[i] == "-p")
-        {
-            if (i+1 < args.size())
-            {
-                std::vector<uint8_t> extraVec;
-                std::string extraString;
-
-                /* Convert the payment ID into an "extra" */
-                if (!CryptoNote::createTxExtraWithPaymentId(args[i+1],
-                                                            extraVec))
-                {
-                    std::cout << WarningMsg("Failed to parse payment ID! "
-                                            "Payment ID's are 64 character "
-                                            "hexadecimal strings.")
-                              << std::endl;
-                    return;
-                }
-                else
-                {
-                    /* Then convert the "extra" back into a string so we
-                       can pass the argument that walletgreen expects. 
-                       Note this string is not the same as the original
-                       paymentID string! */
-                    for (auto i : extraVec)
-                    {
-                        extraString += static_cast<char>(i);
-                    }
-                }
-
-                extra = extraString;
-            }
-            else
-            {
-                std::cout << WarningMsg("Payment ID flag given but no payment "
-                                        "ID follows!") << std::endl;
-                return;
-            }
-        }
-    }
-
-    doTransfer(mixin, address, amount, fee, extra, walletInfo, height);
-}
-
 void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height)
 {
     std::cout << InformationMsg("Note: You can type cancel at any time to "
@@ -447,16 +349,6 @@ void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height)
         return;
     }
 
-    auto maybeMixin = getMixin();
-
-    if (!maybeMixin.isJust)
-    {
-        std::cout << WarningMsg("Cancelling transaction.") << std::endl;
-        return;
-    }
-
-    uint16_t mixin = maybeMixin.x;
-
     auto maybeExtra = getPaymentID();
 
     if (!maybeExtra.isJust)
@@ -467,12 +359,11 @@ void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height)
 
     std::string extra = maybeExtra.x;
 
-    doTransfer(mixin, address, amount, fee, extra, walletInfo, height);
+    doTransfer(address, amount, fee, extra, walletInfo, height);
 }
 
-void doTransfer(uint16_t mixin, std::string address, uint64_t amount,
-                uint64_t fee, std::string extra,
-                std::shared_ptr<WalletInfo> walletInfo,
+void doTransfer(std::string address, uint64_t amount, uint64_t fee,
+                std::string extra, std::shared_ptr<WalletInfo> walletInfo,
                 uint32_t height)
 {
     uint64_t balance = walletInfo->wallet.getActualBalance();
@@ -496,7 +387,7 @@ void doTransfer(uint16_t mixin, std::string address, uint64_t amount,
     };
 
     p.fee = fee;
-    p.mixIn = mixin;
+    p.mixIn = CryptoNote::parameters::DEFAULT_MIXIN;
     p.extra = extra;
     p.changeDestination = walletInfo->walletAddress;
 
@@ -720,7 +611,9 @@ Maybe<uint64_t> getFee()
         std::cout << std::endl 
                   << InformationMsg("What fee do you want to use?")
                   << std::endl
-                  << "Hit enter for the default fee of 0.1 TRTL: ";
+                  << "Hit enter for the default fee of "
+                  << formatAmount(CryptoNote::parameters::MINIMUM_FEE)
+                  << ":";
 
         std::getline(std::cin, stringAmount);
 
@@ -740,36 +633,6 @@ Maybe<uint64_t> getFee()
         {
             parseAmount(stringAmount, amount);
             return Just<uint64_t>(amount);
-        }
-    }
-}
-
-Maybe<uint16_t> getMixin()
-{
-    while (true)
-    {
-        std::string stringMixin;
-
-        std::cout << std::endl
-                  << InformationMsg("What mixin do you want to use?")
-                  << std::endl
-                  << "Mixin is how many times your transaction is mixed "
-                  << "with others for privacy." << std::endl
-                  << "Hit enter for the default mixin of 5: ";
-
-        std::getline(std::cin, stringMixin);
-
-        if (stringMixin == "")
-        {
-            return Just<uint16_t>(CryptoNote::parameters::DEFAULT_MIXIN);
-        }
-        else if (stringMixin == "cancel")
-        {
-            return Nothing<uint16_t>();
-        }
-        else if (parseMixin(stringMixin))
-        {
-            return Just<uint16_t>(std::stoi(stringMixin));
         }
     }
 }
@@ -903,48 +766,6 @@ bool parseAddress(std::string address)
     }
 
     return true;
-}
-
-bool parseMixin(std::string mixinString)
-{
-    try
-    {
-        /* We shouldn't need to check this is >0 because it should fail
-           to parse as it's a uint16_t? */
-        uint16_t mixin = std::stoi(mixinString);
-
-        /* Force them to use a set mixin, if we detect dust later, then we
-           will allow them to use 0 mixin. */
-        uint16_t minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
-        uint16_t maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
-
-        if (mixin < minMixin)
-        {
-            std::cout << WarningMsg("Mixin count is too small! "
-                                    "Minimum allowed is " + 
-                                    std::to_string(minMixin) + ".")
-                                    << std::endl;
-
-            return false;
-        }
-        else if (mixin > maxMixin)
-        {
-            std::cout << WarningMsg("Mixin count is too large! "
-                                    "Maximum allowed is " +
-                                    std::to_string(maxMixin) + ".")
-                                    << std::endl;
-
-            return false;
-        }
-
-        return true;
-    }
-    catch (const std::invalid_argument &)
-    {
-        std::cout << WarningMsg("Failed to parse mixin! Ensure you entered "
-                                "the value correctly.") << std::endl;
-        return false;
-    }
 }
 
 bool parseAmount(std::string amountString)
