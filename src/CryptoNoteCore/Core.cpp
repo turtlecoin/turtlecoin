@@ -519,12 +519,12 @@ Difficulty Core::getDifficultyForNextBlock() const {
 
   uint8_t nextBlockMajorVersion = getBlockMajorVersionForHeight(topBlockIndex);
 
-  size_t blocksCount = std::min(static_cast<size_t>(topBlockIndex), currency.difficultyBlocksCountByBlockVersion(nextBlockMajorVersion));
+  size_t blocksCount = std::min(static_cast<size_t>(topBlockIndex), currency.difficultyBlocksCountByBlockVersion(nextBlockMajorVersion, topBlockIndex));
 
   auto timestamps = mainChain->getLastTimestamps(blocksCount);
   auto difficulties = mainChain->getLastCumulativeDifficulties(blocksCount);
 
-  return currency.nextDifficulty(nextBlockMajorVersion, topBlockIndex, timestamps, difficulties);
+  return currency.getNextDifficulty(nextBlockMajorVersion, topBlockIndex, timestamps, difficulties);
 }
 
 std::vector<Crypto::Hash> Core::findBlockchainSupplement(const std::vector<Crypto::Hash>& remoteBlockIds,
@@ -1147,6 +1147,36 @@ bool Core::getBlockTemplate(BlockTemplate& b, const AccountPublicAddress& adr, c
   b.previousBlockHash = getTopBlockHash();
   b.timestamp = time(nullptr);
 
+  uint64_t blockchain_timestamp_check_window;
+  
+
+  if (height < CryptoNote::parameters::LWMA_DIFFICULTY_BLOCK_INDEX)
+  {
+      blockchain_timestamp_check_window = CryptoNote::parameters::BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW;
+  }
+  /* Jagerman MTP Patch */
+  else
+  {
+      blockchain_timestamp_check_window = CryptoNote::parameters::BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V3;      
+  }
+
+  if (height >= blockchain_timestamp_check_window)
+  {
+      std::vector<uint64_t> timestamps;
+
+      for (size_t offset = height - blockchain_timestamp_check_window; offset < height; offset++)
+      {
+          timestamps.push_back(getBlockTimestampByIndex(offset));
+      }
+
+      uint64_t median_ts = Common::medianValue(timestamps);
+
+      if (b.timestamp < median_ts)
+      {
+          b.timestamp = median_ts;
+      }
+  }
+
   size_t medianSize = calculateCumulativeBlocksizeLimit(height) / 2;
 
   assert(!chainsStorage.empty());
@@ -1490,7 +1520,7 @@ std::error_code Core::validateBlock(const CachedBlock& cachedBlock, IBlockchainC
     }
   }
 
-  if (block.timestamp > getAdjustedTime() + currency.blockFutureTimeLimit()) {
+  if (block.timestamp > getAdjustedTime() + currency.blockFutureTimeLimit(previousBlockIndex+1)) {
     return error::BlockValidationError::TIMESTAMP_TOO_FAR_IN_FUTURE;
   }
 

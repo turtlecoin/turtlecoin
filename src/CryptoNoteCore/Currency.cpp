@@ -19,6 +19,7 @@
 #include <cctype>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/math/special_functions/round.hpp>
 #include "../Common/Base58.h"
 #include "../Common/int-util.h"
 #include "../Common/StringTools.h"
@@ -148,7 +149,12 @@ size_t Currency::difficultyCutByBlockVersion(uint8_t blockMajorVersion) const {
   }
 }
 
-size_t Currency::difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion) const {
+size_t Currency::difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion, uint32_t height) const {
+  if (height >= CryptoNote::parameters::LWMA_DIFFICULTY_BLOCK_INDEX)
+  {
+      return CryptoNote::parameters::DIFFICULTY_BLOCKS_COUNT_V3;
+  }
+
   return difficultyWindowByBlockVersion(blockMajorVersion) + difficultyLagByBlockVersion(blockMajorVersion);
 }
 
@@ -433,6 +439,73 @@ bool Currency::parseAmount(const std::string& str, uint64_t& amount) const {
   }
 
   return Common::fromString(strAmount, amount);
+}
+
+Difficulty Currency::getNextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulativeDifficulties) const
+{
+    if (blockIndex < CryptoNote::parameters::LWMA_DIFFICULTY_BLOCK_INDEX)
+    {
+        return nextDifficulty(version, blockIndex, timestamps, cumulativeDifficulties);
+    }
+    else
+    {
+        return nextDifficultyV3(timestamps, cumulativeDifficulties);
+    }
+}
+
+Difficulty Currency::nextDifficultyV3(std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulative_difficulties) const
+{
+    const int64_t T = CryptoNote::parameters::DIFFICULTY_TARGET;
+    size_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
+    int64_t FTL = CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3;
+
+    /* Return a difficulty of 1 for the first 3 blocks of a new chain */
+    if (timestamps.size() < 4)
+    {
+        return 1;
+    }
+    /* Use a smaller N if the start of the chain is less than N+1 */
+    else if (timestamps.size() < N+1)
+    {
+        N = timestamps.size() - 1;
+    }
+    else
+    {
+        timestamps.resize(N+1);
+        cumulative_difficulties.resize(N+1);
+    }
+
+    /* The divisor k normalizes the LWMA sum to a standard LWMA. */
+    const double k = N * (N + 1) / 2;
+
+    double LWMA = 0;
+    double sum_inverse_D = 0;
+    double harmonic_mean_D = 0;
+    double nextDifficulty = 0;
+    int64_t solveTime = 0;
+    uint64_t difficulty = 0;
+    uint64_t next_difficulty = 0;
+
+    for (size_t i = 1; i <= N; i++)
+    {
+        solveTime = static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]);
+        difficulty = cumulative_difficulties[i] - cumulative_difficulties[i - 1];
+        LWMA += (int64_t)(solveTime * i) / k;
+        sum_inverse_D += 1 / static_cast<double>(difficulty);
+    }
+
+    harmonic_mean_D = N / sum_inverse_D;
+
+    /* Limit LWMA same as Bitcoin's 1/4 in case something unforseen occurs. */
+    if (static_cast<int64_t>(boost::math::round(LWMA)) < T / 4)
+    {
+        LWMA = static_cast<double>(T / 4);
+    }
+
+    nextDifficulty = harmonic_mean_D * T / LWMA;
+
+    next_difficulty = static_cast<uint64_t>(nextDifficulty);
+    return next_difficulty;
 }
 
 Difficulty Currency::nextDifficulty(std::vector<uint64_t> timestamps,
