@@ -11,7 +11,7 @@ RUN tar xzf /tmp/s6-overlay-amd64.tar.gz -C /
 ADD https://github.com/just-containers/socklog-overlay/releases/download/v2.1.0-0/socklog-overlay-amd64.tar.gz /tmp/
 RUN tar xzf /tmp/socklog-overlay-amd64.tar.gz -C /
 
-ARG TURTLECOIN_VERSION=v0.6.0
+ARG TURTLECOIN_VERSION=v0.6.2
 ENV TURTLECOIN_VERSION=${TURTLECOIN_VERSION}
 
 # install build dependencies
