@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -28,40 +17,51 @@
 
 #include <Logging/LoggerRef.h>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-class RocksDBWrapper : public IDataBase {
-public:
-  RocksDBWrapper(Logging::ILogger& logger);
-  virtual ~RocksDBWrapper();
+    class RocksDBWrapper : public IDataBase
+    {
+    public:
+        RocksDBWrapper(Logging::ILogger &logger);
 
-  RocksDBWrapper(const RocksDBWrapper&) = delete;
-  RocksDBWrapper(RocksDBWrapper&&) = delete;
+        virtual ~RocksDBWrapper();
 
-  RocksDBWrapper& operator=(const RocksDBWrapper&) = delete;
-  RocksDBWrapper& operator=(RocksDBWrapper&&) = delete;
+        RocksDBWrapper(const RocksDBWrapper &) = delete;
 
-  void init(const DataBaseConfig& config);
-  void shutdown();
-  void destroy(const DataBaseConfig& config); //Be careful with this method!
+        RocksDBWrapper(RocksDBWrapper &&) = delete;
 
-  std::error_code write(IWriteBatch& batch) override;
-  std::error_code writeSync(IWriteBatch& batch) override;
-  std::error_code read(IReadBatch& batch) override;
+        RocksDBWrapper &operator=(const RocksDBWrapper &) = delete;
 
-private:
-  std::error_code write(IWriteBatch& batch, bool sync);
+        RocksDBWrapper &operator=(RocksDBWrapper &&) = delete;
 
-  rocksdb::Options getDBOptions(const DataBaseConfig& config);
-  std::string getDataDir(const DataBaseConfig& config);
+        void init(const DataBaseConfig &config);
 
-  enum State {
-    NOT_INITIALIZED,
-    INITIALIZED
-  };
+        void shutdown();
 
-  Logging::LoggerRef logger;
-  std::unique_ptr<rocksdb::DB> db;
-  std::atomic<State> state;
-};
+        void destroy(const DataBaseConfig &config); //Be careful with this method!
+
+        std::error_code write(IWriteBatch &batch) override;
+
+        std::error_code writeSync(IWriteBatch &batch) override;
+
+        std::error_code read(IReadBatch &batch) override;
+
+    private:
+        std::error_code write(IWriteBatch &batch, bool sync);
+
+        rocksdb::Options getDBOptions(const DataBaseConfig &config);
+
+        std::string getDataDir(const DataBaseConfig &config);
+
+        enum State
+        {
+            NOT_INITIALIZED,
+            INITIALIZED
+        };
+
+        Logging::LoggerRef logger;
+        std::unique_ptr<rocksdb::DB> db;
+        std::atomic<State> state;
+    };
 }

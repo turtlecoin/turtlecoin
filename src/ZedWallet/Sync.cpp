@@ -22,8 +22,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <Common/StringTools.h>
 
 #include <memory>
+
 #ifndef MSVC
+
 #include <fstream>
+
 #endif
 
 #include <ZedWallet/Tools.h>
@@ -144,12 +147,12 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
     std::cout << std::endl;
 }
 
-void listTransfers(bool incoming, bool outgoing, 
+void listTransfers(bool incoming, bool outgoing,
                    CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 {
     bool fetchTimestamp =
-         confirm("Display timestamps? (Takes lots longer to list transactions)",
-                 false);
+            confirm("Display timestamps? (Takes lots longer to list transactions)",
+                    false);
 
     size_t numTransactions = wallet.getTransactionCount();
     int64_t totalSpent = 0;
@@ -163,8 +166,7 @@ void listTransfers(bool incoming, bool outgoing,
         {
             printOutgoingTransfer(t, node, fetchTimestamp);
             totalSpent += -t.totalAmount;
-        }
-        else if (t.totalAmount > 0 && incoming)
+        } else if (t.totalAmount > 0 && incoming)
         {
             printIncomingTransfer(t, node, fetchTimestamp);
             totalReceived += t.totalAmount;
@@ -173,8 +175,8 @@ void listTransfers(bool incoming, bool outgoing,
 
     if (incoming)
     {
-        std::cout << SuccessMsg("Total received: " 
-                              + formatAmount(totalReceived))
+        std::cout << SuccessMsg("Total received: "
+                                + formatAmount(totalReceived))
                   << std::endl;
     }
 
@@ -212,7 +214,8 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
     {
         CryptoNote::WalletTransaction t = wallet.getTransaction(i);
         /* Ignore fusion transactions */
-        if (t.totalAmount != 0) {
+        if (t.totalAmount != 0)
+        {
             std::string blockTime = getBlockTimestamp(getBlock(t.blockHeight, node));
             myfile << blockTime << "," << t.blockHeight << ","
                    << Common::podToHex(t.hash) << ",";
@@ -226,8 +229,7 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
                 boost::replace_all(splitAmtTRTL, " ", ",");
                 myfile << "-" << splitAmtTRTL << ",OUT\n";
                 ++progress;
-            }
-            else
+            } else
             {
                 std::string splitAmtTRTL = formatAmount(t.totalAmount);
                 boost::replace_all(splitAmtTRTL, ",", "");
@@ -250,11 +252,11 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> &walletInfo)
 
     if (newTransactionCount != walletInfo->knownTransactionCount)
     {
-        for (size_t i = walletInfo->knownTransactionCount; 
-                    i < newTransactionCount; i++)
+        for (size_t i = walletInfo->knownTransactionCount;
+             i < newTransactionCount; i++)
         {
-            CryptoNote::WalletTransaction t 
-                = walletInfo->wallet.getTransaction(i);
+            CryptoNote::WalletTransaction t
+                    = walletInfo->wallet.getTransaction(i);
 
             /* Don't print outgoing or fusion transfers */
             if (t.totalAmount > 0)
@@ -267,7 +269,7 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> &walletInfo)
                           << SuccessMsg("Hash: " + Common::podToHex(t.hash))
                           << std::endl
                           << SuccessMsg("Amount: "
-                                      + formatAmount(t.totalAmount))
+                                        + formatAmount(t.totalAmount))
                           << std::endl
                           << getPrompt(walletInfo)
                           << std::flush;
@@ -318,8 +320,7 @@ void syncWallet(CryptoNote::INode &node,
                   << "that belong to you." << std::endl
                   << "Please wait, this will take some time."
                   << std::endl << std::endl;
-    }
-    else
+    } else
     {
         std::cout << "Scanning through the blockchain to find any new "
                   << "transactions you received"
@@ -362,12 +363,11 @@ void syncWallet(CryptoNote::INode &node,
             if (stuckCounter > 20)
             {
                 std::string warning =
-                    "Syncing may be stuck. Try restarting Turtlecoind.\n"
-                    "If this persists, visit "
-                    "https://turtlecoin.lol/#contact for support.";
+                        "Syncing may be stuck. Try restarting Turtlecoind.\n"
+                        "If this persists, visit "
+                        "https://turtlecoin.lol/#contact for support.";
                 std::cout << WarningMsg(warning) << std::endl;
-            }
-            else if (stuckCounter > 19)
+            } else if (stuckCounter > 19)
             {
                 /*
                    Calling save has the side-effect of starting
@@ -379,21 +379,20 @@ void syncWallet(CryptoNote::INode &node,
                 walletInfo->wallet.save();
                 waitSeconds = 5;
             }
-        }
-        else
+        } else
         {
             stuckCounter = 0;
             walletHeight = tmpWalletHeight;
 
             size_t tmpTransactionCount = walletInfo
-                                       ->wallet.getTransactionCount();
+                    ->wallet.getTransactionCount();
 
             if (tmpTransactionCount != transactionCount)
             {
                 for (size_t i = transactionCount; i < tmpTransactionCount; i++)
                 {
                     CryptoNote::WalletTransaction t
-                        = walletInfo->wallet.getTransaction(i);
+                            = walletInfo->wallet.getTransaction(i);
 
                     /* Don't print out fusion transactions */
                     if (t.totalAmount != 0)
@@ -405,8 +404,7 @@ void syncWallet(CryptoNote::INode &node,
                         if (t.totalAmount < 0)
                         {
                             printOutgoingTransfer(t, node, false);
-                        }
-                        else
+                        } else
                         {
                             printIncomingTransfer(t, node, false);
                         }
@@ -441,7 +439,7 @@ std::string getPrompt(std::shared_ptr<WalletInfo> &walletInfo)
     std::string walletName = walletInfo->walletFileName;
 
     /* Filename ends in .wallet, remove extension */
-    if (std::equal(extension.rbegin(), extension.rend(), 
+    if (std::equal(extension.rbegin(), extension.rend(),
                    walletInfo->walletFileName.rbegin()))
     {
         size_t extPos = walletInfo->walletFileName.find_last_of('.');

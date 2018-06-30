@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "Chaingen001.h"
 
@@ -25,7 +14,7 @@ using namespace CryptoNote;
 
 one_block::one_block()
 {
-  REGISTER_CALLBACK("verify_1", one_block::verify_1);
+    REGISTER_CALLBACK("verify_1", one_block::verify_1);
 }
 
 bool one_block::generate(std::vector<test_event_entry> &events)
@@ -39,7 +28,7 @@ bool one_block::generate(std::vector<test_event_entry> &events)
     return true;
 }
 
-bool one_block::verify_1(CryptoNote::Core& c, size_t ev_index, const std::vector<test_event_entry> &events)
+bool one_block::verify_1(CryptoNote::Core &c, size_t ev_index, const std::vector<test_event_entry> &events)
 {
     DEFINE_TESTS_ERROR_CONTEXT("one_block::verify_1");
 
@@ -55,8 +44,9 @@ bool one_block::verify_1(CryptoNote::Core& c, size_t ev_index, const std::vector
     std::vector<BlockTemplate> blocks;
     auto rawBlocks = c.getBlocks(0, 10000);
     blocks.resize(rawBlocks.size());
-    for (size_t i = 0; i < rawBlocks.size(); ++i) {
-      CHECK_TEST_CONDITION(fromBinaryArray(blocks[i], rawBlocks[i].block));
+    for (size_t i = 0; i < rawBlocks.size(); ++i)
+    {
+        CHECK_TEST_CONDITION(fromBinaryArray(blocks[i], rawBlocks[i].block));
     }
 
     CHECK_TEST_CONDITION(blocks.size() == 1);
@@ -73,8 +63,8 @@ bool one_block::verify_1(CryptoNote::Core& c, size_t ev_index, const std::vector
 
 gen_simple_chain_001::gen_simple_chain_001()
 {
-  REGISTER_CALLBACK("verify_callback_1", gen_simple_chain_001::verify_callback_1);
-  REGISTER_CALLBACK("verify_callback_2", gen_simple_chain_001::verify_callback_2);
+    REGISTER_CALLBACK("verify_callback_1", gen_simple_chain_001::verify_callback_1);
+    REGISTER_CALLBACK("verify_callback_2", gen_simple_chain_001::verify_callback_2);
 }
 
 bool gen_simple_chain_001::generate(std::vector<test_event_entry> &events)
@@ -126,12 +116,14 @@ bool gen_simple_chain_001::generate(std::vector<test_event_entry> &events)
     return true;
 }
 
-bool gen_simple_chain_001::verify_callback_1(CryptoNote::Core& c, size_t ev_index, const std::vector<test_event_entry> &events)
+bool gen_simple_chain_001::verify_callback_1(CryptoNote::Core &c, size_t ev_index,
+                                             const std::vector<test_event_entry> &events)
 {
-  return true;
+    return true;
 }
 
-bool gen_simple_chain_001::verify_callback_2(CryptoNote::Core& c, size_t ev_index, const std::vector<test_event_entry> &events)
+bool gen_simple_chain_001::verify_callback_2(CryptoNote::Core &c, size_t ev_index,
+                                             const std::vector<test_event_entry> &events)
 {
-  return true;
+    return true;
 }

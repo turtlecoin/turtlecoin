@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -28,49 +17,61 @@
 #include "MinerEvent.h"
 #include "MiningConfig.h"
 
-namespace System {
-class Dispatcher;
+namespace System
+{
+    class Dispatcher;
 }
 
-namespace Miner {
+namespace Miner
+{
 
-class MinerManager {
-public:
-  MinerManager(System::Dispatcher& dispatcher, const CryptoNote::MiningConfig& config, Logging::ILogger& logger);
-  ~MinerManager();
+    class MinerManager
+    {
+    public:
+        MinerManager(System::Dispatcher &dispatcher, const CryptoNote::MiningConfig &config, Logging::ILogger &logger);
 
-  void start();
+        ~MinerManager();
 
-private:
-  System::Dispatcher& m_dispatcher;
-  Logging::LoggerRef m_logger;
-  System::ContextGroup m_contextGroup;
-  CryptoNote::MiningConfig m_config;
-  CryptoNote::Miner m_miner;
-  BlockchainMonitor m_blockchainMonitor;
+        void start();
 
-  System::Event m_eventOccurred;
-  System::Event m_httpEvent;
-  std::queue<MinerEvent> m_events;
+    private:
+        System::Dispatcher &m_dispatcher;
+        Logging::LoggerRef m_logger;
+        System::ContextGroup m_contextGroup;
+        CryptoNote::MiningConfig m_config;
+        CryptoNote::Miner m_miner;
+        BlockchainMonitor m_blockchainMonitor;
 
-  CryptoNote::BlockTemplate m_minedBlock;
+        System::Event m_eventOccurred;
+        System::Event m_httpEvent;
+        std::queue<MinerEvent> m_events;
 
-  uint64_t m_lastBlockTimestamp;
+        CryptoNote::BlockTemplate m_minedBlock;
 
-  void eventLoop();
-  MinerEvent waitEvent();
-  void pushEvent(MinerEvent&& event);
+        uint64_t m_lastBlockTimestamp;
 
-  void startMining(const CryptoNote::BlockMiningParameters& params);
-  void stopMining();
+        void eventLoop();
 
-  void startBlockchainMonitoring();
-  void stopBlockchainMonitoring();
+        MinerEvent waitEvent();
 
-  bool submitBlock(const CryptoNote::BlockTemplate& minedBlock, const std::string& daemonHost, uint16_t daemonPort);
-  CryptoNote::BlockMiningParameters requestMiningParameters(System::Dispatcher& dispatcher, const std::string& daemonHost, uint16_t daemonPort, const std::string& miningAddress);
+        void pushEvent(MinerEvent &&event);
 
-  void adjustBlockTemplate(CryptoNote::BlockTemplate& blockTemplate) const;
-};
+        void startMining(const CryptoNote::BlockMiningParameters &params);
+
+        void stopMining();
+
+        void startBlockchainMonitoring();
+
+        void stopBlockchainMonitoring();
+
+        bool
+        submitBlock(const CryptoNote::BlockTemplate &minedBlock, const std::string &daemonHost, uint16_t daemonPort);
+
+        CryptoNote::BlockMiningParameters
+        requestMiningParameters(System::Dispatcher &dispatcher, const std::string &daemonHost, uint16_t daemonPort,
+                                const std::string &miningAddress);
+
+        void adjustBlockTemplate(CryptoNote::BlockTemplate &blockTemplate) const;
+    };
 
 } //namespace Miner

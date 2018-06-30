@@ -63,7 +63,7 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
     {
         std::string mnemonicSeed;
 
-        crypto::ElectrumWords::bytes_to_words(privateSpendKey, 
+        crypto::ElectrumWords::bytes_to_words(privateSpendKey,
                                               mnemonicSeed,
                                               "English");
 
@@ -98,14 +98,13 @@ void help(bool viewWallet)
               << "Show daemon status" << std::endl
               << SuccessMsg("incoming_transfers", 25)
               << "Show incoming transfers" << std::endl;
-                  
+
     if (viewWallet)
     {
         std::cout << InformationMsg("Please note you are using a view only "
                                     "wallet, and so cannot transfer TRTL.")
                   << std::endl;
-    }
-    else
+    } else
     {
         std::cout << SuccessMsg("outgoing_transfers", 25)
                   << "Show outgoing transfers" << std::endl
@@ -146,7 +145,7 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
 
     if (viewWallet)
     {
-        std::cout << std::endl 
+        std::cout << std::endl
                   << InformationMsg("Please note that view only wallets "
                                     "can only track incoming transactions, "
                                     "and so your wallet balance may appear "
@@ -161,8 +160,8 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
                   << std::endl << "Your balance may be incorrect until you "
                   << "are fully synced!" << std::endl;
     }
-    /* Small buffer because wallet height doesn't update instantly like node
-       height does */
+        /* Small buffer because wallet height doesn't update instantly like node
+           height does */
     else if (walletHeight + 1000 < remoteHeight)
     {
         std::cout << std::endl
@@ -190,8 +189,7 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     if (walletHeight + 1000 > remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(walletHeight));
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(std::to_string(walletHeight));
     }
@@ -201,8 +199,7 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(localHeight));
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(std::to_string(localHeight));
     }
@@ -215,8 +212,7 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
         std::cout << WarningMsg("Uh oh, it looks like you don't have "
                                 "TurtleCoind open!")
                   << std::endl;
-    }
-    else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
+    } else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
     {
         std::cout << InformationMsg("You are synced with the network, but the "
                                     "blockchain is still being scanned for "
@@ -224,12 +220,10 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
                   << std::endl
                   << "Balances might be incorrect whilst this is ongoing."
                   << std::endl;
-    }
-    else if (localHeight == remoteHeight)
+    } else if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg("Yay! You are synced!") << std::endl;
-    }
-    else
+    } else
     {
         std::cout << WarningMsg("Be patient, you are still syncing with the "
                                 "network!") << std::endl;

@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -25,104 +14,104 @@
 class performance_timer
 {
 public:
-  typedef boost::chrono::high_resolution_clock clock;
+    typedef boost::chrono::high_resolution_clock clock;
 
-  performance_timer()
-  {
-    m_base = clock::now();
-  }
+    performance_timer()
+    {
+        m_base = clock::now();
+    }
 
-  void start()
-  {
-    m_start = clock::now();
-  }
+    void start()
+    {
+        m_start = clock::now();
+    }
 
-  int elapsed_ms()
-  {
-    clock::duration elapsed = clock::now() - m_start;
-    return static_cast<int>(boost::chrono::duration_cast<boost::chrono::milliseconds>(elapsed).count());
-  }
+    int elapsed_ms()
+    {
+        clock::duration elapsed = clock::now() - m_start;
+        return static_cast<int>(boost::chrono::duration_cast<boost::chrono::milliseconds>(elapsed).count());
+    }
 
 private:
-  clock::time_point m_base;
-  clock::time_point m_start;
+    clock::time_point m_base;
+    clock::time_point m_start;
 };
 
 
-template <typename T>
+template<typename T>
 class test_runner
 {
 public:
-  test_runner()
-    : m_elapsed(0)
-  {
-  }
-
-  bool run()
-  {
-    T test;
-    if (!test.init())
-      return false;
-
-    performance_timer timer;
-    timer.start();
-    warm_up();
-    std::cout << "Warm up: " << timer.elapsed_ms() << " ms" << std::endl;
-
-    timer.start();
-    for (size_t i = 0; i < T::loop_count; ++i)
+    test_runner()
+            : m_elapsed(0)
     {
-      if (!test.test())
-        return false;
     }
-    m_elapsed = timer.elapsed_ms();
 
-    return true;
-  }
+    bool run()
+    {
+        T test;
+        if (!test.init())
+            return false;
 
-  int elapsed_time() const { return m_elapsed; }
+        performance_timer timer;
+        timer.start();
+        warm_up();
+        std::cout << "Warm up: " << timer.elapsed_ms() << " ms" << std::endl;
 
-  int time_per_call() const
-  {
-    static_assert(0 < T::loop_count, "T::loop_count must be greater than 0");
-    return m_elapsed / T::loop_count;
-  }
+        timer.start();
+        for (size_t i = 0; i < T::loop_count; ++i)
+        {
+            if (!test.test())
+                return false;
+        }
+        m_elapsed = timer.elapsed_ms();
+
+        return true;
+    }
+
+    int elapsed_time() const
+    { return m_elapsed; }
+
+    int time_per_call() const
+    {
+        static_assert(0 < T::loop_count, "T::loop_count must be greater than 0");
+        return m_elapsed / T::loop_count;
+    }
 
 private:
-  /**
-   * Warm up processor core, enabling turbo boost, etc.
-   */
-  uint64_t warm_up()
-  {
-    const size_t warm_up_rounds = 1000 * 1000 * 1000;
-    m_warm_up = 0;
-    for (size_t i = 0; i < warm_up_rounds; ++i)
+    /**
+     * Warm up processor core, enabling turbo boost, etc.
+     */
+    uint64_t warm_up()
     {
-      ++m_warm_up;
+        const size_t warm_up_rounds = 1000 * 1000 * 1000;
+        m_warm_up = 0;
+        for (size_t i = 0; i < warm_up_rounds; ++i)
+        {
+            ++m_warm_up;
+        }
+        return m_warm_up;
     }
-    return m_warm_up;
-  }
 
 private:
-  volatile uint64_t m_warm_up;  ///<! This field is intended for preclude compiler optimizations
-  int m_elapsed;
+    volatile uint64_t m_warm_up;  ///<! This field is intended for preclude compiler optimizations
+    int m_elapsed;
 };
 
-template <typename T>
-void run_test(const char* test_name)
+template<typename T>
+void run_test(const char *test_name)
 {
-  test_runner<T> runner;
-  if (runner.run())
-  {
-    std::cout << test_name << " - OK:\n";
-    std::cout << "  loop count:    " << T::loop_count << '\n';
-    std::cout << "  elapsed:       " << runner.elapsed_time() << " ms\n";
-    std::cout << "  time per call: " << runner.time_per_call() << " ms/call\n" << std::endl;
-  }
-  else
-  {
-    std::cout << test_name << " - FAILED" << std::endl;
-  }
+    test_runner<T> runner;
+    if (runner.run())
+    {
+        std::cout << test_name << " - OK:\n";
+        std::cout << "  loop count:    " << T::loop_count << '\n';
+        std::cout << "  elapsed:       " << runner.elapsed_time() << " ms\n";
+        std::cout << "  time per call: " << runner.time_per_call() << " ms/call\n" << std::endl;
+    } else
+    {
+        std::cout << test_name << " - FAILED" << std::endl;
+    }
 }
 
 #define QUOTEME(x) #x

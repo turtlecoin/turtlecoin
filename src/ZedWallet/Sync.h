@@ -22,7 +22,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 #include <Wallet/WalletGreen.h>
 
-void listTransfers(bool incoming, bool outgoing, 
+void listTransfers(bool incoming, bool outgoing,
                    CryptoNote::WalletGreen &wallet, CryptoNote::INode &node);
 
 void printOutgoingTransfer(CryptoNote::WalletTransaction t,

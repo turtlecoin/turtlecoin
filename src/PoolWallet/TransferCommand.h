@@ -10,44 +10,49 @@ using namespace Logging;
 
 namespace CryptoNote
 {
-  class TransferCommand
-  {
+    class TransferCommand
+    {
     public:
-      const CryptoNote::Currency& m_currency;
-      size_t fake_outs_count;
-      std::vector<CryptoNote::WalletLegacyTransfer> dsts;
-      std::vector<uint8_t> extra;
-      uint64_t fee;
+        const CryptoNote::Currency &m_currency;
+        size_t fake_outs_count;
+        std::vector<CryptoNote::WalletLegacyTransfer> dsts;
+        std::vector<uint8_t> extra;
+        uint64_t fee;
 
-      TransferCommand(const CryptoNote::Currency& currency);
-      
-      bool parseArguments(LoggerRef& logger, const std::vector<std::string> &args);
-  };
+        TransferCommand(const CryptoNote::Currency &currency);
 
-  template <typename IterT, typename ValueT = typename IterT::value_type>
-  class ArgumentReader {
-  public:
+        bool parseArguments(LoggerRef &logger, const std::vector<std::string> &args);
+    };
 
-    ArgumentReader(IterT begin, IterT end) :
-      m_begin(begin), m_end(end), m_cur(begin) {
-    }
+    template<typename IterT, typename ValueT = typename IterT::value_type>
+    class ArgumentReader
+    {
+    public:
 
-    bool eof() const {
-      return m_cur == m_end;
-    }
+        ArgumentReader(IterT begin, IterT end) :
+                m_begin(begin), m_end(end), m_cur(begin)
+        {
+        }
 
-    ValueT next() {
-      if (eof()) {
-        throw std::runtime_error("unexpected end of arguments");
-      }
+        bool eof() const
+        {
+            return m_cur == m_end;
+        }
 
-      return *m_cur++;
-    }
+        ValueT next()
+        {
+            if (eof())
+            {
+                throw std::runtime_error("unexpected end of arguments");
+            }
 
-  private:
+            return *m_cur++;
+        }
 
-    IterT m_cur;
-    IterT m_begin;
-    IterT m_end;
-  };
+    private:
+
+        IterT m_cur;
+        IterT m_begin;
+        IterT m_end;
+    };
 }

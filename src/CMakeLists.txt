@@ -27,13 +27,13 @@ file(GLOB_RECURSE PaymentGateService PaymentGateService/*)
 file(GLOB_RECURSE PoolWallet PoolWallet/*)
 file(GLOB_RECURSE ZedWallet ZedWallet/*)
 
-if(MSVC)
-file(GLOB_RECURSE System System/* Platform/Windows/System/*)
-elseif(APPLE)
-file(GLOB_RECURSE System System/* Platform/OSX/System/* Platform/Posix/System/*)
-else()
-file(GLOB_RECURSE System System/* Platform/Linux/System/* Platform/Posix/System/*)
-endif()
+if (MSVC)
+    file(GLOB_RECURSE System System/* Platform/Windows/System/*)
+elseif (APPLE)
+    file(GLOB_RECURSE System System/* Platform/OSX/System/* Platform/Posix/System/*)
+else ()
+    file(GLOB_RECURSE System System/* Platform/Linux/System/* Platform/Posix/System/*)
+endif ()
 
 # This appears to be an IDE thing, to group files together.
 # https://cmake.org/cmake/help/v3.0/command/source_group.html
@@ -58,23 +58,23 @@ add_library(Wallet ${Wallet} ${WalletLegacy})
 add_library(PaymentGate ${PaymentGate})
 add_library(JsonRpcServer ${JsonRpcServer})
 
-if(MSVC)
-  set(DAEMON_SOURCES_OS
-    BinaryInfo/daemon.rc
-  )
-  set(SIMPLE_WALLET_SOURCES_OS
-    BinaryInfo/zedwallet.rc
-  )
-  set(POOLWALLET_SOURCES_OS
-    BinaryInfo/poolwallet.rc
-  )
-  set(MINER_SOURCES_OS
-    BinaryInfo/miner.rc
-  )
-  set(PG_SOURCES_OS
-    BinaryInfo/walletd.rc
-  )
-endif()
+if (MSVC)
+    set(DAEMON_SOURCES_OS
+            BinaryInfo/daemon.rc
+            )
+    set(SIMPLE_WALLET_SOURCES_OS
+            BinaryInfo/zedwallet.rc
+            )
+    set(POOLWALLET_SOURCES_OS
+            BinaryInfo/poolwallet.rc
+            )
+    set(MINER_SOURCES_OS
+            BinaryInfo/miner.rc
+            )
+    set(PG_SOURCES_OS
+            BinaryInfo/walletd.rc
+            )
+endif ()
 
 add_executable(Daemon ${Daemon} ${DAEMON_SOURCES_OS})
 add_executable(ZedWallet ${ZedWallet} ${SIMPLE_WALLET_SOURCES_OS})
@@ -82,10 +82,10 @@ add_executable(PaymentGateService ${PaymentGateService} ${PG_SOURCES_OS})
 add_executable(PoolWallet ${PoolWallet} ${POOLWALLET_SOURCES_OS})
 add_executable(Miner ${Miner} ${MINER_SOURCES_OS})
 
-if(MSVC)
-  target_link_libraries(System ws2_32)
-  target_link_libraries(Daemon Rpcrt4)
-  target_link_libraries(PaymentGateService Rpcrt4)
+if (MSVC)
+    target_link_libraries(System ws2_32)
+    target_link_libraries(Daemon Rpcrt4)
+    target_link_libraries(PaymentGateService Rpcrt4)
 endif ()
 
 # Add the dependencies we need
@@ -93,18 +93,18 @@ target_link_libraries(CryptoNoteCore Common Logging Crypto P2P Rpc Http Serializ
 target_link_libraries(CryptoNoteCore Common Crypto Logging Serialization)
 target_link_libraries(P2P CryptoNoteCore Logging ${Boost_LIBRARIES} upnpc-static)
 target_link_libraries(Rpc CryptoNoteCore Logging P2P)
-if(MSVC)
-	target_link_libraries(Daemon P2P Rpc Serialization System Http Logging CryptoNoteCore Crypto Common rocksdb ${Boost_LIBRARIES} )
-else()
-	target_link_libraries(Daemon P2P Rpc Serialization System Http Logging CryptoNoteCore Crypto Common rocksdblib ${Boost_LIBRARIES} )
-endif()
+if (MSVC)
+    target_link_libraries(Daemon P2P Rpc Serialization System Http Logging CryptoNoteCore Crypto Common rocksdb ${Boost_LIBRARIES})
+else ()
+    target_link_libraries(Daemon P2P Rpc Serialization System Http Logging CryptoNoteCore Crypto Common rocksdblib ${Boost_LIBRARIES})
+endif ()
 target_link_libraries(ZedWallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${Boost_LIBRARIES})
 target_link_libraries(PaymentGate Mnemonics)
-if(MSVC)
-	target_link_libraries(PaymentGateService PaymentGate JsonRpcServer Wallet NodeRpcProxy Transfers CryptoNoteCore Crypto Rpc Http System Logging Common InProcessNode rocksdb ${Boost_LIBRARIES})
-else()
-	target_link_libraries(PaymentGateService PaymentGate JsonRpcServer Wallet NodeRpcProxy Transfers CryptoNoteCore Crypto Rpc Http System Logging Common InProcessNode rocksdblib ${Boost_LIBRARIES})
-endif()
+if (MSVC)
+    target_link_libraries(PaymentGateService PaymentGate JsonRpcServer Wallet NodeRpcProxy Transfers CryptoNoteCore Crypto Rpc Http System Logging Common InProcessNode rocksdb ${Boost_LIBRARIES})
+else ()
+    target_link_libraries(PaymentGateService PaymentGate JsonRpcServer Wallet NodeRpcProxy Transfers CryptoNoteCore Crypto Rpc Http System Logging Common InProcessNode rocksdblib ${Boost_LIBRARIES})
+endif ()
 target_link_libraries(PoolWallet Wallet NodeRpcProxy Transfers Rpc P2P upnpc-static Http Serialization CryptoNoteCore System Logging Common Crypto ${Boost_LIBRARIES})
 target_link_libraries(Miner CryptoNoteCore Rpc Serialization System Http Logging Common Crypto ${Boost_LIBRARIES})
 
