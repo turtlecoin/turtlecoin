@@ -50,7 +50,7 @@ RUN apt-get update && \
     sed -i -e 's/"145.239.88.119:11999", \/\/cision/"10.0.76.11:11897",/g' src/CryptoNoteConfig.h && \
     sed -i -e 's/"142.44.242.106:11897", \/\/tom/"10.0.76.12:11897",/g' src/CryptoNoteConfig.h && \
     sed -i -e 's/"165.227.252.132:11897" \/\/iburnmycd/"10.0.76.13:11897",/g' src/CryptoNoteConfig.h && \
-    sed -i -e 's/TurtleCoin/TortleCoin/' src/CryptoNoteConfig.h && \
+    sed -i -e 's/TurtleCoin/TurtleCoin/' src/CryptoNoteConfig.h && \
     sed -i -e 's/0xcf, 0x52, 0x57/0x52, 0xcf, 0x57/' src/P2p/P2pNetworks.h && \
     mkdir build && \
     cd build && \
