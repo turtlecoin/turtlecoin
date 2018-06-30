@@ -82,7 +82,7 @@ std::string formatDollars(uint64_t amount)
        workaround */
     class comma_numpunct : public std::numpunct<char>
     {
-      protected:
+    protected:
         virtual char do_thousands_sep() const
         {
             return ',';
@@ -139,7 +139,7 @@ bool confirm(std::string msg, bool defaultReturn)
 
         char c = std::tolower(answer[0]);
 
-        switch(std::tolower(answer[0]))
+        switch (std::tolower(answer[0]))
         {
             /* Lets people spam enter / choose default value */
             case '\0':

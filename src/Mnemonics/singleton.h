@@ -38,25 +38,31 @@
  */
 namespace Language
 {
-  /*!
-   * \class Singleton
-   * 
-   * \brief Single helper class.
-   * 
-   * Do Language::Singleton<YourClass>::instance() to create a singleton instance
-   * of `YourClass`.
-   */
-  template <class T>
-  class Singleton
-  {
-    Singleton() {}
-    Singleton(Singleton &s) {}
-    Singleton& operator=(const Singleton&) {}
-  public:
-    static T* instance()
+    /*!
+     * \class Singleton
+     *
+     * \brief Single helper class.
+     *
+     * Do Language::Singleton<YourClass>::instance() to create a singleton instance
+     * of `YourClass`.
+     */
+    template<class T>
+    class Singleton
     {
-      static T* obj = new T;
-      return obj;
-    }
-  };
+        Singleton()
+        {}
+
+        Singleton(Singleton &s)
+        {}
+
+        Singleton &operator=(const Singleton &)
+        {}
+
+    public:
+        static T *instance()
+        {
+            static T *obj = new T;
+            return obj;
+        }
+    };
 }

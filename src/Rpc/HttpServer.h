@@ -1,21 +1,10 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
-#pragma once 
+#pragma once
 
 #include <unordered_set>
 
@@ -30,32 +19,36 @@
 
 #include <Logging/LoggerRef.h>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-class HttpServer {
+    class HttpServer
+    {
 
-public:
+    public:
 
-  HttpServer(System::Dispatcher& dispatcher, Logging::ILogger& log);
+        HttpServer(System::Dispatcher &dispatcher, Logging::ILogger &log);
 
-  void start(const std::string& address, uint16_t port);
-  void stop();
+        void start(const std::string &address, uint16_t port);
 
-  virtual void processRequest(const HttpRequest& request, HttpResponse& response) = 0;
+        void stop();
 
-protected:
+        virtual void processRequest(const HttpRequest &request, HttpResponse &response) = 0;
 
-  System::Dispatcher& m_dispatcher;
+    protected:
 
-private:
+        System::Dispatcher &m_dispatcher;
 
-  void acceptLoop();
-  void connectionHandler(System::TcpConnection&& conn);
+    private:
 
-  System::ContextGroup workingContextGroup;
-  Logging::LoggerRef logger;
-  System::TcpListener m_listener;
-  std::unordered_set<System::TcpConnection*> m_connections;
-};
+        void acceptLoop();
+
+        void connectionHandler(System::TcpConnection &&conn);
+
+        System::ContextGroup workingContextGroup;
+        Logging::LoggerRef logger;
+        System::TcpListener m_listener;
+        std::unordered_set<System::TcpConnection *> m_connections;
+    };
 
 }

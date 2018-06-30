@@ -20,7 +20,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <ZedWallet/ColouredMsg.h>
 #include <ZedWallet/Types.h>
 
-enum Action {Open, Generate, Import, SeedImport, ViewWallet};
+enum Action
+{
+    Open, Generate, Import, SeedImport, ViewWallet
+};
 
 Action getAction(Config &config);
 

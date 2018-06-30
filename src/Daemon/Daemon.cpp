@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include <fstream>
 
@@ -53,7 +42,9 @@
 #include <crtdbg.h>
 #include <io.h>
 #else
+
 #include <unistd.h>
+
 #endif
 
 using Common::JsonValue;
@@ -64,360 +55,414 @@ namespace po = boost::program_options;
 
 namespace
 {
-  const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", "Specify configuration file", std::string(CryptoNote::CRYPTONOTE_NAME) + ".conf"};
-  const command_line::arg_descriptor<bool>        arg_os_version  = {"os-version", ""};
-  const command_line::arg_descriptor<std::string> arg_log_file    = {"log-file", "", ""};
-  const command_line::arg_descriptor<int>         arg_log_level   = {"log-level", "", 2}; // info level
-  const command_line::arg_descriptor<bool>        arg_console     = {"no-console", "Disable daemon console commands"};
-  const command_line::arg_descriptor<bool>        arg_print_genesis_tx = { "print-genesis-tx", "Prints genesis' block tx hex to insert it to config and exits" };
-  const command_line::arg_descriptor<std::vector<std::string>> arg_genesis_block_reward_address = { "genesis-block-reward-address", "" };
-  const command_line::arg_descriptor<bool> arg_blockexplorer_on = {"enable_blockexplorer", "Enable blockchain explorer RPC", false};
-  const command_line::arg_descriptor<std::vector<std::string>>        arg_enable_cors = { "enable-cors", "Adds header 'Access-Control-Allow-Origin' to the daemon's RPC responses. Uses the value as domain. Use * for all" };
-  const command_line::arg_descriptor<bool>        arg_testnet_on  = {"testnet", "Used to deploy test nets. Checkpoints and hardcoded seeds are ignored, "
-    "network id is changed. Use it with --data-dir flag. The wallet must be launched with --testnet flag.", false};
-  const command_line::arg_descriptor<std::string> arg_load_checkpoints   = {"load-checkpoints", "<default|filename> Use builtin default checkpoints or checkpoint csv file for faster initial blockchain sync", ""};
+    const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", "Specify configuration file",
+                                                                       std::string(CryptoNote::CRYPTONOTE_NAME) +
+                                                                       ".conf"};
+    const command_line::arg_descriptor<bool> arg_os_version = {"os-version", ""};
+    const command_line::arg_descriptor<std::string> arg_log_file = {"log-file", "", ""};
+    const command_line::arg_descriptor<int> arg_log_level = {"log-level", "", 2}; // info level
+    const command_line::arg_descriptor<bool> arg_console = {"no-console", "Disable daemon console commands"};
+    const command_line::arg_descriptor<bool> arg_print_genesis_tx = {"print-genesis-tx",
+                                                                     "Prints genesis' block tx hex to insert it to config and exits"};
+    const command_line::arg_descriptor<std::vector<std::string>> arg_genesis_block_reward_address = {
+            "genesis-block-reward-address", ""};
+    const command_line::arg_descriptor<bool> arg_blockexplorer_on = {"enable_blockexplorer",
+                                                                     "Enable blockchain explorer RPC", false};
+    const command_line::arg_descriptor<std::vector<std::string>> arg_enable_cors = {"enable-cors",
+                                                                                    "Adds header 'Access-Control-Allow-Origin' to the daemon's RPC responses. Uses the value as domain. Use * for all"};
+    const command_line::arg_descriptor<bool> arg_testnet_on = {"testnet",
+                                                               "Used to deploy test nets. Checkpoints and hardcoded seeds are ignored, "
+                                                               "network id is changed. Use it with --data-dir flag. The wallet must be launched with --testnet flag.",
+                                                               false};
+    const command_line::arg_descriptor<std::string> arg_load_checkpoints = {"load-checkpoints",
+                                                                            "<default|filename> Use builtin default checkpoints or checkpoint csv file for faster initial blockchain sync",
+                                                                            ""};
 }
 
-bool command_line_preprocessor(const boost::program_options::variables_map& vm, LoggerRef& logger);
-void print_genesis_tx_hex(const po::variables_map& vm, LoggerManager& logManager) {
-  std::vector<CryptoNote::AccountPublicAddress> targets;
-  auto genesis_block_reward_addresses = command_line::get_arg(vm, arg_genesis_block_reward_address);
-  CryptoNote::CurrencyBuilder currencyBuilder(logManager);
-bool blockexplorer_mode = command_line::get_arg(vm, arg_blockexplorer_on);
-currencyBuilder.isBlockexplorer(blockexplorer_mode);
-  CryptoNote::Currency currency = currencyBuilder.currency();
-  for (const auto& address_string : genesis_block_reward_addresses) {
-     CryptoNote::AccountPublicAddress address;
-    if (!currency.parseAccountAddressString(address_string, address)) {
-      std::cout << "Failed to parse address: " << address_string << std::endl;
-      return;
+bool command_line_preprocessor(const boost::program_options::variables_map &vm, LoggerRef &logger);
+
+void print_genesis_tx_hex(const po::variables_map &vm, LoggerManager &logManager)
+{
+    std::vector<CryptoNote::AccountPublicAddress> targets;
+    auto genesis_block_reward_addresses = command_line::get_arg(vm, arg_genesis_block_reward_address);
+    CryptoNote::CurrencyBuilder currencyBuilder(logManager);
+    bool blockexplorer_mode = command_line::get_arg(vm, arg_blockexplorer_on);
+    currencyBuilder.isBlockexplorer(blockexplorer_mode);
+    CryptoNote::Currency currency = currencyBuilder.currency();
+    for (const auto &address_string : genesis_block_reward_addresses)
+    {
+        CryptoNote::AccountPublicAddress address;
+        if (!currency.parseAccountAddressString(address_string, address))
+        {
+            std::cout << "Failed to parse address: " << address_string << std::endl;
+            return;
+        }
+        targets.emplace_back(std::move(address));
     }
-    targets.emplace_back(std::move(address));
-  }
-  if (targets.empty()) {
-    if (CryptoNote::parameters::GENESIS_BLOCK_REWARD > 0) {
-      std::cout << "Error: genesis block reward addresses are not defined" << std::endl;
-    } else {
-  CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction();
-  std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
-  std::cout << "Add this line into your coin configuration file as is: " << std::endl;
-  std::cout << "\"GENESIS_COINBASE_TX_HEX\":\"" << tx_hex << "\"," << std::endl;
+    if (targets.empty())
+    {
+        if (CryptoNote::parameters::GENESIS_BLOCK_REWARD > 0)
+        {
+            std::cout << "Error: genesis block reward addresses are not defined" << std::endl;
+        } else
+        {
+            CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction();
+            std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
+            std::cout << "Add this line into your coin configuration file as is: " << std::endl;
+            std::cout << "\"GENESIS_COINBASE_TX_HEX\":\"" << tx_hex << "\"," << std::endl;
+        }
+    } else
+    {
+        CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction(targets);
+        std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
+        std::cout << "Modify this line into your coin configuration file as is: " << std::endl;
+        std::cout << "\"GENESIS_COINBASE_TX_HEX\":\"" << tx_hex << "\"," << std::endl;
     }
-  } else {
-      CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction(targets);
-      std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
-      std::cout << "Modify this line into your coin configuration file as is: " << std::endl;
-      std::cout << "\"GENESIS_COINBASE_TX_HEX\":\"" << tx_hex << "\"," << std::endl;
-  }
-  return;
+    return;
 }
 
-JsonValue buildLoggerConfiguration(Level level, const std::string& logfile) {
-  JsonValue loggerConfiguration(JsonValue::OBJECT);
-  loggerConfiguration.insert("globalLevel", static_cast<int64_t>(level));
+JsonValue buildLoggerConfiguration(Level level, const std::string &logfile)
+{
+    JsonValue loggerConfiguration(JsonValue::OBJECT);
+    loggerConfiguration.insert("globalLevel", static_cast<int64_t>(level));
 
-  JsonValue& cfgLoggers = loggerConfiguration.insert("loggers", JsonValue::ARRAY);
+    JsonValue &cfgLoggers = loggerConfiguration.insert("loggers", JsonValue::ARRAY);
 
-  JsonValue& fileLogger = cfgLoggers.pushBack(JsonValue::OBJECT);
-  fileLogger.insert("type", "file");
-  fileLogger.insert("filename", logfile);
-  fileLogger.insert("level", static_cast<int64_t>(TRACE));
+    JsonValue &fileLogger = cfgLoggers.pushBack(JsonValue::OBJECT);
+    fileLogger.insert("type", "file");
+    fileLogger.insert("filename", logfile);
+    fileLogger.insert("level", static_cast<int64_t>(TRACE));
 
-  JsonValue& consoleLogger = cfgLoggers.pushBack(JsonValue::OBJECT);
-  consoleLogger.insert("type", "console");
-  consoleLogger.insert("level", static_cast<int64_t>(TRACE));
-  consoleLogger.insert("pattern", "%D %T %L ");
+    JsonValue &consoleLogger = cfgLoggers.pushBack(JsonValue::OBJECT);
+    consoleLogger.insert("type", "console");
+    consoleLogger.insert("level", static_cast<int64_t>(TRACE));
+    consoleLogger.insert("pattern", "%D %T %L ");
 
-  return loggerConfiguration;
+    return loggerConfiguration;
 }
 
 /* Wait for input so users can read errors before the window closes if they
    launch from a GUI rather than a terminal */
-void pause_for_input(int argc) {
-  /* if they passed arguments they're probably in a terminal so the errors will
-     stay visible */
-  if (argc == 1) {
-    #if defined(WIN32)
-    if (_isatty(_fileno(stdout)) && _isatty(_fileno(stdin))) {
-    #else
-    if(isatty(fileno(stdout)) && isatty(fileno(stdin))) {
-    #endif
-      std::cout << "Press any key to close the program: ";
-      getchar();
+void pause_for_input(int argc)
+{
+    /* if they passed arguments they're probably in a terminal so the errors will
+       stay visible */
+    if (argc == 1)
+    {
+#if defined(WIN32)
+        if (_isatty(_fileno(stdout)) && _isatty(_fileno(stdin))) {
+#else
+        if (isatty(fileno(stdout)) && isatty(fileno(stdin)))
+        {
+#endif
+            std::cout << "Press any key to close the program: ";
+            getchar();
+        }
     }
-  }
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 
 #ifdef WIN32
-  _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+    _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
-  LoggerManager logManager;
-  LoggerRef logger(logManager, "daemon");
+    LoggerManager logManager;
+    LoggerRef logger(logManager, "daemon");
 
-  try {
-    po::options_description desc_cmd_only("Command line options");
-    po::options_description desc_cmd_sett("Command line options and settings options");
-
-    command_line::add_arg(desc_cmd_only, command_line::arg_help);
-    command_line::add_arg(desc_cmd_only, command_line::arg_version);
-    command_line::add_arg(desc_cmd_only, arg_os_version);
-    // tools::get_default_data_dir() can't be called during static initialization
-    command_line::add_arg(desc_cmd_sett, command_line::arg_data_dir, Tools::getDefaultDataDirectory());
-    command_line::add_arg(desc_cmd_only, arg_config_file);
-
-    command_line::add_arg(desc_cmd_sett, arg_log_file);
-    command_line::add_arg(desc_cmd_sett, arg_log_level);
-    command_line::add_arg(desc_cmd_sett, arg_console);
-    command_line::add_arg(desc_cmd_sett, arg_testnet_on);
-    command_line::add_arg(desc_cmd_sett, arg_enable_cors);
-    command_line::add_arg(desc_cmd_sett, arg_blockexplorer_on);
-    command_line::add_arg(desc_cmd_sett, arg_print_genesis_tx);
-    command_line::add_arg(desc_cmd_sett, arg_genesis_block_reward_address);
-    command_line::add_arg(desc_cmd_sett, arg_load_checkpoints);
-
-    RpcServerConfig::initOptions(desc_cmd_sett);
-    NetNodeConfig::initOptions(desc_cmd_sett);
-    DataBaseConfig::initOptions(desc_cmd_sett);
-
-    po::options_description desc_options("Allowed options");
-    desc_options.add(desc_cmd_only).add(desc_cmd_sett);
-
-    po::variables_map vm;
-    boost::filesystem::path data_dir_path;
-    bool r = command_line::handle_error_helper(desc_options, [&]()
+    try
     {
-      po::store(po::parse_command_line(argc, argv, desc_options), vm);
+        po::options_description desc_cmd_only("Command line options");
+        po::options_description desc_cmd_sett("Command line options and settings options");
 
-      if (command_line::get_arg(vm, command_line::arg_help))
-      {
-        std::cout << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG << ENDL << ENDL;
-        std::cout << desc_options << std::endl;
-        return false;
-      }
+        command_line::add_arg(desc_cmd_only, command_line::arg_help);
+        command_line::add_arg(desc_cmd_only, command_line::arg_version);
+        command_line::add_arg(desc_cmd_only, arg_os_version);
+        // tools::get_default_data_dir() can't be called during static initialization
+        command_line::add_arg(desc_cmd_sett, command_line::arg_data_dir, Tools::getDefaultDataDirectory());
+        command_line::add_arg(desc_cmd_only, arg_config_file);
 
-      std::string config = command_line::get_arg(vm, arg_config_file);
-      boost::filesystem::path config_path(config);
+        command_line::add_arg(desc_cmd_sett, arg_log_file);
+        command_line::add_arg(desc_cmd_sett, arg_log_level);
+        command_line::add_arg(desc_cmd_sett, arg_console);
+        command_line::add_arg(desc_cmd_sett, arg_testnet_on);
+        command_line::add_arg(desc_cmd_sett, arg_enable_cors);
+        command_line::add_arg(desc_cmd_sett, arg_blockexplorer_on);
+        command_line::add_arg(desc_cmd_sett, arg_print_genesis_tx);
+        command_line::add_arg(desc_cmd_sett, arg_genesis_block_reward_address);
+        command_line::add_arg(desc_cmd_sett, arg_load_checkpoints);
 
-      boost::system::error_code ec;
-      if (boost::filesystem::exists(config_path, ec)) {
-        po::store(po::parse_config_file<char>(config_path.string<std::string>().c_str(), desc_cmd_sett), vm);
-      }
-      po::notify(vm);
+        RpcServerConfig::initOptions(desc_cmd_sett);
+        NetNodeConfig::initOptions(desc_cmd_sett);
+        DataBaseConfig::initOptions(desc_cmd_sett);
 
-      data_dir_path = command_line::get_arg(vm, command_line::arg_data_dir);
+        po::options_description desc_options("Allowed options");
+        desc_options.add(desc_cmd_only).add(desc_cmd_sett);
 
-      if (command_line::get_arg(vm, arg_print_genesis_tx)) {
-        print_genesis_tx_hex(vm, logManager);
-        return false;
-      }
-      return true;
-    });
+        po::variables_map vm;
+        boost::filesystem::path data_dir_path;
+        bool r = command_line::handle_error_helper(desc_options, [&]()
+        {
+            po::store(po::parse_command_line(argc, argv, desc_options), vm);
 
-    if (!r)
-      return 1;
+            if (command_line::get_arg(vm, command_line::arg_help))
+            {
+                std::cout << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG << ENDL << ENDL;
+                std::cout << desc_options << std::endl;
+                return false;
+            }
 
-    auto modulePath = Common::NativePathToGeneric(argv[0]);
-    auto cfgLogFile = Common::NativePathToGeneric(command_line::get_arg(vm, arg_log_file));
+            std::string config = command_line::get_arg(vm, arg_config_file);
+            boost::filesystem::path config_path(config);
 
-    if (cfgLogFile.empty()) {
-      cfgLogFile = Common::ReplaceExtenstion(modulePath, ".log");
-    } else {
-      if (!Common::HasParentPath(cfgLogFile)) {
-        cfgLogFile = Common::CombinePath(Common::GetPathDirectory(modulePath), cfgLogFile);
-      }
-    }
+            boost::system::error_code ec;
+            if (boost::filesystem::exists(config_path, ec))
+            {
+                po::store(po::parse_config_file<char>(config_path.string<std::string>().c_str(), desc_cmd_sett), vm);
+            }
+            po::notify(vm);
 
-    Level cfgLogLevel = static_cast<Level>(static_cast<int>(Logging::ERROR) + command_line::get_arg(vm, arg_log_level));
+            data_dir_path = command_line::get_arg(vm, command_line::arg_data_dir);
 
-    // configure logging
-    logManager.configure(buildLoggerConfiguration(cfgLogLevel, cfgLogFile));
+            if (command_line::get_arg(vm, arg_print_genesis_tx))
+            {
+                print_genesis_tx_hex(vm, logManager);
+                return false;
+            }
+            return true;
+        });
 
-    logger(INFO, BRIGHT_GREEN) <<
+        if (!r)
+            return 1;
 
-      #ifdef _WIN32
-      "\n _______         _   _       _____      _        \n"
+        auto modulePath = Common::NativePathToGeneric(argv[0]);
+        auto cfgLogFile = Common::NativePathToGeneric(command_line::get_arg(vm, arg_log_file));
+
+        if (cfgLogFile.empty())
+        {
+            cfgLogFile = Common::ReplaceExtenstion(modulePath, ".log");
+        } else
+        {
+            if (!Common::HasParentPath(cfgLogFile))
+            {
+                cfgLogFile = Common::CombinePath(Common::GetPathDirectory(modulePath), cfgLogFile);
+            }
+        }
+
+        Level cfgLogLevel = static_cast<Level>(static_cast<int>(Logging::ERROR) +
+                                               command_line::get_arg(vm, arg_log_level));
+
+        // configure logging
+        logManager.configure(buildLoggerConfiguration(cfgLogLevel, cfgLogFile));
+
+        logger(INFO, BRIGHT_GREEN) <<
+
+                                   #ifdef _WIN32
+                                   "\n _______         _   _       _____      _        \n"
               "|__   __|       | | | |     / ____|    (_)      \n"
               "   | |_   _ _ __| |_| | ___| |     ___  _ _ __  \n"
               "   | | | | | '__| __| |/ _ \\ |    / _ \\| | '_ \\ \n"
               "   | | |_| | |  | |_| |  __/ |___| (_) | | | | |\n"
       "   |_|\\__ _|_|   \\__|_|\\___|\\_____\\___/|_|_| |_|\n" << ENDL;
-      #else
-      "\n                                                                            \n"
-        "████████╗██╗  ██╗██████╗ ████████╗██╗    ██████╗ █████╗ █████╗ ██╗███╗   ██╗\n"
-        "╚══██╔══╝██║  ██║██╔══██╗╚══██╔══╝██║    ██╔═══╝██╔═══╝██╔══██╗██║████╗  ██║\n"
-        "   ██║   ██║  ██║██████╔╝   ██║   ██║    ████╗  ██║    ██║  ██║██║██╔██╗ ██║\n"
-        "   ██║   ██║  ██║██╔══██╗   ██║   ██║    ██╔═╝  ██║    ██║  ██║██║██║╚██╗██║\n"
-        "   ██║   ╚█████╔╝██║  ██║   ██║   ██████╗██████╗╚█████╗╚█████╔╝██║██║ ╚████║\n"
-        "   ╚═╝    ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝╚═════╝ ╚════╝ ╚════╝ ╚═╝╚═╝  ╚═══╝\n" << ENDL;
-      #endif
+                                   #else
+                                   "\n                                                                            \n"
+                                   "████████╗██╗  ██╗██████╗ ████████╗██╗    ██████╗ █████╗ █████╗ ██╗███╗   ██╗\n"
+                                   "╚══██╔══╝██║  ██║██╔══██╗╚══██╔══╝██║    ██╔═══╝██╔═══╝██╔══██╗██║████╗  ██║\n"
+                                   "   ██║   ██║  ██║██████╔╝   ██║   ██║    ████╗  ██║    ██║  ██║██║██╔██╗ ██║\n"
+                                   "   ██║   ██║  ██║██╔══██╗   ██║   ██║    ██╔═╝  ██║    ██║  ██║██║██║╚██╗██║\n"
+                                   "   ██║   ╚█████╔╝██║  ██║   ██║   ██████╗██████╗╚█████╗╚█████╔╝██║██║ ╚████║\n"
+                                   "   ╚═╝    ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝╚═════╝ ╚════╝ ╚════╝ ╚═╝╚═╝  ╚═══╝\n"
+                                   << ENDL;
+#endif
 
-    logger(INFO, BRIGHT_GREEN) << "Welcome to " << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG;
+        logger(INFO, BRIGHT_GREEN) << "Welcome to " << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG;
 
-    if (command_line_preprocessor(vm, logger)) {
-      return 0;
-    }
-
-    logger(INFO) << "Module folder: " << argv[0];
-
-    bool testnet_mode = command_line::get_arg(vm, arg_testnet_on);
-    if (testnet_mode) {
-      logger(INFO) << "Starting in testnet mode!";
-    }
-
-    //create objects and link them
-    CryptoNote::CurrencyBuilder currencyBuilder(logManager);
-    bool blockexplorer_mode = command_line::get_arg(vm, arg_blockexplorer_on);
-    currencyBuilder.isBlockexplorer(blockexplorer_mode);
-    currencyBuilder.testnet(testnet_mode);
-    try {
-      currencyBuilder.currency();
-    } catch (std::exception&) {
-      std::cout << "GENESIS_COINBASE_TX_HEX constant has an incorrect value. Please launch: " << CryptoNote::CRYPTONOTE_NAME << "d --" << arg_print_genesis_tx.name;
-      return 1;
-    }
-    CryptoNote::Currency currency = currencyBuilder.currency();
-
-    bool use_checkpoints = !command_line::get_arg(vm, arg_load_checkpoints).empty();
-
-    CryptoNote::Checkpoints checkpoints(logManager);
-    if (use_checkpoints && !testnet_mode) {
-      logger(INFO) << "Loading Checkpoints for faster initial sync...";
-      std::string checkpoints_file = command_line::get_arg(vm, arg_load_checkpoints);
-      if (checkpoints_file == "default") {
-        for (const auto& cp : CryptoNote::CHECKPOINTS) {
-          checkpoints.addCheckpoint(cp.index, cp.blockId);
+        if (command_line_preprocessor(vm, logger))
+        {
+            return 0;
         }
-        logger(INFO) << "Loaded " << CryptoNote::CHECKPOINTS.size() << " default checkpoints";
-      } else {
-        bool results = checkpoints.loadCheckpointsFromFile(checkpoints_file);
-        if (!results) {
-          throw std::runtime_error("Failed to load checkpoints");
+
+        logger(INFO) << "Module folder: " << argv[0];
+
+        bool testnet_mode = command_line::get_arg(vm, arg_testnet_on);
+        if (testnet_mode)
+        {
+            logger(INFO) << "Starting in testnet mode!";
         }
-      }
-    }
 
-    NetNodeConfig netNodeConfig;
-    netNodeConfig.init(vm);
-    netNodeConfig.setTestnet(testnet_mode);
+        //create objects and link them
+        CryptoNote::CurrencyBuilder currencyBuilder(logManager);
+        bool blockexplorer_mode = command_line::get_arg(vm, arg_blockexplorer_on);
+        currencyBuilder.isBlockexplorer(blockexplorer_mode);
+        currencyBuilder.testnet(testnet_mode);
+        try
+        {
+            currencyBuilder.currency();
+        } catch (std::exception &)
+        {
+            std::cout << "GENESIS_COINBASE_TX_HEX constant has an incorrect value. Please launch: "
+                      << CryptoNote::CRYPTONOTE_NAME << "d --" << arg_print_genesis_tx.name;
+            return 1;
+        }
+        CryptoNote::Currency currency = currencyBuilder.currency();
 
-    RpcServerConfig rpcConfig;
-    rpcConfig.init(vm);
+        bool use_checkpoints = !command_line::get_arg(vm, arg_load_checkpoints).empty();
 
-    DataBaseConfig dbConfig;
-    dbConfig.init(vm);
+        CryptoNote::Checkpoints checkpoints(logManager);
+        if (use_checkpoints && !testnet_mode)
+        {
+            logger(INFO) << "Loading Checkpoints for faster initial sync...";
+            std::string checkpoints_file = command_line::get_arg(vm, arg_load_checkpoints);
+            if (checkpoints_file == "default")
+            {
+                for (const auto &cp : CryptoNote::CHECKPOINTS)
+                {
+                    checkpoints.addCheckpoint(cp.index, cp.blockId);
+                }
+                logger(INFO) << "Loaded " << CryptoNote::CHECKPOINTS.size() << " default checkpoints";
+            } else
+            {
+                bool results = checkpoints.loadCheckpointsFromFile(checkpoints_file);
+                if (!results)
+                {
+                    throw std::runtime_error("Failed to load checkpoints");
+                }
+            }
+        }
 
-    if (dbConfig.isConfigFolderDefaulted()) {
-      if (!Tools::create_directories_if_necessary(dbConfig.getDataDir())) {
-        throw std::runtime_error("Can't create directory: " + dbConfig.getDataDir());
-      }
-    } else {
-      if (!Tools::directoryExists(dbConfig.getDataDir())) {
-        throw std::runtime_error("Directory does not exist: " + dbConfig.getDataDir());
-      }
-    }
+        NetNodeConfig netNodeConfig;
+        netNodeConfig.init(vm);
+        netNodeConfig.setTestnet(testnet_mode);
 
-    RocksDBWrapper database(logManager);
-    database.init(dbConfig);
-    Tools::ScopeExit dbShutdownOnExit([&database] () { database.shutdown(); });
+        RpcServerConfig rpcConfig;
+        rpcConfig.init(vm);
 
-    if (!DatabaseBlockchainCache::checkDBSchemeVersion(database, logManager))
+        DataBaseConfig dbConfig;
+        dbConfig.init(vm);
+
+        if (dbConfig.isConfigFolderDefaulted())
+        {
+            if (!Tools::create_directories_if_necessary(dbConfig.getDataDir()))
+            {
+                throw std::runtime_error("Can't create directory: " + dbConfig.getDataDir());
+            }
+        } else
+        {
+            if (!Tools::directoryExists(dbConfig.getDataDir()))
+            {
+                throw std::runtime_error("Directory does not exist: " + dbConfig.getDataDir());
+            }
+        }
+
+        RocksDBWrapper database(logManager);
+        database.init(dbConfig);
+        Tools::ScopeExit dbShutdownOnExit([&database]()
+                                          { database.shutdown(); });
+
+        if (!DatabaseBlockchainCache::checkDBSchemeVersion(database, logManager))
+        {
+            dbShutdownOnExit.cancel();
+            database.shutdown();
+
+            database.destroy(dbConfig);
+
+            database.init(dbConfig);
+            dbShutdownOnExit.resume();
+        }
+
+        System::Dispatcher dispatcher;
+        logger(INFO) << "Initializing core...";
+        CryptoNote::Core ccore(
+                currency,
+                logManager,
+                std::move(checkpoints),
+                dispatcher,
+                std::unique_ptr<IBlockchainCacheFactory>(
+                        new DatabaseBlockchainCacheFactory(database, logger.getLogger())),
+                createSwappedMainChainStorage(data_dir_path.string(), currency));
+
+        ccore.load();
+        logger(INFO) << "Core initialized OK";
+
+        CryptoNote::CryptoNoteProtocolHandler cprotocol(currency, dispatcher, ccore, nullptr, logManager);
+        CryptoNote::NodeServer p2psrv(dispatcher, cprotocol, logManager);
+        CryptoNote::RpcServer rpcServer(dispatcher, logManager, ccore, p2psrv, cprotocol);
+
+        cprotocol.set_p2p_endpoint(&p2psrv);
+        //DaemonCommandsHandler dch(ccore, p2psrv, logManager);
+        DaemonCommandsHandler dch(ccore, p2psrv, logManager, &rpcServer);
+        logger(INFO) << "Initializing p2p server...";
+        if (!p2psrv.init(netNodeConfig))
+        {
+            logger(ERROR, BRIGHT_RED) << "Failed to initialize p2p server.";
+            return 1;
+        }
+
+        logger(INFO) << "P2p server initialized OK";
+
+        if (!command_line::has_arg(vm, arg_console))
+        {
+            dch.start_handling();
+        }
+
+        logger(INFO) << "Starting core rpc server on address " << rpcConfig.getBindAddress();
+        rpcServer.start(rpcConfig.bindIp, rpcConfig.bindPort);
+        rpcServer.enableCors(command_line::get_arg(vm, arg_enable_cors));
+        logger(INFO) << "Core rpc server started ok";
+
+        Tools::SignalHandler::install([&dch, &p2psrv]
+                                      {
+                                          dch.stop_handling();
+                                          p2psrv.sendStopSignal();
+                                      });
+
+        logger(INFO) << "Starting p2p net loop...";
+        p2psrv.run();
+        logger(INFO) << "p2p net loop stopped";
+
+        dch.stop_handling();
+
+        //stop components
+        logger(INFO) << "Stopping core rpc server...";
+        rpcServer.stop();
+
+        //deinitialize components
+        logger(INFO) << "Deinitializing p2p...";
+        p2psrv.deinit();
+
+        cprotocol.set_p2p_endpoint(nullptr);
+        ccore.save();
+
+    } catch (const std::exception &e)
     {
-      dbShutdownOnExit.cancel();
-      database.shutdown();
-
-      database.destroy(dbConfig);
-
-      database.init(dbConfig);
-      dbShutdownOnExit.resume();
+        logger(ERROR, BRIGHT_RED) << "Exception: " << e.what();
+        return 1;
     }
 
-    System::Dispatcher dispatcher;
-    logger(INFO) << "Initializing core...";
-    CryptoNote::Core ccore(
-      currency,
-      logManager,
-      std::move(checkpoints),
-      dispatcher,
-      std::unique_ptr<IBlockchainCacheFactory>(new DatabaseBlockchainCacheFactory(database, logger.getLogger())),
-      createSwappedMainChainStorage(data_dir_path.string(), currency));
-
-    ccore.load();
-    logger(INFO) << "Core initialized OK";
-
-    CryptoNote::CryptoNoteProtocolHandler cprotocol(currency, dispatcher, ccore, nullptr, logManager);
-    CryptoNote::NodeServer p2psrv(dispatcher, cprotocol, logManager);
-    CryptoNote::RpcServer rpcServer(dispatcher, logManager, ccore, p2psrv, cprotocol);
-
-    cprotocol.set_p2p_endpoint(&p2psrv);
-    //DaemonCommandsHandler dch(ccore, p2psrv, logManager);
-	DaemonCommandsHandler dch(ccore, p2psrv, logManager, &rpcServer);
-    logger(INFO) << "Initializing p2p server...";
-    if (!p2psrv.init(netNodeConfig)) {
-      logger(ERROR, BRIGHT_RED) << "Failed to initialize p2p server.";
-      return 1;
-    }
-
-    logger(INFO) << "P2p server initialized OK";
-
-    if (!command_line::has_arg(vm, arg_console)) {
-      dch.start_handling();
-    }
-
-    logger(INFO) << "Starting core rpc server on address " << rpcConfig.getBindAddress();
-    rpcServer.start(rpcConfig.bindIp, rpcConfig.bindPort);
-rpcServer.enableCors(command_line::get_arg(vm, arg_enable_cors));
-    logger(INFO) << "Core rpc server started ok";
-
-    Tools::SignalHandler::install([&dch, &p2psrv] {
-      dch.stop_handling();
-      p2psrv.sendStopSignal();
-    });
-
-    logger(INFO) << "Starting p2p net loop...";
-    p2psrv.run();
-    logger(INFO) << "p2p net loop stopped";
-
-    dch.stop_handling();
-
-    //stop components
-    logger(INFO) << "Stopping core rpc server...";
-    rpcServer.stop();
-
-    //deinitialize components
-    logger(INFO) << "Deinitializing p2p...";
-    p2psrv.deinit();
-
-    cprotocol.set_p2p_endpoint(nullptr);
-    ccore.save();
-
-  } catch (const std::exception& e) {
-    logger(ERROR, BRIGHT_RED) << "Exception: " << e.what();
-    return 1;
-  }
-
-  logger(INFO) << "Node stopped.";
-  return 0;
+    logger(INFO) << "Node stopped.";
+    return 0;
 }
 
-bool command_line_preprocessor(const boost::program_options::variables_map &vm, LoggerRef &logger) {
-  bool exit = false;
+bool command_line_preprocessor(const boost::program_options::variables_map &vm, LoggerRef &logger)
+{
+    bool exit = false;
 
-  if (command_line::get_arg(vm, command_line::arg_version)) {
-    std::cout << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG << ENDL;
-    exit = true;
-  }
-  if (command_line::get_arg(vm, arg_os_version)) {
-    std::cout << "OS: " << Tools::get_os_version_string() << ENDL;
-    exit = true;
-  }
+    if (command_line::get_arg(vm, command_line::arg_version))
+    {
+        std::cout << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG << ENDL;
+        exit = true;
+    }
+    if (command_line::get_arg(vm, arg_os_version))
+    {
+        std::cout << "OS: " << Tools::get_os_version_string() << ENDL;
+        exit = true;
+    }
 
-  if (exit) {
-    return true;
-  }
+    if (exit)
+    {
+        return true;
+    }
 
-  return false;
+    return false;
 }

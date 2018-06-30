@@ -33,9 +33,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 /* Thanks to https://stackoverflow.com/users/85381/iain for this small command
    line parsing snippet! https://stackoverflow.com/a/868894/8737306 */
-char* getCmdOption(char ** begin, char ** end, const std::string & option)
+char *getCmdOption(char **begin, char **end, const std::string &option)
 {
-    char ** itr = std::find(begin, end, option);
+    char **itr = std::find(begin, end, option);
     if (itr != end && ++itr != end)
     {
         return *itr;
@@ -43,7 +43,7 @@ char* getCmdOption(char ** begin, char ** end, const std::string & option)
     return 0;
 }
 
-bool cmdOptionExists(char** begin, char** end, const std::string& option)
+bool cmdOptionExists(char **begin, char **end, const std::string &option)
 {
     return std::find(begin, end, option) != end;
 }
@@ -62,25 +62,25 @@ Config parseArguments(int argc, char **argv)
     config.walletFile = "";
     config.walletPass = "";
 
-    if (cmdOptionExists(argv, argv+argc, "-h")
-     || cmdOptionExists(argv, argv+argc, "--help"))
+    if (cmdOptionExists(argv, argv + argc, "-h")
+        || cmdOptionExists(argv, argv + argc, "--help"))
     {
         helpMessage();
         config.exit = true;
         return config;
     }
 
-    if (cmdOptionExists(argv, argv+argc, "-v")
-     || cmdOptionExists(argv, argv+argc, "--version"))
+    if (cmdOptionExists(argv, argv + argc, "-v")
+        || cmdOptionExists(argv, argv + argc, "--version"))
     {
         versionMessage();
         config.exit = true;
         return config;
     }
 
-    if (cmdOptionExists(argv, argv+argc, "--wallet-file"))
+    if (cmdOptionExists(argv, argv + argc, "--wallet-file"))
     {
-        char *wallet = getCmdOption(argv, argv+argc, "--wallet-file");
+        char *wallet = getCmdOption(argv, argv + argc, "--wallet-file");
 
         if (!wallet)
         {
@@ -96,9 +96,9 @@ Config parseArguments(int argc, char **argv)
         config.walletGiven = true;
     }
 
-    if (cmdOptionExists(argv, argv+argc, "--password"))
+    if (cmdOptionExists(argv, argv + argc, "--password"))
     {
-        char *password = getCmdOption(argv, argv+argc, "--password");
+        char *password = getCmdOption(argv, argv + argc, "--password");
 
         if (!password)
         {
@@ -114,7 +114,7 @@ Config parseArguments(int argc, char **argv)
         config.passGiven = true;
     }
 
-    if (cmdOptionExists(argv, argv+argc, "--remote-daemon"))
+    if (cmdOptionExists(argv, argv + argc, "--remote-daemon"))
     {
         char *url = getCmdOption(argv, argv + argc, "--remote-daemon");
 
@@ -127,8 +127,7 @@ Config parseArguments(int argc, char **argv)
             helpMessage();
 
             config.exit = true;
-        }
-        else
+        } else
         {
             std::string urlString(url);
 
@@ -139,14 +138,13 @@ Config parseArguments(int argc, char **argv)
             if (splitter == std::string::npos)
             {
                 config.host = urlString;
-            }
-            else
+            } else
             {
                 /* Host is everything before ":" */
                 config.host = urlString.substr(0, splitter);
 
                 /* Port is everything after ":" */
-                std::string port = urlString.substr(splitter + 1,   
+                std::string port = urlString.substr(splitter + 1,
                                                     std::string::npos);
 
                 try

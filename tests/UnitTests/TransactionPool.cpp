@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "gtest/gtest.h"
 
@@ -38,179 +27,206 @@
 using namespace CryptoNote;
 using namespace CryptoNote;
 
-class TransactionValidator : public CryptoNote::ITransactionValidator {
-  virtual bool checkTransactionInputs(const CryptoNote::Transaction& tx, BlockInfo& maxUsedBlock) override {
-    return true;
-  }
-
-  virtual bool checkTransactionInputs(const CryptoNote::Transaction& tx, BlockInfo& maxUsedBlock, BlockInfo& lastFailed) override {
-    return true;
-  }
-
-  virtual bool haveSpentKeyImages(const CryptoNote::Transaction& tx) override {
-    return false;
-  }
-
-  virtual bool checkTransactionSize(size_t blobSize) override {
-    return true;
-  }
-};
-
-class FakeTimeProvider : public ITimeProvider {
-public:
-  FakeTimeProvider(time_t currentTime = time(nullptr))
-    : timeNow(currentTime) {}
-
-  time_t timeNow;
-  virtual time_t now() override { return timeNow; }
-};
-
-
-class TestTransactionGenerator {
-
-public:
-
-  TestTransactionGenerator(const CryptoNote::Currency& currency, size_t ringSize) :
-    m_currency(currency),
-    m_ringSize(ringSize),
-    m_miners(ringSize), 
-    m_miner_txs(ringSize), 
-    m_public_keys(ringSize), 
-    m_public_key_ptrs(ringSize) 
-  {
-    rv_acc.generate();
-  }
-
-  bool createSources() {
-
-    size_t real_source_idx = m_ringSize / 2;
-
-    std::vector<TransactionSourceEntry::OutputEntry> output_entries;
-    for (uint32_t i = 0; i < m_ringSize; ++i)
+class TransactionValidator : public CryptoNote::ITransactionValidator
+{
+    virtual bool checkTransactionInputs(const CryptoNote::Transaction &tx, BlockInfo &maxUsedBlock) override
     {
-      m_miners[i].generate();
+        return true;
+    }
 
-      if (!m_currency.constructMinerTx(BLOCK_MAJOR_VERSION_1, 0, 0, 0, 2, 0, m_miners[i].getAccountKeys().address, m_miner_txs[i])) {
+    virtual bool
+    checkTransactionInputs(const CryptoNote::Transaction &tx, BlockInfo &maxUsedBlock, BlockInfo &lastFailed) override
+    {
+        return true;
+    }
+
+    virtual bool haveSpentKeyImages(const CryptoNote::Transaction &tx) override
+    {
         return false;
-      }
-
-      KeyOutput tx_out = boost::get<KeyOutput>(m_miner_txs[i].outputs[0].target);
-      output_entries.push_back(std::make_pair(i, tx_out.key));
-      m_public_keys[i] = tx_out.key;
-      m_public_key_ptrs[i] = &m_public_keys[i];
     }
 
-    m_source_amount = m_miner_txs[0].outputs[0].amount;
-
-    TransactionSourceEntry source_entry;
-    source_entry.amount = m_source_amount;
-    source_entry.realTransactionPublicKey = getTransactionPublicKeyFromExtra(m_miner_txs[real_source_idx].extra);
-    source_entry.realOutputIndexInTransaction = 0;
-    source_entry.outputs.swap(output_entries);
-    source_entry.realOutput = real_source_idx;
-
-    m_sources.push_back(source_entry);
-
-    m_realSenderKeys = m_miners[real_source_idx].getAccountKeys();
-
-    return true;
-  }
-
-  void construct(uint64_t amount, uint64_t fee, size_t outputs, Transaction& tx) {
-
-    std::vector<TransactionDestinationEntry> destinations;
-    uint64_t amountPerOut = (amount - fee) / outputs;
-
-    for (size_t i = 0; i < outputs; ++i) {
-      destinations.push_back(TransactionDestinationEntry(amountPerOut, rv_acc.getAccountKeys().address));
+    virtual bool checkTransactionSize(size_t blobSize) override
+    {
+        return true;
     }
-
-    constructTransaction(m_realSenderKeys, m_sources, destinations, std::vector<uint8_t>(), tx, 0, m_logger);
-  }
-
-  std::vector<AccountBase> m_miners;
-  std::vector<Transaction> m_miner_txs;
-  std::vector<TransactionSourceEntry> m_sources;
-  std::vector<Crypto::PublicKey> m_public_keys;
-  std::vector<const Crypto::PublicKey*> m_public_key_ptrs;
-
-  Logging::LoggerGroup m_logger;
-  const CryptoNote::Currency& m_currency;
-  const size_t m_ringSize;
-  AccountKeys m_realSenderKeys;
-  uint64_t m_source_amount;
-  AccountBase rv_acc;
 };
 
-class tx_pool : public ::testing::Test {
+class FakeTimeProvider : public ITimeProvider
+{
+public:
+    FakeTimeProvider(time_t currentTime = time(nullptr))
+            : timeNow(currentTime)
+    {}
+
+    time_t timeNow;
+
+    virtual time_t now() override
+    { return timeNow; }
+};
+
+
+class TestTransactionGenerator
+{
+
 public:
 
-  tx_pool() : 
-    currency(CryptoNote::CurrencyBuilder(logger).currency()) {}
+    TestTransactionGenerator(const CryptoNote::Currency &currency, size_t ringSize) :
+            m_currency(currency),
+            m_ringSize(ringSize),
+            m_miners(ringSize),
+            m_miner_txs(ringSize),
+            m_public_keys(ringSize),
+            m_public_key_ptrs(ringSize)
+    {
+        rv_acc.generate();
+    }
+
+    bool createSources()
+    {
+
+        size_t real_source_idx = m_ringSize / 2;
+
+        std::vector<TransactionSourceEntry::OutputEntry> output_entries;
+        for (uint32_t i = 0; i < m_ringSize; ++i)
+        {
+            m_miners[i].generate();
+
+            if (!m_currency.constructMinerTx(BLOCK_MAJOR_VERSION_1, 0, 0, 0, 2, 0, m_miners[i].getAccountKeys().address,
+                                             m_miner_txs[i]))
+            {
+                return false;
+            }
+
+            KeyOutput tx_out = boost::get<KeyOutput>(m_miner_txs[i].outputs[0].target);
+            output_entries.push_back(std::make_pair(i, tx_out.key));
+            m_public_keys[i] = tx_out.key;
+            m_public_key_ptrs[i] = &m_public_keys[i];
+        }
+
+        m_source_amount = m_miner_txs[0].outputs[0].amount;
+
+        TransactionSourceEntry source_entry;
+        source_entry.amount = m_source_amount;
+        source_entry.realTransactionPublicKey = getTransactionPublicKeyFromExtra(m_miner_txs[real_source_idx].extra);
+        source_entry.realOutputIndexInTransaction = 0;
+        source_entry.outputs.swap(output_entries);
+        source_entry.realOutput = real_source_idx;
+
+        m_sources.push_back(source_entry);
+
+        m_realSenderKeys = m_miners[real_source_idx].getAccountKeys();
+
+        return true;
+    }
+
+    void construct(uint64_t amount, uint64_t fee, size_t outputs, Transaction &tx)
+    {
+
+        std::vector<TransactionDestinationEntry> destinations;
+        uint64_t amountPerOut = (amount - fee) / outputs;
+
+        for (size_t i = 0; i < outputs; ++i)
+        {
+            destinations.push_back(TransactionDestinationEntry(amountPerOut, rv_acc.getAccountKeys().address));
+        }
+
+        constructTransaction(m_realSenderKeys, m_sources, destinations, std::vector<uint8_t>(), tx, 0, m_logger);
+    }
+
+    std::vector<AccountBase> m_miners;
+    std::vector<Transaction> m_miner_txs;
+    std::vector<TransactionSourceEntry> m_sources;
+    std::vector<Crypto::PublicKey> m_public_keys;
+    std::vector<const Crypto::PublicKey *> m_public_key_ptrs;
+
+    Logging::LoggerGroup m_logger;
+    const CryptoNote::Currency &m_currency;
+    const size_t m_ringSize;
+    AccountKeys m_realSenderKeys;
+    uint64_t m_source_amount;
+    AccountBase rv_acc;
+};
+
+class tx_pool : public ::testing::Test
+{
+public:
+
+    tx_pool() :
+            currency(CryptoNote::CurrencyBuilder(logger).currency())
+    {}
 
 protected:
-  virtual void SetUp() override {
-    m_configDir = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path("test_data_%%%%%%%%%%%%");
-  }
+    virtual void SetUp() override
+    {
+        m_configDir =
+                boost::filesystem::temp_directory_path() / boost::filesystem::unique_path("test_data_%%%%%%%%%%%%");
+    }
 
-  virtual void TearDown() override {
-    boost::system::error_code ignoredErrorCode;
-    boost::filesystem::remove_all(m_configDir, ignoredErrorCode);
-  }
+    virtual void TearDown() override
+    {
+        boost::system::error_code ignoredErrorCode;
+        boost::filesystem::remove_all(m_configDir, ignoredErrorCode);
+    }
 
 protected:
-  Logging::ConsoleLogger logger;
-  CryptoNote::Currency currency;
-  boost::filesystem::path m_configDir;
+    Logging::ConsoleLogger logger;
+    CryptoNote::Currency currency;
+    boost::filesystem::path m_configDir;
 };
 
 namespace
 {
-  static const size_t textMaxCumulativeSize = std::numeric_limits<size_t>::max();
+    static const size_t textMaxCumulativeSize = std::numeric_limits<size_t>::max();
 
-  void GenerateTransaction(const CryptoNote::Currency& currency, Transaction& tx, uint64_t fee, size_t outputs) {
-    TestTransactionGenerator txGenerator(currency, 1);
-    txGenerator.createSources();
-    txGenerator.construct(txGenerator.m_source_amount, fee, outputs, tx);
-  }
-  
-  template <typename Validator, typename TimeProvider>
-  class TestPool {
-  public:
-
-    Validator validator;
-    TimeProvider timeProvider;
-
-    TestPool(const CryptoNote::Currency& currency, Logging::ILogger& logger) {}
-  };
-
-  class TxTestBase {
-  public:
-    TxTestBase(size_t ringSize) :
-      m_currency(CryptoNote::CurrencyBuilder(m_logger).currency()),
-      txGenerator(m_currency, ringSize)
+    void GenerateTransaction(const CryptoNote::Currency &currency, Transaction &tx, uint64_t fee, size_t outputs)
     {
-      txGenerator.createSources();
+        TestTransactionGenerator txGenerator(currency, 1);
+        txGenerator.createSources();
+        txGenerator.construct(txGenerator.m_source_amount, fee, outputs, tx);
     }
 
-    void construct(uint64_t fee, size_t outputs, Transaction& tx) {
-      txGenerator.construct(txGenerator.m_source_amount, fee, outputs, tx);
+    template<typename Validator, typename TimeProvider>
+    class TestPool
+    {
+    public:
+
+        Validator validator;
+        TimeProvider timeProvider;
+
+        TestPool(const CryptoNote::Currency &currency, Logging::ILogger &logger)
+        {}
+    };
+
+    class TxTestBase
+    {
+    public:
+        TxTestBase(size_t ringSize) :
+                m_currency(CryptoNote::CurrencyBuilder(m_logger).currency()),
+                txGenerator(m_currency, ringSize)
+        {
+            txGenerator.createSources();
+        }
+
+        void construct(uint64_t fee, size_t outputs, Transaction &tx)
+        {
+            txGenerator.construct(txGenerator.m_source_amount, fee, outputs, tx);
+        }
+
+        Logging::ConsoleLogger m_logger;
+        CryptoNote::Currency m_currency;
+        CryptoNote::RealTimeProvider m_time;
+        TestTransactionGenerator txGenerator;
+        TransactionValidator validator;
+    };
+
+    void InitBlock(BlockTemplate &bl, uint8_t majorVersion = BLOCK_MAJOR_VERSION_1)
+    {
+        bl.majorVersion = majorVersion;
+        bl.minorVersion = 0;
+        bl.nonce = 0;
+        bl.timestamp = time(0);
+        bl.previousBlockHash = NULL_HASH;
     }
-
-    Logging::ConsoleLogger m_logger;
-    CryptoNote::Currency m_currency;
-    CryptoNote::RealTimeProvider m_time;
-    TestTransactionGenerator txGenerator;
-    TransactionValidator validator;
-  };
-
-  void InitBlock(BlockTemplate& bl, uint8_t majorVersion = BLOCK_MAJOR_VERSION_1) {
-    bl.majorVersion = majorVersion;
-    bl.minorVersion = 0;
-    bl.nonce = 0;
-    bl.timestamp = time(0);
-    bl.previousBlockHash = NULL_HASH;
-  }
 
 }
 

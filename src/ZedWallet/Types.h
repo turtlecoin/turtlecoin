@@ -21,16 +21,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 struct WalletInfo
 {
-    WalletInfo(std::string walletFileName, 
-               std::string walletPass, 
+    WalletInfo(std::string walletFileName,
+               std::string walletPass,
                std::string walletAddress,
                bool viewWallet,
-               CryptoNote::WalletGreen &wallet) : 
-               walletFileName(walletFileName), 
-               walletPass(walletPass), 
-               walletAddress(walletAddress),
-               viewWallet(viewWallet),
-               wallet(wallet) {}
+               CryptoNote::WalletGreen &wallet) :
+            walletFileName(walletFileName),
+            walletPass(walletPass),
+            walletAddress(walletAddress),
+            viewWallet(viewWallet),
+            wallet(wallet)
+    {}
 
     size_t knownTransactionCount = 0;
 
@@ -112,21 +113,27 @@ struct Config
 
 */
 
-template <class X> struct Maybe
+template<class X>
+struct Maybe
 {
     X x;
     bool isJust;
 
-    Maybe(const X &x) : x (x), isJust(true) {}
-    Maybe() : isJust(false) {}
+    Maybe(const X &x) : x(x), isJust(true)
+    {}
+
+    Maybe() : isJust(false)
+    {}
 };
 
-template <class X> Maybe<X> Just(const X&x)
+template<class X>
+Maybe<X> Just(const X &x)
 {
     return Maybe<X>(x);
 }
 
-template <class X> Maybe<X> Nothing()
+template<class X>
+Maybe<X> Nothing()
 {
     return Maybe<X>();
 }

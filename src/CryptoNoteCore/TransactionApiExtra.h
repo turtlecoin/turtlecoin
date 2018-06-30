@@ -1,90 +1,100 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
 #include "CryptoNoteFormatUtils.h"
 #include "TransactionExtra.h"
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-  class TransactionExtra {
-  public:
-    TransactionExtra() {}
-    TransactionExtra(const std::vector<uint8_t>& extra) {
-      parse(extra);        
-    }
+    class TransactionExtra
+    {
+    public:
+        TransactionExtra()
+        {}
 
-    bool parse(const std::vector<uint8_t>& extra) {
-      fields.clear();
-      return CryptoNote::parseTransactionExtra(extra, fields);
-    }
+        TransactionExtra(const std::vector<uint8_t> &extra)
+        {
+            parse(extra);
+        }
 
-    template <typename T>
-    bool get(T& value) const {
-      auto it = find(typeid(T));
-      if (it == fields.end()) {
-        return false;
-      }
-      value = boost::get<T>(*it);
-      return true;
-    }
+        bool parse(const std::vector<uint8_t> &extra)
+        {
+            fields.clear();
+            return CryptoNote::parseTransactionExtra(extra, fields);
+        }
 
-    template <typename T>
-    void set(const T& value) {
-      auto it = find(typeid(T));
-      if (it != fields.end()) {
-        *it = value;
-      } else {
-        fields.push_back(value);
-      }
-    }
+        template<typename T>
+        bool get(T &value) const
+        {
+            auto it = find(typeid(T));
+            if (it == fields.end())
+            {
+                return false;
+            }
+            value = boost::get<T>(*it);
+            return true;
+        }
 
-    template <typename T>
-    void append(const T& value) {
-      fields.push_back(value);
-    }
+        template<typename T>
+        void set(const T &value)
+        {
+            auto it = find(typeid(T));
+            if (it != fields.end())
+            {
+                *it = value;
+            } else
+            {
+                fields.push_back(value);
+            }
+        }
 
-    bool getPublicKey(Crypto::PublicKey& pk) const {
-      CryptoNote::TransactionExtraPublicKey extraPk;
-      if (!get(extraPk)) {
-        return false;
-      }
-      pk = extraPk.publicKey;
-      return true;
-    }
+        template<typename T>
+        void append(const T &value)
+        {
+            fields.push_back(value);
+        }
 
-    std::vector<uint8_t> serialize() const {
-      std::vector<uint8_t> extra;
-      writeTransactionExtra(extra, fields);
-      return extra;
-    }
+        bool getPublicKey(Crypto::PublicKey &pk) const
+        {
+            CryptoNote::TransactionExtraPublicKey extraPk;
+            if (!get(extraPk))
+            {
+                return false;
+            }
+            pk = extraPk.publicKey;
+            return true;
+        }
 
-  private:
+        std::vector<uint8_t> serialize() const
+        {
+            std::vector<uint8_t> extra;
+            writeTransactionExtra(extra, fields);
+            return extra;
+        }
 
-    std::vector<CryptoNote::TransactionExtraField>::const_iterator find(const std::type_info& t) const {
-      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) { return t == f.type(); });
-    }
+    private:
 
-    std::vector<CryptoNote::TransactionExtraField>::iterator find(const std::type_info& t) {
-      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) { return t == f.type(); });
-    }
+        std::vector<CryptoNote::TransactionExtraField>::const_iterator find(const std::type_info &t) const
+        {
+            return std::find_if(fields.begin(), fields.end(),
+                                [&t](const CryptoNote::TransactionExtraField &f)
+                                { return t == f.type(); });
+        }
 
-    std::vector<CryptoNote::TransactionExtraField> fields;
-  };
+        std::vector<CryptoNote::TransactionExtraField>::iterator find(const std::type_info &t)
+        {
+            return std::find_if(fields.begin(), fields.end(),
+                                [&t](const CryptoNote::TransactionExtraField &f)
+                                { return t == f.type(); });
+        }
+
+        std::vector<CryptoNote::TransactionExtraField> fields;
+    };
 
 }

@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -23,42 +12,47 @@
 
 #include <boost/program_options.hpp>
 
-namespace PaymentService {
+namespace PaymentService
+{
 
-class ConfigurationError : public std::runtime_error {
-public:
-  ConfigurationError(const char* desc) : std::runtime_error(desc) {}
-};
+    class ConfigurationError : public std::runtime_error
+    {
+    public:
+        ConfigurationError(const char *desc) : std::runtime_error(desc)
+        {}
+    };
 
-struct Configuration {
-  Configuration();
+    struct Configuration
+    {
+        Configuration();
 
-  void init(const boost::program_options::variables_map& options);
-  static void initOptions(boost::program_options::options_description& desc);
+        void init(const boost::program_options::variables_map &options);
 
-  std::string bindAddress;
-  uint16_t bindPort;
-  std::string rpcPassword;
+        static void initOptions(boost::program_options::options_description &desc);
 
-  std::string containerFile;
-  std::string containerPassword;
-  std::string secretViewKey;
-  std::string secretSpendKey;
-  std::string mnemonicSeed;
-  std::string logFile;
-  std::string serverRoot;
-  std::string corsHeader;
+        std::string bindAddress;
+        uint16_t bindPort;
+        std::string rpcPassword;
 
-  bool generateNewContainer;
-  bool daemonize;
-  bool registerService;
-  bool unregisterService;
-  bool testnet;
-  bool printAddresses;
-  bool syncFromZero;
-  bool legacySecurity;
+        std::string containerFile;
+        std::string containerPassword;
+        std::string secretViewKey;
+        std::string secretSpendKey;
+        std::string mnemonicSeed;
+        std::string logFile;
+        std::string serverRoot;
+        std::string corsHeader;
 
-  size_t logLevel;
-};
+        bool generateNewContainer;
+        bool daemonize;
+        bool registerService;
+        bool unregisterService;
+        bool testnet;
+        bool printAddresses;
+        bool syncFromZero;
+        bool legacySecurity;
+
+        size_t logLevel;
+    };
 
 } //namespace PaymentService

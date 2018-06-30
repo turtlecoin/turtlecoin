@@ -9,6 +9,7 @@ DIFFICULTY_CUT = 60
 
 UINT_MAX = (1 << 64) - 1
 
+
 def difficulty():
     times = []
     diffs = []
@@ -40,6 +41,7 @@ def difficulty():
         assert 0 < diff <= UINT_MAX
         times.append((yield diff))
         diffs.append(diff)
+
 
 time = 1000
 gen = difficulty()
