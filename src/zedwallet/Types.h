@@ -12,35 +12,39 @@
 
 struct Command
 {
-    public:
-        Command() {}
+public:
+    Command()
+    {}
 
-        Command(std::string name, std::string description, 
-                bool viewWalletSupport, bool advanced) : 
-                name(name), description(description),
-                viewWalletSupport(viewWalletSupport), advanced(advanced) {}
+    Command(std::string name, std::string description,
+            bool viewWalletSupport, bool advanced) :
+            name(name), description(description),
+            viewWalletSupport(viewWalletSupport), advanced(advanced)
+    {}
 
-        /* The command name */
-        std::string name;
+    /* The command name */
+    std::string name;
 
-        /* The command description */
-        std::string description;
+    /* The command description */
+    std::string description;
 
-        /* Can the command be used with a view wallet */
-        bool viewWalletSupport;
+    /* Can the command be used with a view wallet */
+    bool viewWalletSupport;
 
-        /* Is the command 'basic' or 'advanced' */
-        bool advanced;
+    /* Is the command 'basic' or 'advanced' */
+    bool advanced;
 };
 
 struct CLICommand
 {
-    CLICommand() {}
+    CLICommand()
+    {}
 
     CLICommand(std::string name, std::string description,
                std::string shortName, bool hasShortName, bool hasArgument) :
-               name(name), description(description), shortName(shortName),
-               hasShortName(hasShortName), hasArgument(hasArgument) {}
+            name(name), description(description), shortName(shortName),
+            hasShortName(hasShortName), hasArgument(hasArgument)
+    {}
 
     /* The command name */
     std::string name;
@@ -60,16 +64,17 @@ struct CLICommand
 
 struct WalletInfo
 {
-    WalletInfo(std::string walletFileName, 
-               std::string walletPass, 
+    WalletInfo(std::string walletFileName,
+               std::string walletPass,
                std::string walletAddress,
                bool viewWallet,
-               CryptoNote::WalletGreen &wallet) : 
-               walletFileName(walletFileName), 
-               walletPass(walletPass), 
-               walletAddress(walletAddress),
-               viewWallet(viewWallet),
-               wallet(wallet) {}
+               CryptoNote::WalletGreen &wallet) :
+            walletFileName(walletFileName),
+            walletPass(walletPass),
+            walletAddress(walletAddress),
+            viewWallet(viewWallet),
+            wallet(wallet)
+    {}
 
     /* How many transactions do we know about */
     size_t knownTransactionCount = 0;
@@ -106,7 +111,7 @@ struct Config
 
     /* The daemon host */
     std::string host = "127.0.0.1";
-    
+
     /* The daemon port */
     int port = CryptoNote::RPC_DEFAULT_PORT;
 
@@ -119,15 +124,18 @@ struct Config
 
 struct AddressBookEntry
 {
-    AddressBookEntry() {}
+    AddressBookEntry()
+    {}
 
     /* Used for quick comparison with strings */
-    AddressBookEntry(std::string friendlyName) : friendlyName(friendlyName) {}
+    AddressBookEntry(std::string friendlyName) : friendlyName(friendlyName)
+    {}
 
     AddressBookEntry(std::string friendlyName, std::string address,
-                std::string paymentID) : friendlyName(friendlyName),
-                                         address(address),
-                                         paymentID(paymentID) {}
+                     std::string paymentID) : friendlyName(friendlyName),
+                                              address(address),
+                                              paymentID(paymentID)
+    {}
 
     /* Friendly name for this address book entry */
     std::string friendlyName;
@@ -208,21 +216,27 @@ typedef std::vector<AddressBookEntry> AddressBook;
 
 */
 
-template <class X> struct Maybe
+template<class X>
+struct Maybe
 {
     X x;
     bool isJust;
 
-    Maybe(const X &x) : x (x), isJust(true) {}
-    Maybe() : isJust(false) {}
+    Maybe(const X &x) : x(x), isJust(true)
+    {}
+
+    Maybe() : isJust(false)
+    {}
 };
 
-template <class X> Maybe<X> Just(const X&x)
+template<class X>
+Maybe<X> Just(const X &x)
 {
     return Maybe<X>(x);
 }
 
-template <class X> Maybe<X> Nothing()
+template<class X>
+Maybe<X> Nothing()
 {
     return Maybe<X>();
 }

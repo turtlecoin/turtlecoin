@@ -39,7 +39,7 @@ std::string formatAmount(uint64_t amount)
     const uint64_t cents = amount % divisor;
 
     return formatDollars(dollars) + "." + formatCents(cents) + " "
-         + WalletConfig::ticker;
+           + WalletConfig::ticker;
 }
 
 std::string formatAmountBasic(uint64_t amount)
@@ -83,7 +83,7 @@ std::string formatDollars(uint64_t amount)
        workaround */
     class comma_numpunct : public std::numpunct<char>
     {
-      protected:
+    protected:
         virtual char do_thousands_sep() const
         {
             return ',';
@@ -142,7 +142,7 @@ bool confirm(std::string msg, bool defaultReturn)
 
         const char c = std::tolower(answer[0]);
 
-        switch(std::tolower(answer[0]))
+        switch (std::tolower(answer[0]))
         {
             /* Lets people spam enter / choose default value */
             case '\0':
@@ -201,7 +201,7 @@ std::string getPrompt(std::shared_ptr<WalletInfo> &walletInfo)
     std::string walletName = walletInfo->walletFileName;
 
     /* Filename ends in .wallet, remove extension */
-    if (std::equal(extension.rbegin(), extension.rend(), 
+    if (std::equal(extension.rbegin(), extension.rend(),
                    walletInfo->walletFileName.rbegin()))
     {
         const size_t extPos = walletInfo->walletFileName.find_last_of('.');

@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -24,61 +13,81 @@
 #include "WalletLegacy/WalletLegacyEvent.h"
 #include "WalletLegacy/WalletUnconfirmedTransactions.h"
 
-namespace CryptoNote {
-class ISerializer;
+namespace CryptoNote
+{
+    class ISerializer;
 }
 
-namespace CryptoNote {
-
-class WalletUserTransactionsCache
+namespace CryptoNote
 {
-public:
-  explicit WalletUserTransactionsCache(uint64_t mempoolTxLiveTime = 60 * 60 * 24);
 
-  bool serialize(CryptoNote::ISerializer& serializer);
+    class WalletUserTransactionsCache
+    {
+    public:
+        explicit WalletUserTransactionsCache(uint64_t mempoolTxLiveTime = 60 * 60 * 24);
 
-  uint64_t unconfirmedTransactionsAmount() const;
-  uint64_t unconfrimedOutsAmount() const;
-  size_t getTransactionCount() const;
-  size_t getTransferCount() const;
+        bool serialize(CryptoNote::ISerializer &serializer);
 
-  TransactionId addNewTransaction(uint64_t amount, uint64_t fee, const std::string& extra, const std::vector<WalletLegacyTransfer>& transfers, uint64_t unlockTime);
-  void updateTransaction(TransactionId transactionId, const CryptoNote::Transaction& tx, uint64_t amount, const std::list<TransactionOutputInformation>& usedOutputs);
-  void updateTransactionSendingState(TransactionId transactionId, std::error_code ec);
+        uint64_t unconfirmedTransactionsAmount() const;
 
-  std::shared_ptr<WalletLegacyEvent> onTransactionUpdated(const TransactionInformation& txInfo, int64_t txBalance);
-  std::shared_ptr<WalletLegacyEvent> onTransactionDeleted(const Crypto::Hash& transactionHash);
+        uint64_t unconfrimedOutsAmount() const;
 
-  TransactionId findTransactionByTransferId(TransferId transferId) const;
+        size_t getTransactionCount() const;
 
-  bool getTransaction(TransactionId transactionId, WalletLegacyTransaction& transaction) const;
-  WalletLegacyTransaction& getTransaction(TransactionId transactionId);
-  bool getTransfer(TransferId transferId, WalletLegacyTransfer& transfer) const;
-  WalletLegacyTransfer& getTransfer(TransferId transferId);
+        size_t getTransferCount() const;
 
-  bool isUsed(const TransactionOutputInformation& out) const;
-  void reset();
+        TransactionId addNewTransaction(uint64_t amount, uint64_t fee, const std::string &extra,
+                                        const std::vector<WalletLegacyTransfer> &transfers, uint64_t unlockTime);
 
-  std::vector<TransactionId> deleteOutdatedTransactions();
+        void updateTransaction(TransactionId transactionId, const CryptoNote::Transaction &tx, uint64_t amount,
+                               const std::list<TransactionOutputInformation> &usedOutputs);
 
-private:
+        void updateTransactionSendingState(TransactionId transactionId, std::error_code ec);
 
-  TransactionId findTransactionByHash(const Crypto::Hash& hash);
-  TransactionId insertTransaction(WalletLegacyTransaction&& Transaction);
-  TransferId insertTransfers(const std::vector<WalletLegacyTransfer>& transfers);
-  void updateUnconfirmedTransactions();
+        std::shared_ptr<WalletLegacyEvent>
+        onTransactionUpdated(const TransactionInformation &txInfo, int64_t txBalance);
 
-  typedef std::vector<WalletLegacyTransfer> UserTransfers;
-  typedef std::vector<WalletLegacyTransaction> UserTransactions;
+        std::shared_ptr<WalletLegacyEvent> onTransactionDeleted(const Crypto::Hash &transactionHash);
 
-  void getGoodItems(UserTransactions& transactions, UserTransfers& transfers);
-  void getGoodTransaction(TransactionId txId, size_t offset, UserTransactions& transactions, UserTransfers& transfers);
+        TransactionId findTransactionByTransferId(TransferId transferId) const;
 
-  void getTransfersByTx(TransactionId id, UserTransfers& transfers);
+        bool getTransaction(TransactionId transactionId, WalletLegacyTransaction &transaction) const;
 
-  UserTransactions m_transactions;
-  UserTransfers m_transfers;
-  WalletUnconfirmedTransactions m_unconfirmedTransactions;
-};
+        WalletLegacyTransaction &getTransaction(TransactionId transactionId);
+
+        bool getTransfer(TransferId transferId, WalletLegacyTransfer &transfer) const;
+
+        WalletLegacyTransfer &getTransfer(TransferId transferId);
+
+        bool isUsed(const TransactionOutputInformation &out) const;
+
+        void reset();
+
+        std::vector<TransactionId> deleteOutdatedTransactions();
+
+    private:
+
+        TransactionId findTransactionByHash(const Crypto::Hash &hash);
+
+        TransactionId insertTransaction(WalletLegacyTransaction &&Transaction);
+
+        TransferId insertTransfers(const std::vector<WalletLegacyTransfer> &transfers);
+
+        void updateUnconfirmedTransactions();
+
+        typedef std::vector<WalletLegacyTransfer> UserTransfers;
+        typedef std::vector<WalletLegacyTransaction> UserTransactions;
+
+        void getGoodItems(UserTransactions &transactions, UserTransfers &transfers);
+
+        void
+        getGoodTransaction(TransactionId txId, size_t offset, UserTransactions &transactions, UserTransfers &transfers);
+
+        void getTransfersByTx(TransactionId id, UserTransfers &transfers);
+
+        UserTransactions m_transactions;
+        UserTransfers m_transfers;
+        WalletUnconfirmedTransactions m_unconfirmedTransactions;
+    };
 
 } //namespace CryptoNote

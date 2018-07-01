@@ -7,7 +7,10 @@
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/Types.h>
 
-enum Action {Open, Generate, Import, SeedImport, ViewWallet};
+enum Action
+{
+    Open, Generate, Import, SeedImport, ViewWallet
+};
 
 Action getAction(Config &config);
 
@@ -30,7 +33,9 @@ Maybe<std::shared_ptr<WalletInfo>> handleAction(CryptoNote::WalletGreen &wallet,
                                                 Action action, Config &config);
 
 #ifdef HAVE_READLINE
+
 char **getAutoCompleteMatches(const char *text, int start, int end);
 
 char *getAutoCompleteMatch(const char *text, int);
+
 #endif

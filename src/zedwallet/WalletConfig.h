@@ -40,7 +40,7 @@ namespace WalletConfig
 
     /* The number of decimals your coin has */
     const int numDecimalPlaces = CryptoNote::parameters
-                                           ::CRYPTONOTE_DISPLAY_DECIMAL_POINT;
+    ::CRYPTONOTE_DISPLAY_DECIMAL_POINT;
 
 
     /* The length of a standard address for your coin */
@@ -51,7 +51,7 @@ namespace WalletConfig
     const uint64_t defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN;
 
     /* The default fee value to use with transactions (in ATOMIC units!) */
-    const uint64_t defaultFee = CryptoNote::parameters::MINIMUM_FEE; 
+    const uint64_t defaultFee = CryptoNote::parameters::MINIMUM_FEE;
 
     /* The minimum fee value to allow with transactions (in ATOMIC units!) */
     const uint64_t minimumFee = CryptoNote::parameters::MINIMUM_FEE;
@@ -66,5 +66,5 @@ namespace WalletConfig
        fork height, or 0, if never allowed. This is ignored if a mixin of
        zero is allowed */
     const uint64_t mixinZeroDisabledHeight
-        = CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT;
+            = CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT;
 }
