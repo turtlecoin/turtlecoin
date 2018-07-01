@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "BlockchainMonitor.h"
 
@@ -27,79 +16,92 @@
 #include "Rpc/JsonRpc.h"
 #include "Rpc/HttpClient.h"
 
-BlockchainMonitor::BlockchainMonitor(System::Dispatcher& dispatcher, const std::string& daemonHost, uint16_t daemonPort, size_t pollingInterval, Logging::ILogger& logger):
-  m_dispatcher(dispatcher),
-  m_daemonHost(daemonHost),
-  m_daemonPort(daemonPort),
-  m_pollingInterval(pollingInterval),
-  m_stopped(false),
-  m_httpEvent(dispatcher),
-  m_sleepingContext(dispatcher),
-  m_logger(logger, "BlockchainMonitor") {
+BlockchainMonitor::BlockchainMonitor(System::Dispatcher &dispatcher, const std::string &daemonHost, uint16_t daemonPort,
+                                     size_t pollingInterval, Logging::ILogger &logger) :
+        m_dispatcher(dispatcher),
+        m_daemonHost(daemonHost),
+        m_daemonPort(daemonPort),
+        m_pollingInterval(pollingInterval),
+        m_stopped(false),
+        m_httpEvent(dispatcher),
+        m_sleepingContext(dispatcher),
+        m_logger(logger, "BlockchainMonitor")
+{
 
-  m_httpEvent.set();
+    m_httpEvent.set();
 }
 
-void BlockchainMonitor::waitBlockchainUpdate() {
-  m_logger(Logging::DEBUGGING) << "Waiting for blockchain updates";
-  m_stopped = false;
+void BlockchainMonitor::waitBlockchainUpdate()
+{
+    m_logger(Logging::DEBUGGING) << "Waiting for blockchain updates";
+    m_stopped = false;
 
-  Crypto::Hash lastBlockHash = requestLastBlockHash();
+    Crypto::Hash lastBlockHash = requestLastBlockHash();
 
-  while(!m_stopped) {
-    m_sleepingContext.spawn([this] () {
-      System::Timer timer(m_dispatcher);
-      timer.sleep(std::chrono::seconds(m_pollingInterval));
-    });
+    while (!m_stopped)
+    {
+        m_sleepingContext.spawn([this]()
+                                {
+                                    System::Timer timer(m_dispatcher);
+                                    timer.sleep(std::chrono::seconds(m_pollingInterval));
+                                });
 
+        m_sleepingContext.wait();
+
+        if (lastBlockHash != requestLastBlockHash())
+        {
+            m_logger(Logging::DEBUGGING) << "Blockchain has been updated";
+            break;
+        }
+    }
+
+    if (m_stopped)
+    {
+        m_logger(Logging::DEBUGGING) << "Blockchain monitor has been stopped";
+        throw System::InterruptedException();
+    }
+}
+
+void BlockchainMonitor::stop()
+{
+    m_logger(Logging::DEBUGGING) << "Sending stop signal to blockchain monitor";
+    m_stopped = true;
+
+    m_sleepingContext.interrupt();
     m_sleepingContext.wait();
-
-    if (lastBlockHash != requestLastBlockHash()) {
-      m_logger(Logging::DEBUGGING) << "Blockchain has been updated";
-      break;
-    }
-  }
-
-  if (m_stopped) {
-    m_logger(Logging::DEBUGGING) << "Blockchain monitor has been stopped";
-    throw System::InterruptedException();
-  }
 }
 
-void BlockchainMonitor::stop() {
-  m_logger(Logging::DEBUGGING) << "Sending stop signal to blockchain monitor";
-  m_stopped = true;
+Crypto::Hash BlockchainMonitor::requestLastBlockHash()
+{
+    m_logger(Logging::DEBUGGING) << "Requesting last block hash";
 
-  m_sleepingContext.interrupt();
-  m_sleepingContext.wait();
-}
+    try
+    {
+        CryptoNote::HttpClient client(m_dispatcher, m_daemonHost, m_daemonPort);
 
-Crypto::Hash BlockchainMonitor::requestLastBlockHash() {
-  m_logger(Logging::DEBUGGING) << "Requesting last block hash";
+        CryptoNote::COMMAND_RPC_GET_LAST_BLOCK_HEADER::request request;
+        CryptoNote::COMMAND_RPC_GET_LAST_BLOCK_HEADER::response response;
 
-  try {
-    CryptoNote::HttpClient client(m_dispatcher, m_daemonHost, m_daemonPort);
+        System::EventLock lk(m_httpEvent);
+        CryptoNote::JsonRpc::invokeJsonRpcCommand(client, "getlastblockheader", request, response);
 
-    CryptoNote::COMMAND_RPC_GET_LAST_BLOCK_HEADER::request request;
-    CryptoNote::COMMAND_RPC_GET_LAST_BLOCK_HEADER::response response;
+        if (response.status != CORE_RPC_STATUS_OK)
+        {
+            throw std::runtime_error("Core responded with wrong status: " + response.status);
+        }
 
-    System::EventLock lk(m_httpEvent);
-    CryptoNote::JsonRpc::invokeJsonRpcCommand(client, "getlastblockheader", request, response);
+        Crypto::Hash blockHash;
+        if (!Common::podFromHex(response.block_header.hash, blockHash))
+        {
+            throw std::runtime_error("Couldn't parse block hash: " + response.block_header.hash);
+        }
 
-    if (response.status != CORE_RPC_STATUS_OK) {
-      throw std::runtime_error("Core responded with wrong status: " + response.status);
+        m_logger(Logging::DEBUGGING) << "Last block hash: " << Common::podToHex(blockHash);
+
+        return blockHash;
+    } catch (std::exception &e)
+    {
+        m_logger(Logging::ERROR) << "Failed to request last block hash: " << e.what();
+        throw;
     }
-
-    Crypto::Hash blockHash;
-    if (!Common::podFromHex(response.block_header.hash, blockHash)) {
-      throw std::runtime_error("Couldn't parse block hash: " + response.block_header.hash);
-    }
-
-    m_logger(Logging::DEBUGGING) << "Last block hash: " << Common::podToHex(blockHash);
-
-    return blockHash;
-  } catch (std::exception& e) {
-    m_logger(Logging::ERROR) << "Failed to request last block hash: " << e.what();
-    throw;
-  }
 }

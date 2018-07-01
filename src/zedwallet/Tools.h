@@ -6,14 +6,18 @@
 
 #include <zedwallet/Types.h>
 
-void confirmPassword(std::string walletPass, std::string msg="");
+void confirmPassword(std::string walletPass, std::string msg = "");
 
 bool confirm(std::string msg);
+
 bool confirm(std::string msg, bool defaultReturn);
 
 std::string formatAmountBasic(uint64_t amount);
+
 std::string formatAmount(uint64_t amount);
+
 std::string formatDollars(uint64_t amount);
+
 std::string formatCents(uint64_t amount);
 
 std::string getPaymentIDFromExtra(std::string extra);

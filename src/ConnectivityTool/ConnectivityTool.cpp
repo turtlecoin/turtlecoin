@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
@@ -46,19 +35,25 @@ using namespace CryptoNote;
 #define ENDL std::endl
 #endif
 
-namespace {
-  const command_line::arg_descriptor<std::string, true> arg_ip           = {"ip", "set ip"};
-  const command_line::arg_descriptor<uint16_t>      arg_port = { "port", "set port" };
-  const command_line::arg_descriptor<uint16_t>      arg_rpc_port           = {"rpc_port", "set rpc port"};
-  const command_line::arg_descriptor<uint32_t, true> arg_timeout         = {"timeout", "set timeout"};
-  const command_line::arg_descriptor<std::string> arg_priv_key           = {"private_key", "private key to subscribe debug command", "", true};
-  const command_line::arg_descriptor<uint64_t>    arg_peer_id            = {"peer_id", "peer_id if known(if not - will be requested)", 0};
-  const command_line::arg_descriptor<bool>        arg_generate_keys      = {"generate_keys_pair", "generate private and public keys pair"};
+namespace
+{
+    const command_line::arg_descriptor<std::string, true> arg_ip = {"ip", "set ip"};
+    const command_line::arg_descriptor<uint16_t> arg_port = {"port", "set port"};
+    const command_line::arg_descriptor<uint16_t> arg_rpc_port = {"rpc_port", "set rpc port"};
+    const command_line::arg_descriptor<uint32_t, true> arg_timeout = {"timeout", "set timeout"};
+    const command_line::arg_descriptor<std::string> arg_priv_key = {"private_key",
+                                                                    "private key to subscribe debug command", "", true};
+    const command_line::arg_descriptor<uint64_t> arg_peer_id = {"peer_id",
+                                                                "peer_id if known(if not - will be requested)", 0};
+    const command_line::arg_descriptor<bool> arg_generate_keys = {"generate_keys_pair",
+                                                                  "generate private and public keys pair"};
 #ifdef ALLOW_DEBUG_COMMANDS
-  const command_line::arg_descriptor<bool>        arg_request_stat_info  = {"request_stat_info", "request statistics information"};
-  const command_line::arg_descriptor<bool>        arg_request_net_state  = {"request_net_state", "request network state information (peer list, connections count)"};
+    const command_line::arg_descriptor<bool>        arg_request_stat_info  = {"request_stat_info", "request statistics information"};
+    const command_line::arg_descriptor<bool>        arg_request_net_state  = {"request_net_state", "request network state information (peer list, connections count)"};
 #endif
-  const command_line::arg_descriptor<bool>        arg_get_daemon_info    = {"rpc_get_daemon_info", "request daemon state info vie rpc (--rpc_port option should be set ).", "", true};
+    const command_line::arg_descriptor<bool> arg_get_daemon_info = {"rpc_get_daemon_info",
+                                                                    "request daemon state info vie rpc (--rpc_port option should be set ).",
+                                                                    "", true};
 }
 
 #ifdef ALLOW_DEBUG_COMMANDS
@@ -71,26 +66,32 @@ struct response_schema {
 };
 #endif
 
-void withTimeout(System::Dispatcher& dispatcher, unsigned timeout, std::function<void()> f) {
-  std::string result;
-  System::ContextGroup cg(dispatcher);
-  System::ContextGroupTimeout cgTimeout(dispatcher, cg, std::chrono::milliseconds(timeout));
-  
-  cg.spawn([&] {
-    try {
-      f();
-    } catch (System::InterruptedException&) {
-      result = "Operation timeout";
-    } catch (std::exception& e) {
-      result = e.what();
+void withTimeout(System::Dispatcher &dispatcher, unsigned timeout, std::function<void()> f)
+{
+    std::string result;
+    System::ContextGroup cg(dispatcher);
+    System::ContextGroupTimeout cgTimeout(dispatcher, cg, std::chrono::milliseconds(timeout));
+
+    cg.spawn([&]
+             {
+                 try
+                 {
+                     f();
+                 } catch (System::InterruptedException &)
+                 {
+                     result = "Operation timeout";
+                 } catch (std::exception &e)
+                 {
+                     result = e.what();
+                 }
+             });
+
+    cg.wait();
+
+    if (!result.empty())
+    {
+        throw std::runtime_error(result);
     }
-  });
-
-  cg.wait();
-
-  if (!result.empty()) {
-    throw std::runtime_error(result);
-  }
 }
 
 #ifdef ALLOW_DEBUG_COMMANDS
@@ -191,38 +192,42 @@ bool print_COMMAND_REQUEST_NETWORK_STATE(const COMMAND_REQUEST_NETWORK_STATE::re
 //---------------------------------------------------------------------------------------------------------------
 #endif
 
-bool handle_get_daemon_info(po::variables_map& vm) {
-  if(!command_line::has_arg(vm, arg_rpc_port)) {
-    std::cout << "ERROR: rpc port not set" << ENDL;
-    return false;
-  }
+bool handle_get_daemon_info(po::variables_map &vm)
+{
+    if (!command_line::has_arg(vm, arg_rpc_port))
+    {
+        std::cout << "ERROR: rpc port not set" << ENDL;
+        return false;
+    }
 
-  try {
-    System::Dispatcher dispatcher;
-    HttpClient httpClient(dispatcher, command_line::get_arg(vm, arg_ip), command_line::get_arg(vm, arg_rpc_port));
+    try
+    {
+        System::Dispatcher dispatcher;
+        HttpClient httpClient(dispatcher, command_line::get_arg(vm, arg_ip), command_line::get_arg(vm, arg_rpc_port));
 
-    CryptoNote::COMMAND_RPC_GET_INFO::request req;
-    CryptoNote::COMMAND_RPC_GET_INFO::response res;
+        CryptoNote::COMMAND_RPC_GET_INFO::request req;
+        CryptoNote::COMMAND_RPC_GET_INFO::response res;
 
-    invokeJsonCommand(httpClient, "/getinfo", req, res); // TODO: timeout
+        invokeJsonCommand(httpClient, "/getinfo", req, res); // TODO: timeout
 
-    std::cout << "OK" << ENDL
-      << "height: " << res.height << ENDL
-      << "difficulty: " << res.difficulty << ENDL
-      << "tx_count: " << res.tx_count << ENDL
-      << "tx_pool_size: " << res.tx_pool_size << ENDL
-      << "alt_blocks_count: " << res.alt_blocks_count << ENDL
-      << "outgoing_connections_count: " << res.outgoing_connections_count << ENDL
-      << "incoming_connections_count: " << res.incoming_connections_count << ENDL
-      << "white_peerlist_size: " << res.white_peerlist_size << ENDL
-      << "grey_peerlist_size: " << res.grey_peerlist_size << ENDL;
+        std::cout << "OK" << ENDL
+                  << "height: " << res.height << ENDL
+                  << "difficulty: " << res.difficulty << ENDL
+                  << "tx_count: " << res.tx_count << ENDL
+                  << "tx_pool_size: " << res.tx_pool_size << ENDL
+                  << "alt_blocks_count: " << res.alt_blocks_count << ENDL
+                  << "outgoing_connections_count: " << res.outgoing_connections_count << ENDL
+                  << "incoming_connections_count: " << res.incoming_connections_count << ENDL
+                  << "white_peerlist_size: " << res.white_peerlist_size << ENDL
+                  << "grey_peerlist_size: " << res.grey_peerlist_size << ENDL;
 
-  } catch (const std::exception& e) {
-    std::cout << "ERROR: " << e.what() << std::endl;
-    return false;
-  }
+    } catch (const std::exception &e)
+    {
+        std::cout << "ERROR: " << e.what() << std::endl;
+        return false;
+    }
 
-  return true;
+    return true;
 }
 //---------------------------------------------------------------------------------------------------------------
 
@@ -331,70 +336,75 @@ bool handle_request_stat(po::variables_map& vm, PeerIdType peer_id) {
 #endif
 
 //---------------------------------------------------------------------------------------------------------------
-bool generate_and_print_keys() {
-  Crypto::PublicKey pk;
-  Crypto::SecretKey sk;
-  generate_keys(pk, sk);
-  std::cout << "PUBLIC KEY: " << Common::podToHex(pk) << ENDL
-            << "PRIVATE KEY: " << Common::podToHex(sk);
-  return true;
+bool generate_and_print_keys()
+{
+    Crypto::PublicKey pk;
+    Crypto::SecretKey sk;
+    generate_keys(pk, sk);
+    std::cout << "PUBLIC KEY: " << Common::podToHex(pk) << ENDL
+              << "PRIVATE KEY: " << Common::podToHex(sk);
+    return true;
 }
 
-int main(int argc, char *argv[]) {
-  // Declare the supported options.
-  po::options_description desc_general("General options");
-  command_line::add_arg(desc_general, command_line::arg_help);
+int main(int argc, char *argv[])
+{
+    // Declare the supported options.
+    po::options_description desc_general("General options");
+    command_line::add_arg(desc_general, command_line::arg_help);
 
-  po::options_description desc_params("Connectivity options");
-  command_line::add_arg(desc_params, arg_ip);
-  command_line::add_arg(desc_params, arg_port);
-  command_line::add_arg(desc_params, arg_rpc_port);
-  command_line::add_arg(desc_params, arg_timeout);
+    po::options_description desc_params("Connectivity options");
+    command_line::add_arg(desc_params, arg_ip);
+    command_line::add_arg(desc_params, arg_port);
+    command_line::add_arg(desc_params, arg_rpc_port);
+    command_line::add_arg(desc_params, arg_timeout);
 #ifdef ALLOW_DEBUG_COMMANDS
-  command_line::add_arg(desc_params, arg_request_stat_info);
-  command_line::add_arg(desc_params, arg_request_net_state);
+    command_line::add_arg(desc_params, arg_request_stat_info);
+    command_line::add_arg(desc_params, arg_request_net_state);
 #endif
-  command_line::add_arg(desc_params, arg_generate_keys);
-  command_line::add_arg(desc_params, arg_peer_id);
-  command_line::add_arg(desc_params, arg_priv_key);
-  command_line::add_arg(desc_params, arg_get_daemon_info);
+    command_line::add_arg(desc_params, arg_generate_keys);
+    command_line::add_arg(desc_params, arg_peer_id);
+    command_line::add_arg(desc_params, arg_priv_key);
+    command_line::add_arg(desc_params, arg_get_daemon_info);
 
-  po::options_description desc_all;
-  desc_all.add(desc_general).add(desc_params);
+    po::options_description desc_all;
+    desc_all.add(desc_general).add(desc_params);
 
-  po::variables_map vm;
-  bool r = command_line::handle_error_helper(desc_all, [&]() {
-    po::store(command_line::parse_command_line(argc, argv, desc_general, true), vm);
-    if (command_line::get_arg(vm, command_line::arg_help))
+    po::variables_map vm;
+    bool r = command_line::handle_error_helper(desc_all, [&]()
     {
-      std::cout << desc_all << ENDL;
-      return false;
+        po::store(command_line::parse_command_line(argc, argv, desc_general, true), vm);
+        if (command_line::get_arg(vm, command_line::arg_help))
+        {
+            std::cout << desc_all << ENDL;
+            return false;
+        }
+
+        po::store(command_line::parse_command_line(argc, argv, desc_params, false), vm);
+        po::notify(vm);
+
+        return true;
+    });
+
+    if (!r)
+        return 1;
+
+#ifdef ALLOW_DEBUG_COMMANDS
+    if (command_line::has_arg(vm, arg_request_stat_info) || command_line::has_arg(vm, arg_request_net_state)) {
+      return handle_request_stat(vm, command_line::get_arg(vm, arg_peer_id)) ? 0 : 1;
+    }
+#endif
+
+    if (command_line::has_arg(vm, arg_get_daemon_info))
+    {
+        return handle_get_daemon_info(vm) ? 0 : 1;
     }
 
-    po::store(command_line::parse_command_line(argc, argv, desc_params, false), vm);
-    po::notify(vm);
+    if (command_line::has_arg(vm, arg_generate_keys))
+    {
+        return generate_and_print_keys() ? 0 : 1;
+    }
 
-    return true;
-  });
-
-  if (!r)
+    std::cerr << "Not enough arguments." << ENDL;
+    std::cerr << desc_all << ENDL;
     return 1;
-
-#ifdef ALLOW_DEBUG_COMMANDS
-  if (command_line::has_arg(vm, arg_request_stat_info) || command_line::has_arg(vm, arg_request_net_state)) {
-    return handle_request_stat(vm, command_line::get_arg(vm, arg_peer_id)) ? 0 : 1;
-  }
-#endif
-  
-  if (command_line::has_arg(vm, arg_get_daemon_info)) {
-    return handle_get_daemon_info(vm) ? 0 : 1;
-  } 
-  
-  if (command_line::has_arg(vm, arg_generate_keys)) {
-    return generate_and_print_keys() ? 0 : 1;
-  }
-
-  std::cerr << "Not enough arguments." << ENDL;
-  std::cerr << desc_all << ENDL;
-  return 1;
 }

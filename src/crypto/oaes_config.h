@@ -31,7 +31,7 @@
 #ifndef _OAES_CONFIG_H
 #define _OAES_CONFIG_H
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -43,7 +43,7 @@ extern "C" {
 //#define OAES_DEBUG 0
 //#endif // OAES_DEBUG
 
-#ifdef __cplusplus 
+#ifdef __cplusplus
 }
 #endif
 

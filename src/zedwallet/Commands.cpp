@@ -7,8 +7,10 @@
 ///////////////////////////////
 
 #ifdef HAVE_READLINE
+
 #include <readline/readline.h>
 #include <readline/history.h>
+
 #endif
 
 #include <zedwallet/AddressBook.h>
@@ -19,7 +21,7 @@
 #include <zedwallet/WalletConfig.h>
 
 const Maybe<Command> contains(std::string name,
-                                    std::vector<Command> &commands)
+                              std::vector<Command> &commands)
 {
     for (auto command : commands)
     {
@@ -33,7 +35,7 @@ const Maybe<Command> contains(std::string name,
 }
 
 const std::vector<Command> filterCommands(std::vector<Command> &commands,
-                                    std::function<bool(Command)> predicate)
+                                          std::function<bool(Command)> predicate)
 {
     std::vector<Command> result;
 
@@ -73,88 +75,68 @@ bool dispatchCommand(std::shared_ptr<WalletInfo> &walletInfo,
     if (command == "export_keys")
     {
         exportKeys(walletInfo);
-    }
-    else if (command == "help")
+    } else if (command == "help")
     {
         listCommands(available, false);
-    }
-    else if (command == "advanced")
+    } else if (command == "advanced")
     {
         listCommands(available, true);
-    }
-    else if (command == "status")
+    } else if (command == "status")
     {
         status(node);
-    }
-    else if (command == "balance")
+    } else if (command == "balance")
     {
         balance(node, walletInfo->wallet, walletInfo->viewWallet);
-    }
-    else if (command == "address")
+    } else if (command == "address")
     {
         std::cout << SuccessMsg(walletInfo->walletAddress) << std::endl;
-    }
-    else if (command == "incoming_transfers")
+    } else if (command == "incoming_transfers")
     {
         listTransfers(true, false, walletInfo->wallet, node);
-    }
-    else if (command == "save_csv")
+    } else if (command == "save_csv")
     {
         saveCSV(walletInfo->wallet, node);
-    }
-    else if (command == "exit")
+    } else if (command == "exit")
     {
         return true;
-    }
-    else if (command == "save")
+    } else if (command == "save")
     {
         save(walletInfo->wallet);
-    }
-    else if (command == "bc_height")
+    } else if (command == "bc_height")
     {
         blockchainHeight(node, walletInfo->wallet);
-    }
-    else if (command == "reset")
+    } else if (command == "reset")
     {
         reset(node, walletInfo);
-    }
-    else if (command == "outgoing_transfers")
+    } else if (command == "outgoing_transfers")
     {
         listTransfers(false, true, walletInfo->wallet, node);
-    }
-    else if (command == "list_transfers")
+    } else if (command == "list_transfers")
     {
         listTransfers(true, true, walletInfo->wallet, node);
-    }
-    else if (command == "transfer")
+    } else if (command == "transfer")
     {
         transfer(walletInfo, node.getLastKnownBlockHeight());
-    }
-    else if (command == "optimize")
+    } else if (command == "optimize")
     {
         fullOptimize(walletInfo->wallet);
-    }
-    else if (command == "ab_add")
+    } else if (command == "ab_add")
     {
         addToAddressBook();
-    }
-    else if (command == "ab_delete")
+    } else if (command == "ab_delete")
     {
         deleteFromAddressBook();
-    }
-    else if (command == "ab_list")
+    } else if (command == "ab_list")
     {
         listAddressBook();
-    }
-    else if (command == "ab_send")
+    } else if (command == "ab_send")
     {
         sendFromAddressBook(walletInfo, node.getLastKnownBlockHeight());
-    }
-    else if (command == "change_password")
+    } else if (command == "change_password")
     {
         changePassword(walletInfo);
     }
-    /* This should never happen */
+        /* This should never happen */
     else
     {
         std::cout << WarningMsg("Command was defined but not hooked up: ")
@@ -168,8 +150,8 @@ bool dispatchCommand(std::shared_ptr<WalletInfo> &walletInfo,
 }
 
 const Maybe<Command> resolveCommand(std::string command,
-                              std::vector<Command> &allCommands,
-                              std::vector<Command> &available)
+                                    std::vector<Command> &allCommands,
+                                    std::vector<Command> &available)
 {
     int index;
 
@@ -210,7 +192,7 @@ const Maybe<Command> resolveCommand(std::string command,
     /* Command doesn't exist */
     if (!maybeCommand.isJust)
     {
-        std::cout << "Unknown command: " << WarningMsg(command) 
+        std::cout << "Unknown command: " << WarningMsg(command)
                   << ", use " << SuggestionMsg("help")
                   << " command to list all possible commands."
                   << std::endl;
@@ -226,40 +208,40 @@ std::vector<Command> allCommands()
     /* Add things to this in alphabetical order so it's nicer to read please
        :) */
     std::vector<Command> commands =
-    {
-        /* Basic commands */
-        {"address", "Display your payment address", true, false},
-        {"advanced", "List available advanced commands", true, false},
+            {
+                    /* Basic commands */
+                    {"address",            "Display your payment address",                 true,  false},
+                    {"advanced",           "List available advanced commands",             true,  false},
 
-        {"balance", "Display how much " + WalletConfig::ticker + 
-                    " you have", true, false},
+                    {"balance",            "Display how much " + WalletConfig::ticker +
+                                           " you have",                                    true,  false},
 
-        {"exit", "Exit and save your wallet", true, false},
-        {"export_keys", "Export your private keys", true, false},
-        {"help", "List this help message", true, false},
+                    {"exit",               "Exit and save your wallet",                    true,  false},
+                    {"export_keys",        "Export your private keys",                     true,  false},
+                    {"help",               "List this help message",                       true,  false},
 
-        {"transfer", "Send " + WalletConfig::ticker +
-                     " to someone", false, false},
+                    {"transfer",           "Send " + WalletConfig::ticker +
+                                           " to someone",                                  false, false},
 
-        /* Advanced commands */
-        {"ab_add", "Add a person to your address book", true, true},
-        {"ab_delete", "Delete a person from your address book", true, true},
-        {"ab_list", "List everyone in your address book", true, true},
+                    /* Advanced commands */
+                    {"ab_add",             "Add a person to your address book",            true,  true},
+                    {"ab_delete",          "Delete a person from your address book",       true,  true},
+                    {"ab_list",            "List everyone in your address book",           true,  true},
 
-        {"ab_send", "Send " + WalletConfig::ticker + 
-                    " to someone in your address book", false, true},
+                    {"ab_send",            "Send " + WalletConfig::ticker +
+                                           " to someone in your address book",             false, true},
 
-        {"bc_height", "Show the blockchain height", true, true},
-        {"change_password", "Change your wallet password", true, true},
-        {"incoming_transfers", "Show incoming transfers", true, true},
-        {"list_transfers", "Show all transfers", false, true},
-        {"optimize", "Optimize your wallet to send large amounts", false, true},
-        {"outgoing_transfers", "Show outgoing transfers", false, true},
-        {"reset", "Recheck the chain from zero for transactions", true, true},
-        {"save", "Save your wallet state", true, true},
-        {"save_csv", "Save all wallet transactions to a CSV file", false, true},
-        {"status", "Show the daemon status", true, true}
-    };
+                    {"bc_height",          "Show the blockchain height",                   true,  true},
+                    {"change_password",    "Change your wallet password",                  true,  true},
+                    {"incoming_transfers", "Show incoming transfers",                      true,  true},
+                    {"list_transfers",     "Show all transfers",                           false, true},
+                    {"optimize",           "Optimize your wallet to send large amounts",   false, true},
+                    {"outgoing_transfers", "Show outgoing transfers",                      false, true},
+                    {"reset",              "Recheck the chain from zero for transactions", true,  true},
+                    {"save",               "Save your wallet state",                       true,  true},
+                    {"save_csv",           "Save all wallet transactions to a CSV file",   false, true},
+                    {"status",             "Show the daemon status",                       true,  true}
+            };
 
     /* Pop em in alphabetical order */
     std::sort(commands.begin(), commands.end(), [](const Command &lhs,
@@ -280,8 +262,8 @@ std::vector<Command> allCommands()
 
 /* The commands which are currently usable */
 const std::vector<Command> availableCommands(bool viewWallet,
-                                                   std::vector<Command>
-                                                   &commands)
+                                             std::vector<Command>
+                                             &commands)
 {
     if (!viewWallet)
     {

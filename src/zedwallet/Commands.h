@@ -11,15 +11,15 @@
 #pragma once
 
 const Maybe<Command> contains(std::string name,
-                                    std::vector<Command> &commands);
+                              std::vector<Command> &commands);
 
 const std::vector<Command> filterCommands(std::vector<Command> &commands,
-                                    std::function<bool(Command)> predicate);
+                                          std::function<bool(Command)> predicate);
 
 std::vector<Command> allCommands();
 
 const std::vector<Command> availableCommands(bool viewWallet,
-                                       std::vector<Command> &commands);
+                                             std::vector<Command> &commands);
 
 void listCommands(std::vector<Command> &commands, bool advanced);
 

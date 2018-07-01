@@ -13,7 +13,9 @@
 #include <CryptoNoteCore/Account.h>
 
 #ifndef MSVC
+
 #include <fstream>
+
 #endif
 
 #include <Mnemonics/electrum-words.h>
@@ -34,7 +36,7 @@ void changePassword(std::shared_ptr<WalletInfo> &walletInfo)
 
     /* Get a new password for the wallet */
     const std::string newPassword
-        = getWalletPassword(true, "Enter your new password: ");
+            = getWalletPassword(true, "Enter your new password: ");
 
     /* Change the wallet password */
     walletInfo->wallet.changePassword(walletInfo->walletPass, newPassword);
@@ -75,7 +77,7 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
                                                    derivedPrivateViewKey);
 
     const bool deterministicPrivateKeys
-             = derivedPrivateViewKey == privateViewKey;
+            = derivedPrivateViewKey == privateViewKey;
 
     std::cout << SuccessMsg("Private spend key:")
               << std::endl
@@ -91,7 +93,7 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
     {
         std::string mnemonicSeed;
 
-        crypto::ElectrumWords::bytes_to_words(privateSpendKey, 
+        crypto::ElectrumWords::bytes_to_words(privateSpendKey,
                                               mnemonicSeed,
                                               "English");
 
@@ -110,10 +112,10 @@ void status(CryptoNote::INode &node)
     std::string status;
 
     std::thread getStatus([&node, &completed, &status]
-    {
-        status = node.getInfo();
-        completed.store(true);
-    });
+                          {
+                              status = node.getInfo();
+                              completed.store(true);
+                          });
 
     const auto startTime = std::chrono::system_clock::now();
 
@@ -136,8 +138,7 @@ void status(CryptoNote::INode &node)
         std::cout << WarningMsg("Unable to get daemon status - has it "
                                 "crashed/frozen?")
                   << std::endl;
-    }
-    else
+    } else
     {
         std::cout << InformationMsg(status) << std::endl;
     }
@@ -163,7 +164,7 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
 
     if (viewWallet)
     {
-        std::cout << std::endl 
+        std::cout << std::endl
                   << InformationMsg("Please note that view only wallets "
                                     "can only track incoming transactions,")
                   << std::endl
@@ -180,8 +181,8 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
                   << "Your balance may be incorrect until you are fully "
                   << "synced!" << std::endl;
     }
-    /* Small buffer because wallet height doesn't update instantly like node
-       height does */
+        /* Small buffer because wallet height doesn't update instantly like node
+           height does */
     else if (walletHeight + 1000 < remoteHeight)
     {
         std::cout << std::endl
@@ -209,8 +210,7 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     if (walletHeight + 1000 > remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(walletHeight));
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(std::to_string(walletHeight));
     }
@@ -220,8 +220,7 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(localHeight));
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(std::to_string(localHeight));
     }
@@ -235,8 +234,7 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
                   << WarningMsg(WalletConfig::daemonName)
                   << WarningMsg(" open!")
                   << std::endl;
-    }
-    else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
+    } else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
     {
         std::cout << InformationMsg("You are synced with the network, but the "
                                     "blockchain is still being scanned for "
@@ -244,12 +242,10 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
                   << std::endl
                   << "Balances might be incorrect whilst this is ongoing."
                   << std::endl;
-    }
-    else if (localHeight == remoteHeight)
+    } else if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg("Yay! You are synced!") << std::endl;
-    }
-    else
+    } else
     {
         std::cout << WarningMsg("Be patient, you are still syncing with the "
                                 "network!") << std::endl;
@@ -277,7 +273,7 @@ void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo)
 void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 {
     const bool fetchTimestamp =
-         confirm("Output timestamps? (Takes lots longer to write file)", false);
+            confirm("Output timestamps? (Takes lots longer to write file)", false);
 
     const size_t numTransactions = wallet.getTransactionCount();
 
@@ -302,8 +298,7 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
     {
         csv << "Timestamp,Block Height,Hash,Amount,In/Out"
             << std::endl;
-    }
-    else
+    } else
     {
         csv << "Block Height,Hash,Amount,In/Out"
             << std::endl;
@@ -335,7 +330,7 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
                 csv.close();
                 return;
             }
-            
+
             csv << blockTime << ",";                    /* Timestamp */
         }
 
@@ -387,7 +382,7 @@ void printOutgoingTransfer(CryptoNote::WalletTransaction t,
     if (fetchTimestamp)
     {
         const std::string blockTime
-            = getBlockTimestamp(getBlock(t.blockHeight, node));
+                = getBlockTimestamp(getBlock(t.blockHeight, node));
 
         /* Couldn't get timestamp, maybe old node or turtlecoind closed */
         if (blockTime != "")
@@ -422,7 +417,7 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
     if (fetchTimestamp)
     {
         const std::string blockTime
-            = getBlockTimestamp(getBlock(t.blockHeight, node));
+                = getBlockTimestamp(getBlock(t.blockHeight, node));
 
         /* Couldn't get timestamp, maybe old node or turtlecoind closed */
         if (blockTime != "")
@@ -434,12 +429,12 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
     std::cout << std::endl;
 }
 
-void listTransfers(bool incoming, bool outgoing, 
+void listTransfers(bool incoming, bool outgoing,
                    CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 {
     const bool fetchTimestamp =
-         confirm("Display timestamps? (Takes lots longer to list transactions)",
-                 false);
+            confirm("Display timestamps? (Takes lots longer to list transactions)",
+                    false);
 
     const size_t numTransactions = wallet.getTransactionCount();
 
@@ -454,8 +449,7 @@ void listTransfers(bool incoming, bool outgoing,
         {
             printOutgoingTransfer(t, node, fetchTimestamp);
             totalSpent += -t.totalAmount;
-        }
-        else if (t.totalAmount > 0 && incoming)
+        } else if (t.totalAmount > 0 && incoming)
         {
             printIncomingTransfer(t, node, fetchTimestamp);
             totalReceived += t.totalAmount;
@@ -464,8 +458,8 @@ void listTransfers(bool incoming, bool outgoing,
 
     if (incoming)
     {
-        std::cout << SuccessMsg("Total received: " 
-                              + formatAmount(totalReceived))
+        std::cout << SuccessMsg("Total received: "
+                                + formatAmount(totalReceived))
                   << std::endl;
     }
 
