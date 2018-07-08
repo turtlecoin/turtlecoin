@@ -70,12 +70,15 @@ namespace po = boost::program_options;
 
 namespace {
 
+/* Can't nicely do a c style string inline */
+const std::string daemon_port_desc = "Use daemon instance at port <arg> instead of " + std::to_string(CryptoNote::RPC_DEFAULT_PORT);
+
 const command_line::arg_descriptor<std::string> arg_wallet_file = { "wallet-file", "Use wallet <arg>", "" };
 const command_line::arg_descriptor<std::string> arg_generate_new_wallet = { "generate-new-wallet", "Generate new wallet and save it to <arg>", "" };
 const command_line::arg_descriptor<std::string> arg_daemon_address = { "daemon-address", "Use daemon instance at <host>:<port>", "" };
 const command_line::arg_descriptor<std::string> arg_daemon_host = { "daemon-host", "Use daemon instance at host <arg> instead of localhost", "" };
 const command_line::arg_descriptor<std::string> arg_password = { "password", "Wallet password", "", true };
-const command_line::arg_descriptor<uint16_t> arg_daemon_port = { "daemon-port", "Use daemon instance at port <arg> instead of " + CryptoNote::RPC_DEFAULT_PORT, 0 };
+const command_line::arg_descriptor<uint16_t> arg_daemon_port = { "daemon-port", daemon_port_desc.c_str(), 0 };
 const command_line::arg_descriptor<uint32_t> arg_log_level = { "set_log", "", INFO, true };
 const command_line::arg_descriptor<bool>      arg_SYNC_FROM_ZERO  = {"SYNC_FROM_ZERO", "Sync from block 0. Use for premine wallet or brainwallet", false};
 const command_line::arg_descriptor<bool>      arg_exit_after_generate  = {"exit-after-generate", "Exit immediately after generating a wallet, do not try to sync with the daemon", false};
