@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "CryptoNoteConfig.h"
 #include "RpcNodeConfiguration.h"
 
 namespace PaymentService {
@@ -29,7 +30,7 @@ RpcNodeConfiguration::RpcNodeConfiguration() {
 void RpcNodeConfiguration::initOptions(boost::program_options::options_description& desc) {
   desc.add_options()
     ("daemon-address", po::value<std::string>()->default_value("localhost"), "turtlecoind address")
-    ("daemon-port", po::value<uint16_t>()->default_value(11898), "daemon port");
+    ("daemon-port", po::value<uint16_t>()->default_value(CryptoNote::RPC_DEFAULT_PORT), "daemon port");
 }
 
 void RpcNodeConfiguration::init(const boost::program_options::variables_map& options) {
