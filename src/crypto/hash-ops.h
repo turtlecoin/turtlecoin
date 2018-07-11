@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers
 //
 // This file is part of Bytecoin.
 //
@@ -61,12 +61,12 @@ enum {
   HASH_SIZE = 32,
   HASH_DATA_AREA = 136,
   SLOW_HASH_CONTEXT_SIZE = 2097552,
-  SLOW_HASH_CONTEXT_LITE_SIZE = 1048976   // Suml: Unused for now but this is the right size for 1MB scratchpads.
+  SLOW_HASH_CONTEXT_LITE_SIZE = 1048976 // Suml: Unused for now but this is the right size for 1MB scratchpads.
 };
 
 void cn_fast_hash(const void *data, size_t length, char *hash);
 
-void cn_slow_hash_f(void *, const void *, size_t, void *, int, int);
+void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed);
 
 void hash_extra_blake(const void *data, size_t length, char *hash);
 void hash_extra_groestl(const void *data, size_t length, char *hash);

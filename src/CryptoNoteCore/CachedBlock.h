@@ -20,12 +20,6 @@
 #include <boost/optional.hpp>
 #include <CryptoNote.h>
 
-namespace Crypto {
-
-class cn_context;
-
-}
-
 namespace CryptoNote {
 
 class CachedBlock {
@@ -34,7 +28,7 @@ public:
   const BlockTemplate& getBlock() const;
   const Crypto::Hash& getTransactionTreeHash() const;
   const Crypto::Hash& getBlockHash() const;
-  const Crypto::Hash& getBlockLongHash(Crypto::cn_context& cryptoContext) const;
+  const Crypto::Hash& getBlockLongHash() const;
   const Crypto::Hash& getAuxiliaryBlockHeaderHash() const;
   const BinaryArray& getBlockHashingBinaryArray() const;
   const BinaryArray& getParentBlockBinaryArray(bool headerOnly) const;

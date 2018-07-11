@@ -278,7 +278,7 @@ namespace CryptoNote
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
-  bool miner::find_nonce_for_given_block(Crypto::cn_context &context, BlockTemplate& bl, const Difficulty& diffic) {
+  bool miner::find_nonce_for_given_block(BlockTemplate& bl, const Difficulty& diffic) {
 
     unsigned nthreads = std::thread::hardware_concurrency();
 
@@ -290,7 +290,6 @@ namespace CryptoNote
 
       for (unsigned i = 0; i < nthreads; ++i) {
         threads[i] = std::async(std::launch::async, [&, i]() {
-          Crypto::cn_context localctx;
           Crypto::Hash h;
 
           BlockTemplate lb(bl); // copy to local block
@@ -300,7 +299,7 @@ namespace CryptoNote
 
             CachedBlock cb(lb);
             try {
-              h = cb.getBlockLongHash(localctx);
+              h = cb.getBlockLongHash();
             } catch (std::exception&) {
               return;
             }
@@ -328,7 +327,7 @@ namespace CryptoNote
         Crypto::Hash h;
         CachedBlock cb(bl);
         try {
-          h = cb.getBlockLongHash(context);
+          h = cb.getBlockLongHash();
         } catch (std::exception&) {
           return false;
         }
@@ -376,7 +375,6 @@ namespace CryptoNote
     uint32_t nonce = m_starter_nonce + th_local_index;
     Difficulty local_diff = 0;
     uint32_t local_template_ver = 0;
-    Crypto::cn_context context;
     BlockTemplate b;
 
     while(!m_stop)
@@ -410,7 +408,7 @@ namespace CryptoNote
       CachedBlock cb(b);
       if (!m_stop) {
         try {
-          h = cb.getBlockLongHash(context);
+          h = cb.getBlockLongHash();
         } catch (std::exception& e) {
           logger(ERROR) << "getBlockLongHash failed: " << e.what();
           m_stop = true;

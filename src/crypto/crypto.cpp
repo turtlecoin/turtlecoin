@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2012-2016, The CryptoNote developers, The Bytecoin developers, The Karbowanec developers
 //
 // This file is part of Bytecoin.
 //
@@ -62,13 +62,35 @@ namespace Crypto {
     ge_p3_tobytes(reinterpret_cast<unsigned char*>(&pub), &point);
   }
 
-  void crypto_ops::generate_keys_from_seed(PublicKey &pub, SecretKey &sec, SecretKey &seed) {
+  void crypto_ops::generate_deterministic_keys(PublicKey &pub, SecretKey &sec, SecretKey& second) {
+    lock_guard<mutex> lock(random_lock);
     ge_p3 point;
-    sec = seed;
-    sc_reduce32(reinterpret_cast<unsigned char*>(&sec));
+	sec = second;
+    sc_reduce32(reinterpret_cast<unsigned char*>(&sec)); // reduce in case second round of keys (sendkeys)
     ge_scalarmult_base(&point, reinterpret_cast<unsigned char*>(&sec));
     ge_p3_tobytes(reinterpret_cast<unsigned char*>(&pub), &point);
   }
+
+  SecretKey crypto_ops::generate_m_keys(PublicKey &pub, SecretKey &sec, const SecretKey& recovery_key, bool recover) {
+    lock_guard<mutex> lock(random_lock);
+    ge_p3 point;
+    SecretKey rng;
+    if (recover)
+    {
+      rng = recovery_key;
+    }
+    else
+    {
+      random_scalar(reinterpret_cast<EllipticCurveScalar&>(rng));
+    }
+    sec = rng;
+    sc_reduce32(reinterpret_cast<unsigned char*>(&sec)); // reduce in case second round of keys (sendkeys)
+    ge_scalarmult_base(&point, reinterpret_cast<unsigned char*>(&sec));
+    ge_p3_tobytes(reinterpret_cast<unsigned char*>(&pub), &point);
+
+    return rng;
+  }
+
 
   bool crypto_ops::check_key(const PublicKey &key) {
     ge_p3 point;
@@ -306,16 +328,16 @@ namespace Crypto {
     ge_p1p1_to_p3(&res, &point2);
   }
 
-    KeyImage crypto_ops::scalarmultKey(const KeyImage & P, const KeyImage & a) {
-        ge_p3 A;
-        ge_p2 R;
-// maybe use assert instead?
-        ge_frombytes_vartime(&A, reinterpret_cast<const unsigned char*>(&P));
-        ge_scalarmult(&R, reinterpret_cast<const unsigned char*>(&a), &A);
-        KeyImage aP;
-        ge_tobytes(reinterpret_cast<unsigned char*>(&aP), &R);
-        return aP;
-    }
+  KeyImage crypto_ops::scalarmultKey(const KeyImage & P, const KeyImage & a) {
+    ge_p3 A;
+    ge_p2 R;
+    // maybe use assert instead?
+    ge_frombytes_vartime(&A, reinterpret_cast<const unsigned char*>(&P));
+    ge_scalarmult(&R, reinterpret_cast<const unsigned char*>(&a), &A);
+    KeyImage aP;
+    ge_tobytes(reinterpret_cast<unsigned char*>(&aP), &R);
+    return aP;
+  }
 
   void crypto_ops::hash_data_to_ec(const uint8_t* data, std::size_t len, PublicKey& key) {
     Hash h;
@@ -346,17 +368,16 @@ namespace Crypto {
 #ifdef _MSC_VER
 #pragma warning(disable: 4200)
 #endif
-  struct ec_point_pair {
-    EllipticCurvePoint a, b;
-  };
+
   struct rs_comm {
     Hash h;
-    struct ec_point_pair ab[];
-
+    struct {
+      EllipticCurvePoint a, b;
+    } ab[];
   };
 
   static inline size_t rs_comm_size(size_t pubs_count) {
-     return sizeof(rs_comm) + pubs_count * sizeof(ec_point_pair);
+    return sizeof(rs_comm) + pubs_count * sizeof(((rs_comm*)0)->ab[0]);
   }
 
   void crypto_ops::generate_ring_signature(const Hash &prefix_hash, const KeyImage &image,
@@ -464,4 +485,3 @@ namespace Crypto {
     return sc_isnonzero(reinterpret_cast<unsigned char*>(&h)) == 0;
   }
 }
-

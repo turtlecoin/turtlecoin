@@ -50,7 +50,7 @@ namespace CryptoNote {
     bool on_idle();
     void on_synchronized();
     //synchronous analog (for fast calls)
-    static bool find_nonce_for_given_block(Crypto::cn_context &context, BlockTemplate& bl, const Difficulty& diffic);
+    static bool find_nonce_for_given_block(BlockTemplate& bl, const Difficulty& diffic);
     void pause();
     void resume();
     void do_print_hashrate(bool do_hr);
