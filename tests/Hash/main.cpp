@@ -27,8 +27,6 @@
 using namespace std;
 typedef Crypto::Hash chash;
 
-Crypto::cn_context *context;
-
 extern "C" {
 #ifdef _MSC_VER
 #pragma warning(disable: 4297)
@@ -42,19 +40,19 @@ extern "C" {
   }
 
   static void cn_v6(const void *data, size_t length, char *hash) {
-    cn_slow_hash_v6(*context, data, length, *reinterpret_cast<chash *>(hash));
+    cn_slow_hash_v6(data, length, *reinterpret_cast<chash *>(hash));
   }
 
   static void cn_v7(const void *data, size_t length, char *hash) {
-    cn_slow_hash_v7(*context, data, length, *reinterpret_cast<chash *>(hash));
+    cn_slow_hash_v7(data, length, *reinterpret_cast<chash *>(hash));
   }
 
   static void cn_lite_v0(const void *data, size_t length, char *hash) {
-    cn_lite_slow_hash_v0(*context, data, length, *reinterpret_cast<chash *>(hash));
+    cn_lite_slow_hash_v0(data, length, *reinterpret_cast<chash *>(hash));
   }
 
   static void cn_lite_v1(const void *data, size_t length, char *hash) {
-    cn_lite_slow_hash_v1(*context, data, length, *reinterpret_cast<chash *>(hash));
+    cn_lite_slow_hash_v1(data, length, *reinterpret_cast<chash *>(hash));
   }
 }
 
@@ -94,9 +92,6 @@ int main(int argc, char *argv[]) {
       f = &hf->f;
       break;
     }
-  }
-  if (f == cn_v6 || f == cn_v7 || f == cn_lite_v0 || f == cn_lite_v1 ) {
-    context = new Crypto::cn_context();
   }
   input.open(argv[2], ios_base::in);
   for (;;) {

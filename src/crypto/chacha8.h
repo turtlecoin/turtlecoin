@@ -11,6 +11,7 @@
 #define CHACHA8_IV_SIZE 8
 
 #if defined(__cplusplus)
+#pragma once
 #include <memory.h>
 #include <string>
 
