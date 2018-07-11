@@ -61,7 +61,7 @@ enum {
   HASH_SIZE = 32,
   HASH_DATA_AREA = 136,
   SLOW_HASH_CONTEXT_SIZE = 2097552,
-  SLOW_HASH_CONTEXT_LITE_SIZE = 1048976 // Suml: Unused for now but this is the right size for 1MB scratchpads.
+  SLOW_HASH_CONTEXT_LITE_SIZE = 1048976  // Suml: Unused for now but this is the right size for 1MB scratchpads.
 };
 
 void cn_fast_hash(const void *data, size_t length, char *hash);
