@@ -7,43 +7,46 @@ This is python3, so you might need to launch it with python3 makechange.py
 Make two wallets and fill one or both with some funds, or start mining to it.
 Open the wallets with walletd like so:
 
-./walletd -w walletA.wallet -p yourpass --rpc-password test --daemon-port 11898 --bind-port 8070
-./walletd -w walletB.wallet -p yourpass --rpc-password test --daemon-port 11898 --bind-port 8071
+./walletd -w walletA.wallet -p yourpass --rpc-password test --bind-port 8070
+./walletd -w walletB.wallet -p yourpass --rpc-password test --bind-port 8071
 
 Feel free to change these parameters if needed of course.
 
-Next, fill in the address variables with your two address, and change the walletd ports and hosts if needed.
-
-Make sure the address variables are correct, because if it isn't, you will
-rapidly be sending your funds to this address.
-
-This script rapidly sends random amount of funds from two wallets to each other,
-hopefully generating change on a new network.
+This script rapidly sends random amount of funds from two wallets to each
+other, hopefully generating change on a new network.
 '''
 
 import requests
 import json
 import random
 import time
+import sys
+from threading import Thread
 
-# The address of your first wallet
-addressA = "Fill me in!"
 
-# The address of your second wallet
-addressB = "Fill me in!"
+def getAddress(host, port, rpcPassword):
+    payload = {
+        'jsonrpc': '2.0',
+        'method': "getAddresses",
+        'password': rpcPassword,
+        'id': 'test',
+        'params': {}
+    }
 
-if len(addressA) != 99 or len(addressB) != 99:
-    print("Please fill in your addresses and re-run the script.")
-    quit()
+    url = 'http://' + host + ':' + port + '/json_rpc'
 
-walletdPortA = "8070"
-walletdAddressA = "127.0.0.1"
+    response = requests.post(
+        url, data=json.dumps(payload),
+        headers={'content-type': 'application/json'}
+    ).json()
 
-walletdPortB = "8071"
-walletdAddressB = "127.0.0.1"
+    if 'error' in response:
+        print(response['error'])
+        print('Failed to get address, exiting')
+        sys.exit()
+    else:
+        return response['result']['addresses'][0]
 
-rpcPasswordA = "test"
-rpcPasswordB = "test"
 
 def sendTransaction(host, port, rpcPassword, **kwargs):
     payload = {
@@ -56,8 +59,10 @@ def sendTransaction(host, port, rpcPassword, **kwargs):
 
     url = 'http://' + host + ':' + port + '/json_rpc'
 
-    response = requests.post(url, data=json.dumps(payload),
-                             headers={'content-type': 'application/json'}).json()
+    response = requests.post(
+        url, data=json.dumps(payload),
+        headers={'content-type': 'application/json'}
+    ).json()
 
     if 'error' in response:
         print(response['error'])
@@ -65,6 +70,7 @@ def sendTransaction(host, port, rpcPassword, **kwargs):
     else:
         print(response['result'])
         return True
+
 
 def sendTXs(host, port, rpcPassword, sender, receiver):
     def loop():
@@ -93,6 +99,21 @@ def sendTXs(host, port, rpcPassword, sender, receiver):
             else:
                 sleepAmount = 0.001
 
-while True:
-    sendTXs(walletdAddressA, walletdPortA, rpcPasswordA, sender=addressA, receiver=addressB)
-    sendTXs(walletdAddressB, walletdPortB, rpcPasswordB, sender=addressB, receiver=addressA)
+
+walletdHostA = "127.0.0.1"
+walletdPortA = "8070"
+
+walletdHostB = "127.0.0.1"
+walletdPortB = "8071"
+
+rpcPasswordA = "test"
+rpcPasswordB = "test"
+
+addressA = getAddress(walletdHostA, walletdPortA, rpcPasswordA)
+addressB = getAddress(walletdHostB, walletdPortB, rpcPasswordB)
+
+Thread(target=sendTXs, args=(walletdHostA, walletdPortA, rpcPasswordA,
+       addressA, addressB)).start()
+
+Thread(target=sendTXs, args=(walletdHostB, walletdPortB, rpcPasswordB,
+       addressB, addressA)).start()
