@@ -37,7 +37,7 @@ sudo apt-get install librocksdb-dev
 
 ##### Building
 
-- `git clone https://github.com/turtlecoin/turtlecoin`
+- `git clone -b master https://github.com/turtlecoin/turtlecoin`
 - `cd turtlecoin`
 - `mkdir build && cd $_`
 - `cmake ..`
@@ -54,7 +54,7 @@ sudo apt-get install librocksdb-dev
 
 ##### Building
 
-- `git clone https://github.com/turtlecoin/turtlecoin`
+- `git clone -b master https://github.com/turtlecoin/turtlecoin`
 - `cd turtlecoin`
 - `mkdir build && cd $_`
 - `cmake ..` or `cmake -DBOOST_ROOT=<path_to_boost_install> ..` when building
