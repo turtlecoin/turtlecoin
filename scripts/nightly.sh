@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# nightly.sh - pull a copy of turtlecoin-master 
+# nightly.sh - pull a copy of turtlecoin-development 
 # and put it inside a timestamped folder.
 # rock made this
 
@@ -13,7 +13,7 @@ cd ~/Source/
 ls -al
 
 echo -e "\n CLONING TurtleCoin in $sourcefolder"
-git clone https://github.com/turtlecoin/turtlecoin $sourcefolder
+git clone -b development https://github.com/turtlecoin/turtlecoin $sourcefolder
 cd $sourcefolder
 mkdir -p $sourcefolder/build && cd $sourcefolder/build
 ls -al
