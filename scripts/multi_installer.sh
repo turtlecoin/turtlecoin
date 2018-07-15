@@ -54,7 +54,7 @@ _set_wd() {
             esac
         fi
         mkdir turtlecoin
-        git clone -q https://github.com/turtlecoin/turtlecoin turtlecoin   >>build.log 2>&1 || _fail "Unable to clone git repository. Please see build.log for more information"
+        git clone -b master -q https://github.com/turtlecoin/turtlecoin turtlecoin   >>build.log 2>&1 || _fail "Unable to clone git repository. Please see build.log for more information"
         cd turtlecoin
     fi
 }
