@@ -651,7 +651,7 @@ void doTransfer(std::string address, uint64_t amount, uint64_t fee,
                     if (!WalletConfig::mixinZeroDisabled ||
                          height < WalletConfig::mixinZeroDisabledHeight)
                     {
-                        std::cout << "Alternatively, you can sent the mixin "
+                        std::cout << "Alternatively, you can set the mixin "
                                   << "count to 0." << std::endl;
 
                         if(confirm("Retry transaction with mixin of 0? "
