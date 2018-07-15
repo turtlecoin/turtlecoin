@@ -18,6 +18,7 @@
 #include "PaymentServiceConfiguration.h"
 
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <boost/program_options.hpp>
 
@@ -57,8 +58,8 @@ void Configuration::initOptions(boost::program_options::options_description& des
       ("container-file,w", po::value<std::string>(), "container file")
       ("container-password,p", po::value<std::string>(), "container password")
       ("generate-container,g", "generate new container file with one wallet and exit")
-	    ("view-key", po::value<std::string>(), "generate a container with this secret key view")
-	    ("spend-key", po::value<std::string>(), "generate a container with this secret spend key")
+      ("view-key", po::value<std::string>(), "generate a container with this secret key view")
+      ("spend-key", po::value<std::string>(), "generate a container with this secret spend key")
       ("mnemonic-seed", po::value<std::string>(), "generate a container with this mnemonic seed")
       ("daemon,d", "run as daemon in Unix or as service in Windows")
 #ifdef _WIN32
@@ -122,6 +123,22 @@ void Configuration::init(const boost::program_options::variables_map& options) {
     containerFile = options["container-file"].as<std::string>();
   }
 
+  if (!std::ifstream(containerFile) && options.count("generate-container") == 0)
+  {
+      if (std::ifstream(containerFile + ".wallet"))
+      {
+        throw ConfigurationError(("The wallet file specified doesn't exist, did you mean: " + containerFile + ".wallet?").c_str());
+      }
+      else
+      {
+        throw ConfigurationError("The file specified doesn't exist; maybe check your spelling?");
+      }
+  }
+
+  if (options.count("container-file") != 0) {
+      containerFile = options["container-file"].as<std::string>();
+    }
+
   if (options.count("container-password") != 0) {
     containerPassword = options["container-password"].as<std::string>();
   }
@@ -173,17 +190,17 @@ void Configuration::init(const boost::program_options::variables_map& options) {
       throw ConfigurationError("container-file parameter are required");
     }
   }
-  
+
   // If generating a container skip the authentication parameters.
   if (generateNewContainer) {
     return;
   }
-  
+
   // Check for the authentication parameters
   if ((options.count("rpc-password") == 0) && (options.count("rpc-legacy-security") == 0)) {
     throw ConfigurationError("Please specify an RPC password or use the --rpc-legacy-security flag.");
   }
-  
+
   if (options.count("rpc-legacy-security") != 0) {
     legacySecurity = true;
   }
@@ -194,7 +211,7 @@ void Configuration::init(const boost::program_options::variables_map& options) {
   if (options.count("enable-cors") != 0) {
     corsHeader = options["enable-cors"].as<std::string>();
   }
-  
+
 }
 
 } //namespace PaymentService
