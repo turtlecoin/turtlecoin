@@ -293,7 +293,7 @@ bool Currency::isFusionTransaction(const std::vector<uint64_t>& inputsAmounts, c
 
   uint64_t inputAmount = 0;
   for (auto amount: inputsAmounts) {
-    if (amount < defaultDustThreshold(height)) {
+    if (amount < defaultFusionDustThreshold(height)) {
       return false;
     }
 
@@ -302,7 +302,7 @@ bool Currency::isFusionTransaction(const std::vector<uint64_t>& inputsAmounts, c
 
   std::vector<uint64_t> expectedOutputsAmounts;
   expectedOutputsAmounts.reserve(outputsAmounts.size());
-  decomposeAmount(inputAmount, defaultDustThreshold(height), expectedOutputsAmounts);
+  decomposeAmount(inputAmount, defaultFusionDustThreshold(height), expectedOutputsAmounts);
   std::sort(expectedOutputsAmounts.begin(), expectedOutputsAmounts.end());
 
   return expectedOutputsAmounts == outputsAmounts;
@@ -334,7 +334,7 @@ bool Currency::isAmountApplicableInFusionTransactionInput(uint64_t amount, uint6
     return false;
   }
 
-  if (amount < defaultDustThreshold(height)) {
+  if (amount < defaultFusionDustThreshold(height)) {
     return false;
   }
 

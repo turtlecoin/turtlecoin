@@ -67,6 +67,14 @@ public:
 
       return m_defaultDustThreshold;
   }
+  uint64_t defaultFusionDustThreshold(uint32_t height) const {
+      if (height >= CryptoNote::parameters::FUSION_DUST_THRESHOLD_HEIGHT)
+      {
+          return CryptoNote::parameters::DEFAULT_DUST_THRESHOLD_V2;
+      }
+
+      return m_defaultDustThreshold;
+  }
 
   uint64_t difficultyTarget() const { return m_difficultyTarget; }
   size_t difficultyWindow() const { return m_difficultyWindow; }
