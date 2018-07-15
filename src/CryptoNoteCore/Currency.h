@@ -68,7 +68,7 @@ public:
       return m_defaultDustThreshold;
   }
   uint64_t defaultFusionDustThreshold(uint32_t height) const {
-      if (height >= CryptoNote::parameters::FUSION_DUST_THRESHOLD_HEIGHT)
+      if (height >= CryptoNote::parameters::FUSION_DUST_THRESHOLD_HEIGHT_V2)
       {
           return CryptoNote::parameters::DEFAULT_DUST_THRESHOLD_V2;
       }
