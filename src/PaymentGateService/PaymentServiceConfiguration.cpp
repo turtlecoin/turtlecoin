@@ -135,10 +135,6 @@ void Configuration::init(const boost::program_options::variables_map& options) {
       }
   }
 
-  if (options.count("container-file") != 0) {
-      containerFile = options["container-file"].as<std::string>();
-    }
-
   if (options.count("container-password") != 0) {
     containerPassword = options["container-password"].as<std::string>();
   }
