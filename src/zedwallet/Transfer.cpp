@@ -147,8 +147,11 @@ bool confirmTransaction(CryptoNote::TransactionParameters t,
     return false;
 }
 
+/* Note that the originalTXParams, and thus the splitTXParams already has the
+   node transfer added */
 void splitTX(CryptoNote::WalletGreen &wallet, 
-             const CryptoNote::TransactionParameters p, uint32_t nodeFee)
+             const CryptoNote::TransactionParameters originalTXParams,
+             uint32_t nodeFee)
 {
     std::cout << "Transaction is still too large to send, splitting into "
               << "multiple chunks." 
@@ -167,37 +170,22 @@ void splitTX(CryptoNote::WalletGreen &wallet,
 
     uint64_t balance = wallet.getActualBalance();
 
-    uint64_t totalAmount = p.destinations[0].amount;
+    uint64_t totalAmount = originalTXParams.destinations[0].amount;
     uint64_t sentAmount = 0;
     uint64_t remainder = totalAmount - sentAmount;
 
-    const uint64_t maxSize = wallet.getMaxTxSize();
-    const size_t txSize = wallet.getTxSize(wallet.formTransaction(p));
-
-    /* Guess how much to divide the original amount up by */
-    uint64_t amountDivider = txSize / maxSize;
-
-    /* Increase to next even number if odd for nicer dividing. */
-    if (amountDivider % 2 != 0)
-    {
-        amountDivider++;
-    }
-    /* Don't want to divide by zero */
-    else if (amountDivider == 0)
-    {
-        amountDivider = 2;
-    }
-
-    /* Use for quick restoring to originalDivider once a tx suceeds */
-    uint64_t originalDivider = amountDivider;
+    /* How much to split the remaining balance to be sent into each individual
+       transaction. If it's 1, then we'll attempt to send the full amount,
+       if it's 2, we'll send half, and so on. */
+    uint64_t amountDivider = 1;
 
     int txNumber = 1;
 
     while (true)
     {
-        auto p1 = p;
+        auto splitTXParams = originalTXParams;
 
-        p1.destinations[0].amount = totalAmount / amountDivider;
+        splitTXParams.destinations[0].amount = totalAmount / amountDivider;
 
         /* If we have odd numbers, we can have an amount that is smaller
            than the remainder to send, but the remainder is less than
@@ -206,23 +194,20 @@ void splitTX(CryptoNote::WalletGreen &wallet,
            this change not being sent.
            If we're trying to send more than the remaining amount, set to
            the remaining amount. */
-        if ((p1.destinations[0].amount != remainder &&
-             remainder < (p1.destinations[0].amount * 2))
-         || (p1.destinations[0].amount > remainder))
+        if ((splitTXParams.destinations[0].amount != remainder &&
+             remainder < (splitTXParams.destinations[0].amount * 2))
+         || (splitTXParams.destinations[0].amount > remainder))
         {
-            p1.destinations[0].amount = remainder;
+            splitTXParams.destinations[0].amount = remainder;
         }
-        else if (p1.destinations[0].amount + p1.fee + nodeFee > balance)
+        else if (splitTXParams.destinations[0].amount + splitTXParams.fee 
+                                                      + nodeFee > balance)
         {
-            p1.destinations[0].amount = balance - p1.fee - nodeFee;
-
-            if (p1.destinations[0].amount < WalletConfig::minimumSend)
-            {
-                return;
-            }
+            splitTXParams.destinations[0].amount = balance - splitTXParams.fee
+                                                           - nodeFee;
         }
 
-        if (p1.destinations[0].amount == 0)
+        if (splitTXParams.destinations[0].amount < WalletConfig::minimumSend)
         {
             std::cout << WarningMsg("Failed to split up transaction, sorry.")
                       << std::endl;
@@ -230,7 +215,8 @@ void splitTX(CryptoNote::WalletGreen &wallet,
             return;
         }
 
-        uint64_t totalNeeded = p1.destinations[0].amount + p1.fee + nodeFee;
+        uint64_t totalNeeded = splitTXParams.destinations[0].amount
+                             + splitTXParams.fee + nodeFee;
 
         /* Need to update before checking intially */
         wallet.updateInternalCache();
@@ -250,15 +236,17 @@ void splitTX(CryptoNote::WalletGreen &wallet,
             wallet.updateInternalCache();
         }
 
-        auto prepared = wallet.formTransaction(p1);
+        auto preparedTransaction = wallet.formTransaction(splitTXParams);
 
         /* Still too large, increase divider and try again */
-        if (wallet.txIsTooLarge(prepared))
+        if (wallet.txIsTooLarge(preparedTransaction))
         {
-            amountDivider *= 2;
-            /* This can take quite a long time so let them know it's not frozen
-            */
+            amountDivider++;
+
+            /* This can take quite a long time getting mixins each time
+               so let them know it's not frozen */
             std::cout << InformationMsg("Working...") << std::endl;
+
             continue;
         }
 
@@ -267,23 +255,30 @@ void splitTX(CryptoNote::WalletGreen &wallet,
                   << InformationMsg("...")
                   << std::endl;
 
-        const size_t id = wallet.transfer(prepared);
+        const size_t id = wallet.transfer(preparedTransaction);
         auto hash = wallet.getTransaction(id).hash;
 
-        std::cout << SuccessMsg("Transaction has been sent!")
-                  << std::endl
-                  << SuccessMsg("Hash: ")
-                  << SuccessMsg(Common::podToHex(hash))
-                  << std::endl
-                  << SuccessMsg("Amount: ")
-                  << SuccessMsg(formatAmount(p1.destinations[0].amount))
-                  << std::endl << std::endl;
+        std::stringstream stream;
+
+        stream << "Transaction has been sent!"
+               << std::endl
+               << "Hash: "
+               << Common::podToHex(hash)
+               << std::endl
+               << "Amount: "
+               << formatAmount(splitTXParams.destinations[0].amount)
+               << std::endl << std::endl;
+
+        std::cout << SuccessMsg(stream.str()) << std::endl;
 
         txNumber++;
 
-        sentAmount += p1.destinations[0].amount;
-        /* Remember to remove the fee as well from balance */
-        balance = balance - p1.destinations[0].amount - p1.fee - nodeFee;
+        sentAmount += splitTXParams.destinations[0].amount;
+
+        /* Remember to remove the fee and node fee as well from balance */
+        balance -= splitTXParams.destinations[0].amount
+                 - splitTXParams.fee - nodeFee;
+
         remainder = totalAmount - sentAmount;
 
         /* We've sent the full amount required now */
@@ -295,8 +290,8 @@ void splitTX(CryptoNote::WalletGreen &wallet,
             return;
         }
 
-        /* Went well, lets restart with the original divider */
-        amountDivider = originalDivider;
+        /* Went well, lets restart, trying to send the max amount */
+        amountDivider = 1;
     }
 }
 
@@ -557,8 +552,9 @@ void doTransfer(std::string address, uint64_t amount, uint64_t fee,
         {address, amount}
     };
     
-    if (!nodeAddress.empty() && nodeFee != 0) {
-      p.destinations.push_back({nodeAddress, nodeFee});
+    if (!nodeAddress.empty() && nodeFee != 0)
+    {
+        p.destinations.push_back({nodeAddress, nodeFee});
     }
 
     p.fee = fee;
