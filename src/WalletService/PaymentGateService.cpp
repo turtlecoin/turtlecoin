@@ -22,7 +22,7 @@
 #include "Common/SignalHandler.h"
 #include "Common/Util.h"
 #include "Logging/LoggerRef.h"
-#include "PaymentGate/PaymentServiceJsonRpcServer.h"
+#include "PaymentServiceJsonRpcServer.h"
 
 #include "Common/ScopeExit.h"
 #include "NodeRpcProxy/NodeRpcProxy.h"

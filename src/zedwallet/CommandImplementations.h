@@ -12,11 +12,22 @@ void changePassword(std::shared_ptr<WalletInfo> &walletInfo);
 
 void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet);
 
-void status(CryptoNote::INode &node);
-
 void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo);
 
-void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet);
+void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet);
+
+void printHeights(uint32_t localHeight, uint32_t remoteHeight,
+                  uint32_t walletHeight);
+
+void printSyncStatus(uint32_t localHeight, uint32_t remoteHeight,
+                     uint32_t walletHeight);
+
+void printSyncSummary(uint32_t localHeight, uint32_t remoteHeight,
+                      uint32_t walletHeight);
+
+void printPeerCount(size_t peerCount);
+
+void printHashrate(uint64_t difficulty);
 
 void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
              bool viewWallet);

@@ -123,8 +123,9 @@ void syncWallet(CryptoNote::INode &node,
         int waitSeconds = 1;
 
         /* Save periodically so if someone closes before completion they don't
-           lose all their progress */
-        if (counter % 60 == 0)
+           lose all their progress. Saving is actually quite slow with big
+           wallets so lets do it every 10 minutes */
+        if (counter % 600 == 0)
         {
             walletInfo->wallet.save();
         }

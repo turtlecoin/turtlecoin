@@ -18,14 +18,25 @@ namespace Common {
 std::string get_mining_speed(uint32_t hr) {
   if (hr>1e9) return (boost::format("%.2f GH/s") % (hr/1e9)).str();
   if (hr>1e6) return (boost::format("%.2f MH/s") % (hr/1e6)).str();
-  if (hr>1e3) return (boost::format("%.2f kH/s") % (hr/1e3)).str();
+  if (hr>1e3) return (boost::format("%.2f KH/s") % (hr/1e3)).str();
 
   return (boost::format("%.0f H/s") % hr).str();
 }
 
 //--------------------------------------------------------------------------------
 std::string get_sync_percentage(uint64_t height, uint64_t target_height) {
-  target_height = target_height ? target_height < height ? height : target_height : height;
+  /* Don't divide by zero */
+  if (height == 0 || target_height == 0)
+  {
+    return "0.00";
+  }
+
+  /* So we don't have > 100% */
+  if (target_height > height)
+  {
+      target_height = height;
+  }
+
   float pc = 100.0f * height / target_height;
 
   if (height < target_height && pc > 99.99f) {

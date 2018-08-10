@@ -31,7 +31,7 @@ script:
 before_deploy:
 - cd src
 - mkdir turtlecoin-${TRAVIS_TAG}
-- mv TurtleCoind miner zedwallet service poolwallet turtlecoin-${TRAVIS_TAG}/
+- mv TurtleCoind miner zedwallet turtle-service  turtlecoin-${TRAVIS_TAG}/
 - cp ../../LICENSE turtlecoin-${TRAVIS_TAG}/
 - tar cvfz turtlecoin-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz turtlecoin-${TRAVIS_TAG}/
 deploy:

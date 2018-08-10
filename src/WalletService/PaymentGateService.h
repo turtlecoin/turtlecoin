@@ -24,8 +24,8 @@
 #include "Logging/LoggerGroup.h"
 #include "Logging/StreamLogger.h"
 
-#include "PaymentGate/NodeFactory.h"
-#include "PaymentGate/WalletService.h"
+#include "WalletService/NodeFactory.h"
+#include "WalletService/WalletService.h"
 
 class PaymentGateService {
 public:
