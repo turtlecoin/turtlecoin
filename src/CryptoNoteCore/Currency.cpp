@@ -490,7 +490,6 @@ Difficulty Currency::nextDifficultyV4(std::vector<std::uint64_t> timestamps, std
 {
     int64_t T = CryptoNote::parameters::DIFFICULTY_TARGET;
     int64_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
-    int64_t FTL = CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4;
     int64_t L(0), ST, sum_3_ST(0), next_D, prev_D;
 
     if (timestamps.size() <= static_cast<uint64_t>(N))
