@@ -32,9 +32,9 @@ std::string get_sync_percentage(uint64_t height, uint64_t target_height) {
   }
 
   /* So we don't have > 100% */
-  if (target_height > height)
+  if (height > target_height)
   {
-      target_height = height;
+      height = target_height;
   }
 
   float pc = 100.0f * height / target_height;
