@@ -6,7 +6,7 @@
 
 On Linux or Mac on a non standard architecture, and can't get GNU Readline installed?
 
-Disable it with `cmake .. -DFORCE_READLINE=FALSE`
+Disable it with `cmake .. -DENABLE_READLINE=FALSE`
 
 #### Ubuntu 16.04+ and MacOS 10.10+
 

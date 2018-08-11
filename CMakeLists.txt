@@ -15,12 +15,7 @@ set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_SKIP_PACKAGE_ALL_DEPENDENCY ON)
 set(CMAKE_SUPPRESS_REGENERATION ON)
 set(DO_TESTS ON CACHE STRING "Spend time making tests? Defaults to ON")
-set(FORCE_READLINE ON CACHE BOOL "Make readline support mandatory on Linux and Mac? Defaults to ON")
-
-# GNU Readline isn't easy to get working on Windows :(
-if (MSVC)
-    set(FORCE_READLINE OFF)
-endif()
+set(ENABLE_READLINE ON CACHE BOOL "Enable readline support for zedwallet on Linux and Mac? Defaults to ON")
 
 set(STATIC ON CACHE BOOL "Link libraries statically")
 
@@ -64,7 +59,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/Platform/Posix)
 endif()
 
 # Don't bother searching for readline on windows
-if (NOT MSVC)
+# Don't search if readline disabled
+if (NOT MSVC OR NOT ENABLE_READLINE)
     find_package(Readline)
 
     if(READLINE_FOUND)
@@ -72,9 +68,7 @@ if (NOT MSVC)
         include_directories(${Readline_INCLUDE_DIR})
         link_libraries(${Readline_LIBRARY})
     else()
-        if(FORCE_READLINE)
-            message(FATAL_ERROR "Could not find GNU Readline library!\nYou can fix this by either re-running cmake like so:\ncmake .. -DFORCE_READLINE=FALSE\nAlternatively, you can install the readline package for your operating system.\nUbuntu: sudo apt-get install libreadline-dev\nApple: brew install readline; brew link --force readline")
-        endif()
+        message(FATAL_ERROR "Could not find GNU Readline library!\nYou can fix this by either re-running cmake like so:\ncmake .. -DENABLE_READLINE=FALSE\nAlternatively, you can install the readline package for your operating system.\nUbuntu: sudo apt-get install libreadline-dev\nApple: brew install readline; brew link --force readline")
     endif()
 endif()
 
