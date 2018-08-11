@@ -60,7 +60,7 @@ endif()
 
 # Don't bother searching for readline on windows
 # Don't search if readline disabled
-if (NOT MSVC OR NOT ENABLE_READLINE)
+if (NOT MSVC AND NOT ENABLE_READLINE)
     find_package(Readline)
 
     if(READLINE_FOUND)
