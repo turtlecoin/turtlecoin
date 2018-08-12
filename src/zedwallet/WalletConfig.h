@@ -28,8 +28,9 @@ namespace WalletConfig
     /* The name to call this wallet */
     const std::string walletName = "zedwallet";
 
-    /* The name of walletd, the programmatic rpc interface to a wallet */
-    const std::string walletdName = "service";
+    /* The name of service/walletd, the programmatic rpc interface to a
+       wallet */
+    const std::string walletdName = "turtle-service";
 
     /* The full name of your crypto */
     const std::string coinName = std::string(CryptoNote::CRYPTONOTE_NAME);
@@ -46,9 +47,13 @@ namespace WalletConfig
     /* The length of a standard address for your coin */
     const long unsigned int standardAddressLength = 99;
 
-    /* The length of an integrated address for your coin */
-    const long unsigned int integratedAddressLength = 236;
-
+    /* The length of an integrated address for your coin - It's the same as
+       a normal address, but there is a paymentID included in there - since
+       payment ID's are 64 chars, and base58 encoding is done by encoding
+       chunks of 8 chars at once into blocks of 11 chars, we can calculate
+       this automatically */
+    const long unsigned int integratedAddressLength = standardAddressLength
+                                                    + ((64 * 11) / 8);
 
     /* The mixin value to use with transactions */
     const uint64_t defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN;

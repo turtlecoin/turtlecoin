@@ -24,7 +24,7 @@
 #include "Logging/ILogger.h"
 #include "Logging/LoggerRef.h"
 #include "Rpc/HttpServer.h"
-#include "PaymentGateService/PaymentServiceConfiguration.h"
+#include "WalletService/PaymentServiceConfiguration.h"
 
 
 namespace CryptoNote {

@@ -127,6 +127,27 @@ int main(int argc, char **argv)
                       << std::endl << std::endl;
         }
     }
+    
+    /*
+      This will check to see if the node responded to /feeinfo and actually
+      returned something that it expects us to use for convenience charges
+      for using that node to send transactions.
+    */
+    if (node->feeAmount() != 0 && !node->feeAddress().empty()) {
+      std::stringstream feemsg;
+      
+      feemsg << std::endl << "You have connected to a node that charges " <<
+             "a fee to send transactions." << std::endl << std::endl
+             << "The fee for sending transactions is: " << 
+             formatAmount(node->feeAmount()) << 
+             " per transaction." << std::endl << std::endl <<
+             "If you don't want to pay the node fee, please " <<
+             "relaunch " << WalletConfig::walletName <<
+             " and specify a different node or run your own." <<
+             std::endl;
+             
+      std::cout << WarningMsg(feemsg.str()) << std::endl;
+    }
 
     /* Create the wallet instance */
     CryptoNote::WalletGreen wallet(*dispatcher, currency, *node, 

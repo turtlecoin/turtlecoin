@@ -54,12 +54,12 @@ std::error_code interpretResponseStatus(const std::string& status) {
 }
 
 NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort, Logging::ILogger& logger) :
-    m_logger(logger, "NodeRpcProxy"),
-    m_rpcTimeout(10000),
-    m_pullInterval(5000),
-    m_nodeHost(nodeHost),
-    m_nodePort(nodePort),
-    m_connected(true) {
+  m_logger(logger, "NodeRpcProxy"),
+  m_rpcTimeout(10000),
+  m_pullInterval(5000),
+  m_nodeHost(nodeHost),
+  m_nodePort(nodePort),
+  m_connected(true) {
   resetInternalState();
 }
 
@@ -150,7 +150,9 @@ void NodeRpcProxy::workerThread(const INode::Callback& initialized_callback) {
       m_state = STATE_INITIALIZED;
       m_cv_initialized.notify_all();
     }
-
+	
+    getFeeInfo();
+	
     updateNodeStatus();
 
     initialized_callback(std::error_code());
@@ -284,6 +286,29 @@ void NodeRpcProxy::updatePoolState(const std::vector<std::unique_ptr<ITransactio
     Hash hash = tx->getTransactionHash();
     m_knownTxs.emplace(std::move(hash));
   }
+}
+
+void NodeRpcProxy::getFeeInfo() {
+  CryptoNote::COMMAND_RPC_GET_FEE_ADDRESS::request ireq = AUTO_VAL_INIT(ireq);
+  CryptoNote::COMMAND_RPC_GET_FEE_ADDRESS::response iresp = AUTO_VAL_INIT(iresp);
+  
+  std::error_code ec = jsonCommand("/feeinfo", ireq, iresp);
+  
+  if (ec || iresp.status != CORE_RPC_STATUS_OK) {
+    return;
+  }
+  m_fee_address = iresp.address;
+  m_fee_amount = iresp.amount;
+  
+  return;
+}
+
+std::string NodeRpcProxy::feeAddress() {
+  return m_fee_address;
+}
+
+uint32_t NodeRpcProxy::feeAmount() {
+  return m_fee_amount;
 }
 
 std::string NodeRpcProxy::getInfo() {

@@ -15,6 +15,7 @@
 #include "Common/ObserverManager.h"
 #include "Logging/LoggerRef.h"
 #include "INode.h"
+#include "Rpc/CoreRpcServerCommandsDefinitions.h"
 
 namespace System {
   class ContextGroup;
@@ -53,6 +54,7 @@ public:
   virtual uint32_t getKnownBlockCount() const override;
   virtual uint64_t getLastLocalBlockTimestamp() const override;
   virtual std::string getInfo() override;
+  virtual void getFeeInfo() override;
 
   virtual void getBlockHashesByTimestamps(uint64_t timestampBegin, size_t secondsCount, std::vector<Crypto::Hash>& blockHashes, const Callback& callback) override;
   virtual void getTransactionHashesByPaymentId(const Crypto::Hash& paymentId, std::vector<Crypto::Hash>& transactionHashes, const Callback& callback) override;
@@ -71,7 +73,9 @@ public:
   virtual void getBlock(const uint32_t blockHeight, BlockDetails &block, const Callback& callback) override;
   virtual void getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<TransactionDetails>& transactions, const Callback& callback) override;
   virtual void isSynchronized(bool& syncStatus, const Callback& callback) override;
-
+  virtual std::string feeAddress() override;
+  virtual uint32_t feeAmount() override;
+  
   unsigned int rpcTimeout() const { return m_rpcTimeout; }
   void rpcTimeout(unsigned int val) { m_rpcTimeout = val; }
 
@@ -148,5 +152,7 @@ private:
   std::unordered_set<Crypto::Hash> m_knownTxs;
 
   bool m_connected;
+  std::string m_fee_address;
+  uint32_t m_fee_amount;
 };
 }

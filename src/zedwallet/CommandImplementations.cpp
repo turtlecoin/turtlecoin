@@ -8,6 +8,7 @@
 
 #include <atomic>
 
+#include <Common/FormatTools.h>
 #include <Common/StringTools.h>
 
 #include <CryptoNoteCore/Account.h>
@@ -104,56 +105,6 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
     }
 }
 
-void status(CryptoNote::INode &node)
-{
-    std::atomic_bool completed(false);
-
-    std::string status;
-
-    std::thread getStatus([&node, &completed, &status]
-    {
-        status = node.getInfo();
-        completed.store(true);
-    });
-
-    const auto startTime = std::chrono::system_clock::now();
-
-    while (!completed.load())
-    {
-        const auto currentTime = std::chrono::system_clock::now();
-
-        if ((currentTime - startTime) > std::chrono::seconds(5))
-        {
-            std::cout << WarningMsg("Unable to get daemon status - has it ")
-                      << WarningMsg("crashed/frozen?")
-                      << std::endl;
-
-            /* Detach the thread so it doesn't call terminate() when we exit
-               scope */
-            getStatus.detach();
-
-            /* Wait a moment for detach to complete */
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-
-            return;
-        }
-    }
-
-    /* Wait for the thread to clean up so we don't call terminate() on exit */
-    getStatus.join();
-
-    if (status == "Problem retrieving information from RPC server.")
-    {
-        std::cout << WarningMsg("Unable to get daemon status - has it "
-                                "crashed/frozen?")
-                  << std::endl;
-    }
-    else
-    {
-        std::cout << InformationMsg(status) << std::endl;
-    }
-}
-
 void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
              bool viewWallet)
 {
@@ -204,12 +155,9 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
     }
 }
 
-void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
+void printHeights(uint32_t localHeight, uint32_t remoteHeight,
+                  uint32_t walletHeight)
 {
-    const uint32_t localHeight = node.getLastLocalBlockHeight();
-    const uint32_t remoteHeight = node.getLastKnownBlockHeight();
-    const uint32_t walletHeight = wallet.getBlockCount();
-
     /* This is the height that the wallet has been scanned to. The blockchain
        can be fully updated, but we have to walk the chain to find our
        transactions, and this number indicates that progress. */
@@ -239,7 +187,44 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
 
     std::cout << std::endl << "Network blockchain height: "
               << SuccessMsg(std::to_string(remoteHeight)) << std::endl;
+}
 
+void printSyncStatus(uint32_t localHeight, uint32_t remoteHeight,
+                     uint32_t walletHeight)
+{
+    std::string networkSyncPercentage
+        = Common::get_sync_percentage(localHeight, remoteHeight) + "%";
+
+    std::string walletSyncPercentage
+        = Common::get_sync_percentage(walletHeight, remoteHeight) + "%";
+
+    std::cout << "Network sync status: ";
+
+    if (localHeight == remoteHeight)
+    {
+        std::cout << SuccessMsg(networkSyncPercentage) << std::endl;
+    }
+    else
+    {
+        std::cout << WarningMsg(networkSyncPercentage) << std::endl;
+    }
+
+    std::cout << "Wallet sync status: ";
+    
+    /* Small buffer because wallet height is not always completely accurate */
+    if (walletHeight + 1000 > remoteHeight)
+    {
+        std::cout << SuccessMsg(walletSyncPercentage) << std::endl;
+    }
+    else
+    {
+        std::cout << WarningMsg(walletSyncPercentage) << std::endl;
+    }
+}
+
+void printSyncSummary(uint32_t localHeight, uint32_t remoteHeight,
+                      uint32_t walletHeight)
+{
     if (localHeight == 0 && remoteHeight == 0)
     {
         std::cout << WarningMsg("Uh oh, it looks like you don't have ")
@@ -265,6 +250,60 @@ void blockchainHeight(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
         std::cout << WarningMsg("Be patient, you are still syncing with the "
                                 "network!") << std::endl;
     }
+}
+
+void printPeerCount(size_t peerCount)
+{
+    std::cout << "Peers: " << SuccessMsg(std::to_string(peerCount))
+              << std::endl;
+}
+
+void printHashrate(uint64_t difficulty)
+{
+    /* Offline node / not responding */
+    if (difficulty == 0)
+    {
+        return;
+    }
+
+    /* Hashrate is difficulty divided by block target time */
+    uint64_t hashrate = round(difficulty / 
+                              CryptoNote::parameters::DIFFICULTY_TARGET);
+
+    std::cout << "Network hashrate: "
+              << SuccessMsg(Common::get_mining_speed(hashrate))
+              << " (Based on the last local block)" << std::endl;
+}
+
+/* This makes sure to call functions on the node which only return cached
+   data. This ensures it returns promptly, and doesn't hang waiting for a
+   response when the node is having issues. */
+void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
+{
+    uint32_t localHeight = node.getLastLocalBlockHeight();
+    uint32_t remoteHeight = node.getLastKnownBlockHeight();
+    uint32_t walletHeight = wallet.getBlockCount();
+
+    /* Print the heights of local, remote, and wallet */
+    printHeights(localHeight, remoteHeight, walletHeight);
+
+    std::cout << std::endl;
+
+    /* Print the network and wallet sync status in percentage */
+    printSyncStatus(localHeight, remoteHeight, walletHeight);
+
+    std::cout << std::endl;
+
+    /* Print the network hashrate, based on the last local block */
+    printHashrate(node.getLastLocalBlockHeaderInfo().difficulty);
+
+    /* Print the amount of peers we have */
+    printPeerCount(node.getPeerCount());
+
+    std::cout << std::endl;
+
+    /* Print a summary of the sync status */
+    printSyncSummary(localHeight, remoteHeight, walletHeight);
 }
 
 void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo)
@@ -320,25 +359,15 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
             continue;
         }
 
-        const std::string amount = formatAmountBasic(std::abs(t.totalAmount));
+        const std::string amount = formatAmountBasic(t.totalAmount);
 
         const std::string direction = t.totalAmount > 0 ? "IN" : "OUT";
 
         csv << unixTimeToDate(t.timestamp) << ","       /* Timestamp */
             << t.blockHeight << ","                     /* Block Height */
-            << Common::podToHex(t.hash) << ",";         /* Hash */
-            
-            /* Make outgoing transfers negative for easier spreadsheet math */
-            if (t.totalAmount < 0)
-            {
-                csv << "-" << amount << ",";
-            }
-            else
-            {
-                csv << amount << ",";
-            }
-            
-        csv << direction                                /* In/Out */
+            << Common::podToHex(t.hash) << ","          /* Hash */
+            << amount << ","                            /* Amount */
+            << direction                                /* In/Out */
             << std::endl;
     }
 

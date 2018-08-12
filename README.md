@@ -27,17 +27,11 @@ If the script doesn't work for you:
 ##### Prerequisites
 
 - You will need the following packages: boost (1.55 or higher), rocksdb, cmake, git, gcc (4.9 or higher), g++ (4.9 or higher), make, GNU readline, and python. Most of these should already be installed on your system.
-- For example on Ubuntu: `sudo apt-get install -y build-essential python-dev gcc g++ git cmake libboost-all-dev librocksdb-dev libreadline-dev`
-- If you are using Ubuntu and your version of Ubuntu doesn't have librocksdb-dev, you can get it from a ppa instead:
-```
-sudo add-apt-repository ppa:ethcore/ethcore -y
-sudo apt-get update
-sudo apt-get install librocksdb-dev
-```
+- For example on Ubuntu: `sudo apt-get install -y build-essential python-dev gcc g++ git cmake libboost-all-dev libreadline-dev`
 
 ##### Building
 
-- `git clone -b master https://github.com/turtlecoin/turtlecoin`
+- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
 - `cd turtlecoin`
 - `mkdir build && cd $_`
 - `cmake ..`

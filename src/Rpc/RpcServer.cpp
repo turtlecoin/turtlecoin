@@ -581,7 +581,7 @@ bool RpcServer::on_send_raw_tx(const COMMAND_RPC_SEND_RAW_TX::request& req, COMM
 
 bool RpcServer::on_get_fee_info(const COMMAND_RPC_GET_FEE_ADDRESS::request & req, COMMAND_RPC_GET_FEE_ADDRESS::response & res) {
   if (m_fee_address.empty()) {
-    res.status = "Node's fee address is not set";
+    res.status = CORE_RPC_STATUS_OK;
     return false;
   }
 

@@ -169,7 +169,7 @@ const Maybe<const AddressBookEntry> getAddressBookEntry(AddressBook addressBook)
 }
 
 void sendFromAddressBook(std::shared_ptr<WalletInfo> &walletInfo,
-                         uint32_t height)
+                         uint32_t height, std::string feeAddress, uint32_t feeAmount)
 {
     auto addressBook = getAddressBook();
 
@@ -204,8 +204,9 @@ void sendFromAddressBook(std::shared_ptr<WalletInfo> &walletInfo,
     auto fee = WalletConfig::defaultFee;
     auto extra = getExtraFromPaymentID(maybeAddressBookEntry.x.paymentID);
     auto integrated = maybeAddressBookEntry.x.integratedAddress;
+	auto mixin = WalletConfig::defaultMixin;
 
-    doTransfer(address, amount, fee, extra, walletInfo, height, integrated);
+    doTransfer(address, amount, fee, extra, walletInfo, height, integrated, mixin, feeAddress, feeAmount);
 }
 
 bool isAddressBookEmpty(AddressBook addressBook)
