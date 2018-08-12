@@ -75,10 +75,11 @@ endif()
 
 # Don't bother searching for readline on windows
 # Don't search if readline disabled
-if (NOT MSVC AND NOT ENABLE_READLINE)
+if (NOT MSVC AND ENABLE_READLINE)
     find_package(Readline)
 
     if(READLINE_FOUND)
+        message(STATUS "Found GNU readline")
         add_definitions(-DHAVE_READLINE)
         include_directories(${Readline_INCLUDE_DIR})
     else()
