@@ -1,25 +1,16 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "MinerManager.h"
 
 #include <System/EventLock.h>
 #include <System/InterruptedException.h>
 #include <System/Timer.h>
+#include <thread>
+#include <chrono>
 
 #include "Common/StringTools.h"
 #include "CryptoNoteConfig.h"
@@ -30,8 +21,10 @@
 #include "Rpc/HttpClient.h"
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
 #include "Rpc/JsonRpc.h"
+#include <Logging/LoggerManager.h>
 
 using namespace CryptoNote;
+using namespace Logging;
 
 namespace Miner {
 
@@ -102,10 +95,26 @@ void MinerManager::start() {
     break;
   }
 
+  isRunning = true;
+
   startBlockchainMonitoring();
+  std::thread reporter(std::bind(&MinerManager::printHashRate, this));
   startMining(params);
 
   eventLoop();
+  isRunning = false;
+}
+
+void MinerManager::printHashRate() {
+  uint64_t last_hash_count = m_miner.getHashCount();
+
+  while (isRunning) {
+    std::this_thread::sleep_for(std::chrono::seconds(60));
+    uint64_t current_hash_count = m_miner.getHashCount();
+    double hashes = static_cast<double>((current_hash_count - last_hash_count) / 60);
+    last_hash_count = current_hash_count;
+    m_logger(Logging::INFO, BRIGHT_GREEN) << "Mining at " << hashes << " H/s";
+  }
 }
 
 void MinerManager::eventLoop() {
