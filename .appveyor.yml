@@ -1,11 +1,33 @@
 os: Visual Studio 2015
 
 environment:
-    BOOST_ROOT: C:\Libraries\boost_1_67_0
-    BOOST_LIBRARYDIR: C:\Libraries\boost_1_67_0\lib64-msvc-14
+  BOOST_ROOT: C:\Libraries\boost_1_67_0
+  BOOST_LIBRARYDIR: C:\Libraries\boost_1_67_0\lib64-msvc-14
 
 build_script:
-    - md build
-    - cd build
-    - cmake -G "Visual Studio 14 Win64" ..
-    - MSBuild TurtleCoin.sln /p:Configuration=Release /m
+  - md build
+  - cd build
+  - cmake -G "Visual Studio 14 Win64" ..
+  - MSBuild TurtleCoin.sln /p:Configuration=Release /m
+
+after_build:
+  - cd src\Release
+  - mkdir turtlecoin-%APPVEYOR_REPO_TAG_NAME%
+  - copy *.exe turtlecoin-%APPVEYOR_REPO_TAG_NAME%
+  - copy ..\..\LICENSE turtlecoin-%APPVEYOR_REPO_TAG_NAME%
+  - 7z a turtlecoin-%APPVEYOR_REPO_TAG_NAME%.zip turtlecoin-%APPVEYOR_REPO_TAG_NAME%
+    
+artifacts:
+  - path: src\Release\turtlecoin-%APPVEYOR_REPO_TAG_NAME%.zip
+    name: TurtleCoinRelease
+    
+deploy:
+  - provider: GitHub
+    auth_token:
+      secure: XyM7qAnX9Slm4bX7WYPOnWGRuXfuwc7wnJHb7wN4WGy+GefXm3xSFoNIZdmTY1XnJ2HpIAXuuHL2aey8KKt+gEXbhp882z6m9jZWOdog3cjObdRCsOuETNE0rbXasDvntdhm1Jn7PM+mkN6O9GoqRVaEnyyIwCGEFA7Cc/d2KgtqpTu0NB6nIPZbTgJnudHDQYEWl0kwA1UjkYrEIRlAOFTaRHBUsUHPTFW8758mgerYitLm27BNJTbo74lYe65iExtguKFN/VRVXDl08/2i3gnAxzWJ2K0qUZu7PD8ePd+2UC1wwE2Dc1uiTOmhDgVeuQO6k0tuipjIA+dh5r7A8/YPyOX4zoZ4ac+g1mWSRO1VS/WQ2Uvq2XU848KACLJ+ky3kHWZKowTSl/v3+3rU4c6kqYJHShkH5XlFp503yRqlaqOow4ogz020eIEHEFCgwLhNxZSEUzKP4rEZPpboZyNJbW7lL92UxMZDZm1zKMvnrY5zi2HltYzIQyOjDvmXUxQD8blz1C66lqfBc6mApjDRZVLUcfTT4WIGAWc6opTYJAJpCg34zGAQgXoFaOG0cH3ApsREmBd1dg9d8cJscedy9qZjn3HsmibmdRiGctB5o08JrjfM5sZVk620iKFgovis7q7XfIKb3rQdSfsiRwsfZEwhE2lvY3bf9B0VMrU=
+    artifact: TurtleCoinRelease
+    draft: false
+    prerelease: false
+    on:
+      branch: master
+      appveyor_repo_tag: true
