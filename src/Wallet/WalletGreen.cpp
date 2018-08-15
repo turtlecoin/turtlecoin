@@ -1004,7 +1004,7 @@ std::vector<std::string> WalletGreen::createAddressList(const std::vector<Crypto
 }
 
 std::string WalletGreen::doCreateAddress(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, uint64_t creationTimestamp) {
-  assert(creationTimestamp <= std::numeric_limits<uint64_t>::max() - m_currency.blockFutureTimeLimit());
+  assert(creationTimestamp <= std::numeric_limits<uint64_t>::max() - m_currency.blockFutureTimeLimit(0));
 
   std::vector<NewAddressData> addressDataList;
   addressDataList.push_back(NewAddressData{ spendPublicKey, spendSecretKey, creationTimestamp });
@@ -1037,7 +1037,7 @@ std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewA
       });
 
       for (auto& addressData : addressDataList) {
-        assert(addressData.creationTimestamp <= std::numeric_limits<uint64_t>::max() - m_currency.blockFutureTimeLimit());
+        assert(addressData.creationTimestamp <= std::numeric_limits<uint64_t>::max() - m_currency.blockFutureTimeLimit(0));
         std::string address = addWallet(addressData.spendPublicKey, addressData.spendSecretKey, addressData.creationTimestamp);
         m_logger(INFO, BRIGHT_WHITE) << "New wallet added " << address << ", creation timestamp " << addressData.creationTimestamp;
         addresses.push_back(std::move(address));
@@ -1048,7 +1048,7 @@ std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewA
 
     m_containerStorage.setAutoFlush(true);
     auto currentTime = static_cast<uint64_t>(time(nullptr));
-    if (minCreationTimestamp + m_currency.blockFutureTimeLimit() < currentTime) {
+    if (minCreationTimestamp + m_currency.blockFutureTimeLimit(0) < currentTime) {
       m_logger(DEBUGGING) << "Reset is required";
       save(WalletSaveLevel::SAVE_KEYS_AND_TRANSACTIONS, m_extra);
       shutdown();
