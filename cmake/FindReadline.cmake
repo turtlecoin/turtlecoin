@@ -40,7 +40,7 @@ if (APPLE AND Readline_INCLUDE_DIR STREQUAL "/usr/include")
     unset(Readline_INCLUDE_DIR CACHE)
     unset(Readline_LIBRARY CACHE)
 
-    message(FATAL_ERROR "Readline library found, but it is using the Apple version of readline rather than GNU Readline.\nTo fix this, run:\nbrew install readline; brew link --force readline\nThen, re-run cmake.\nAlternatively, run:\ncmake .. -DFORCE_READLINE=FALSE\nTo disable readline support")
+    message(FATAL_ERROR "Readline library found, but it is using the Apple version of readline rather than GNU Readline.\nTo fix this, run:\nbrew install readline; brew link --force readline\nThen, re-run cmake.\nIf this STILL fails, instead try:\nbrew uninstall --force --ignore-dependencies readline; brew install readline; brew link --force readline\nThen, re-run cmake.\nAlternatively, run:\ncmake .. -DENABLE_READLINE=FALSE\nTo disable readline support")
 
 endif()
 

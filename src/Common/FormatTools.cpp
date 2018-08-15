@@ -32,9 +32,9 @@ std::string get_sync_percentage(uint64_t height, uint64_t target_height) {
   }
 
   /* So we don't have > 100% */
-  if (target_height > height)
+  if (height > target_height)
   {
-      target_height = height;
+      height = target_height;
   }
 
   float pc = 100.0f * height / target_height;
@@ -76,8 +76,8 @@ ForkStatus get_fork_status(uint64_t height, std::vector<uint64_t> upgrade_height
 
     float days = (next_fork - height) / CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;
 
-    /* Next fork in < 2 weeks away */
-    if (days < 14)
+    /* Next fork in < 30 days away */
+    if (days < 30)
     {
         /* Software doesn't support the next fork yet */
         if (supported_height < next_fork)

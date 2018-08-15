@@ -11,19 +11,13 @@ matrix:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-4.9
+        #- g++-4.9
         - libboost1.55-all-dev
     env:
-    - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9
+    - MATRIX_EVAL="CC=gcc && CXX=g++
   - os: osx
 before_install:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository ppa:ethcore/ethcore
-  -y    ; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -q                            ;
-  fi
 install:
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install librocksdb-dev
-  -y            ; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install readline; brew link --force readline; fi
 script:
 - mkdir build && cd build

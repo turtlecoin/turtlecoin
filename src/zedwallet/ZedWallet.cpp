@@ -270,7 +270,7 @@ void run(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node,
                   << InformationMsg("Until this is completed new "
                                     "transactions might not show up.")
                   << std::endl
-                  << InformationMsg("Use bc_height to check the progress.")
+                  << InformationMsg("Use status to check the progress.")
                   << std::endl << std::endl;
     }
 
