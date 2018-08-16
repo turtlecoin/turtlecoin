@@ -14,7 +14,7 @@ after_build:
   - cd src\Release
   - mkdir turtlecoin-%APPVEYOR_REPO_TAG_NAME%
   - copy *.exe turtlecoin-%APPVEYOR_REPO_TAG_NAME%
-  - copy ..\..\LICENSE turtlecoin-%APPVEYOR_REPO_TAG_NAME%
+  - copy ..\..\..\LICENSE turtlecoin-%APPVEYOR_REPO_TAG_NAME%
   - 7z a turtlecoin-%APPVEYOR_REPO_TAG_NAME%.zip turtlecoin-%APPVEYOR_REPO_TAG_NAME%
     
 artifacts:
