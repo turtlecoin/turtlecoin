@@ -141,7 +141,7 @@ bool Miner::setStateBlockFound() {
 
 void Miner::incrementHashCount() {
   std::lock_guard<std::mutex> guard(m_hashes_mutex);
-  m_hash_count = m_hash_count++;
+  m_hash_count++;
 }
 
 uint64_t Miner::getHashCount() {
