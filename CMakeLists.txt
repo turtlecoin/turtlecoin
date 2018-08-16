@@ -30,6 +30,63 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(TurtleCoin)
 
+# TODO: Windows build?
+if(NOT MSVC AND ENABLE_READLINE)
+    ### BUILD READLINE ###
+
+    # Let the source code know we've got readline, with #ifdef HAVE_READLINE
+    add_definitions(-DHAVE_READLINE)
+
+    # Make the build directory (so we don't clutter up the source folder, or
+    # make files that git will see)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/)
+
+    # Run configure
+    execute_process(
+        COMMAND ../configure WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/
+    )
+
+    # Compile readline
+    execute_process(
+        COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/
+    )
+
+    # Link it statically
+    add_library(readline STATIC IMPORTED GLOBAL)
+
+    # Pass the path to the compiled readline static library
+    set_target_properties(readline PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/libreadline.a)
+
+    message(STATUS "Compiled GNU Readline")
+
+    ### BUILD NCURSES ###
+
+    # Make the build directory (so we don't clutter up the source folder, or
+    # make files that git will see)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/)
+
+    # Run configure
+    execute_process(
+        COMMAND ../configure WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/
+    )
+
+    # Compile ncurses
+    execute_process(
+        COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/
+    )
+
+    # Link it statically
+    add_library(NCURSES STATIC IMPORTED GLOBAL)
+
+    # Pass the path to the compiled ncurses static library
+    set_target_properties(NCURSES PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/lib/libncurses.a)
+
+    message(STATUS "Compiled Ncurses")
+
+    # Set HAVE_READLINE so we know to link against readline and ncurses later
+    set(HAVE_READLINE ON)
+endif()
+
 set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/version")
 if (NOT COMMIT_ID_IN_VERSION)
@@ -71,20 +128,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/Platform/Posix)
 else()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/Platform/Linux)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/Platform/Posix)
-endif()
-
-# Don't bother searching for readline on windows
-# Don't search if readline disabled
-if (NOT MSVC AND ENABLE_READLINE)
-    find_package(Readline)
-
-    if(READLINE_FOUND)
-        message(STATUS "Found GNU readline")
-        add_definitions(-DHAVE_READLINE)
-        include_directories(${Readline_INCLUDE_DIR})
-    else()
-        message(FATAL_ERROR "Could not find GNU Readline library!\nYou can fix this by either re-running cmake like so:\ncmake .. -DENABLE_READLINE=FALSE\nAlternatively, you can install the readline package for your operating system.\nUbuntu: sudo apt-get install libreadline-dev\nApple: brew install readline; brew link --force readline")
-    endif()
 endif()
 
 if(MSVC)
