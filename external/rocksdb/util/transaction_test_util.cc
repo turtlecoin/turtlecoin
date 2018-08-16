@@ -175,7 +175,7 @@ bool RandomTransactionInserter::DoInsert(DB* db, Transaction* txn,
     if (txn != nullptr) {
       std::hash<std::thread::id> hasher;
       char name[64];
-      snprintf(name, 64, "txn%zu-%d", hasher(std::this_thread::get_id()),
+      snprintf(name, 64, "txn%" ROCKSDB_PRIszt "-%d", hasher(std::this_thread::get_id()),
                txn_id_++);
       assert(strlen(name) < 64 - 1);
       if (!is_optimistic && !rand_->OneIn(10)) {
@@ -184,9 +184,7 @@ bool RandomTransactionInserter::DoInsert(DB* db, Transaction* txn,
         s = txn->Prepare();
         assert(s.ok());
       }
-      // TODO(myabandeh): enable this when WritePreparedTxnDB::RollbackPrepared
-      // is updated to handle in-the-middle rollbacks.
-      if (!rand_->OneIn(0)) {
+      if (!rand_->OneIn(20)) {
         s = txn->Commit();
       } else {
         // Also try 5% rollback

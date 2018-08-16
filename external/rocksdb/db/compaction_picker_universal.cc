@@ -204,7 +204,7 @@ void UniversalCompactionPicker::SortedRun::DumpSizeInfo(
 
 std::vector<UniversalCompactionPicker::SortedRun>
 UniversalCompactionPicker::CalculateSortedRuns(
-    const VersionStorageInfo& vstorage, const ImmutableCFOptions& ioptions,
+    const VersionStorageInfo& vstorage, const ImmutableCFOptions& /*ioptions*/,
     const MutableCFOptions& mutable_cf_options) {
   std::vector<UniversalCompactionPicker::SortedRun> ret;
   for (FileMetaData* f : vstorage.LevelFiles(0)) {
@@ -406,9 +406,9 @@ uint32_t UniversalCompactionPicker::GetPathId(
       file_size *
       (100 - mutable_cf_options.compaction_options_universal.size_ratio) / 100;
   uint32_t p = 0;
-  assert(!ioptions.db_paths.empty());
-  for (; p < ioptions.db_paths.size() - 1; p++) {
-    uint64_t target_size = ioptions.db_paths[p].target_size;
+  assert(!ioptions.cf_paths.empty());
+  for (; p < ioptions.cf_paths.size() - 1; p++) {
+    uint64_t target_size = ioptions.cf_paths[p].target_size;
     if (target_size > file_size &&
         accumulated_size + (target_size - file_size) > future_size) {
       return p;
@@ -609,11 +609,13 @@ Compaction* UniversalCompactionPicker::PickCompactionToReduceSortedRuns(
   }
   return new Compaction(
       vstorage, ioptions_, mutable_cf_options, std::move(inputs), output_level,
-      mutable_cf_options.MaxFileSizeForLevel(output_level), LLONG_MAX, path_id,
+      MaxFileSizeForLevel(mutable_cf_options, output_level,
+                          kCompactionStyleUniversal),
+      LLONG_MAX, path_id,
       GetCompressionType(ioptions_, vstorage, mutable_cf_options, start_level,
                          1, enable_compression),
-      /* grandparents */ {}, /* is manual */ false, score,
-      false /* deletion_compaction */, compaction_reason);
+      /* max_subcompactions */ 0, /* grandparents */ {}, /* is manual */ false,
+      score, false /* deletion_compaction */, compaction_reason);
 }
 
 // Look at overall size amplification. If size amplification
@@ -742,12 +744,13 @@ Compaction* UniversalCompactionPicker::PickCompactionToReduceSizeAmp(
 
   return new Compaction(
       vstorage, ioptions_, mutable_cf_options, std::move(inputs),
-      output_level, mutable_cf_options.MaxFileSizeForLevel(output_level),
+      output_level, MaxFileSizeForLevel(mutable_cf_options, output_level,
+          kCompactionStyleUniversal),
       /* max_grandparent_overlap_bytes */ LLONG_MAX, path_id,
       GetCompressionType(ioptions_, vstorage, mutable_cf_options,
                          output_level, 1),
-      /* grandparents */ {}, /* is manual */ false, score,
-      false /* deletion_compaction */,
+      /* max_subcompactions */ 0, /* grandparents */ {}, /* is manual */ false,
+      score, false /* deletion_compaction */,
       CompactionReason::kUniversalSizeAmplification);
 }
 }  // namespace rocksdb

@@ -36,7 +36,9 @@ class TestIterator : public InternalIterator {
         valid_(false),
         sequence_number_(0),
         iter_(0),
-        cmp(comparator) {}
+        cmp(comparator) {
+    data_.reserve(16);
+  }
 
   void AddPut(std::string argkey, std::string argvalue) {
     Add(argkey, kTypeValue, argvalue);
@@ -84,6 +86,36 @@ class TestIterator : public InternalIterator {
     });
   }
 
+  // Removes the key from the set of keys over which this iterator iterates.
+  // Not to be confused with AddDeletion().
+  // If the iterator is currently positioned on this key, the deletion will
+  // apply next time the iterator moves.
+  // Used for simulating ForwardIterator updating to a new version that doesn't
+  // have some of the keys (e.g. after compaction with a filter).
+  void Vanish(std::string _key) {
+    if (valid_ && data_[iter_].first == _key) {
+      delete_current_ = true;
+      return;
+    }
+    for (auto it = data_.begin(); it != data_.end(); ++it) {
+      ParsedInternalKey ikey;
+      bool ok __attribute__((__unused__)) = ParseInternalKey(it->first, &ikey);
+      assert(ok);
+      if (ikey.user_key != _key) {
+        continue;
+      }
+      if (valid_ && data_.begin() + iter_ > it) {
+        --iter_;
+      }
+      data_.erase(it);
+      return;
+    }
+    assert(false);
+  }
+
+  // Number of operations done on this iterator since construction.
+  size_t steps() const { return steps_; }
+
   virtual bool Valid() const override {
     assert(initialized_);
     return valid_;
@@ -91,12 +123,16 @@ class TestIterator : public InternalIterator {
 
   virtual void SeekToFirst() override {
     assert(initialized_);
+    ++steps_;
+    DeleteCurrentIfNeeded();
     valid_ = (data_.size() > 0);
     iter_ = 0;
   }
 
   virtual void SeekToLast() override {
     assert(initialized_);
+    ++steps_;
+    DeleteCurrentIfNeeded();
     valid_ = (data_.size() > 0);
     iter_ = data_.size() - 1;
   }
@@ -104,6 +140,7 @@ class TestIterator : public InternalIterator {
   virtual void Seek(const Slice& target) override {
     assert(initialized_);
     SeekToFirst();
+    ++steps_;
     if (!valid_) {
       return;
     }
@@ -119,20 +156,31 @@ class TestIterator : public InternalIterator {
 
   virtual void SeekForPrev(const Slice& target) override {
     assert(initialized_);
+    DeleteCurrentIfNeeded();
     SeekForPrevImpl(target, &cmp);
   }
 
   virtual void Next() override {
     assert(initialized_);
-    if (data_.empty() || (iter_ == data_.size() - 1)) {
-      valid_ = false;
+    assert(valid_);
+    assert(iter_ < data_.size());
+
+    ++steps_;
+    if (delete_current_) {
+      DeleteCurrentIfNeeded();
     } else {
       ++iter_;
     }
+    valid_ = iter_ < data_.size();
   }
 
   virtual void Prev() override {
     assert(initialized_);
+    assert(valid_);
+    assert(iter_ < data_.size());
+
+    ++steps_;
+    DeleteCurrentIfNeeded();
     if (iter_ == 0) {
       valid_ = false;
     } else {
@@ -163,9 +211,19 @@ class TestIterator : public InternalIterator {
   bool valid_;
   size_t sequence_number_;
   size_t iter_;
+  size_t steps_ = 0;
 
   InternalKeyComparator cmp;
   std::vector<std::pair<std::string, std::string>> data_;
+  bool delete_current_ = false;
+
+  void DeleteCurrentIfNeeded() {
+    if (!delete_current_) {
+      return;
+    }
+    data_.erase(data_.begin() + iter_);
+    delete_current_ = false;
+  }
 };
 
 class DBIteratorTest : public testing::Test {
@@ -2549,8 +2607,8 @@ TEST_F(DBIterWithMergeIterTest, InnerMergeIteratorDataRace1) {
   // MergeIterator::Prev() realized the mem table iterator is at its end
   // and before an SeekToLast() is called.
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "MergeIterator::Prev:BeforeSeekToLast",
-      [&](void* arg) { internal_iter2_->Add("z", kTypeValue, "7", 12u); });
+      "MergeIterator::Prev:BeforePrev",
+      [&](void* /*arg*/) { internal_iter2_->Add("z", kTypeValue, "7", 12u); });
   rocksdb::SyncPoint::GetInstance()->EnableProcessing();
 
   db_iter_->Prev();
@@ -2585,7 +2643,7 @@ TEST_F(DBIterWithMergeIterTest, InnerMergeIteratorDataRace2) {
   // mem table after MergeIterator::Prev() realized the mem tableiterator is at
   // its end and before an SeekToLast() is called.
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "MergeIterator::Prev:BeforeSeekToLast", [&](void* arg) {
+      "MergeIterator::Prev:BeforePrev", [&](void* /*arg*/) {
         internal_iter2_->Add("z", kTypeValue, "7", 12u);
         internal_iter2_->Add("z", kTypeValue, "7", 11u);
       });
@@ -2623,7 +2681,7 @@ TEST_F(DBIterWithMergeIterTest, InnerMergeIteratorDataRace3) {
   // mem table after MergeIterator::Prev() realized the mem table iterator is at
   // its end and before an SeekToLast() is called.
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "MergeIterator::Prev:BeforeSeekToLast", [&](void* arg) {
+      "MergeIterator::Prev:BeforePrev", [&](void* /*arg*/) {
         internal_iter2_->Add("z", kTypeValue, "7", 16u, true);
         internal_iter2_->Add("z", kTypeValue, "7", 15u, true);
         internal_iter2_->Add("z", kTypeValue, "7", 14u, true);
@@ -3016,6 +3074,41 @@ TEST_F(DBIteratorTest, SeekLessLowerBound) {
   db_iter->Seek(before_lower_bound);
   ASSERT_TRUE(db_iter->Valid());
   ASSERT_EQ(lower_bound_str, db_iter->key().ToString());
+}
+
+TEST_F(DBIteratorTest, ReverseToForwardWithDisappearingKeys) {
+  Options options;
+  options.prefix_extractor.reset(NewCappedPrefixTransform(0));
+
+  TestIterator* internal_iter = new TestIterator(BytewiseComparator());
+  internal_iter->AddPut("a", "A");
+  internal_iter->AddPut("b", "B");
+  for (int i = 0; i < 100; ++i) {
+    internal_iter->AddPut("c" + ToString(i), "");
+  }
+  internal_iter->Finish();
+
+  std::unique_ptr<Iterator> db_iter(NewDBIterator(
+      env_, ReadOptions(), ImmutableCFOptions(options), BytewiseComparator(),
+      internal_iter, 10, options.max_sequential_skip_in_iterations,
+      nullptr /*read_callback*/));
+
+  db_iter->SeekForPrev("a");
+  ASSERT_TRUE(db_iter->Valid());
+  ASSERT_OK(db_iter->status());
+  ASSERT_EQ("a", db_iter->key().ToString());
+
+  internal_iter->Vanish("a");
+  db_iter->Next();
+  ASSERT_TRUE(db_iter->Valid());
+  ASSERT_OK(db_iter->status());
+  ASSERT_EQ("b", db_iter->key().ToString());
+
+  // A (sort of) bug used to cause DBIter to pointlessly drag the internal
+  // iterator all the way to the end. But this doesn't really matter at the time
+  // of writing because the only iterator that can see disappearing keys is
+  // ForwardIterator, which doesn't support SeekForPrev().
+  EXPECT_LT(internal_iter->steps(), 20);
 }
 
 }  // namespace rocksdb

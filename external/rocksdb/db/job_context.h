@@ -27,7 +27,9 @@ struct SuperVersionContext {
   };
 
   autovector<SuperVersion*> superversions_to_free;
+#ifndef ROCKSDB_DISABLE_STALL_NOTIFICATION
   autovector<WriteStallNotification> write_stall_notifications;
+#endif
   unique_ptr<SuperVersion> new_superversion;  // if nullptr no new superversion
 
   explicit SuperVersionContext(bool create_superversion = false)
@@ -38,28 +40,37 @@ struct SuperVersionContext {
   }
 
   inline bool HaveSomethingToDelete() const {
-    return superversions_to_free.size() > 0 ||
-           write_stall_notifications.size() > 0;
+#ifndef ROCKSDB_DISABLE_STALL_NOTIFICATION
+    return !superversions_to_free.empty() ||
+           !write_stall_notifications.empty();
+#else
+    return !superversions_to_free.empty();
+#endif
   }
 
   void PushWriteStallNotification(
       WriteStallCondition old_cond, WriteStallCondition new_cond,
       const std::string& name, const ImmutableCFOptions* ioptions) {
-#ifndef ROCKSDB_LITE
+#if !defined(ROCKSDB_LITE) && !defined(ROCKSDB_DISABLE_STALL_NOTIFICATION)
     WriteStallNotification notif;
     notif.write_stall_info.cf_name = name;
     notif.write_stall_info.condition.prev = old_cond;
     notif.write_stall_info.condition.cur = new_cond;
     notif.immutable_cf_options = ioptions;
     write_stall_notifications.push_back(notif);
-#endif  // !ROCKSDB_LITE
+#else
+    (void)old_cond;
+    (void)new_cond;
+    (void)name;
+    (void)ioptions;
+#endif  // !defined(ROCKSDB_LITE) && !defined(ROCKSDB_DISABLE_STALL_NOTIFICATION)
   }
 
   void Clean() {
-#ifndef ROCKSDB_LITE
+#if !defined(ROCKSDB_LITE) && !defined(ROCKSDB_DISABLE_STALL_NOTIFICATION)
     // notify listeners on changed write stall conditions
     for (auto& notif : write_stall_notifications) {
-      for (auto listener : notif.immutable_cf_options->listeners) {
+      for (auto& listener : notif.immutable_cf_options->listeners) {
         listener->OnStallConditionsChanged(notif.write_stall_info);
       }
     }
@@ -73,8 +84,10 @@ struct SuperVersionContext {
   }
 
   ~SuperVersionContext() {
-    assert(write_stall_notifications.size() == 0);
-    assert(superversions_to_free.size() == 0);
+#ifndef ROCKSDB_DISABLE_STALL_NOTIFICATION
+    assert(write_stall_notifications.empty());
+#endif
+    assert(superversions_to_free.empty());
   }
 };
 
@@ -92,11 +105,12 @@ struct JobContext {
   // Structure to store information for candidate files to delete.
   struct CandidateFileInfo {
     std::string file_name;
-    uint32_t path_id;
-    CandidateFileInfo(std::string name, uint32_t path)
-        : file_name(std::move(name)), path_id(path) {}
+    std::string file_path;
+    CandidateFileInfo(std::string name, std::string path)
+        : file_name(std::move(name)), file_path(std::move(path)) {}
     bool operator==(const CandidateFileInfo& other) const {
-      return file_name == other.file_name && path_id == other.path_id;
+      return file_name == other.file_name &&
+             file_path == other.file_path;
     }
   };
 
@@ -113,7 +127,7 @@ struct JobContext {
   std::vector<FileDescriptor> sst_live;
 
   // a list of sst files that we need to delete
-  std::vector<FileMetaData*> sst_delete_files;
+  std::vector<ObsoleteFileInfo> sst_delete_files;
 
   // a list of log files that we need to delete
   std::vector<uint64_t> log_delete_files;

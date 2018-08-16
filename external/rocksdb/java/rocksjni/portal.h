@@ -484,7 +484,7 @@ class StatusJni : public RocksDBNativeClass<rocksdb::Status*, StatusJni> {
       // exception occurred
       return nullptr;
     }
-    
+
     jmethodID mid_code_value = rocksdb::CodeJni::getValueMethod(env);
     if (mid_code_value == nullptr) {
       // exception occurred
@@ -2583,7 +2583,7 @@ class WriteTypeJni : public JavaClass {
   static jobject LOG(JNIEnv* env) {
     return getEnum(env, "LOG");
   }
-  
+
   // Returns the equivalent org.rocksdb.WBWIRocksIterator.WriteType for the
   // provided C++ rocksdb::WriteType enum
   static jbyte toJavaWriteType(const rocksdb::WriteType& writeType) {
@@ -3295,8 +3295,10 @@ class TickerTypeJni {
         return 0x5C;
       case rocksdb::Tickers::NUMBER_ITER_SKIP:
         return 0x5D;
-      case rocksdb::Tickers::TICKER_ENUM_MAX:
+      case rocksdb::Tickers::NUMBER_MULTIGET_KEYS_FOUND:
         return 0x5E;
+      case rocksdb::Tickers::TICKER_ENUM_MAX:
+        return 0x5F;
 
       default:
         // undefined/default
@@ -3497,6 +3499,8 @@ class TickerTypeJni {
       case 0x5D:
         return rocksdb::Tickers::NUMBER_ITER_SKIP;
       case 0x5E:
+        return rocksdb::Tickers::NUMBER_MULTIGET_KEYS_FOUND;
+      case 0x5F:
         return rocksdb::Tickers::TICKER_ENUM_MAX;
 
       default:
@@ -4288,25 +4292,12 @@ class JniUtil {
      * @param bytes The bytes to copy
      *
      * @return the Java byte[] or nullptr if an exception occurs
+     * 
+     * @throws RocksDBException thrown 
+     *   if memory size to copy exceeds general java specific array size limitation.
      */
     static jbyteArray copyBytes(JNIEnv* env, std::string bytes) {
-      const jsize jlen = static_cast<jsize>(bytes.size());
-
-      jbyteArray jbytes = env->NewByteArray(jlen);
-      if(jbytes == nullptr) {
-        // exception thrown: OutOfMemoryError
-        return nullptr;
-      }
-
-      env->SetByteArrayRegion(jbytes, 0, jlen,
-        const_cast<jbyte*>(reinterpret_cast<const jbyte*>(bytes.c_str())));
-      if(env->ExceptionCheck()) {
-        // exception thrown: ArrayIndexOutOfBoundsException
-        env->DeleteLocalRef(jbytes);
-        return nullptr;
-      }
-
-      return jbytes;
+      return createJavaByteArrayWithSizeCheck(env, bytes.c_str(), bytes.size());
     }
 
     /**
@@ -4469,6 +4460,47 @@ class JniUtil {
 
       return jbyte_strings;
     }
+    
+    /**
+      * Copies bytes to a new jByteArray with the check of java array size limitation.
+      *
+      * @param bytes pointer to memory to copy to a new jByteArray
+      * @param size number of bytes to copy
+      *
+      * @return the Java byte[] or nullptr if an exception occurs
+      * 
+      * @throws RocksDBException thrown 
+      *   if memory size to copy exceeds general java array size limitation to avoid overflow.
+      */
+    static jbyteArray createJavaByteArrayWithSizeCheck(JNIEnv* env, const char* bytes, const size_t size) {
+      // Limitation for java array size is vm specific
+      // In general it cannot exceed Integer.MAX_VALUE (2^31 - 1)
+      // Current HotSpot VM limitation for array size is Integer.MAX_VALUE - 5 (2^31 - 1 - 5)
+      // It means that the next call to env->NewByteArray can still end with 
+      // OutOfMemoryError("Requested array size exceeds VM limit") coming from VM
+      static const size_t MAX_JARRAY_SIZE = (static_cast<size_t>(1)) << 31;
+      if(size > MAX_JARRAY_SIZE) {
+        rocksdb::RocksDBExceptionJni::ThrowNew(env, "Requested array size exceeds VM limit");
+        return nullptr;
+      }
+      
+      const jsize jlen = static_cast<jsize>(size);
+      jbyteArray jbytes = env->NewByteArray(jlen);
+      if(jbytes == nullptr) {
+        // exception thrown: OutOfMemoryError	
+        return nullptr;
+      }
+      
+      env->SetByteArrayRegion(jbytes, 0, jlen,
+        const_cast<jbyte*>(reinterpret_cast<const jbyte*>(bytes)));
+      if(env->ExceptionCheck()) {
+        // exception thrown: ArrayIndexOutOfBoundsException
+        env->DeleteLocalRef(jbytes);
+        return nullptr;
+      }
+
+      return jbytes;
+    }
 
     /**
      * Copies bytes from a rocksdb::Slice to a jByteArray
@@ -4477,25 +4509,12 @@ class JniUtil {
      * @param bytes The bytes to copy
      *
      * @return the Java byte[] or nullptr if an exception occurs
+     * 
+     * @throws RocksDBException thrown 
+     *   if memory size to copy exceeds general java specific array size limitation.
      */
     static jbyteArray copyBytes(JNIEnv* env, const Slice& bytes) {
-      const jsize jlen = static_cast<jsize>(bytes.size());
-
-      jbyteArray jbytes = env->NewByteArray(jlen);
-      if(jbytes == nullptr) {
-        // exception thrown: OutOfMemoryError
-        return nullptr;
-      }
-
-      env->SetByteArrayRegion(jbytes, 0, jlen,
-        const_cast<jbyte*>(reinterpret_cast<const jbyte*>(bytes.data())));
-      if(env->ExceptionCheck()) {
-        // exception thrown: ArrayIndexOutOfBoundsException
-        env->DeleteLocalRef(jbytes);
-        return nullptr;
-      }
-
-      return jbytes;
+      return createJavaByteArrayWithSizeCheck(env, bytes.data(), bytes.size());
     }
 
     /*
@@ -4506,7 +4525,7 @@ class JniUtil {
      */
     static std::unique_ptr<rocksdb::Status> kv_op(
         std::function<rocksdb::Status(rocksdb::Slice, rocksdb::Slice)> op,
-        JNIEnv* env, jobject jobj,
+        JNIEnv* env, jobject /*jobj*/,
         jbyteArray jkey, jint jkey_len,
         jbyteArray jvalue, jint jvalue_len) {
       jbyte* key = env->GetByteArrayElements(jkey, nullptr);
@@ -4548,7 +4567,7 @@ class JniUtil {
      */
     static std::unique_ptr<rocksdb::Status> k_op(
         std::function<rocksdb::Status(rocksdb::Slice)> op,
-        JNIEnv* env, jobject jobj,
+        JNIEnv* env, jobject /*jobj*/,
         jbyteArray jkey, jint jkey_len) {
       jbyte* key = env->GetByteArrayElements(jkey, nullptr);
       if(env->ExceptionCheck()) {
@@ -4796,7 +4815,7 @@ class HashMapJni : public JavaClass {
 
   /**
    * A function which maps a std::pair<K,V> to a std::pair<jobject, jobject>
-   * 
+   *
    * @return Either a pointer to a std::pair<jobject, jobject>, or nullptr
    *     if an error occurs during the mapping
    */

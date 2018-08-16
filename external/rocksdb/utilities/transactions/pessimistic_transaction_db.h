@@ -35,6 +35,8 @@ class PessimisticTransactionDB : public TransactionDB {
 
   virtual ~PessimisticTransactionDB();
 
+  virtual const Snapshot* GetSnapshot() override { return db_->GetSnapshot(); }
+
   virtual Status Initialize(
       const std::vector<size_t>& compaction_enabled_cf_indices,
       const std::vector<ColumnFamilyHandle*>& handles);
@@ -118,7 +120,7 @@ class PessimisticTransactionDB : public TransactionDB {
   // an odd performance drop we observed when the added std::atomic member to
   // the base class even when the subclass do not read it in the fast path.
   virtual void UpdateCFComparatorMap(const std::vector<ColumnFamilyHandle*>&) {}
-  virtual void UpdateCFComparatorMap(const ColumnFamilyHandle*) {}
+  virtual void UpdateCFComparatorMap(ColumnFamilyHandle*) {}
 
  protected:
   DBImpl* db_impl_;
@@ -135,6 +137,7 @@ class PessimisticTransactionDB : public TransactionDB {
   friend class WritePreparedTxnDB;
   friend class WritePreparedTxnDBMock;
   friend class TransactionTest_DoubleEmptyWrite_Test;
+  friend class TransactionTest_DuplicateKeys_Test;
   friend class TransactionTest_PersistentTwoPhaseTransactionTest_Test;
   friend class TransactionTest_TwoPhaseLongPrepareTest_Test;
   friend class TransactionTest_TwoPhaseDoubleRecoveryTest_Test;

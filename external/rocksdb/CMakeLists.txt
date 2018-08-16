@@ -16,7 +16,7 @@
 #    See thirdparty.inc for more information.
 #        sample command: cmake -G "Visual Studio 15 Win64" -DWITH_GFLAGS=1 -DWITH_SNAPPY=1 -DWITH_JEMALLOC=1 -DWITH_JNI=1 ..
 # 4. Then build the project in debug mode (you may want to add /m[:<N>] flag to run msbuild in <N> parallel threads
-#                                          or simply /m ot use all avail cores)
+#                                          or simply /m to use all avail cores)
 #        msbuild rocksdb.sln
 #
 #        rocksdb.sln build features exclusions of test only code in Release. If you build ALL_BUILD then everything
@@ -56,7 +56,7 @@ if(MSVC)
   include(${CMAKE_CURRENT_SOURCE_DIR}/thirdparty.inc)
 else()
   if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
-    # FreeBSD has jemaloc as default malloc
+    # FreeBSD has jemalloc as default malloc
     # but it does not have all the jemalloc files in include/...
     set(WITH_JEMALLOC ON)
   else()
@@ -64,9 +64,10 @@ else()
       find_package(JeMalloc REQUIRED)
       add_definitions(-DROCKSDB_JEMALLOC -DJEMALLOC_NO_DEMANGLE)
       include_directories(${JEMALLOC_INCLUDE_DIR})
+      list(APPEND THIRDPARTY_LIBS ${JEMALLOC_LIBRARIES})
     endif()
   endif()
-  
+
   # No config file for this
   option(WITH_GFLAGS "build with GFlags" ON)
   if(WITH_GFLAGS)
@@ -132,19 +133,17 @@ endif()
 
 string(REGEX REPLACE "[^0-9a-f]+" "" GIT_SHA "${GIT_SHA}")
 
-set(SH_CMD "sh")
-execute_process(COMMAND
-  ${SH_CMD} -c "build_tools/version.sh full"
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE ROCKSDB_VERSION
-)
-string(STRIP "${ROCKSDB_VERSION}" ROCKSDB_VERSION)
-execute_process(COMMAND
-  ${SH_CMD} -c "build_tools/version.sh major"
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  OUTPUT_VARIABLE ROCKSDB_VERSION_MAJOR
-)
-string(STRIP "${ROCKSDB_VERSION_MAJOR}" ROCKSDB_VERSION_MAJOR)
+
+# Read rocksdb version from version.h header file.
+file(READ include/rocksdb/version.h version_header_file)
+string(REGEX MATCH "#define ROCKSDB_MAJOR ([0-9]+)" _ ${version_header_file})
+set(ROCKSDB_VERSION_MAJOR ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define ROCKSDB_MINOR ([0-9]+)" _ ${version_header_file})
+set(ROCKSDB_VERSION_MINOR ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define ROCKSDB_PATCH ([0-9]+)" _ ${version_header_file})
+set(ROCKSDB_VERSION_PATCH ${CMAKE_MATCH_1})
+set(ROCKSDB_VERSION ${ROCKSDB_VERSION_MAJOR}.${ROCKSDB_VERSION_MINOR}.${ROCKSDB_VERSION_PATCH})
+
 
 option(WITH_MD_LIBRARY "build with MD" ON)
 if(WIN32 AND MSVC)
@@ -173,11 +172,9 @@ else()
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fno-omit-frame-pointer")
     include(CheckCXXCompilerFlag)
-    if(ENABLE_LEAF_FRAME)
-      CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
-      if(HAVE_OMIT_LEAF_FRAME_POINTER)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
-      endif()
+    CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
+    if(HAVE_OMIT_LEAF_FRAME_POINTER)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
     endif()
   endif()
 endif()
@@ -213,42 +210,39 @@ else()
 endif()
 
 include(CheckCXXSourceCompiles)
-if(ENABLE_SSE42)
-  if(NOT MSVC)
-    set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
-  endif()
-  CHECK_CXX_SOURCE_COMPILES("
-  #include <cstdint>
-  #include <nmmintrin.h>
-  #include <wmmintrin.h>
-  int main() {
-    volatile uint32_t x = _mm_crc32_u32(0, 0);
-    const auto a = _mm_set_epi64x(0, 0);
-    const auto b = _mm_set_epi64x(0, 0);
-    const auto c = _mm_clmulepi64_si128(a, b, 0x00);
-    auto d = _mm_cvtsi128_si64(c);
-  }
-  " HAVE_SSE42)
-  unset(CMAKE_REQUIRED_FLAGS)
-  if(HAVE_SSE42)
-    add_definitions(-DHAVE_SSE42)
-  elseif(FORCE_SSE42)
-    message(FATAL_ERROR "FORCE_SSE42=ON but unable to compile with SSE4.2 enabled")
-  endif()
+if(NOT MSVC)
+  set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
+endif()
+CHECK_CXX_SOURCE_COMPILES("
+#include <cstdint>
+#include <nmmintrin.h>
+#include <wmmintrin.h>
+int main() {
+  volatile uint32_t x = _mm_crc32_u32(0, 0);
+  const auto a = _mm_set_epi64x(0, 0);
+  const auto b = _mm_set_epi64x(0, 0);
+  const auto c = _mm_clmulepi64_si128(a, b, 0x00);
+  auto d = _mm_cvtsi128_si64(c);
+}
+" HAVE_SSE42)
+unset(CMAKE_REQUIRED_FLAGS)
+if(HAVE_SSE42)
+  add_definitions(-DHAVE_SSE42)
+  add_definitions(-DHAVE_PCLMUL)
+elseif(FORCE_SSE42)
+  message(FATAL_ERROR "FORCE_SSE42=ON but unable to compile with SSE4.2 enabled")
 endif()
 
-if(ENABLE_THREAD_LOCAL)
-  CHECK_CXX_SOURCE_COMPILES("
-  #if defined(_MSC_VER) && !defined(__thread)
-  #define __thread __declspec(thread)
-  #endif
-  int main() {
-    static __thread int tls;
-  }
-  " HAVE_THREAD_LOCAL)
-  if(HAVE_THREAD_LOCAL)
-    add_definitions(-DROCKSDB_SUPPORT_THREAD_LOCAL)
-  endif()
+CHECK_CXX_SOURCE_COMPILES("
+#if defined(_MSC_VER) && !defined(__thread)
+#define __thread __declspec(thread)
+#endif
+int main() {
+  static __thread int tls;
+}
+" HAVE_THREAD_LOCAL)
+if(HAVE_THREAD_LOCAL)
+  add_definitions(-DROCKSDB_SUPPORT_THREAD_LOCAL)
 endif()
 
 option(FAIL_ON_WARNINGS "Treat compile warnings as errors" ON)
@@ -291,24 +285,26 @@ if(WITH_UBSAN)
   endif()
 endif()
 
-option(WITH_NUMA "build with NUMA" OFF)
+option(WITH_NUMA "build with NUMA policy support" OFF)
 if(WITH_NUMA)
-  find_package(NUMA)
-  if(NUMA_FOUND)
-    add_definitions(-DNUMA)
-    include_directories(${NUMA_INCLUDE_DIR})
-    list(APPEND THIRDPARTY_LIBS ${NUMA_LIBRARIES})
-  endif()
+  find_package(NUMA REQUIRED)
+  add_definitions(-DNUMA)
+  include_directories(${NUMA_INCLUDE_DIR})
+  list(APPEND THIRDPARTY_LIBS ${NUMA_LIBRARIES})
 endif()
 
-option(WITH_TBB "build with TBB" OFF)
+option(WITH_TBB "build with Threading Building Blocks (TBB)" OFF)
 if(WITH_TBB)
-  find_package(TBB)
-  if(TBB_FOUND)
-    add_definitions(-DTBB)
-    include_directories(${TBB_INCLUDE_DIR})
-    list(APPEND THIRDPARTY_LIBS ${TBB_LIBRARIES})
-  endif()
+  find_package(TBB REQUIRED)
+  add_definitions(-DTBB)
+  include_directories(${TBB_INCLUDE_DIR})
+  list(APPEND THIRDPARTY_LIBS ${TBB_LIBRARIES})
+endif()
+
+# Stall notifications eat some performance from inserts
+option(DISABLE_STALL_NOTIF "Build with stall notifications" OFF)
+if(DISABLE_STALL_NOTIF)
+  add_definitions(-DROCKSDB_DISABLE_STALL_NOTIFICATION)
 endif()
 
 # Used to run CI build and tests so we can run faster
@@ -318,6 +314,22 @@ if(DEFINED OPTDBG)
    set(OPTIMIZE_DEBUG ${OPTDBG})
 else()
    set(OPTIMIZE_DEBUG ${OPTIMIZE_DEBUG_DEFAULT})
+endif()
+
+if(DEFINED USE_RTTI)
+  if(USE_RTTI)
+    message(STATUS "Enabling RTTI")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DROCKSDB_USE_RTTI")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DROCKSDB_USE_RTTI")
+  else()
+    message(STATUS "Disabling RTTI")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+  endif()
+else()
+  message(STATUS "Enabling RTTI in Debug builds only (default)")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DROCKSDB_USE_RTTI")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
 endif()
 
 if(MSVC)
@@ -377,7 +389,7 @@ if(NOT WIN32)
   add_definitions(-DROCKSDB_PLATFORM_POSIX -DROCKSDB_LIB_IO_POSIX)
 endif()
 
-option(WITH_FALLOCATE "build with fallocate" OFF)
+option(WITH_FALLOCATE "build with fallocate" ON)
 if(WITH_FALLOCATE)
   CHECK_CXX_SOURCE_COMPILES("
 #include <fcntl.h>
@@ -392,44 +404,36 @@ int main() {
   endif()
 endif()
 
-if(ENABLE_SYNC_FILE_RANGE_WRITE)
-  CHECK_CXX_SOURCE_COMPILES("
-  #include <fcntl.h>
-  int main() {
-    int fd = open(\"/dev/null\", 0);
-    sync_file_range(fd, 0, 1024, SYNC_FILE_RANGE_WRITE);
-  }
-  " HAVE_SYNC_FILE_RANGE_WRITE)
-  if(HAVE_SYNC_FILE_RANGE_WRITE)
-    add_definitions(-DROCKSDB_RANGESYNC_PRESENT)
-  endif()
+CHECK_CXX_SOURCE_COMPILES("
+#include <fcntl.h>
+int main() {
+  int fd = open(\"/dev/null\", 0);
+  sync_file_range(fd, 0, 1024, SYNC_FILE_RANGE_WRITE);
+}
+" HAVE_SYNC_FILE_RANGE_WRITE)
+if(HAVE_SYNC_FILE_RANGE_WRITE)
+  add_definitions(-DROCKSDB_RANGESYNC_PRESENT)
 endif()
 
-if(ENABLE_PTHREAD_MUTEX_ADAPTIVE_NP)
-  CHECK_CXX_SOURCE_COMPILES("
-  #include <pthread.h>
-  int main() {
-    (void) PTHREAD_MUTEX_ADAPTIVE_NP;
-  }
-  " HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-  if(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-    add_definitions(-DROCKSDB_PTHREAD_ADAPTIVE_MUTEX)
-  endif()
+CHECK_CXX_SOURCE_COMPILES("
+#include <pthread.h>
+int main() {
+  (void) PTHREAD_MUTEX_ADAPTIVE_NP;
+}
+" HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+if(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+  add_definitions(-DROCKSDB_PTHREAD_ADAPTIVE_MUTEX)
 endif()
 
 include(CheckCXXSymbolExists)
-if(ENABLE_MALLOC_USABLE_SIZE)
-  check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
-  if(HAVE_MALLOC_USABLE_SIZE)
-    add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
-  endif()
+check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
+if(HAVE_MALLOC_USABLE_SIZE)
+  add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
 endif()
 
-if(ENABLE_SCHED_GETCPU)
-  check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
-  if(HAVE_SCHED_GETCPU)
-    add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
-  endif()
+check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
+if(HAVE_SCHED_GETCPU)
+  add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
@@ -475,6 +479,7 @@ set(SOURCES
         db/flush_scheduler.cc
         db/forward_iterator.cc
         db/internal_stats.cc
+        db/logs_with_prep_tracker.cc
         db/log_reader.cc
         db/log_writer.cc
         db/malloc_stats.cc
@@ -589,12 +594,14 @@ set(SOURCES
         util/status_message.cc
         util/string_util.cc
         util/sync_point.cc
+        util/sync_point_impl.cc
         util/testutil.cc
         util/thread_local.cc
         util/threadpool_imp.cc
         util/transaction_test_util.cc
         util/xxhash.cc
         utilities/backupable/backupable_db.cc
+        utilities/blob_db/blob_compaction_filter.cc
         utilities/blob_db/blob_db.cc
         utilities/blob_db/blob_db_impl.cc
         utilities/blob_db/blob_dump_tool.cc
@@ -676,8 +683,12 @@ if(WIN32)
     port/win/env_default.cc
     port/win/port_win.cc
     port/win/win_logger.cc
-    port/win/win_thread.cc
+    port/win/win_thread.cc)
+
+if(WITH_XPRESS)
+  list(APPEND SOURCES
     port/win/xpress_win.cc)
+endif()
 
 if(WITH_JEMALLOC)
   list(APPEND SOURCES
@@ -694,6 +705,14 @@ endif()
 set(ROCKSDB_STATIC_LIB rocksdb${ARTIFACT_SUFFIX})
 set(ROCKSDB_SHARED_LIB rocksdb-shared${ARTIFACT_SUFFIX})
 set(ROCKSDB_IMPORT_LIB ${ROCKSDB_SHARED_LIB})
+
+option(WITH_LIBRADOS "Build with librados" OFF)
+if(WITH_LIBRADOS)
+  list(APPEND SOURCES
+    utilities/env_librados.cc)
+  list(APPEND THIRDPARTY_LIBS rados)
+endif()
+
 if(WIN32)
   set(SYSTEM_LIBS ${SYSTEM_LIBS} Shlwapi.lib Rpcrt4.lib)
   set(LIBS ${ROCKSDB_STATIC_LIB} ${THIRDPARTY_LIBS} ${SYSTEM_LIBS})
@@ -710,13 +729,6 @@ else()
                         SOVERSION ${ROCKSDB_VERSION_MAJOR}
                         CXX_STANDARD 11
                         OUTPUT_NAME "rocksdb")
-endif()
-
-option(WITH_LIBRADOS "Build with librados" OFF)
-if(WITH_LIBRADOS)
-  list(APPEND SOURCES
-    utilities/env_librados.cc)
-  list(APPEND THIRDPARTY_LIBS rados)
 endif()
 
 add_library(${ROCKSDB_STATIC_LIB} STATIC ${SOURCES})
@@ -833,6 +845,7 @@ if(WITH_TESTS)
         db/db_inplace_update_test.cc
         db/db_io_failure_test.cc
         db/db_iter_test.cc
+        db/db_iter_stress_test.cc
         db/db_iterator_test.cc
         db/db_log_iter_test.cc
         db/db_memtable_test.cc
@@ -851,6 +864,7 @@ if(WITH_TESTS)
         db/db_write_test.cc
         db/dbformat_test.cc
         db/deletefile_test.cc
+        db/obsolete_files_test.cc
         db/external_sst_file_basic_test.cc
         db/external_sst_file_test.cc
         db/fault_injection_test.cc
@@ -1030,64 +1044,4 @@ endif()
 option(WITH_TOOLS "build with tools" ON)
 if(WITH_TOOLS)
   add_subdirectory(tools)
-endif()
-
-
-if(MSVC)
-  # Check for the presence of AVX and figure out the flags to use for it.
-  string (REPLACE "/arch:AVX2" ""     CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-  string (REPLACE "/arch:AVX" ""     CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-
-  if(ENABLE_AVX)
-    include(CheckCXXSourceRuns)
-    
-    # Check AVX
-    check_cxx_source_runs("
-      #include <immintrin.h>
-      int main()
-      {
-        __m256 a, b, c;
-        const float src[8] = { 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f };
-        float dst[8];
-        a = _mm256_loadu_ps( src );
-        b = _mm256_loadu_ps( src );
-        c = _mm256_add_ps( a, b );
-        _mm256_storeu_ps( dst, c );
-        for( int i = 0; i < 8; i++ ){
-          if( ( src[i] + src[i] ) != dst[i] ){
-            return -1;
-          }
-        }
-        return 0;
-      }"
-      HAVE_AVX_EXTENSIONS)
-
-    # Check AVX2
-    check_cxx_source_runs("
-      #include <immintrin.h>
-      int main()
-      {
-        __m256i a, b, c;
-        const int src[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-        int dst[8];
-        a =  _mm256_loadu_si256( (__m256i*)src );
-        b =  _mm256_loadu_si256( (__m256i*)src );
-        c = _mm256_add_epi32( a, b );
-        _mm256_storeu_si256( (__m256i*)dst, c );
-        for( int i = 0; i < 8; i++ ){
-          if( ( src[i] + src[i] ) != dst[i] ){
-            return -1;
-          }
-        }
-        return 0;
-      }"
-      HAVE_AVX2_EXTENSIONS)
-
-    # Set Flags
-    if(HAVE_AVX2_EXTENSIONS AND NOT MSVC_VERSION LESS 1800)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
-    elseif(HAVE_AVX_EXTENSIONS  AND NOT MSVC_VERSION LESS 1600)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX")
-    endif()
-  endif()
 endif()

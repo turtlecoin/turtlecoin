@@ -41,7 +41,7 @@ bool FindIntraL0Compaction(const std::vector<FileMetaData*>& level_files,
                            size_t min_files_to_compact,
                            uint64_t max_compact_bytes_per_del_file,
                            CompactionInputFiles* comp_inputs) {
-  size_t compact_bytes = level_files[0]->fd.file_size;
+  size_t compact_bytes = static_cast<size_t>(level_files[0]->fd.file_size);
   size_t compact_bytes_per_del_file = port::kMaxSizet;
   // compaction range will be [0, span_len).
   size_t span_len;
@@ -59,7 +59,7 @@ bool FindIntraL0Compaction(const std::vector<FileMetaData*>& level_files,
   }
 
   if (span_len >= min_files_to_compact &&
-      new_compact_bytes_per_del_file < max_compact_bytes_per_del_file) {
+      compact_bytes_per_del_file < max_compact_bytes_per_del_file) {
     assert(comp_inputs != nullptr);
     comp_inputs->level = 0;
     for (size_t i = 0; i < span_len; ++i) {
@@ -199,7 +199,7 @@ void CompactionPicker::GetRange(const std::vector<CompactionInputFiles>& inputs,
   assert(initialized);
 }
 
-bool CompactionPicker::ExpandInputsToCleanCut(const std::string& cf_name,
+bool CompactionPicker::ExpandInputsToCleanCut(const std::string& /*cf_name*/,
                                               VersionStorageInfo* vstorage,
                                               CompactionInputFiles* inputs) {
   // This isn't good compaction
@@ -301,7 +301,9 @@ Compaction* CompactionPicker::CompactFiles(
       new Compaction(vstorage, ioptions_, mutable_cf_options, input_files,
                      output_level, compact_options.output_file_size_limit,
                      mutable_cf_options.max_compaction_bytes, output_path_id,
-                     compact_options.compression, /* grandparents */ {}, true);
+                     compact_options.compression,
+                     compact_options.max_subcompactions,
+                     /* grandparents */ {}, true);
   RegisterCompaction(c);
   return c;
 }
@@ -309,7 +311,7 @@ Compaction* CompactionPicker::CompactFiles(
 Status CompactionPicker::GetCompactionInputsFromFileNumbers(
     std::vector<CompactionInputFiles>* input_files,
     std::unordered_set<uint64_t>* input_set, const VersionStorageInfo* vstorage,
-    const CompactionOptions& compact_options) const {
+    const CompactionOptions& /*compact_options*/) const {
   if (input_set->size() == 0U) {
     return Status::InvalidArgument(
         "Compaction must include at least one file.");
@@ -475,7 +477,7 @@ bool CompactionPicker::SetupOtherInputs(
       ROCKS_LOG_INFO(ioptions_.info_log,
                      "[%s] Expanding@%d %" ROCKSDB_PRIszt "+%" ROCKSDB_PRIszt
                      "(%" PRIu64 "+%" PRIu64 " bytes) to %" ROCKSDB_PRIszt
-                     "+%" ROCKSDB_PRIszt " (%" PRIu64 "+%" PRIu64 "bytes)\n",
+                     "+%" ROCKSDB_PRIszt " (%" PRIu64 "+%" PRIu64 " bytes)\n",
                      cf_name.c_str(), input_level, inputs->size(),
                      output_level_inputs->size(), inputs_size,
                      output_level_inputs_size, expanded_inputs.size(),
@@ -504,7 +506,8 @@ void CompactionPicker::GetGrandparents(
 Compaction* CompactionPicker::CompactRange(
     const std::string& cf_name, const MutableCFOptions& mutable_cf_options,
     VersionStorageInfo* vstorage, int input_level, int output_level,
-    uint32_t output_path_id, const InternalKey* begin, const InternalKey* end,
+    uint32_t output_path_id, uint32_t max_subcompactions,
+    const InternalKey* begin, const InternalKey* end,
     InternalKey** compaction_end, bool* manual_conflict) {
   // CompactionPickerFIFO has its own implementation of compact range
   assert(ioptions_.compaction_style != kCompactionStyleFIFO);
@@ -566,11 +569,12 @@ Compaction* CompactionPicker::CompactRange(
 
     Compaction* c = new Compaction(
         vstorage, ioptions_, mutable_cf_options, std::move(inputs),
-        output_level, mutable_cf_options.MaxFileSizeForLevel(output_level),
+        output_level, MaxFileSizeForLevel(mutable_cf_options, output_level,
+            ioptions_.compaction_style),
         /* max_compaction_bytes */ LLONG_MAX, output_path_id,
         GetCompressionType(ioptions_, vstorage, mutable_cf_options,
                            output_level, 1),
-        /* grandparents */ {}, /* is manual */ true);
+        max_subcompactions, /* grandparents */ {}, /* is manual */ true);
     RegisterCompaction(c);
     return c;
   }
@@ -616,7 +620,7 @@ Compaction* CompactionPicker::CompactRange(
       }
     }
   }
-  assert(output_path_id < static_cast<uint32_t>(ioptions_.db_paths.size()));
+  assert(output_path_id < static_cast<uint32_t>(ioptions_.cf_paths.size()));
 
   if (ExpandInputsToCleanCut(cf_name, vstorage, &inputs) == false) {
     // manual compaction is now multi-threaded, so it can
@@ -673,11 +677,15 @@ Compaction* CompactionPicker::CompactRange(
   GetGrandparents(vstorage, inputs, output_level_inputs, &grandparents);
   Compaction* compaction = new Compaction(
       vstorage, ioptions_, mutable_cf_options, std::move(compaction_inputs),
-      output_level, mutable_cf_options.MaxFileSizeForLevel(output_level),
+      output_level,
+      MaxFileSizeForLevel(mutable_cf_options, output_level,
+          ioptions_.compaction_style, vstorage->base_level(),
+          ioptions_.level_compaction_dynamic_level_bytes),
       mutable_cf_options.max_compaction_bytes, output_path_id,
       GetCompressionType(ioptions_, vstorage, mutable_cf_options, output_level,
                          vstorage->base_level()),
-      std::move(grandparents), /* is manual compaction */ true);
+      /* max_subcompactions */ 0, std::move(grandparents),
+      /* is manual compaction */ true);
 
   TEST_SYNC_POINT_CALLBACK("CompactionPicker::CompactRange:Return", compaction);
   RegisterCompaction(compaction);
@@ -941,6 +949,9 @@ void CompactionPicker::UnregisterCompaction(Compaction* c) {
 
 bool LevelCompactionPicker::NeedsCompaction(
     const VersionStorageInfo* vstorage) const {
+  if (!vstorage->ExpiredTtlFiles().empty()) {
+    return true;
+  }
   if (!vstorage->BottommostFilesMarkedForCompaction().empty()) {
     return true;
   }
@@ -1009,6 +1020,8 @@ class LevelCompactionBuilder {
 
   // If there is any file marked for compaction, put put it into inputs.
   void PickFilesMarkedForCompaction();
+
+  void PickExpiredTtlFiles();
 
   const std::string& cf_name_;
   VersionStorageInfo* vstorage_;
@@ -1080,6 +1093,42 @@ void LevelCompactionBuilder::PickFilesMarkedForCompaction() {
   start_level_inputs_.files.clear();
 }
 
+void LevelCompactionBuilder::PickExpiredTtlFiles() {
+  if (vstorage_->ExpiredTtlFiles().empty()) {
+    return;
+  }
+
+  auto continuation = [&](std::pair<int, FileMetaData*> level_file) {
+    // If it's being compacted it has nothing to do here.
+    // If this assert() fails that means that some function marked some
+    // files as being_compacted, but didn't call ComputeCompactionScore()
+    assert(!level_file.second->being_compacted);
+    start_level_ = level_file.first;
+    output_level_ =
+        (start_level_ == 0) ? vstorage_->base_level() : start_level_ + 1;
+
+    if ((start_level_ == vstorage_->num_non_empty_levels() - 1) ||
+        (start_level_ == 0 &&
+         !compaction_picker_->level0_compactions_in_progress()->empty())) {
+      return false;
+    }
+
+    start_level_inputs_.files = {level_file.second};
+    start_level_inputs_.level = start_level_;
+    return compaction_picker_->ExpandInputsToCleanCut(cf_name_, vstorage_,
+                                                      &start_level_inputs_);
+  };
+
+  for (auto& level_file : vstorage_->ExpiredTtlFiles()) {
+    if (continuation(level_file)) {
+      // found the compaction!
+      return;
+    }
+  }
+
+  start_level_inputs_.files.clear();
+}
+
 void LevelCompactionBuilder::SetupInitialFiles() {
   // Find the compactions by size on all levels.
   bool skipped_l0_to_base = false;
@@ -1131,32 +1180,40 @@ void LevelCompactionBuilder::SetupInitialFiles() {
   // if we didn't find a compaction, check if there are any files marked for
   // compaction
   if (start_level_inputs_.empty()) {
-    is_manual_ = true;
     parent_index_ = base_index_ = -1;
+
     PickFilesMarkedForCompaction();
-    if (start_level_inputs_.empty()) {
-      size_t i;
-      for (i = 0; i < vstorage_->BottommostFilesMarkedForCompaction().size();
-           ++i) {
-        auto& level_and_file =
-            vstorage_->BottommostFilesMarkedForCompaction()[i];
-        assert(!level_and_file.second->being_compacted);
-        start_level_inputs_.level = output_level_ = start_level_ =
-            level_and_file.first;
-        start_level_inputs_.files = {level_and_file.second};
-        if (compaction_picker_->ExpandInputsToCleanCut(cf_name_, vstorage_,
-                                                       &start_level_inputs_)) {
-          break;
-        }
-      }
-      if (i == vstorage_->BottommostFilesMarkedForCompaction().size()) {
-        start_level_inputs_.clear();
-      } else {
-        assert(!start_level_inputs_.empty());
-        compaction_reason_ = CompactionReason::kBottommostFiles;
-      }
-    } else {
+    if (!start_level_inputs_.empty()) {
+      is_manual_ = true;
       compaction_reason_ = CompactionReason::kFilesMarkedForCompaction;
+      return;
+    }
+
+    size_t i;
+    for (i = 0; i < vstorage_->BottommostFilesMarkedForCompaction().size();
+         ++i) {
+      auto& level_and_file = vstorage_->BottommostFilesMarkedForCompaction()[i];
+      assert(!level_and_file.second->being_compacted);
+      start_level_inputs_.level = output_level_ = start_level_ =
+          level_and_file.first;
+      start_level_inputs_.files = {level_and_file.second};
+      if (compaction_picker_->ExpandInputsToCleanCut(cf_name_, vstorage_,
+                                                     &start_level_inputs_)) {
+        break;
+      }
+    }
+    if (i == vstorage_->BottommostFilesMarkedForCompaction().size()) {
+      start_level_inputs_.clear();
+    } else {
+      assert(!start_level_inputs_.empty());
+      compaction_reason_ = CompactionReason::kBottommostFiles;
+      return;
+    }
+
+    assert(start_level_inputs_.empty());
+    PickExpiredTtlFiles();
+    if (!start_level_inputs_.empty()) {
+      compaction_reason_ = CompactionReason::kTtl;
     }
   }
 }
@@ -1258,13 +1315,16 @@ Compaction* LevelCompactionBuilder::PickCompaction() {
 Compaction* LevelCompactionBuilder::GetCompaction() {
   auto c = new Compaction(
       vstorage_, ioptions_, mutable_cf_options_, std::move(compaction_inputs_),
-      output_level_, mutable_cf_options_.MaxFileSizeForLevel(output_level_),
+      output_level_,
+      MaxFileSizeForLevel(mutable_cf_options_, output_level_,
+          ioptions_.compaction_style, vstorage_->base_level(),
+          ioptions_.level_compaction_dynamic_level_bytes),
       mutable_cf_options_.max_compaction_bytes,
       GetPathId(ioptions_, mutable_cf_options_, output_level_),
       GetCompressionType(ioptions_, vstorage_, mutable_cf_options_,
                          output_level_, vstorage_->base_level()),
-      std::move(grandparents_), is_manual_, start_level_score_,
-      false /* deletion_compaction */, compaction_reason_);
+      /* max_subcompactions */ 0, std::move(grandparents_), is_manual_,
+      start_level_score_, false /* deletion_compaction */, compaction_reason_);
 
   // If it's level 0 compaction, make sure we don't execute any other level 0
   // compactions in parallel
@@ -1287,10 +1347,10 @@ uint32_t LevelCompactionBuilder::GetPathId(
     const ImmutableCFOptions& ioptions,
     const MutableCFOptions& mutable_cf_options, int level) {
   uint32_t p = 0;
-  assert(!ioptions.db_paths.empty());
+  assert(!ioptions.cf_paths.empty());
 
   // size remaining in the most recent path
-  uint64_t current_path_size = ioptions.db_paths[0].target_size;
+  uint64_t current_path_size = ioptions.cf_paths[0].target_size;
 
   uint64_t level_size;
   int cur_level = 0;
@@ -1300,7 +1360,7 @@ uint32_t LevelCompactionBuilder::GetPathId(
   level_size = mutable_cf_options.max_bytes_for_level_base;
 
   // Last path is the fallback
-  while (p < ioptions.db_paths.size() - 1) {
+  while (p < ioptions.cf_paths.size() - 1) {
     if (level_size <= current_path_size) {
       if (cur_level == level) {
         // Does desired level fit in this path?
@@ -1327,7 +1387,7 @@ uint32_t LevelCompactionBuilder::GetPathId(
       }
     }
     p++;
-    current_path_size = ioptions.db_paths[p].target_size;
+    current_path_size = ioptions.cf_paths[p].target_size;
   }
   return p;
 }
@@ -1512,8 +1572,9 @@ Compaction* FIFOCompactionPicker::PickTTLCompaction(
 
   Compaction* c = new Compaction(
       vstorage, ioptions_, mutable_cf_options, std::move(inputs), 0, 0, 0, 0,
-      kNoCompression, {}, /* is manual */ false, vstorage->CompactionScore(0),
-      /* is deletion compaction */ true, CompactionReason::kFIFOTtl);
+      kNoCompression, /* max_subcompactions */ 0, {}, /* is manual */ false,
+      vstorage->CompactionScore(0), /* is deletion compaction */ true,
+      CompactionReason::kFIFOTtl);
   return c;
 }
 
@@ -1531,18 +1592,28 @@ Compaction* FIFOCompactionPicker::PickSizeCompaction(
     if (mutable_cf_options.compaction_options_fifo.allow_compaction &&
         level_files.size() > 0) {
       CompactionInputFiles comp_inputs;
+      // try to prevent same files from being compacted multiple times, which
+      // could produce large files that may never TTL-expire. Achieve this by
+      // disallowing compactions with files larger than memtable (inflate its
+      // size by 10% to account for uncompressed L0 files that may have size
+      // slightly greater than memtable size limit).
+      size_t max_compact_bytes_per_del_file =
+          static_cast<size_t>(MultiplyCheckOverflow(
+              static_cast<uint64_t>(mutable_cf_options.write_buffer_size),
+              1.1));
       if (FindIntraL0Compaction(
               level_files,
               mutable_cf_options
-                  .level0_file_num_compaction_trigger /* min_files_to_compact */,
-              mutable_cf_options.write_buffer_size, &comp_inputs)) {
+                  .level0_file_num_compaction_trigger /* min_files_to_compact */
+              ,
+              max_compact_bytes_per_del_file, &comp_inputs)) {
         Compaction* c = new Compaction(
             vstorage, ioptions_, mutable_cf_options, {comp_inputs}, 0,
             16 * 1024 * 1024 /* output file size limit */,
             0 /* max compaction bytes, not applicable */,
-            0 /* output path ID */, mutable_cf_options.compression, {},
-            /* is manual */ false, vstorage->CompactionScore(0),
-            /* is deletion compaction */ false,
+            0 /* output path ID */, mutable_cf_options.compression,
+            0 /* max_subcompactions */, {}, /* is manual */ false,
+            vstorage->CompactionScore(0), /* is deletion compaction */ false,
             CompactionReason::kFIFOReduceNumFiles);
         return c;
       }
@@ -1588,8 +1659,9 @@ Compaction* FIFOCompactionPicker::PickSizeCompaction(
 
   Compaction* c = new Compaction(
       vstorage, ioptions_, mutable_cf_options, std::move(inputs), 0, 0, 0, 0,
-      kNoCompression, {}, /* is manual */ false, vstorage->CompactionScore(0),
-      /* is deletion compaction */ true, CompactionReason::kFIFOMaxSize);
+      kNoCompression, /* max_subcompactions */ 0, {}, /* is manual */ false,
+      vstorage->CompactionScore(0), /* is deletion compaction */ true,
+      CompactionReason::kFIFOMaxSize);
   return c;
 }
 
@@ -1612,8 +1684,13 @@ Compaction* FIFOCompactionPicker::PickCompaction(
 Compaction* FIFOCompactionPicker::CompactRange(
     const std::string& cf_name, const MutableCFOptions& mutable_cf_options,
     VersionStorageInfo* vstorage, int input_level, int output_level,
-    uint32_t output_path_id, const InternalKey* begin, const InternalKey* end,
-    InternalKey** compaction_end, bool* manual_conflict) {
+    uint32_t /*output_path_id*/, uint32_t /*max_subcompactions*/,
+    const InternalKey* /*begin*/, const InternalKey* /*end*/,
+    InternalKey** compaction_end, bool* /*manual_conflict*/) {
+#ifdef NDEBUG
+  (void)input_level;
+  (void)output_level;
+#endif
   assert(input_level == 0);
   assert(output_level == 0);
   *compaction_end = nullptr;

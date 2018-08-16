@@ -56,9 +56,9 @@ void VerifyCompactionResult(
 
 class KeepFilter : public CompactionFilter {
  public:
-  virtual bool Filter(int level, const Slice& key, const Slice& value,
-                      std::string* new_value, bool* value_changed) const
-      override {
+  virtual bool Filter(int /*level*/, const Slice& /*key*/,
+                      const Slice& /*value*/, std::string* /*new_value*/,
+                      bool* /*value_changed*/) const override {
     return false;
   }
 
@@ -88,9 +88,9 @@ class KeepFilterFactory : public CompactionFilterFactory {
 class DelayFilter : public CompactionFilter {
  public:
   explicit DelayFilter(DBTestBase* d) : db_test(d) {}
-  virtual bool Filter(int level, const Slice& key, const Slice& value,
-                      std::string* new_value,
-                      bool* value_changed) const override {
+  virtual bool Filter(int /*level*/, const Slice& /*key*/,
+                      const Slice& /*value*/, std::string* /*new_value*/,
+                      bool* /*value_changed*/) const override {
     db_test->env_->addon_time_.fetch_add(1000);
     return true;
   }
@@ -105,7 +105,7 @@ class DelayFilterFactory : public CompactionFilterFactory {
  public:
   explicit DelayFilterFactory(DBTestBase* d) : db_test(d) {}
   virtual std::unique_ptr<CompactionFilter> CreateCompactionFilter(
-      const CompactionFilter::Context& context) override {
+      const CompactionFilter::Context& /*context*/) override {
     return std::unique_ptr<CompactionFilter>(new DelayFilter(db_test));
   }
 
@@ -697,7 +697,7 @@ TEST_P(DBTestUniversalCompactionMultiLevels, UniversalCompactionTrivialMove) {
   int32_t non_trivial_move = 0;
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "DBImpl::BackgroundCompaction:TrivialMove",
-      [&](void* arg) { trivial_move++; });
+      [&](void* /*arg*/) { trivial_move++; });
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "DBImpl::BackgroundCompaction:NonTrivial", [&](void* arg) {
         non_trivial_move++;
@@ -769,7 +769,7 @@ TEST_P(DBTestUniversalCompactionParallel, UniversalCompactionParallel) {
   std::atomic<int> num_compactions_running(0);
   std::atomic<bool> has_parallel(false);
   rocksdb::SyncPoint::GetInstance()->SetCallBack("CompactionJob::Run():Start",
-                                                 [&](void* arg) {
+                                                 [&](void* /*arg*/) {
     if (num_compactions_running.fetch_add(1) > 0) {
       has_parallel.store(true);
       return;
@@ -784,7 +784,7 @@ TEST_P(DBTestUniversalCompactionParallel, UniversalCompactionParallel) {
   });
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "CompactionJob::Run():End",
-      [&](void* arg) { num_compactions_running.fetch_add(-1); });
+      [&](void* /*arg*/) { num_compactions_running.fetch_add(-1); });
   rocksdb::SyncPoint::GetInstance()->EnableProcessing();
 
   options = CurrentOptions(options);
@@ -1154,7 +1154,7 @@ TEST_P(DBTestUniversalCompaction, UniversalCompactionTrivialMoveTest1) {
   int32_t non_trivial_move = 0;
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "DBImpl::BackgroundCompaction:TrivialMove",
-      [&](void* arg) { trivial_move++; });
+      [&](void* /*arg*/) { trivial_move++; });
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "DBImpl::BackgroundCompaction:NonTrivial", [&](void* arg) {
         non_trivial_move++;
@@ -1200,7 +1200,7 @@ TEST_P(DBTestUniversalCompaction, UniversalCompactionTrivialMoveTest2) {
   int32_t trivial_move = 0;
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "DBImpl::BackgroundCompaction:TrivialMove",
-      [&](void* arg) { trivial_move++; });
+      [&](void* /*arg*/) { trivial_move++; });
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
       "DBImpl::BackgroundCompaction:NonTrivial", [&](void* arg) {
         ASSERT_TRUE(arg != nullptr);
@@ -1341,6 +1341,146 @@ TEST_P(DBTestUniversalCompaction, UniversalCompactionFourPaths) {
   }
 
   Destroy(options);
+}
+
+TEST_P(DBTestUniversalCompaction, UniversalCompactionCFPathUse) {
+  Options options = CurrentOptions();
+  options.db_paths.emplace_back(dbname_, 300 * 1024);
+  options.db_paths.emplace_back(dbname_ + "_2", 300 * 1024);
+  options.db_paths.emplace_back(dbname_ + "_3", 500 * 1024);
+  options.db_paths.emplace_back(dbname_ + "_4", 1024 * 1024 * 1024);
+  options.memtable_factory.reset(
+      new SpecialSkipListFactory(KNumKeysByGenerateNewFile - 1));
+  options.compaction_style = kCompactionStyleUniversal;
+  options.compaction_options_universal.size_ratio = 5;
+  options.write_buffer_size = 111 << 10;  // 114KB
+  options.arena_block_size = 4 << 10;
+  options.level0_file_num_compaction_trigger = 2;
+  options.num_levels = 1;
+
+  std::vector<Options> option_vector;
+  option_vector.emplace_back(options);
+  ColumnFamilyOptions cf_opt1(options), cf_opt2(options);
+  // Configure CF1 specific paths.
+  cf_opt1.cf_paths.emplace_back(dbname_ + "cf1", 300 * 1024);
+  cf_opt1.cf_paths.emplace_back(dbname_ + "cf1_2", 300 * 1024);
+  cf_opt1.cf_paths.emplace_back(dbname_ + "cf1_3", 500 * 1024);
+  cf_opt1.cf_paths.emplace_back(dbname_ + "cf1_4", 1024 * 1024 * 1024);
+  option_vector.emplace_back(DBOptions(options), cf_opt1);
+  CreateColumnFamilies({"one"},option_vector[1]);
+
+  // Configura CF2 specific paths.
+  cf_opt2.cf_paths.emplace_back(dbname_ + "cf2", 300 * 1024);
+  cf_opt2.cf_paths.emplace_back(dbname_ + "cf2_2", 300 * 1024);
+  cf_opt2.cf_paths.emplace_back(dbname_ + "cf2_3", 500 * 1024);
+  cf_opt2.cf_paths.emplace_back(dbname_ + "cf2_4", 1024 * 1024 * 1024);
+  option_vector.emplace_back(DBOptions(options), cf_opt2);
+  CreateColumnFamilies({"two"},option_vector[2]);
+
+  ReopenWithColumnFamilies({"default", "one", "two"}, option_vector);
+
+  Random rnd(301);
+  int key_idx = 0;
+  int key_idx1 = 0;
+  int key_idx2 = 0;
+
+  auto generate_file = [&]() {
+    GenerateNewFile(0, &rnd, &key_idx);
+    GenerateNewFile(1, &rnd, &key_idx1);
+    GenerateNewFile(2, &rnd, &key_idx2);
+  };
+
+  auto check_sstfilecount = [&](int path_id, int expected) {
+    ASSERT_EQ(expected, GetSstFileCount(options.db_paths[path_id].path));
+    ASSERT_EQ(expected, GetSstFileCount(cf_opt1.cf_paths[path_id].path));
+    ASSERT_EQ(expected, GetSstFileCount(cf_opt2.cf_paths[path_id].path));
+  };
+
+  auto check_getvalues = [&]() {
+    for (int i = 0; i < key_idx; i++) {
+      auto v = Get(0, Key(i));
+      ASSERT_NE(v, "NOT_FOUND");
+      ASSERT_TRUE(v.size() == 1 || v.size() == 990);
+    }
+
+    for (int i = 0; i < key_idx1; i++) {
+      auto v = Get(1, Key(i));
+      ASSERT_NE(v, "NOT_FOUND");
+      ASSERT_TRUE(v.size() == 1 || v.size() == 990);
+    }
+
+    for (int i = 0; i < key_idx2; i++) {
+      auto v = Get(2, Key(i));
+      ASSERT_NE(v, "NOT_FOUND");
+      ASSERT_TRUE(v.size() == 1 || v.size() == 990);
+    }
+  };
+
+  // First three 110KB files are not going to second path.
+  // After that, (100K, 200K)
+  for (int num = 0; num < 3; num++) {
+    generate_file();
+  }
+
+  // Another 110KB triggers a compaction to 400K file to second path
+  generate_file();
+  check_sstfilecount(2, 1);
+
+  // (1, 4)
+  generate_file();
+  check_sstfilecount(2, 1);
+  check_sstfilecount(0, 1);
+
+  // (1,1,4) -> (2, 4)
+  generate_file();
+  check_sstfilecount(2, 1);
+  check_sstfilecount(1, 1);
+  check_sstfilecount(0, 0);
+
+  // (1, 2, 4) -> (3, 4)
+  generate_file();
+  check_sstfilecount(2, 1);
+  check_sstfilecount(1, 1);
+  check_sstfilecount(0, 0);
+
+  // (1, 3, 4) -> (8)
+  generate_file();
+  check_sstfilecount(3, 1);
+
+  // (1, 8)
+  generate_file();
+  check_sstfilecount(3, 1);
+  check_sstfilecount(0, 1);
+
+  // (1, 1, 8) -> (2, 8)
+  generate_file();
+  check_sstfilecount(3, 1);
+  check_sstfilecount(1, 1);
+
+  // (1, 2, 8) -> (3, 8)
+  generate_file();
+  check_sstfilecount(3, 1);
+  check_sstfilecount(1, 1);
+  check_sstfilecount(0, 0);
+
+  // (1, 3, 8) -> (4, 8)
+  generate_file();
+  check_sstfilecount(2, 1);
+  check_sstfilecount(3, 1);
+
+  // (1, 4, 8) -> (5, 8)
+  generate_file();
+  check_sstfilecount(3, 1);
+  check_sstfilecount(2, 1);
+  check_sstfilecount(0, 0);
+
+  check_getvalues();
+
+  ReopenWithColumnFamilies({"default", "one", "two"}, option_vector);
+
+  check_getvalues();
+
+  Destroy(options, true);
 }
 
 TEST_P(DBTestUniversalCompaction, IncreaseUniversalCompactionNumLevels) {
@@ -1540,50 +1680,6 @@ TEST_P(DBTestUniversalCompaction, UniversalCompactionSecondPathRatio) {
   Destroy(options);
 }
 
-TEST_P(DBTestUniversalCompaction, FullCompactionInBottomPriThreadPool) {
-  const int kNumFilesTrigger = 3;
-  Env::Default()->SetBackgroundThreads(1, Env::Priority::BOTTOM);
-  for (bool allow_ingest_behind : {false, true}) {
-    Options options = CurrentOptions();
-    options.allow_ingest_behind = allow_ingest_behind;
-    options.compaction_style = kCompactionStyleUniversal;
-    options.num_levels = num_levels_;
-    options.write_buffer_size = 100 << 10;     // 100KB
-    options.target_file_size_base = 32 << 10;  // 32KB
-    options.level0_file_num_compaction_trigger = kNumFilesTrigger;
-    // Trigger compaction if size amplification exceeds 110%
-    options.compaction_options_universal.max_size_amplification_percent = 110;
-    DestroyAndReopen(options);
-
-    int num_bottom_pri_compactions = 0;
-    SyncPoint::GetInstance()->SetCallBack(
-        "DBImpl::BGWorkBottomCompaction",
-        [&](void* arg) { ++num_bottom_pri_compactions; });
-    SyncPoint::GetInstance()->EnableProcessing();
-
-    Random rnd(301);
-    for (int num = 0; num < kNumFilesTrigger; num++) {
-      ASSERT_EQ(NumSortedRuns(), num);
-      int key_idx = 0;
-      GenerateNewFile(&rnd, &key_idx);
-    }
-    dbfull()->TEST_WaitForCompact();
-
-    if (allow_ingest_behind || num_levels_ > 1) {
-      // allow_ingest_behind increases number of levels while sanitizing.
-      ASSERT_EQ(1, num_bottom_pri_compactions);
-    } else {
-      // for single-level universal, everything's bottom level so nothing should
-      // be executed in bottom-pri thread pool.
-      ASSERT_EQ(0, num_bottom_pri_compactions);
-    }
-    // Verify that size amplification did occur
-    ASSERT_EQ(NumSortedRuns(), 1);
-    rocksdb::SyncPoint::GetInstance()->DisableProcessing();
-  }
-  Env::Default()->SetBackgroundThreads(0, Env::Priority::BOTTOM);
-}
-
 TEST_P(DBTestUniversalCompaction, ConcurrentBottomPriLowPriCompactions) {
   if (num_levels_ == 1) {
     // for single-level universal, everything's bottom level so nothing should
@@ -1656,7 +1752,7 @@ TEST_P(DBTestUniversalCompaction, RecalculateScoreAfterPicking) {
 
   std::atomic<int> num_compactions_attempted(0);
   rocksdb::SyncPoint::GetInstance()->SetCallBack(
-      "DBImpl::BackgroundCompaction:Start", [&](void* arg) {
+      "DBImpl::BackgroundCompaction:Start", [&](void* /*arg*/) {
         ++num_compactions_attempted;
       });
   rocksdb::SyncPoint::GetInstance()->EnableProcessing();
@@ -1759,6 +1855,8 @@ int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 #else
+  (void) argc;
+  (void) argv;
   return 0;
 #endif
 }

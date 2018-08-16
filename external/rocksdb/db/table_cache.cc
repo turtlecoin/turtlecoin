@@ -30,7 +30,7 @@ namespace rocksdb {
 namespace {
 
 template <class T>
-static void DeleteEntry(const Slice& key, void* value) {
+static void DeleteEntry(const Slice& /*key*/, void* value) {
   T* typed_value = reinterpret_cast<T*>(value);
   delete typed_value;
 }
@@ -41,7 +41,7 @@ static void UnrefEntry(void* arg1, void* arg2) {
   cache->Release(h);
 }
 
-static void DeleteTableReader(void* arg1, void* arg2) {
+static void DeleteTableReader(void* arg1, void* /*arg2*/) {
   TableReader* table_reader = reinterpret_cast<TableReader*>(arg1);
   delete table_reader;
 }
@@ -92,13 +92,17 @@ Status TableCache::GetTableReader(
     bool skip_filters, int level, bool prefetch_index_and_filter_in_cache,
     bool for_compaction) {
   std::string fname =
-      TableFileName(ioptions_.db_paths, fd.GetNumber(), fd.GetPathId());
+      TableFileName(ioptions_.cf_paths, fd.GetNumber(), fd.GetPathId());
   unique_ptr<RandomAccessFile> file;
   Status s = ioptions_.env->NewRandomAccessFile(fname, &file, env_options);
 
   RecordTick(ioptions_.statistics, NO_FILE_OPENS);
   if (s.ok()) {
-    if (readahead > 0) {
+    if (readahead > 0 && !env_options.use_mmap_reads) {
+      // Not compatible with mmap files since ReadaheadRandomAccessFile requires
+      // its wrapped file's Read() to copy data into the provided scratch
+      // buffer, which mmap files don't use.
+      // TODO(ajkr): try madvise for mmap files in place of buffered readahead.
       file = NewReadaheadRandomAccessFile(std::move(file), readahead);
     }
     if (!sequential_mode && ioptions_.advise_random_on_open) {
@@ -247,13 +251,15 @@ InternalIterator* TableCache::NewIterator(
     }
   }
   if (s.ok() && range_del_agg != nullptr && !options.ignore_range_deletions) {
-    std::unique_ptr<InternalIterator> range_del_iter(
-        table_reader->NewRangeTombstoneIterator(options));
-    if (range_del_iter != nullptr) {
-      s = range_del_iter->status();
-    }
-    if (s.ok()) {
-      s = range_del_agg->AddTombstones(std::move(range_del_iter));
+    if (range_del_agg->AddFile(fd.GetNumber())) {
+      std::unique_ptr<InternalIterator> range_del_iter(
+          table_reader->NewRangeTombstoneIterator(options));
+      if (range_del_iter != nullptr) {
+        s = range_del_iter->status();
+      }
+      if (s.ok()) {
+        s = range_del_agg->AddTombstones(std::move(range_del_iter));
+      }
     }
   }
 

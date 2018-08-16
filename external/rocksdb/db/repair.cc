@@ -101,10 +101,12 @@ class Repairer {
         db_options_(SanitizeOptions(dbname_, db_options)),
         immutable_db_options_(ImmutableDBOptions(db_options_)),
         icmp_(default_cf_opts.comparator),
-        default_cf_opts_(default_cf_opts),
+        default_cf_opts_(
+            SanitizeOptions(immutable_db_options_, default_cf_opts)),
         default_cf_iopts_(
-            ImmutableCFOptions(immutable_db_options_, default_cf_opts)),
-        unknown_cf_opts_(unknown_cf_opts),
+            ImmutableCFOptions(immutable_db_options_, default_cf_opts_)),
+        unknown_cf_opts_(
+            SanitizeOptions(immutable_db_options_, unknown_cf_opts)),
         create_unknown_cfs_(create_unknown_cfs),
         raw_table_cache_(
             // TableCache can be small since we expect each table to be opened
@@ -203,7 +205,7 @@ class Repairer {
       ROCKS_LOG_WARN(db_options_.info_log,
                      "**** Repaired rocksdb %s; "
                      "recovered %" ROCKSDB_PRIszt " files; %" PRIu64
-                     "bytes. "
+                     " bytes. "
                      "Some data may have been lost. "
                      "****",
                      dbname_.c_str(), tables_.size(), bytes);

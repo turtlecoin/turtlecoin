@@ -166,6 +166,8 @@ class WritableFileWriter {
 
   Status Append(const Slice& data);
 
+  Status Pad(const size_t pad_bytes);
+
   Status Flush();
 
   Status Close();
@@ -186,6 +188,8 @@ class WritableFileWriter {
   WritableFile* writable_file() const { return writable_file_.get(); }
 
   bool use_direct_io() { return writable_file_->use_direct_io(); }
+
+  bool TEST_BufferIsEmpty() { return buf_.CurrentSize() == 0; }
 
  private:
   // Used when os buffering is OFF and we are writing
