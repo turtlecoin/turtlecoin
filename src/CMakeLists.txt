@@ -106,6 +106,7 @@ target_link_libraries(miner CryptoNoteCore Rpc Serialization System Http Logging
 # Add dependencies means we have to build the latter before we build the former
 # In this case it's because we need to have the current version name rather
 # than a cached one
+add_dependencies(WalletService version)
 add_dependencies(Rpc version)
 add_dependencies(TurtleCoind version)
 add_dependencies(zedwallet version)
