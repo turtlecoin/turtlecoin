@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-//
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
 
 #include "WalletService.h"
 
@@ -333,9 +322,15 @@ std::vector<std::string> collectDestinationAddresses(const std::vector<PaymentSe
   return result;
 }
 
-std::vector<CryptoNote::WalletOrder> convertWalletRpcOrdersToWalletOrders(const std::vector<PaymentService::WalletRpcOrder>& orders) {
+std::vector<CryptoNote::WalletOrder> convertWalletRpcOrdersToWalletOrders(const std::vector<PaymentService::WalletRpcOrder>& orders, const std::string nodeAddress, const uint32_t nodeFee) {
   std::vector<CryptoNote::WalletOrder> result;
-  result.reserve(orders.size());
+  
+  if (!nodeAddress.empty() && nodeFee != 0) {
+    result.reserve(orders.size() + 1);
+    result.emplace_back(CryptoNote::WalletOrder {nodeAddress, nodeFee});
+  } else {
+    result.reserve(orders.size());
+  }
 
   for (const auto& order: orders) {
     result.emplace_back(CryptoNote::WalletOrder {order.address, order.amount});
@@ -452,9 +447,41 @@ void WalletService::init() {
   loadWallet();
   loadTransactionIdIndex();
 
+  getNodeFee();
   refreshContext.spawn([this] { refresh(); });
-
+  
   inited = true;
+}
+
+void WalletService::getNodeFee() {
+  logger(Logging::DEBUGGING) <<
+    "Trying to retrieve node fee information." << std::endl;
+    
+  m_node_address = node.feeAddress();
+  m_node_fee = node.feeAmount();
+  
+  if (!m_node_address.empty() && m_node_fee != 0) {
+    // Partially borrowed from <zedwallet/Tools.h>
+    uint32_t div = static_cast<uint32_t>(pow(10, CryptoNote::parameters::CRYPTONOTE_DISPLAY_DECIMAL_POINT));
+    uint32_t coins = m_node_fee / div;
+    uint32_t cents = m_node_fee % div;
+    std::stringstream stream;
+    stream << std::setfill('0') << std::setw(CryptoNote::parameters::CRYPTONOTE_DISPLAY_DECIMAL_POINT) << cents;
+    std::string amount = std::to_string(coins) + "." + stream.str();
+    
+    logger(Logging::INFO, Logging::RED) << 
+      "You have connected to a node that charges " <<
+      "a fee to send transactions." << std::endl;
+    
+    logger(Logging::INFO, Logging::RED) << 
+      "The fee for sending transactions is: " <<
+      amount << " per transaction." << std::endl ;
+    
+    logger(Logging::INFO, Logging::RED) <<
+      "If you don't want to pay the node fee, please " <<
+      "relaunch this program and specify a different " <<
+      "node or run your own." << std::endl;
+  }
 }
 
 void WalletService::saveWallet() {
@@ -949,7 +976,7 @@ std::error_code WalletService::sendTransaction(SendTransaction::Request& request
     std::transform(request.paymentId.begin(), request.paymentId.end(), request.paymentId.begin(), ::toupper);
 
     std::vector<std::string> paymentIDs;
-
+    
     for (auto &transfer : request.transfers)
     {
         std::string addr = transfer.address;
@@ -1051,7 +1078,7 @@ std::error_code WalletService::sendTransaction(SendTransaction::Request& request
     }
 
     sendParams.sourceAddresses = request.sourceAddresses;
-    sendParams.destinations = convertWalletRpcOrdersToWalletOrders(request.transfers);
+    sendParams.destinations = convertWalletRpcOrdersToWalletOrders(request.transfers, m_node_address, m_node_fee);
     sendParams.fee = request.fee;
     sendParams.mixIn = request.anonymity;
     sendParams.unlockTimestamp = request.unlockTime;
@@ -1090,7 +1117,7 @@ std::error_code WalletService::createDelayedTransaction(const CreateDelayedTrans
     }
 
     sendParams.sourceAddresses = request.addresses;
-    sendParams.destinations = convertWalletRpcOrdersToWalletOrders(request.transfers);
+    sendParams.destinations = convertWalletRpcOrdersToWalletOrders(request.transfers, m_node_address, m_node_fee);
     sendParams.fee = request.fee;
     sendParams.mixIn = request.anonymity;
     sendParams.unlockTimestamp = request.unlockTime;
@@ -1322,6 +1349,13 @@ std::error_code WalletService::createIntegratedAddress(const std::string &addres
       paymentId + keys
   );
 
+  return std::error_code();
+}
+
+std::error_code WalletService::getFeeInfo(std::string& address, uint32_t& amount) {
+  address = m_node_address;
+  amount = m_node_fee;
+  
   return std::error_code();
 }
 
