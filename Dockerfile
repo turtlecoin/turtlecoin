@@ -25,7 +25,8 @@ RUN apt-get update && \
       g++-4.9 \
       git cmake \
       libboost1.58-all-dev \
-      librocksdb-dev && \
+      libreadline-dev \
+      libncurses-dev && \
     git clone https://github.com/turtlecoin/turtlecoin.git /src/turtlecoin && \
     cd /src/turtlecoin && \
     git checkout $TURTLECOIN_BRANCH && \

@@ -14,8 +14,6 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are
 set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_SKIP_PACKAGE_ALL_DEPENDENCY ON)
 set(CMAKE_SUPPRESS_REGENERATION ON)
-set(ENABLE_READLINE ON CACHE BOOL "Enable readline support for zedwallet on Linux and Mac? Defaults to ON")
-
 set(STATIC ON CACHE BOOL "Link libraries statically")
 
 set(ENABLE_AVX OFF CACHE STRING "Enable RocksDB AVX/AVX2 support detection? Defaults to OFF")
@@ -29,63 +27,6 @@ set(ENABLE_SCHED_GETCPU OFF CACHE STRING "Enable RocksDB SCHED_GETCPU support de
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(TurtleCoin)
-
-# TODO: Windows build?
-if(NOT MSVC AND ENABLE_READLINE)
-    ### BUILD READLINE ###
-
-    # Let the source code know we've got readline, with #ifdef HAVE_READLINE
-    add_definitions(-DHAVE_READLINE)
-
-    # Make the build directory (so we don't clutter up the source folder, or
-    # make files that git will see)
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/)
-
-    # Run configure
-    execute_process(
-        COMMAND ../configure WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/
-    )
-
-    # Compile readline
-    execute_process(
-        COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/
-    )
-
-    # Link it statically
-    add_library(readline STATIC IMPORTED GLOBAL)
-
-    # Pass the path to the compiled readline static library
-    set_target_properties(readline PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/libreadline.a)
-
-    message(STATUS "Compiled GNU Readline")
-
-    ### BUILD NCURSES ###
-
-    # Make the build directory (so we don't clutter up the source folder, or
-    # make files that git will see)
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/)
-
-    # Run configure
-    execute_process(
-        COMMAND ../configure WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/
-    )
-
-    # Compile ncurses
-    execute_process(
-        COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/
-    )
-
-    # Link it statically
-    add_library(NCURSES STATIC IMPORTED GLOBAL)
-
-    # Pass the path to the compiled ncurses static library
-    set_target_properties(NCURSES PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/lib/libncurses.a)
-
-    message(STATUS "Compiled Ncurses")
-
-    # Set HAVE_READLINE so we know to link against readline and ncurses later
-    set(HAVE_READLINE ON)
-endif()
 
 set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/version")
@@ -141,7 +82,7 @@ if(MSVC)
   include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/src/platform/msc)
 else()
   if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    # This option has no effect in glibc version less than 2.20. 
+    # This option has no effect in glibc version less than 2.20.
     # Since glibc 2.20 _BSD_SOURCE is deprecated, this macro is recomended instead
     add_definitions("-D_DEFAULT_SOURCE -D_GNU_SOURCE")
   endif()
@@ -169,7 +110,7 @@ else()
   endif()
   set(C_WARNINGS "-Waggregate-return -Wnested-externs -Wold-style-definition -Wstrict-prototypes")
   set(CXX_WARNINGS "-Wno-reorder -Wno-missing-field-initializers")
-  
+
   # -maes is not supported on arm
   if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 ${MINGW_FLAG} ${STATICASSERTC_FLAG} ${WARNINGS} ${C_WARNINGS} ${ARCH_FLAG} -maes")
@@ -191,7 +132,7 @@ else()
   set(RELEASE_FLAGS "-Ofast -DNDEBUG -Wno-unused-variable")
   if(NOT APPLE)
     # There is a clang bug that does not allow to compile code that uses AES-NI intrinsics if -flto is enabled
-    if (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_NAME STREQUAL "Linux" 
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
         AND CMAKE_BUILD_TYPE STREQUAL "Release" AND ((CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.9) OR (CMAKE_C_COMPILER_VERSION VERSION_EQUAL 4.9)))
       # On linux, to build in lto mode, check that ld.gold linker is used: 'update-alternatives --install /usr/bin/ld ld /usr/bin/ld.gold HIGHEST_PRIORITY'
       set(CMAKE_AR gcc-ar)
@@ -227,6 +168,21 @@ elseif(APPLE)
   set(Boost_LIBRARIES "${Boost_LIBRARIES}")
 elseif(NOT MSVC)
   set(Boost_LIBRARIES "${Boost_LIBRARIES};rt")
+endif()
+
+# Readline support building block
+if(NOT MSVC)
+  if(STATIC)
+    set(READLINE_USE_STATIC ON)
+  else()
+    set(READLINE_USE_STATIC OFF)
+  endif()
+
+  find_package(readline)
+
+  if (READLINE_FOUND)
+    set(HAVE_READLINE ON)
+  endif()
 endif()
 
 add_subdirectory(external)

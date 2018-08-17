@@ -6,7 +6,7 @@
 # You should only need to run this line on a new machine or
 # a machine that needs updating.
 sudo apt-get update
-sudo apt-get install -y build-essential python-dev gcc g++ git cmake libboost-all-dev librocksdb-dev libreadline-dev zip
+sudo apt-get install -y build-essential python-dev gcc g++ git cmake libboost-all-dev libreadline-dev zip libncurses-dev
 
 # This is the folder where your source code snapshots will go
 # when you are done building.

@@ -70,7 +70,7 @@ _build_turtlecoin() {
     echo "Using ${_threads} threads"
 
     mkdir build && cd $_
-    cmake --silent -DDO_TESTS=OFF .. >>build.log 2>&1 || _fail "Unable to run cmake. Please see build.log for more information"
+    cmake --silent .. >>build.log 2>&1 || _fail "Unable to run cmake. Please see build.log for more information"
     make --silent -j"$_threads"  >>build.log 2>&1 || _fail "Unable to run make. Please see build.log for more information"
     _note "Compilation completed!"
 }
@@ -84,7 +84,7 @@ _configure_ubuntu() {
         _note "Sudo privileges required for package installation"
     fi
     $_sudo apt-get update -qq
-    $_sudo apt-get install -qq -y git build-essential python-dev gcc g++ git cmake libboost-all-dev librocksdb-dev libreadline-dev >>build.log 2>&1 || _fail "Unable to install build dependencies. Please see build.log for more information"
+    $_sudo apt-get install -qq -y git build-essential python-dev gcc g++ git cmake libboost-all-dev libreadline-dev libncurses-dev >>build.log 2>&1 || _fail "Unable to install build dependencies. Please see build.log for more information"
 
     export CXXFLAGS="-std=gnu++11"
 }
@@ -98,7 +98,7 @@ _configure_debian() {
         _note "Sudo privileges required for package installation"
     fi
     $_sudo apt-get update -qq
-    $_sudo apt-get install -qq -y git build-essential python-dev gcc g++ git cmake libboost-all-dev librocksdb-dev  >>build.log 2>&1 || _fail "Unable to install build dependencies. Please see build.log for more information"
+    $_sudo apt-get install -qq -y git build-essential python-dev gcc g++ git cmake libboost-all-dev libreadline-dev libncurses-dev  >>build.log 2>&1 || _fail "Unable to install build dependencies. Please see build.log for more information"
 
     export CXXFLAGS="-std=gnu++11"
 }
@@ -124,8 +124,9 @@ _configure_osx() {
     fi
     _note "Updating homebrew and installing software dependencies..."
     brew update --quiet
-    brew install --quiet git cmake boost rocksdb readline
+    brew install --quiet git cmake boost readline ncurses
     brew link --force readline
+	brew link --force ncurses
 }
 
 _configure_os() {

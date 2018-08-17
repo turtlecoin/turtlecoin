@@ -24,7 +24,8 @@ RUN apt-get update && \
       g++-4.9 \
       git cmake \
       libboost1.58-all-dev \
-      librocksdb-dev && \
+      libreadline-dev \
+      libncurses-dev && \
     cd /src/turtlecoin && \
     mkdir build && \
     cd build && \

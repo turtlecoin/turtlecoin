@@ -72,7 +72,7 @@ function generate_tarball()
         miner \
         zedwallet \
         TurtleCoind \
-        walletd
+        turtle-service
 
     generate_checksums $TARBALL
 }

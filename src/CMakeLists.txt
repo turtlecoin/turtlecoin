@@ -94,7 +94,7 @@ endif()
 
 # Link with readline and curses if we found them
 if(HAVE_READLINE)
-    target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common readline NCURSES ${Boost_LIBRARIES})
+    target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${READLINE_LIBRARIES} ${CURSES_LIBRARIES} ${Boost_LIBRARIES})
 else()
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${Boost_LIBRARIES})
 endif()
