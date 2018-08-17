@@ -1307,8 +1307,7 @@ std::error_code WalletService::createIntegratedAddress(const std::string &addres
   CryptoNote::AccountPublicAddress addr;
 
   /* Get the private + public key from the address */
-  const bool valid = CryptoNote::parseAccountAddressString(prefix, addr,
-                                                           address);
+  CryptoNote::parseAccountAddressString(prefix, addr, address);
 
   /* Pack as a binary array */
   CryptoNote::BinaryArray ba;
