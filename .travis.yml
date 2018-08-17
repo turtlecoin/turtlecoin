@@ -13,17 +13,21 @@ matrix:
         packages:
         #- g++-4.9
         - libboost1.55-all-dev
+        - libreadline-dev
+        - libncurses-dev
     env:
     - MATRIX_EVAL="CC=gcc && CXX=g++
   - os: osx
 before_install:
 install:
 - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install readline; brew link --force readline; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ncurses; brew link --force ncurses; fi
 script:
 - mkdir build && cd build
-- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. && make
+- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. && make -j2
 before_deploy:
 - cd src
+- strip TurtleCoind miner zedwallet turtle-service
 - mkdir turtlecoin-${TRAVIS_TAG}
 - mv TurtleCoind miner zedwallet turtle-service  turtlecoin-${TRAVIS_TAG}/
 - cp ../../LICENSE turtlecoin-${TRAVIS_TAG}/
