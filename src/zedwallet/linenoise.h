@@ -35,6 +35,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+ 
+#ifndef _WIN32
 
 #ifndef __LINENOISE_H
 #define __LINENOISE_H
@@ -84,3 +86,5 @@ void linenoiseSetEncodingFunctions(
 #endif
 
 #endif /* __LINENOISE_H */
+
+#endif

@@ -40,7 +40,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#ifndef _WIN32
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -520,3 +520,4 @@ size_t linenoiseUtf8ReadCode(int fd, char* buf, size_t buf_len, int* cp) {
 
     return utf8BytesToCodePoint(buf, buf_len, cp);
 }
+#endif

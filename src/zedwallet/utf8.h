@@ -35,7 +35,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
+#ifndef _WIN32
 #ifndef __LINENOISE_ENCODINGS_UTF8_H
 #define __LINENOISE_ENCODINGS_UTF8_H
 
@@ -52,4 +52,4 @@ size_t linenoiseUtf8ReadCode(int fd, char* buf, size_t buf_len, int* cp);
 #endif
 
 #endif /* __LINENOISE_ENCODINGS_UTF8_H */
-
+#endif
