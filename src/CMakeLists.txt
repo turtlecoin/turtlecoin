@@ -1,6 +1,7 @@
 add_definitions(-DSTATICLIB)
 
 include_directories(${CMAKE_SOURCE_DIR}/external/rocksdb/include)
+include_directories(${CMAKE_SOURCE_DIR}/external/linenoise)
 
 file(GLOB_RECURSE BlockchainExplorer BlockchainExplorer/*)
 file(GLOB_RECURSE Common Common/*)
@@ -22,7 +23,13 @@ file(GLOB_RECURSE Wallet Wallet/*)
 file(GLOB_RECURSE WalletLegacy WalletLegacy/*)
 file(GLOB_RECURSE JsonRpcServer JsonRpcServer/*)
 file(GLOB_RECURSE service WalletService/*)
+
+if(ENABLE_LINENOISE)
+message(STATUS "linenoise library is enabled")
+file(GLOB_RECURSE zedwallet zedwallet/* ${CMAKE_SOURCE_DIR}/external/linenoise/*)
+else()
 file(GLOB_RECURSE zedwallet zedwallet/*)
+endif()
 
 if(MSVC)
 file(GLOB_RECURSE System System/* Platform/Windows/System/*)
