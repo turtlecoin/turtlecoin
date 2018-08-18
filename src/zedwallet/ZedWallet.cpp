@@ -18,7 +18,10 @@
 
 #include <NodeRpcProxy/NodeRpcProxy.h>
 
-#ifdef HAVE_READLINE
+#if defined(USE_LINENOISE)
+#include "linenoise.h"
+#include "utf8.h"
+#elif defined(HAVE_READLINE)
 #include <readline/readline.h>
 #include <readline/history.h>
 #endif
@@ -389,7 +392,21 @@ void welcomeMsg()
               << std::endl << std::endl;
 }
 
-#ifdef HAVE_READLINE
+#if defined(USE_LINENOISE)
+
+void completion(const char *buf, linenoiseCompletions *lc){
+    size_t i;
+    const auto commands = allCommands();
+    for(i=0;i<commands.size();i++){
+        std::string name = commands[i].name;
+        if (name.find(buf[0]) == 0)
+        {
+             linenoiseAddCompletion(lc, name.c_str());
+        }
+    }
+}
+    
+#elif defined(HAVE_READLINE)
 
 char **getAutoCompleteMatches(const char *text, int start, int end)
 {
@@ -441,7 +458,28 @@ char *getAutoCompleteMatch(const char *text, int state)
 
 std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo)
 {
-    #ifdef HAVE_READLINE
+    #if defined(USE_LINENOISE)
+
+    char *command;
+    const char* histfile = "zedwallet-history.txt";
+    linenoiseSetCompletionCallback(completion);
+    std::string prompt = yellowANSIMsg(getPrompt(walletInfo));
+    linenoiseHistorySetMaxLen(256);
+    linenoiseHistoryLoad(histfile);
+
+    while((command = linenoise(prompt.c_str())) != NULL) {
+        if (command[0] != '\0' && command[0] != '/') {
+          linenoiseHistoryAdd(command); /* Add to the history. */
+          linenoiseHistorySave(histfile); /* Save the history on disk. */
+          std::string tmp = std::string(command);
+          linenoiseFree(command);
+          return tmp;
+        }
+    }
+    free(command);
+    return std::string(command);
+
+    #elif defined(HAVE_READLINE)
 
     /* disable the signal handlers libreadline installed so ctrl+c and
        so on still work as expected */

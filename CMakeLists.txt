@@ -14,7 +14,8 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are
 set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_SKIP_PACKAGE_ALL_DEPENDENCY ON)
 set(CMAKE_SUPPRESS_REGENERATION ON)
-set(ENABLE_READLINE ON CACHE BOOL "Enable readline support for zedwallet on Linux and Mac? Defaults to ON")
+set(ENABLE_LINENOISE ON CACHE BOOL "Enable line editing support (completion & history) support for zedwallet? Defaults to ON")
+set(ENABLE_READLINE OFF CACHE BOOL "Enable readline support for zedwallet on Linux and Mac? Defaults to OFF")
 
 set(STATIC ON CACHE BOOL "Link libraries statically")
 
@@ -29,9 +30,10 @@ set(ENABLE_SCHED_GETCPU OFF CACHE STRING "Enable RocksDB SCHED_GETCPU support de
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(TurtleCoin)
-
+if(ENABLE_LINENOISE)
+    add_definitions(-DUSE_LINENOISE)
 # TODO: Windows build?
-if(NOT MSVC AND ENABLE_READLINE)
+elseif(NOT MSVC AND ENABLE_READLINE)
     ### BUILD READLINE ###
 
     # Let the source code know we've got readline, with #ifdef HAVE_READLINE
