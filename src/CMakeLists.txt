@@ -1,7 +1,7 @@
 add_definitions(-DSTATICLIB)
 
 include_directories(${CMAKE_SOURCE_DIR}/external/rocksdb/include)
-if(USE_LINENOISE)
+if(ENABLE_LINENOISE)
 include_directories(${CMAKE_SOURCE_DIR}/external/linenoise)
 endif()
 
@@ -96,7 +96,7 @@ else()
 endif()
 
 # Link with readline and curses if we found them
-if(USE_LINENOISE)
+if(ENABLE_LINENOISE)
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common linenoise ${Boost_LIBRARIES})
 elseif(HAVE_READLINE)
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common readline NCURSES ${Boost_LIBRARIES})
