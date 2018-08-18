@@ -621,7 +621,7 @@ void inputLoop(std::shared_ptr<WalletInfo> &walletInfo, CryptoNote::INode &node)
 {
     while (true)
     {
-        #if !defined(HAVE_READLINE) || !defined(USE_LINENOISE)
+        #if !defined(HAVE_READLINE) && !defined(USE_LINENOISE)
         std::cout << InformationMsg(getPrompt(walletInfo));
         #endif
 
