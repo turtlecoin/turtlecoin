@@ -101,6 +101,8 @@
  *    Effect: clear the whole screen
  *
  */
+ 
+#ifndef _WIN32
 
 #include <termios.h>
 #include <unistd.h>
@@ -1443,3 +1445,4 @@ int linenoiseHistoryLoad(const char *filename) {
     return 0;
 }
 
+#endif

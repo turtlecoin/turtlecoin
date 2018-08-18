@@ -1,8 +1,0 @@
-Tue May 15 16:45:32 UTC 2018
-* Create CHANGELOG
-* Merged PRs #151, #147, #144, #139, #138, #136, #146, #152
-* Merged PRs #135, #130, #127, #119, #117, #112, #133, #126
-* Merged PRs #108, #103, #86, #78, #76, #71
-* Merged PRs #70, #69, #65, #61
-* Integrated the work from yhirose's UTF-8 repo
-

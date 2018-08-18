@@ -1,7 +1,9 @@
 add_definitions(-DSTATICLIB)
 
 include_directories(${CMAKE_SOURCE_DIR}/external/rocksdb/include)
+if(USE_LINENOISE)
 include_directories(${CMAKE_SOURCE_DIR}/external/linenoise)
+endif()
 
 file(GLOB_RECURSE BlockchainExplorer BlockchainExplorer/*)
 file(GLOB_RECURSE Common Common/*)
@@ -23,13 +25,7 @@ file(GLOB_RECURSE Wallet Wallet/*)
 file(GLOB_RECURSE WalletLegacy WalletLegacy/*)
 file(GLOB_RECURSE JsonRpcServer JsonRpcServer/*)
 file(GLOB_RECURSE service WalletService/*)
-
-if(ENABLE_LINENOISE)
-message(STATUS "linenoise library is enabled")
-file(GLOB_RECURSE zedwallet zedwallet/* ${CMAKE_SOURCE_DIR}/external/linenoise/*)
-else()
 file(GLOB_RECURSE zedwallet zedwallet/*)
-endif()
 
 if(MSVC)
 file(GLOB_RECURSE System System/* Platform/Windows/System/*)
@@ -100,7 +96,9 @@ else()
 endif()
 
 # Link with readline and curses if we found them
-if(HAVE_READLINE)
+if(USE_LINENOISE)
+    target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common linenoise ${Boost_LIBRARIES})
+elseif(HAVE_READLINE)
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common readline NCURSES ${Boost_LIBRARIES})
 else()
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${Boost_LIBRARIES})
