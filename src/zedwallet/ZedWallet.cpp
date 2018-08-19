@@ -396,7 +396,7 @@ void completion(const char *buf, linenoiseCompletions *lc){
     const auto commands = allCommands();
     for(i=0;i<commands.size();i++){
         std::string name = commands[i].name;
-        if (name.find(buf[0]) == 0)
+        if(name.rfind(buf, 0) == 0)
         {
              linenoiseAddCompletion(lc, name.c_str());
         }
