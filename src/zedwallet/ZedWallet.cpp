@@ -461,16 +461,13 @@ std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo)
     #if defined(USE_LINENOISE)
 
     char *command;
-    const char* histfile = "zedwallet-history.txt";
     linenoiseSetCompletionCallback(completion);
     std::string prompt = yellowANSIMsg(getPrompt(walletInfo));
     linenoiseHistorySetMaxLen(256);
-    linenoiseHistoryLoad(histfile);
 
     while((command = linenoise(prompt.c_str())) != NULL) {
         if (command[0] != '\0' && command[0] != '/') {
-          linenoiseHistoryAdd(command); /* Add to the history. */
-          linenoiseHistorySave(histfile); /* Save the history on disk. */
+          linenoiseHistoryAdd(command);
           std::string tmp = std::string(command);
           linenoiseFree(command);
           return tmp;
