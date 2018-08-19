@@ -413,6 +413,10 @@ std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo)
     linenoiseSetCompletionCallback(completion);
     std::string prompt = yellowANSIMsg(getPrompt(walletInfo));
     linenoiseHistorySetMaxLen(256);
+    linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen,
+        linenoiseUtf8NextCharLen,
+        linenoiseUtf8ReadCode
+    );
 
     while((command = linenoise(prompt.c_str())) != NULL) {
         if (command[0] != '\0' && command[0] != '/') {
@@ -422,8 +426,11 @@ std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo)
           return tmp;
         }
     }
-    free(command);
-    return std::string(command);
+    
+    if (command != NULL){
+        return std::string(command);
+    }
+    return std::string("");
 
     #else
     
