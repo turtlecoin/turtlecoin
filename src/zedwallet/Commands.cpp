@@ -6,11 +6,6 @@
 #include <zedwallet/Commands.h>
 ///////////////////////////////
 
-#ifdef HAVE_READLINE
-#include <readline/readline.h>
-#include <readline/history.h>
-#endif
-
 #include <zedwallet/AddressBook.h>
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/CommandImplementations.h>

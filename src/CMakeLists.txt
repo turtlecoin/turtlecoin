@@ -95,11 +95,8 @@ else()
 	target_link_libraries(TurtleCoind P2P Rpc Serialization System Http Logging CryptoNoteCore Crypto Common rocksdblib ${Boost_LIBRARIES} )
 endif()
 
-# Link with readline and curses if we found them
 if(ENABLE_LINENOISE)
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common linenoise ${Boost_LIBRARIES})
-elseif(HAVE_READLINE)
-    target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common readline NCURSES ${Boost_LIBRARIES})
 else()
     target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${Boost_LIBRARIES})
 endif()

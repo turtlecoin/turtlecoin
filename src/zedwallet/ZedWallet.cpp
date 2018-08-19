@@ -18,12 +18,9 @@
 
 #include <NodeRpcProxy/NodeRpcProxy.h>
 
-#if defined(USE_LINENOISE)
+#ifdef USE_LINENOISE
 #include "linenoise.h"
 #include "utf8.h"
-#elif defined(HAVE_READLINE)
-#include <readline/readline.h>
-#include <readline/history.h>
 #endif
 
 #include "version.h"
@@ -392,7 +389,7 @@ void welcomeMsg()
               << std::endl << std::endl;
 }
 
-#if defined(USE_LINENOISE)
+#ifdef USE_LINENOISE
 
 void completion(const char *buf, linenoiseCompletions *lc){
     size_t i;
@@ -406,59 +403,11 @@ void completion(const char *buf, linenoiseCompletions *lc){
     }
 }
     
-#elif defined(HAVE_READLINE)
-
-char **getAutoCompleteMatches(const char *text, int start, int end)
-{
-    rl_attempted_completion_over = 1;
-    rl_completion_append_character = '\0';
-    return rl_completion_matches(text, getAutoCompleteMatch);
-}
-
-char *getAutoCompleteMatch(const char *text, int state)
-{
-    /* Need to maintain position in vector across calls */
-    static long unsigned int i = 0;
-
-    /* Function is being called again, make sure we reset i to zero, otherwise
-       no matches will be returned. */
-    if (state == 0)
-    {
-        i = 0;
-    }
-
-    const auto commands = allCommands();
-
-    while (i < commands.size())
-    {
-        std::string name = commands[i].name;
-
-        i++;
-
-        /* Check if text is a prefix of name */
-        if (name.find(std::string(text)) == 0)
-        {
-            /* Can't just return .c_str(), the underlying std::string will
-               be cleaned up and we'll have a dangling ptr - need to make a
-               copy. Readline will call free() on it for us, so it's OK. */
-
-            /* +1 for \0 */
-            char *ptr = new char[name.length() + 1];
-
-            strcpy(ptr, name.c_str());
-
-            return ptr;
-        }
-    }
-
-    return NULL;
-}
-
 #endif
 
 std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo)
 {
-    #if defined(USE_LINENOISE)
+    #ifdef USE_LINENOISE
 
     char *command;
     linenoiseSetCompletionCallback(completion);
@@ -476,34 +425,6 @@ std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo)
     free(command);
     return std::string(command);
 
-    #elif defined(HAVE_READLINE)
-
-    /* disable the signal handlers libreadline installed so ctrl+c and
-       so on still work as expected */
-    rl_catch_signals = 0;
-
-    rl_attempted_completion_function = getAutoCompleteMatches;
-
-    std::string prompt = yellowANSIMsg(getPrompt(walletInfo));
-
-    char *command = readline(prompt.c_str());
-
-    while (command != nullptr)
-    {
-        if (strlen(command) > 0)
-        {
-            add_history(command);
-        }
-
-        std::string tmp = std::string(command);
-
-        free(command);
-
-        return tmp;
-    }
-
-    return std::string(command);
-    
     #else
     
     std::string command;
@@ -595,10 +516,6 @@ bool shutdown(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node,
         }
     });
 
-    #ifdef HAVE_READLINE
-    /* clean readline to restore usual terminal history after shutdown */
-    rl_cleanup_after_signal();
-    #endif  
 
     wallet.save();
     wallet.shutdown();
@@ -618,7 +535,7 @@ void inputLoop(std::shared_ptr<WalletInfo> &walletInfo, CryptoNote::INode &node)
 {
     while (true)
     {
-        #if !defined(HAVE_READLINE) && !defined(USE_LINENOISE)
+        #ifndef USE_LINENOISE
         std::cout << InformationMsg(getPrompt(walletInfo));
         #endif
 

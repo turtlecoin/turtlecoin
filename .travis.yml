@@ -18,7 +18,6 @@ matrix:
   - os: osx
 before_install:
 install:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install readline; brew link --force readline; fi
 script:
 - mkdir build && cd build
 - cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. && make

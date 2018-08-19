@@ -15,7 +15,6 @@ set(CMAKE_SKIP_INSTALL_RULES OFF)
 set(CMAKE_SKIP_PACKAGE_ALL_DEPENDENCY ON)
 set(CMAKE_SUPPRESS_REGENERATION ON)
 set(ENABLE_LINENOISE ON CACHE BOOL "Enable line editing support (completion & history) support for zedwallet? Defaults to ON")
-set(ENABLE_READLINE OFF CACHE BOOL "Enable readline support for zedwallet on Linux and Mac? Defaults to OFF")
 
 set(STATIC ON CACHE BOOL "Link libraries statically")
 
@@ -32,61 +31,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 project(TurtleCoin)
 if(NOT MSVC AND ENABLE_LINENOISE)
     add_definitions(-DUSE_LINENOISE)
-# TODO: Windows build?
-elseif(NOT MSVC AND ENABLE_READLINE)
-    ### BUILD READLINE ###
-
-    # Let the source code know we've got readline, with #ifdef HAVE_READLINE
-    add_definitions(-DHAVE_READLINE)
-
-    # Make the build directory (so we don't clutter up the source folder, or
-    # make files that git will see)
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/)
-
-    # Run configure
-    execute_process(
-        COMMAND ../configure WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/
-    )
-
-    # Compile readline
-    execute_process(
-        COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/
-    )
-
-    # Link it statically
-    add_library(readline STATIC IMPORTED GLOBAL)
-
-    # Pass the path to the compiled readline static library
-    set_target_properties(readline PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/readline/build/libreadline.a)
-
-    message(STATUS "Compiled GNU Readline")
-
-    ### BUILD NCURSES ###
-
-    # Make the build directory (so we don't clutter up the source folder, or
-    # make files that git will see)
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/)
-
-    # Run configure
-    execute_process(
-        COMMAND ../configure WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/
-    )
-
-    # Compile ncurses
-    execute_process(
-        COMMAND make WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/
-    )
-
-    # Link it statically
-    add_library(NCURSES STATIC IMPORTED GLOBAL)
-
-    # Pass the path to the compiled ncurses static library
-    set_target_properties(NCURSES PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/ncurses/build/lib/libncurses.a)
-
-    message(STATUS "Compiled Ncurses")
-
-    # Set HAVE_READLINE so we know to link against readline and ncurses later
-    set(HAVE_READLINE ON)
 endif()
 
 set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")
