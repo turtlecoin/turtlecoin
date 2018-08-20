@@ -281,10 +281,7 @@ namespace Common {
                 if (!line.empty()) {
                     handleCommand(line);
                 }
-            }else{
-                break;
             }
-            //std::cout << m_prompt;
             std::cout.flush();
         } catch (std::exception&) {
             // do nothing    
