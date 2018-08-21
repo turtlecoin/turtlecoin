@@ -84,7 +84,7 @@ _configure_ubuntu() {
         _note "Sudo privileges required for package installation"
     fi
     $_sudo apt-get update -qq
-    $_sudo apt-get install -qq -y git build-essential python-dev gcc g++ git cmake libboost-all-dev librocksdb-dev >>build.log 2>&1 || _fail "Unable to install build dependencies. Please see build.log for more information"
+    $_sudo apt-get install -qq -y git build-essential python-dev gcc g++ git cmake libboost-all-dev >>build.log 2>&1 || _fail "Unable to install build dependencies. Please see build.log for more information"
 
     export CXXFLAGS="-std=gnu++11"
 }
