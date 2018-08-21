@@ -8,10 +8,6 @@
 
 ### How To Compile
 
-On Linux or Mac on a non standard architecture, and can't get GNU Readline/Ncurses compiled?
-
-Disable it with `cmake .. -DENABLE_READLINE=FALSE`
-
 #### Ubuntu 16.04+ and MacOS 10.10+
 
 There is a bash installation script for Ubuntu 16.04+ and MacOS 10.10+ which can be used to checkout and build the project from source:
