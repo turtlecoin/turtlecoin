@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 2.8.6)
 
+# We do not support 32-bit builds. When and if we do, this can be removed.
+if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+  message(FATAL_ERROR "Targeting a 32-bit architecture is not supported.")
+endif()
+
 # Required for finding Threads on arm
 enable_language(C)
 enable_language(CXX)
