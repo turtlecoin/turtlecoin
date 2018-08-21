@@ -5,6 +5,15 @@ enable_language(C)
 enable_language(CXX)
 find_package(Threads)
 
+# Need this to build on aarch64 (aka Arm64) - you must have a 64bit ARM CPU.
+if(NOT MSVC)
+  execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
+  message(STATUS "Setting up for ${ARCHITECTURE}")
+  if(${ARCHITECTURE} STREQUAL "aarch64")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  endif()
+endif()
+
 set(VERSION "0.1")
 # $Format:Packaged from commit %H%nset(COMMIT %h)%nset(REFS "%d")$
 
