@@ -12,5 +12,3 @@ src/Makefile
 src/build/
 src/cmake_install.cmake
 *.swp
-/external/ncurses/build
-/external/readline/build
