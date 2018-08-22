@@ -11,7 +11,7 @@
 #include <CryptoNoteCore/Account.h>
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
 
-#include <Mnemonics/electrum-words.h>
+#include <Mnemonics/Mnemonics.h>
 
 #include <Wallet/WalletErrors.h>
 
@@ -79,15 +79,26 @@ std::shared_ptr<WalletInfo> mnemonicImportWallet(CryptoNote::WalletGreen
     Crypto::SecretKey privateSpendKey;
     Crypto::SecretKey privateViewKey;
 
-    do
+    while (true)
     {
         std::cout << "Mnemonic Phrase (25 words): ";
         std::getline(std::cin, mnemonicPhrase);
         boost::algorithm::trim(mnemonicPhrase);
+        
+        std::string error;
+
+        std::tie(error, privateSpendKey)
+            = Mnemonics::MnemonicToPrivateKey(mnemonicPhrase);
+
+        if (!error.empty())
+        {
+            std::cout << WarningMsg(error) << std::endl;
+        }
+        else
+        {
+            break;
+        }
     }
-    while (!crypto::ElectrumWords::is_valid_mnemonic(mnemonicPhrase,
-                                                     privateSpendKey,
-                                                     std::cout));
 
     CryptoNote::AccountBase::generateViewFromSpend(privateSpendKey, 
                                                    privateViewKey);

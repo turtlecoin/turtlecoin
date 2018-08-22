@@ -39,7 +39,7 @@
 #include "Wallet/WalletUtils.h"
 #include "WalletServiceErrorCategory.h"
 
-#include "Mnemonics/electrum-words.h"
+#include "Mnemonics/Mnemonics.h"
 
 namespace PaymentService {
 
@@ -373,11 +373,15 @@ void generateNewWallet(const CryptoNote::Currency& currency, const WalletConfigu
     Crypto::SecretKey private_spend_key;
     Crypto::SecretKey private_view_key;
 
-    auto x = log(Logging::ERROR, Logging::BRIGHT_RED);
+    std::string error;
 
-    if (!crypto::ElectrumWords::is_valid_mnemonic(conf.mnemonicSeed, private_spend_key, x))
+    std::tie(error, private_spend_key)
+        = Mnemonics::MnemonicToPrivateKey(conf.mnemonicSeed);
+
+    if (!error.empty())
     {
-      return;
+        log(Logging::ERROR, Logging::BRIGHT_RED) << error;
+        return;
     }
 
     CryptoNote::AccountBase::generateViewFromSpend(private_spend_key, private_view_key);
@@ -810,7 +814,7 @@ std::error_code WalletService::getMnemonicSeed(const std::string& address, std::
     bool deterministic_private_keys = deterministic_private_view_key == viewKey.secretKey;
 
     if (deterministic_private_keys) {
-      crypto::ElectrumWords::bytes_to_words(key.secretKey, mnemonicSeed, "English");
+      mnemonicSeed = Mnemonics::PrivateKeyToMnemonic(key.secretKey);
     } else {
       /* Have to be able to derive view key from spend key to create a mnemonic
          seed, due to being able to generate multiple addresses we can't do

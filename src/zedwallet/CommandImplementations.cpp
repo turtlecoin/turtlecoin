@@ -8,6 +8,8 @@
 
 #include <atomic>
 
+#include <boost/algorithm/string.hpp>
+
 #include <Common/FormatTools.h>
 #include <Common/StringTools.h>
 
@@ -18,7 +20,7 @@
 #include <fstream>
 #endif
 
-#include <Mnemonics/electrum-words.h>
+#include <Mnemonics/Mnemonics.h>
 
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/Open.h>
@@ -91,16 +93,10 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
 
     if (deterministicPrivateKeys)
     {
-        std::string mnemonicSeed;
-
-        crypto::ElectrumWords::bytes_to_words(privateSpendKey, 
-                                              mnemonicSeed,
-                                              "English");
-
         std::cout << std::endl
                   << SuccessMsg("Mnemonic seed:")
                   << std::endl
-                  << SuccessMsg(mnemonicSeed)
+                  << SuccessMsg(Mnemonics::PrivateKeyToMnemonic(privateSpendKey))
                   << std::endl;
     }
 }
