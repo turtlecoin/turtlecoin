@@ -9,8 +9,6 @@
 
 #include "Mnemonics.h"
 #include "WordList.h"
-/* REMOVE ME */
-#include <iostream>
 
 namespace Mnemonics
 {
