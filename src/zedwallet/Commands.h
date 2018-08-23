@@ -23,7 +23,7 @@ const std::vector<Command> availableCommands(bool viewWallet,
 
 void listCommands(std::vector<Command> &commands, bool advanced);
 
-int numBasicCommands(std::vector<Command> &commands);
+uint64_t numBasicCommands(std::vector<Command> &commands);
 
 const Maybe<Command> resolveCommand(std::string command,
                                     std::vector<Command> &allCommands,
