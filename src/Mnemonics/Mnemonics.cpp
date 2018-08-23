@@ -159,7 +159,7 @@ namespace Mnemonics
         auto wordsNoChecksum = words;
 
         /* Remove the last checksum word */
-        wordsNoChecksum.erase(wordsNoChecksum.end());
+        wordsNoChecksum.erase(wordsNoChecksum.end() - 1);
 
         /* Assert the last word (the checksum word) is equal to the derived
            checksum */

@@ -23,6 +23,7 @@ script:
 - cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. && make -j2
 before_deploy:
 - cd src
+- strip TurtleCoind miner zedwallet turtle-service
 - mkdir turtlecoin-${TRAVIS_TAG}
 - mv TurtleCoind miner zedwallet turtle-service  turtlecoin-${TRAVIS_TAG}/
 - cp ../../LICENSE turtlecoin-${TRAVIS_TAG}/
