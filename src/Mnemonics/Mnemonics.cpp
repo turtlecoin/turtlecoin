@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <boost/crc.hpp>
+#include <sstream>
 
 #include "Mnemonics.h"
 #include "WordList.h"
