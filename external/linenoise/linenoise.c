@@ -115,6 +115,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <signal.h>
 #include "linenoise.h"
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
@@ -132,6 +133,7 @@ static int atexit_registered = 0; /* Register atexit just 1 time. */
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
 static char **history = NULL;
+static int raiseOnInt = 0;
 
 /* The linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
@@ -398,12 +400,14 @@ failed:
 
 /* Get the length of the string ignoring escape-sequences */
 // TODO merge with columnPos
+/*
 static int strlenPerceived(const char* str) {
 	int len = 0;
 	if (str) {
 		int escaping = 0;
 		while(*str) {
-			if (escaping) { /* was terminating char reached? */
+			if (escaping) { 
+			  /// was terminating char reached? 
 				if(*str >= 0x40 && *str <= 0x7E)
 					escaping = 0;
 			}
@@ -419,7 +423,7 @@ static int strlenPerceived(const char* str) {
 	}
 	return len;
 }
-
+*/
 /* Clear the screen. Used to handle ctrl+l */
 void linenoiseClearScreen(void) {
     int fd;
@@ -511,6 +515,10 @@ static int completeLine(struct linenoiseState *ls, char *cbuf, size_t cbuf_len, 
 
     freeCompletions(&lc);
     return nread;
+}
+
+void linenoiseSetRaiseOnInt(int r){
+    raiseOnInt = r;
 }
 
 /* Register a callback function to be called for tab-completion. */
@@ -1031,8 +1039,19 @@ static int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, size_t buflen, 
             }
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
-            errno = EAGAIN;
-            return -1;
+            if ( raiseOnInt == 1 && l.len == 0) {
+                history_len--;
+                free(history[history_len]);
+                raise(SIGINT);
+                return -1;
+            }
+            
+            buf[0] = '\0';
+            l.pos = l.len = 0;
+            refreshLine(&l);
+            break;
+            //errno = EAGAIN;
+            //return -1;
         case BACKSPACE:   /* backspace */
         case 8:     /* ctrl-h */
             linenoiseEditBackspace(&l);

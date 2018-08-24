@@ -189,7 +189,7 @@ namespace Common {
         m_thread.join();
       }
     } catch (std::exception& e) {
-      std::cerr << "Exception in ConsoleHandler::wait - " << e.what() << std::endl;
+      //std::cerr << "Exception in ConsoleHandler::wait - " << e.what() << std::endl;
     }
   }
 
@@ -269,6 +269,7 @@ namespace Common {
     char *cline;
     linenoiseSetCompletionCallback( completionCallback );
     linenoiseHistorySetMaxLen(256);
+    linenoiseSetRaiseOnInt(1);
     linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen, linenoiseUtf8NextCharLen, linenoiseUtf8ReadCode);
     while(!m_consoleReader.stopped() && (cline = linenoise("\033[0m")) != NULL) {
         try{
@@ -277,12 +278,12 @@ namespace Common {
                 line = std::string(cline);
                 linenoiseFree(cline);
                 boost::algorithm::trim(line);
-                std::cout << "" << std::endl;
                 if (!line.empty()) {
+                    std::cout << "" << std::endl;
                     handleCommand(line);
+                    std::cout << "" << std::endl;
                 }
             }
-            std::cout.flush();
         } catch (std::exception&) {
             // do nothing    
         }
