@@ -362,7 +362,7 @@ void generateNewWallet(const CryptoNote::Currency& currency, const WalletConfigu
     CryptoNote::AccountBase::generateViewFromSpend(spendKey.secretKey, private_view_key);
 
     wallet->initializeWithViewKey(conf.walletFile, conf.walletPassword, private_view_key);
-    address = wallet->createAddress(spendKey.secretKey);
+    address = wallet->createAddress(spendKey.secretKey, 0, true);
 
 	  log(Logging::INFO, Logging::BRIGHT_WHITE) << "New wallet is generated. Address: " << address;
   }
@@ -386,7 +386,7 @@ void generateNewWallet(const CryptoNote::Currency& currency, const WalletConfigu
 
     CryptoNote::AccountBase::generateViewFromSpend(private_spend_key, private_view_key);
     wallet->initializeWithViewKey(conf.walletFile, conf.walletPassword, private_view_key);
-    address = wallet->createAddress(private_spend_key);
+    address = wallet->createAddress(private_spend_key, conf.scanHeight, false);
     log(Logging::INFO, Logging::BRIGHT_WHITE) << "Imported wallet successfully.";
   }
   else
@@ -414,7 +414,7 @@ void generateNewWallet(const CryptoNote::Currency& currency, const WalletConfigu
 		  Crypto::SecretKey private_view_key = *(struct Crypto::SecretKey *) &private_view_key_hash;
 
 		  wallet->initializeWithViewKey(conf.walletFile, conf.walletPassword, private_view_key);
-		  address = wallet->createAddress(private_spend_key);
+		  address = wallet->createAddress(private_spend_key, conf.scanHeight, false);
 		  log(Logging::INFO, Logging::BRIGHT_WHITE) << "Imported wallet successfully.";
 	  }
   }
@@ -608,7 +608,7 @@ std::error_code WalletService::replaceWithNewWallet(const std::string& viewSecre
   return std::error_code();
 }
 
-std::error_code WalletService::createAddress(const std::string& spendSecretKeyText, std::string& address) {
+std::error_code WalletService::createAddress(const std::string& spendSecretKeyText, uint64_t scanHeight, bool newAddress, std::string& address) {
   try {
     System::EventLock lk(readyEvent);
 
@@ -620,7 +620,7 @@ std::error_code WalletService::createAddress(const std::string& spendSecretKeyTe
       return make_error_code(CryptoNote::error::WalletServiceErrorCode::WRONG_KEY_FORMAT);
     }
 
-    address = wallet.createAddress(secretKey);
+    address = wallet.createAddress(secretKey, scanHeight, newAddress);
   } catch (std::system_error& x) {
     logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Error while creating address: " << x.what();
     return x.code();
@@ -631,7 +631,7 @@ std::error_code WalletService::createAddress(const std::string& spendSecretKeyTe
   return std::error_code();
 }
 
-std::error_code WalletService::createAddressList(const std::vector<std::string>& spendSecretKeysText, std::vector<std::string>& addresses) {
+std::error_code WalletService::createAddressList(const std::vector<std::string>& spendSecretKeysText, uint64_t scanHeight, bool newAddress, std::vector<std::string>& addresses) {
   try {
     System::EventLock lk(readyEvent);
 
@@ -657,7 +657,7 @@ std::error_code WalletService::createAddressList(const std::vector<std::string>&
       secretKeys.push_back(std::move(key));
     }
 
-    addresses = wallet.createAddressList(secretKeys);
+    addresses = wallet.createAddressList(secretKeys, scanHeight, newAddress);
   } catch (std::system_error& x) {
     logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Error while creating addresses: " << x.what();
     return x.code();
@@ -685,7 +685,7 @@ std::error_code WalletService::createAddress(std::string& address) {
   return std::error_code();
 }
 
-std::error_code WalletService::createTrackingAddress(const std::string& spendPublicKeyText, std::string& address) {
+std::error_code WalletService::createTrackingAddress(const std::string& spendPublicKeyText, uint64_t scanHeight, bool newAddress, std::string& address) {
   try {
     System::EventLock lk(readyEvent);
 
@@ -697,7 +697,7 @@ std::error_code WalletService::createTrackingAddress(const std::string& spendPub
       return make_error_code(CryptoNote::error::WalletServiceErrorCode::WRONG_KEY_FORMAT);
     }
 
-    address = wallet.createAddress(publicKey);
+    address = wallet.createAddress(publicKey, scanHeight, true);
   } catch (std::system_error& x) {
     logger(Logging::WARNING, Logging::BRIGHT_YELLOW) << "Error while creating tracking address: " << x.what();
     return x.code();

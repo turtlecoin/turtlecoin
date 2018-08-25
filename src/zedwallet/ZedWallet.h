@@ -28,4 +28,3 @@ std::string getCommand(std::shared_ptr<WalletInfo> &walletInfo);
 
 Maybe<std::shared_ptr<WalletInfo>> handleAction(CryptoNote::WalletGreen &wallet,
                                                 Action action, Config &config);
-

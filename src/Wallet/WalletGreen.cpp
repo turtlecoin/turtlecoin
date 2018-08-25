@@ -149,7 +149,9 @@ WalletGreen::~WalletGreen() {
 void WalletGreen::createViewWallet(const std::string &path,
                                    const std::string &password,
                                    const std::string address,
-                                   const Crypto::SecretKey &viewSecretKey)
+                                   const Crypto::SecretKey &viewSecretKey,
+                                   const uint64_t scanHeight,
+                                   bool newAddress)
 {
     CryptoNote::AccountPublicAddress publicKeys;
     uint64_t prefix;
@@ -160,7 +162,8 @@ void WalletGreen::createViewWallet(const std::string &path,
     }
 
     initializeWithViewKey(path, password, viewSecretKey);
-    createAddress(publicKeys.spendPublicKey);
+
+    createAddress(publicKeys.spendPublicKey, scanHeight, newAddress);
 }
 
 void WalletGreen::initialize(const std::string& path, const std::string& password) {
@@ -782,7 +785,7 @@ void WalletGreen::subscribeWallets() {
       sub.keys.spendSecretKey = wallet.spendSecretKey;
       sub.transactionSpendableAge = m_transactionSoftLockTime;
       sub.syncStart.height = 0;
-      sub.syncStart.timestamp = std::max(static_cast<uint64_t>(wallet.creationTimestamp), ACCOUNT_CREATE_TIME_ACCURACY) - ACCOUNT_CREATE_TIME_ACCURACY;
+      sub.syncStart.timestamp = wallet.creationTimestamp;
 
       auto& subscription = m_synchronizer.addSubscription(sub);
       bool r = index.modify(it, [&subscription](WalletRecord& rec) { rec.container = &subscription.getContainer(); });
@@ -959,71 +962,112 @@ KeyPair WalletGreen::getViewKey() const {
   return {m_viewPublicKey, m_viewSecretKey};
 }
 
-std::string WalletGreen::createAddress() {
-  KeyPair spendKey;
-  Crypto::generate_keys(spendKey.publicKey, spendKey.secretKey);
-  uint64_t creationTimestamp = static_cast<uint64_t>(time(nullptr));
+std::string WalletGreen::createAddress()
+{
+    KeyPair spendKey;
 
-  return doCreateAddress(spendKey.publicKey, spendKey.secretKey, creationTimestamp);
+    Crypto::generate_keys(spendKey.publicKey, spendKey.secretKey);
+
+    return doCreateAddress(spendKey.publicKey, spendKey.secretKey, 0, true);
 }
 
-std::string WalletGreen::createAddress(const Crypto::SecretKey& spendSecretKey) {
-  Crypto::PublicKey spendPublicKey;
-  if (!Crypto::secret_key_to_public_key(spendSecretKey, spendPublicKey)) {
-    m_logger(ERROR, BRIGHT_RED) << "createAddress(" << spendSecretKey << ") Failed to convert secret key to public key";
-    throw std::system_error(make_error_code(CryptoNote::error::KEY_GENERATION_ERROR));
-  }
-
-  return doCreateAddress(spendPublicKey, spendSecretKey, 0);
-}
-
-std::string WalletGreen::createAddress(const Crypto::PublicKey& spendPublicKey) {
-  if (!Crypto::check_key(spendPublicKey)) {
-    m_logger(ERROR, BRIGHT_RED) << "createAddress(" << spendPublicKey << ") Wrong public key format";
-    throw std::system_error(make_error_code(error::WRONG_PARAMETERS), "Wrong public key format");
-  }
-
-  return doCreateAddress(spendPublicKey, NULL_SECRET_KEY, 0);
-}
-
-std::vector<std::string> WalletGreen::createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys) {
-  std::vector<NewAddressData> addressDataList(spendSecretKeys.size());
-  for (size_t i = 0; i < spendSecretKeys.size(); ++i) {
+std::string WalletGreen::createAddress(const Crypto::SecretKey& spendSecretKey, const uint64_t scanHeight, const bool newAddress)
+{
     Crypto::PublicKey spendPublicKey;
-    if (!Crypto::secret_key_to_public_key(spendSecretKeys[i], spendPublicKey)) {
-      m_logger(ERROR, BRIGHT_RED) << "createAddressList(): failed to convert secret key to public key, secret key " << spendSecretKeys[i];
-      throw std::system_error(make_error_code(CryptoNote::error::KEY_GENERATION_ERROR));
+
+    if (!Crypto::secret_key_to_public_key(spendSecretKey, spendPublicKey))
+    {
+        m_logger(ERROR, BRIGHT_RED) << "createAddress(" << spendSecretKey << ") Failed to convert secret key to public key";
+        throw std::system_error(make_error_code(CryptoNote::error::KEY_GENERATION_ERROR));
     }
 
-    addressDataList[i].spendSecretKey = spendSecretKeys[i];
-    addressDataList[i].spendPublicKey = spendPublicKey;
-    addressDataList[i].creationTimestamp = 0;
-  }
-
-  return doCreateAddressList(addressDataList);
+    return doCreateAddress(spendPublicKey, spendSecretKey, scanHeight, newAddress);
 }
 
-std::string WalletGreen::doCreateAddress(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, uint64_t creationTimestamp) {
-  assert(creationTimestamp <= std::numeric_limits<uint64_t>::max() - m_currency.blockFutureTimeLimit(0));
+std::string WalletGreen::createAddress(const Crypto::PublicKey& spendPublicKey, const uint64_t scanHeight, const bool newAddress)
+{
+    if (!Crypto::check_key(spendPublicKey))
+    {
+        m_logger(ERROR, BRIGHT_RED) << "createAddress(" << spendPublicKey << ") Wrong public key format";
+        throw std::system_error(make_error_code(error::WRONG_PARAMETERS), "Wrong public key format");
+    }
 
-  std::vector<NewAddressData> addressDataList;
-  addressDataList.push_back(NewAddressData{ spendPublicKey, spendSecretKey, creationTimestamp });
-  std::vector<std::string> addresses = doCreateAddressList(addressDataList);
-  assert(addresses.size() == 1);
-
-  return addresses.front();
+    return doCreateAddress(spendPublicKey, NULL_SECRET_KEY, scanHeight, newAddress);
 }
 
-std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewAddressData>& addressDataList) {
+std::vector<std::string> WalletGreen::createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys, const uint64_t scanHeight, const bool newAddress)
+{
+    std::vector<NewAddressData> addressDataList(spendSecretKeys.size());
+
+    for (size_t i = 0; i < spendSecretKeys.size(); ++i)
+    {
+        Crypto::PublicKey spendPublicKey;
+
+        if (!Crypto::secret_key_to_public_key(spendSecretKeys[i], spendPublicKey))
+        {
+            m_logger(ERROR, BRIGHT_RED) << "createAddressList(): failed to convert secret key to public key, secret key " << spendSecretKeys[i];
+            throw std::system_error(make_error_code(CryptoNote::error::KEY_GENERATION_ERROR));
+        }
+
+        addressDataList[i].spendSecretKey = spendSecretKeys[i];
+        addressDataList[i].spendPublicKey = spendPublicKey;
+    }
+
+    return doCreateAddressList(addressDataList, scanHeight, newAddress);
+}
+
+std::string WalletGreen::doCreateAddress(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, const uint64_t scanHeight, const bool newAddress)
+{
+    std::vector<NewAddressData> addressDataList;
+
+    addressDataList.push_back(NewAddressData{ spendPublicKey, spendSecretKey });
+
+    std::vector<std::string> addresses = doCreateAddressList(addressDataList, scanHeight, newAddress);
+
+    assert(addresses.size() == 1);
+
+    return addresses.front();
+}
+
+std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewAddressData>& addressDataList, const uint64_t scanHeight, const bool newAddress) {
   throwIfNotInitialized();
   throwIfStopped();
 
   stopBlockchainSynchronizer();
 
   std::vector<std::string> addresses;
-  try {
-    uint64_t minCreationTimestamp = std::numeric_limits<uint64_t>::max();
 
+  bool resetRequired = false;
+
+  const auto& walletsIndex = m_walletsContainer.get<RandomAccessIndex>();
+
+  /* If there are already existing wallets, we need to check their creation
+     timestamps. If their creation timestamps are greater than the timestamp
+     of the wallet we are currently adding, we will have to rescan from this
+     lower height to get the blocks we need. */
+  if (!walletsIndex.empty() && !newAddress)
+  {
+      uint64_t timestamp = scanHeightToTimestamp(scanHeight);
+
+      time_t minTimestamp = std::numeric_limits<time_t>::max();
+
+      for (const WalletRecord& wallet : walletsIndex)
+      {
+          std::cout << wallet.creationTimestamp << std::endl;
+
+          if (wallet.creationTimestamp < minTimestamp)
+          {
+              minTimestamp = wallet.creationTimestamp;
+          }
+      }
+
+      if (timestamp < static_cast<uint64_t>(minTimestamp))
+      {
+          resetRequired = true;
+      }
+  }
+
+  try {
     {
       if (addressDataList.size() > 1) {
         m_containerStorage.setAutoFlush(false);
@@ -1037,19 +1081,19 @@ std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewA
       });
 
       for (auto& addressData : addressDataList) {
-        assert(addressData.creationTimestamp <= std::numeric_limits<uint64_t>::max() - m_currency.blockFutureTimeLimit(0));
-        std::string address = addWallet(addressData.spendPublicKey, addressData.spendSecretKey, addressData.creationTimestamp);
-        m_logger(INFO, BRIGHT_WHITE) << "New wallet added " << address << ", creation timestamp " << addressData.creationTimestamp;
-        addresses.push_back(std::move(address));
+        std::string address = addWallet(addressData, scanHeight, newAddress);
 
-        minCreationTimestamp = std::min(minCreationTimestamp, addressData.creationTimestamp);
+        addresses.push_back(std::move(address));
       }
     }
 
     m_containerStorage.setAutoFlush(true);
-    auto currentTime = static_cast<uint64_t>(time(nullptr));
-    if (minCreationTimestamp + m_currency.blockFutureTimeLimit(0) < currentTime) {
-      m_logger(DEBUGGING) << "Reset is required";
+
+    if (resetRequired)
+    {
+      m_logger(DEBUGGING) << "A reset is required to scan from this new lower "
+                          << "block height" << std::endl;
+
       save(WalletSaveLevel::SAVE_KEYS_AND_TRANSACTIONS, m_extra);
       shutdown();
       load(m_path, m_password);
@@ -1065,7 +1109,10 @@ std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewA
   return addresses;
 }
 
-std::string WalletGreen::addWallet(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, uint64_t creationTimestamp) {
+std::string WalletGreen::addWallet(const NewAddressData &addressData, uint64_t scanHeight, bool newAddress) {
+  const SecretKey spendSecretKey = addressData.spendSecretKey;
+  const PublicKey spendPublicKey = addressData.spendPublicKey;
+
   auto& index = m_walletsContainer.get<KeysIndex>();
 
   auto trackingMode = getTrackingMode();
@@ -1083,10 +1130,7 @@ std::string WalletGreen::addWallet(const Crypto::PublicKey& spendPublicKey, cons
       m_currency.accountAddressAsString(AccountPublicAddress{spendPublicKey, m_viewPublicKey});
     throw std::system_error(make_error_code(error::ADDRESS_ALREADY_EXISTS));
   }
-
-  m_containerStorage.push_back(encryptKeyPair(spendPublicKey, spendSecretKey, creationTimestamp));
-  incNextIv();
-
+  
   try {
     AccountSubscription sub;
     sub.keys.address.viewPublicKey = m_viewPublicKey;
@@ -1094,8 +1138,19 @@ std::string WalletGreen::addWallet(const Crypto::PublicKey& spendPublicKey, cons
     sub.keys.viewSecretKey = m_viewSecretKey;
     sub.keys.spendSecretKey = spendSecretKey;
     sub.transactionSpendableAge = m_transactionSoftLockTime;
-    sub.syncStart.height = 0;
-    sub.syncStart.timestamp = std::max(creationTimestamp, ACCOUNT_CREATE_TIME_ACCURACY) - ACCOUNT_CREATE_TIME_ACCURACY;
+    sub.syncStart.height = scanHeight;
+
+    if (newAddress)
+    {
+        sub.syncStart.timestamp = getCurrentTimestampAdjusted();
+    }
+    else
+    {
+        sub.syncStart.timestamp = scanHeightToTimestamp(scanHeight);
+    }
+
+    m_containerStorage.push_back(encryptKeyPair(spendPublicKey, spendSecretKey, sub.syncStart.timestamp));
+    incNextIv();
 
     auto& trSubscription = m_synchronizer.addSubscription(sub);
     ITransfersContainer* container = &trSubscription.getContainer();
@@ -1104,7 +1159,7 @@ std::string WalletGreen::addWallet(const Crypto::PublicKey& spendPublicKey, cons
     wallet.spendPublicKey = spendPublicKey;
     wallet.spendSecretKey = spendSecretKey;
     wallet.container = container;
-    wallet.creationTimestamp = static_cast<time_t>(creationTimestamp);
+    wallet.creationTimestamp = static_cast<time_t>(sub.syncStart.timestamp);
     trSubscription.addObserver(this);
 
     index.insert(insertIt, std::move(wallet));
@@ -1116,7 +1171,7 @@ std::string WalletGreen::addWallet(const Crypto::PublicKey& spendPublicKey, cons
     }
 
     auto address = m_currency.accountAddressAsString({ spendPublicKey, m_viewPublicKey });
-    m_logger(DEBUGGING) << "Wallet added " << address << ", creation timestamp " << creationTimestamp;
+    m_logger(DEBUGGING) << "Wallet added " << address << ", creation timestamp " << sub.syncStart.timestamp;
     return address;
   } catch (const std::exception& e) {
     m_logger(ERROR) << "Failed to add wallet: " << e.what();
@@ -1129,6 +1184,87 @@ std::string WalletGreen::addWallet(const Crypto::PublicKey& spendPublicKey, cons
 
     throw;
   }
+}
+
+CryptoNote::BlockDetails WalletGreen::getBlock(uint64_t blockHeight)
+{
+    CryptoNote::BlockDetails block;
+
+    if (m_node.getLastKnownBlockHeight() == 0)
+    {
+        return block;
+    }
+
+    std::promise<std::error_code> errorPromise;
+
+    auto e = errorPromise.get_future();
+
+    auto callback = [&errorPromise](std::error_code e)
+    {
+        errorPromise.set_value(e);
+    };
+
+    m_node.getBlock(blockHeight, block, callback);
+
+    e.get();
+
+    return block;
+}
+
+uint64_t WalletGreen::scanHeightToTimestamp(const uint64_t scanHeight)
+{
+    if (scanHeight == 0)
+    {
+        return 0;
+    }
+
+    /* Get the block timestamp from the node if the node has it */
+    uint64_t timestamp = static_cast<uint64_t>(getBlock(scanHeight).timestamp);
+
+    if (timestamp != 0)
+    {
+        return timestamp;
+    }
+
+    /* Get the amount of seconds since the blockchain launched */
+    uint64_t secondsSinceLaunch = scanHeight * 
+                                  CryptoNote::parameters::DIFFICULTY_TARGET;
+
+    /* Add a bit of a buffer in case of difficulty weirdness, blocks coming
+       out too fast */
+    secondsSinceLaunch *= 0.95;
+
+    /* Get the genesis block timestamp and add the time since launch */
+    timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP
+              + secondsSinceLaunch;
+
+    /* Timestamp in the future */
+    if (timestamp >= static_cast<uint64_t>(std::time(nullptr)))
+    {
+        return getCurrentTimestampAdjusted();
+    }
+
+    return timestamp;
+}
+
+uint64_t WalletGreen::getCurrentTimestampAdjusted()
+{
+    /* Get the current time as a unix timestamp */
+    std::time_t time = std::time(nullptr);
+
+    /* Take the amount of time a block can potentially be in the past/future */
+    std::initializer_list<uint64_t> limits =
+    {
+        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT,
+        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3,
+        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4
+    };
+
+    /* Get the largest adjustment possible */
+    uint64_t adjust = std::max(limits);
+
+    /* Take the earliest timestamp that will include all possible blocks */
+    return time - adjust;
 }
 
 void WalletGreen::deleteAddress(const std::string& address) {

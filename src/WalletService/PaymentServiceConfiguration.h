@@ -58,6 +58,8 @@ struct Configuration {
   bool legacySecurity;
 
   size_t logLevel;
+
+  uint64_t scanHeight;
 };
 
 } //namespace PaymentService
