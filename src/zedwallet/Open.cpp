@@ -17,6 +17,7 @@
 
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/CommandImplementations.h>
+#include <zedwallet/Tools.h>
 #include <zedwallet/Transfer.h>
 #include <zedwallet/Types.h>
 #include <zedwallet/PasswordContainer.h>
@@ -121,7 +122,9 @@ std::shared_ptr<WalletInfo> importFromKeys(CryptoNote::WalletGreen &wallet,
 
     connectingMsg();
 
-    wallet.initializeWithViewKey(walletFileName, walletPass, privateViewKey);
+    wallet.initializeWithViewKey(
+        walletFileName, walletPass, privateViewKey, scanHeight, false
+    );
 
     const std::string walletAddress = wallet.createAddress(
         privateSpendKey, scanHeight, false
@@ -150,7 +153,9 @@ std::shared_ptr<WalletInfo> generateWallet(CryptoNote::WalletGreen &wallet)
     CryptoNote::AccountBase::generateViewFromSpend(spendKey.secretKey,
                                                    privateViewKey);
 
-    wallet.initializeWithViewKey(walletFileName, walletPass, privateViewKey);
+    wallet.initializeWithViewKey(
+        walletFileName, walletPass, privateViewKey, 0, true
+    );
 
     const std::string walletAddress = wallet.createAddress(
         spendKey.secretKey, 0, true
@@ -465,47 +470,6 @@ std::string getWalletPassword(bool verifyPwd, std::string msg)
     Tools::PasswordContainer pwdContainer;
     pwdContainer.read_password(verifyPwd, msg);
     return pwdContainer.password();
-}
-
-uint64_t getScanHeight()
-{
-    while (true)
-    {
-        std::cout << "What height would you like to begin scanning "
-                  << "your wallet from?"
-                  << std::endl
-                  << "This can greatly speed up the initial wallet "
-                  << "scanning process."
-                  << std::endl
-                  << "If you do not know the exact height, "
-                  << std::endl
-                  << "err on the side of caution so transactions do not "
-                  << "get missed."
-                  << std::endl
-                  << "Hit enter for the default of zero: ";
-
-        std::string stringHeight;
-
-        std::getline(std::cin, stringHeight);
-
-        /* Remove commas so user can enter height as e.g. 200,000 */
-        boost::erase_all(stringHeight, ",");
-
-        if (stringHeight == "")
-        {
-            return 0;
-        }
-
-        try
-        {
-            return std::stoi(stringHeight);
-        }
-        catch (const std::invalid_argument &)
-        {
-            std::cout << WarningMsg("Failed to parse height - input is not ")
-                      << WarningMsg("a number!") << std::endl << std::endl;
-        }
-    }
 }
 
 void viewWalletMsg()

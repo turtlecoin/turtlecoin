@@ -149,7 +149,7 @@ void WalletSerializerV2::load(Common::IInputStream& source, uint8_t version) {
   s(saveLevelValue, "saveLevel");
   WalletSaveLevel saveLevel = static_cast<WalletSaveLevel>(saveLevelValue);
 
-  loadKeyListAndBanalces(s, saveLevel == WalletSaveLevel::SAVE_ALL);
+  loadKeyListAndBalances(s, saveLevel == WalletSaveLevel::SAVE_ALL);
 
   if (saveLevel == WalletSaveLevel::SAVE_KEYS_AND_TRANSACTIONS || saveLevel == WalletSaveLevel::SAVE_ALL) {
     loadTransactions(s);
@@ -171,7 +171,7 @@ void WalletSerializerV2::save(Common::IOutputStream& destination, WalletSaveLeve
   uint8_t saveLevelValue = static_cast<uint8_t>(saveLevel);
   s(saveLevelValue, "saveLevel");
 
-  saveKeyListAndBanalces(s, saveLevel == WalletSaveLevel::SAVE_ALL);
+  saveKeyListAndBalances(s, saveLevel == WalletSaveLevel::SAVE_ALL);
 
   if (saveLevel == WalletSaveLevel::SAVE_KEYS_AND_TRANSACTIONS || saveLevel == WalletSaveLevel::SAVE_ALL) {
     saveTransactions(s);
@@ -195,7 +195,7 @@ std::unordered_set<Crypto::PublicKey>& WalletSerializerV2::deletedKeys() {
   return m_deletedKeys;
 }
 
-void WalletSerializerV2::loadKeyListAndBanalces(CryptoNote::ISerializer& serializer, bool saveCache) {
+void WalletSerializerV2::loadKeyListAndBalances(CryptoNote::ISerializer& serializer, bool saveCache) {
   size_t walletCount;
   serializer(walletCount, "walletCount");
 
@@ -239,7 +239,7 @@ void WalletSerializerV2::loadKeyListAndBanalces(CryptoNote::ISerializer& seriali
   }
 }
 
-void WalletSerializerV2::saveKeyListAndBanalces(CryptoNote::ISerializer& serializer, bool saveCache) {
+void WalletSerializerV2::saveKeyListAndBalances(CryptoNote::ISerializer& serializer, bool saveCache) {
   auto walletCount = m_walletsContainer.get<RandomAccessIndex>().size();
   serializer(walletCount, "walletCount");
   for (auto wallet : m_walletsContainer.get<RandomAccessIndex>()) {

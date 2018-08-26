@@ -27,3 +27,5 @@ std::string unixTimeToDate(uint64_t timestamp);
 std::string createIntegratedAddress(std::string address, std::string paymentID);
 
 uint64_t getDivisor();
+
+uint64_t getScanHeight();

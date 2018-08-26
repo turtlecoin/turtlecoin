@@ -50,13 +50,14 @@ public:
   virtual ~WalletGreen();
 
   virtual void initialize(const std::string& path, const std::string& password) override;
-  virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey) override;
+  virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, bool newAddress) override;
   virtual void load(const std::string& path, const std::string& password, std::string& extra) override;
   virtual void load(const std::string& path, const std::string& password) override;
   virtual void shutdown() override;
 
   virtual void changePassword(const std::string& oldPassword, const std::string& newPassword) override;
   virtual void save(WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string& extra = "") override;
+  virtual void reset(const uint64_t scanHeight) override;
   virtual void exportWallet(const std::string& path, bool encrypt = true, WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string& extra = "") override;
 
   virtual size_t getAddressCount() const override;
@@ -141,13 +142,15 @@ protected:
   Crypto::chacha8_iv getNextIv() const;
   static void incIv(Crypto::chacha8_iv& iv);
   void incNextIv();
-  void initWithKeys(const std::string& path, const std::string& password, const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey);
+  void initWithKeys(const std::string& path, const std::string& password, const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, const bool newAddress);
   std::string doCreateAddress(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, const uint64_t scanHeight, const bool newAddress);
   std::vector<std::string> doCreateAddressList(const std::vector<NewAddressData>& addressDataList, const uint64_t scanHeight, const bool newAddress);
 
+  CryptoNote::BlockDetails getBlock(const uint64_t blockHeight);
+
   uint64_t scanHeightToTimestamp(const uint64_t scanHeight);
+
   uint64_t getCurrentTimestampAdjusted();
-  CryptoNote::BlockDetails getBlock(uint64_t blockHeight);
 
   struct InputInfo {
     TransactionTypes::InputKeyInfo keyInfo;

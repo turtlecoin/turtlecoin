@@ -305,27 +305,23 @@ void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
 
 void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo)
 {
-    std::cout << InformationMsg("This process may take some time to complete. "
-                                "You can't make any transactions during the process.")
-              << std::endl;
+    uint64_t scanHeight = getScanHeight();
+
+    std::cout << InformationMsg("This process may take some time to complete.")
+              << std::endl
+              << InformationMsg("You can't make any transactions during the ")
+              << InformationMsg("process.")
+              << std::endl << std::endl;
     
-    if (!confirm("Are you sure?")){
+    if (!confirm("Are you sure?"))
+    {
         return;
     }
     
     std::cout << InformationMsg("Resetting wallet...") << std::endl;
 
-    walletInfo->knownTransactionCount = 0;
+    walletInfo->wallet.reset(scanHeight);
 
-    /* Wallet is now unitialized. You must reinit with load, initWithKeys,
-       or whatever. This function wipes the cache, then saves the wallet. */
-    walletInfo->wallet.clearCacheAndShutdown();
-
-    /* Now, we reopen the wallet. It now has no cached tx's, and balance */
-    walletInfo->wallet.load(walletInfo->walletFileName,
-                            walletInfo->walletPass);
-
-    /* Now we rescan the chain to re-discover our balance and transactions */
     syncWallet(node, walletInfo);
 }
 

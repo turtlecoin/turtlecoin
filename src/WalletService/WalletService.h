@@ -53,10 +53,10 @@ public:
 
   std::error_code saveWalletNoThrow();
   std::error_code exportWallet(const std::string& fileName);
-  std::error_code resetWallet();
-  std::error_code replaceWithNewWallet(const std::string& viewSecretKey);
-  std::error_code createAddress(const std::string& spendSecretKeyText, uint64_t scanHeight, bool newAddress, std::string& address);
-  std::error_code createAddressList(const std::vector<std::string>& spendSecretKeysText, uint64_t scanHeight, bool newAddress, std::vector<std::string>& addresses);
+  std::error_code resetWallet(const uint64_t scanHeight);
+  std::error_code replaceWithNewWallet(const std::string& viewSecretKey, const uint64_t scanHeight, const bool newAddress);
+  std::error_code createAddress(const std::string& spendSecretKeyText, const uint64_t scanHeight, const bool newAddress, std::string& address);
+  std::error_code createAddressList(const std::vector<std::string>& spendSecretKeysText, const uint64_t scanHeight, const bool newAddress, std::vector<std::string>& addresses);
   std::error_code createAddress(std::string& address);
   std::error_code createTrackingAddress(const std::string& spendPublicKeyText, uint64_t scanHeight, bool newAddress, std::string& address);
   std::error_code deleteAddress(const std::string& address);
@@ -91,13 +91,13 @@ public:
 
 private:
   void refresh();
-  void reset();
+  void reset(const uint64_t scanHeight, const bool newAddress);
 
   void loadWallet();
   void loadTransactionIdIndex();
   void getNodeFee();
 
-  void replaceWithNewWallet(const Crypto::SecretKey& viewSecretKey);
+  void replaceWithNewWallet(const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, const bool newAddress);
 
   std::vector<CryptoNote::TransactionsInBlockInfo> getTransactions(const Crypto::Hash& blockHash, size_t blockCount) const;
   std::vector<CryptoNote::TransactionsInBlockInfo> getTransactions(uint32_t firstBlockIndex, size_t blockCount) const;

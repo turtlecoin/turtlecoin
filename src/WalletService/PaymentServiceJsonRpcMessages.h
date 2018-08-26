@@ -47,6 +47,10 @@ struct Reset {
   struct Request {
     std::string viewSecretKey;
 
+    uint64_t scanHeight;
+
+    bool newAddress;
+
     void serialize(CryptoNote::ISerializer& serializer);
   };
 

@@ -117,9 +117,9 @@ std::error_code PaymentServiceJsonRpcServer::handleExport(const Export::Request&
 
 std::error_code PaymentServiceJsonRpcServer::handleReset(const Reset::Request& request, Reset::Response& response) {
   if (request.viewSecretKey.empty()) {
-    return service.resetWallet();
+    return service.resetWallet(request.scanHeight);
   } else {
-    return service.replaceWithNewWallet(request.viewSecretKey);
+    return service.replaceWithNewWallet(request.viewSecretKey, request.scanHeight, request.newAddress);
   }
 }
 

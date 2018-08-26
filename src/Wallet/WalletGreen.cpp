@@ -161,7 +161,7 @@ void WalletGreen::createViewWallet(const std::string &path,
         throw std::runtime_error("Failed to parse address!");
     }
 
-    initializeWithViewKey(path, password, viewSecretKey);
+    initializeWithViewKey(path, password, viewSecretKey, scanHeight, newAddress);
 
     createAddress(publicKeys.spendPublicKey, scanHeight, newAddress);
 }
@@ -171,18 +171,18 @@ void WalletGreen::initialize(const std::string& path, const std::string& passwor
   Crypto::SecretKey viewSecretKey;
   Crypto::generate_keys(viewPublicKey, viewSecretKey);
 
-  initWithKeys(path, password, viewPublicKey, viewSecretKey);
+  initWithKeys(path, password, viewPublicKey, viewSecretKey, 0, true);
   m_logger(INFO, BRIGHT_WHITE) << "New container initialized, public view key " << viewPublicKey;
 }
 
-void WalletGreen::initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey) {
+void WalletGreen::initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, bool newAddress) {
   Crypto::PublicKey viewPublicKey;
   if (!Crypto::secret_key_to_public_key(viewSecretKey, viewPublicKey)) {
     m_logger(ERROR, BRIGHT_RED) << "initializeWithViewKey(" << viewSecretKey << ") Failed to convert secret key to public key";
     throw std::system_error(make_error_code(CryptoNote::error::KEY_GENERATION_ERROR));
   }
 
-  initWithKeys(path, password, viewPublicKey, viewSecretKey);
+  initWithKeys(path, password, viewPublicKey, viewSecretKey, scanHeight, newAddress);
   m_logger(INFO, BRIGHT_WHITE) << "Container initialized with view secret key, public view key " << viewPublicKey;
 }
 
@@ -335,7 +335,7 @@ void WalletGreen::incNextIv() {
 }
 
 void WalletGreen::initWithKeys(const std::string& path, const std::string& password,
-  const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey) {
+  const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, const bool newAddress) {
 
   if (m_state != WalletState::NOT_INITIALIZED) {
     m_logger(ERROR, BRIGHT_RED) << "Failed to initialize with keys: already initialized. Current state: " << m_state;
@@ -351,7 +351,17 @@ void WalletGreen::initWithKeys(const std::string& path, const std::string& passw
 
   Crypto::generate_chacha8_key(password, m_key);
 
-  uint64_t creationTimestamp = time(nullptr);
+  uint64_t creationTimestamp;
+
+  if (newAddress)
+  {
+    creationTimestamp = getCurrentTimestampAdjusted();
+  }
+  else
+  {
+    creationTimestamp = scanHeightToTimestamp(scanHeight);
+  }
+
   prefix->encryptedViewKeys = encryptKeyPair(viewPublicKey, viewSecretKey, creationTimestamp, m_key, prefix->nextIv);
 
   newStorage.flush();
@@ -1053,8 +1063,6 @@ std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewA
 
       for (const WalletRecord& wallet : walletsIndex)
       {
-          std::cout << wallet.creationTimestamp << std::endl;
-
           if (wallet.creationTimestamp < minTimestamp)
           {
               minTimestamp = wallet.creationTimestamp;
@@ -1186,7 +1194,7 @@ std::string WalletGreen::addWallet(const NewAddressData &addressData, uint64_t s
   }
 }
 
-CryptoNote::BlockDetails WalletGreen::getBlock(uint64_t blockHeight)
+CryptoNote::BlockDetails WalletGreen::getBlock(const uint64_t blockHeight)
 {
     CryptoNote::BlockDetails block;
 
@@ -1265,6 +1273,54 @@ uint64_t WalletGreen::getCurrentTimestampAdjusted()
 
     /* Take the earliest timestamp that will include all possible blocks */
     return time - adjust;
+}
+
+void WalletGreen::reset(const uint64_t scanHeight)
+{
+    throwIfNotInitialized();
+    throwIfStopped();
+
+    /* Stop so things can't be added to the container as we're looping */
+    stop();
+
+    /* Grab the wallet encrypted prefix */
+    auto* prefix = reinterpret_cast<ContainerStoragePrefix*>(m_containerStorage.prefix());
+
+    uint64_t newTimestamp = scanHeightToTimestamp(scanHeight);
+
+    /* Reencrypt with the new creation timestamp so we rescan from here when we relaunch */
+    prefix->encryptedViewKeys = encryptKeyPair(m_viewPublicKey, m_viewSecretKey, newTimestamp);
+
+    /* As a reference so we can update it */
+    for (auto& encryptedSpendKeys : m_containerStorage)
+    {
+        Crypto::PublicKey publicKey;
+        Crypto::SecretKey secretKey;
+        uint64_t oldTimestamp;
+
+        /* Decrypt the key pair we're pointing to */
+        decryptKeyPair(encryptedSpendKeys, publicKey, secretKey, oldTimestamp);
+
+        /* Re-encrypt with the new timestamp */
+        encryptedSpendKeys = encryptKeyPair(publicKey, secretKey, newTimestamp);
+    }
+
+    /* Start again so we can save */
+    start();
+
+    /* Save just the keys + timestamp to file */
+    save(CryptoNote::WalletSaveLevel::SAVE_KEYS_ONLY);
+
+    /* Stop and shutdown */
+    stop();
+
+    /* Shutdown the wallet */
+    shutdown();
+
+    start();
+
+    /* Reopen from truncated storage */
+    load(m_path, m_password);
 }
 
 void WalletGreen::deleteAddress(const std::string& address) {

@@ -40,5 +40,3 @@ void viewWalletMsg();
 void connectingMsg();
 
 void promptSaveKeys(CryptoNote::WalletGreen &wallet);
-
-uint64_t getScanHeight();
