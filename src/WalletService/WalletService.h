@@ -91,7 +91,7 @@ public:
 
 private:
   void refresh();
-  void reset(const uint64_t scanHeight, const bool newAddress);
+  void reset(const uint64_t scanHeight);
 
   void loadWallet();
   void loadTransactionIdIndex();

@@ -1381,10 +1381,6 @@ void WalletService::refresh() {
 
 void WalletService::reset(const uint64_t scanHeight) {
   wallet.reset(scanHeight);
-
-  inited = false;
-  refreshContext.wait();
-  init();
 }
 
 void WalletService::replaceWithNewWallet(const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, const bool newAddress) {
