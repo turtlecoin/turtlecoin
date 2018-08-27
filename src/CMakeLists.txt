@@ -128,4 +128,4 @@ set_property(TARGET miner PROPERTY OUTPUT_NAME "miner")
 # Additional make targets
 add_custom_target(pool DEPENDS TurtleCoind service)
 add_custom_target(solominer DEPENDS TurtleCoind zedwallet miner)
-add_custom_target(wallet DEPENDS TurtleCoind zedwallet)
+add_custom_target(cli DEPENDS TurtleCoind zedwallet)
