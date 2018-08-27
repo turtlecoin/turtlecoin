@@ -18,6 +18,13 @@ set(CMAKE_SUPPRESS_REGENERATION ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(FIND_BOOST_VERSION 1.55)
 
+# We need to set the label and import it into CMake if it exists
+set(LABEL "")
+if(DEFINED ENV{LABEL})
+  set(LABEL $ENV{LABEL})
+  message(STATUS "Found LABEL: ${LABEL}")
+endif()
+
 # We do not support 32-bit builds. When and if we do, this can be removed.
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
   message(FATAL_ERROR "Targeting a 32-bit architecture is not supported.")
@@ -110,9 +117,9 @@ if(NOT MSVC)
   set(C_WARNINGS "-Waggregate-return -Wnested-externs -Wold-style-definition -Wstrict-prototypes")
   set(CXX_WARNINGS "-Wno-reorder -Wno-missing-field-initializers")
 
-  if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" OR $ENV{LABEL} STREQUAL "aarch64")
+  if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" OR "${LABEL}" STREQUAL "aarch64")
     set(MAES_FLAG "")
-  elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT $ENV{LABEL} STREQUAL "aarch64")
+  elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT "${LABEL}" STREQUAL "aarch64")
     set(MAES_FLAG "-maes")
   endif()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 ${STATICASSERTC_FLAG} ${WARNINGS} ${C_WARNINGS} ${ARCH_FLAG} ${MAES_FLAG}")
@@ -174,7 +181,7 @@ add_subdirectory(src)
 ## We need to setup the RocksDB build environment to match our system
 if(NOT MSVC)
   execute_process(
-    COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/external/rocksdb -DWITH_GFLAGS=0 -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_TESTS=OFF -DWITH_TOOLS=OFF -DPORTABLE=ON -B${PROJECT_BINARY_DIR}/rocksdb 
+    COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/external/rocksdb -DWITH_GFLAGS=0 -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_TESTS=OFF -DWITH_TOOLS=OFF -DPORTABLE=ON -B${PROJECT_BINARY_DIR}/rocksdb
   )
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_BINARY_DIR}/rocksdb/librocksdb.a")
 endif()
