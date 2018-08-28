@@ -26,7 +26,6 @@
 #include "CachedBlock.h"
 #include "CachedTransaction.h"
 #include "CoreStatistics.h"
-#include "Difficulty.h"
 #include "ICoreObserver.h"
 #include "ICoreDefinitions.h"
 #include "MessageQueue.h"
@@ -71,8 +70,8 @@ public:
                                std::vector<BinaryArray>& transactions,
                                std::vector<Crypto::Hash>& missedHashes) const = 0;
 
-  virtual Difficulty getBlockDifficulty(uint32_t blockIndex) const = 0;
-  virtual Difficulty getDifficultyForNextBlock() const = 0;
+  virtual uint64_t getBlockDifficulty(uint32_t blockIndex) const = 0;
+  virtual uint64_t getDifficultyForNextBlock() const = 0;
 
   virtual std::error_code addBlock(const CachedBlock& cachedBlock, RawBlock&& rawBlock) = 0;
   virtual std::error_code addBlock(RawBlock&& rawBlock) = 0;
@@ -95,7 +94,7 @@ public:
                                   std::vector<Crypto::Hash>& deletedTransactions) const = 0;
 
   virtual bool getBlockTemplate(BlockTemplate& b, const AccountPublicAddress& adr, const BinaryArray& extraNonce,
-                                Difficulty& difficulty, uint32_t& height) const = 0;
+                                uint64_t& difficulty, uint32_t& height) const = 0;
 
   virtual CoreStatistics getCoreStatistics() const = 0;
 

@@ -63,7 +63,7 @@ struct BlockHeaderInfo {
   uint32_t nonce;
   bool isAlternative;
   uint32_t depth; // last block index = current block index + depth
-  Difficulty difficulty;
+  uint64_t difficulty;
   uint64_t reward;
 };
 
