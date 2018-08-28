@@ -71,7 +71,7 @@ void Configuration::initOptions(boost::program_options::options_description& des
       ("log-level", po::value<size_t>(), "log level")
       ("SYNC_FROM_ZERO", "sync from timestamp 0")
       ("address", "print wallet addresses and exit")
-      ("enable-cors", po::value<std::string>(), "Adds header 'Access-Control-Allow-Origin' to walletd's RPC responses. Uses the value as domain. Use * for all.");
+      ("enable-cors", po::value<std::string>(), "Adds header 'Access-Control-Allow-Origin' to walletd's RPC responses. Uses the value as domain. Use * for all.")
       ("scan-height", po::value<uint64_t>(), "The height to begin scanning a wallet from");
 }
 
