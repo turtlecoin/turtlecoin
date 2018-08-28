@@ -2,6 +2,8 @@
 // 
 // Please see the included LICENSE file for more information.
 
+#include <algorithm>
+
 #include "Difficulty.h"
 
 #include "CryptoNoteConfig.h"
