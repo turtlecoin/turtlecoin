@@ -10,29 +10,6 @@
 
 #include <Wallet/WalletGreen.h>
 
-struct Command
-{
-    public:
-        Command() {}
-
-        Command(std::string name, std::string description, 
-                bool viewWalletSupport, bool advanced) : 
-                name(name), description(description),
-                viewWalletSupport(viewWalletSupport), advanced(advanced) {}
-
-        /* The command name */
-        std::string name;
-
-        /* The command description */
-        std::string description;
-
-        /* Can the command be used with a view wallet */
-        bool viewWalletSupport;
-
-        /* Is the command 'basic' or 'advanced' */
-        bool advanced;
-};
-
 struct CLICommand
 {
     CLICommand() {}

@@ -48,9 +48,6 @@ std::string printTransactionFullInfo(const CryptoNote::CachedTransaction& transa
 
 DaemonCommandsHandler::DaemonCommandsHandler(CryptoNote::Core& core, CryptoNote::NodeServer& srv, Logging::LoggerManager& log, CryptoNote::RpcServer* prpc_server) :
   m_core(core), m_srv(srv), logger(log, "daemon"), m_logManager(log), m_prpc_server(prpc_server) {
-  #ifdef USE_LINENOISE
-  m_consoleHandler.setCommands(all_commands);
-  #endif  
   m_consoleHandler.setHandler("exit", boost::bind(&DaemonCommandsHandler::exit, this, _1), "Shutdown the daemon");
   m_consoleHandler.setHandler("help", boost::bind(&DaemonCommandsHandler::help, this, _1), "Show this help");
   m_consoleHandler.setHandler("print_pl", boost::bind(&DaemonCommandsHandler::print_pl, this, _1), "Print peer list");

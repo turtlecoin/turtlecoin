@@ -161,7 +161,7 @@ const Maybe<const AddressBookEntry> getAddressBookEntry(AddressBook addressBook)
     }
 }
 
-void sendFromAddressBook(std::shared_ptr<WalletInfo> &walletInfo,
+void sendFromAddressBook(std::shared_ptr<WalletInfo> walletInfo,
                          uint32_t height, std::string feeAddress,
                          uint32_t feeAmount)
 {

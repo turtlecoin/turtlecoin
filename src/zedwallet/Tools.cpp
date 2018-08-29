@@ -6,6 +6,8 @@
 #include <zedwallet/Tools.h>
 ////////////////////////////
 
+#include <boost/algorithm/string.hpp>
+
 #include <cmath>
 
 #include <Common/Base58.h>
@@ -14,6 +16,8 @@
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
 #include <CryptoNoteCore/CryptoNoteTools.h>
 #include <CryptoNoteCore/TransactionExtra.h>
+
+#include <iostream>
 
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/PasswordContainer.h>
@@ -144,7 +148,7 @@ bool confirm(std::string msg, bool defaultReturn)
         std::string answer;
         std::getline(std::cin, answer);
 
-        const char c = std::tolower(answer[0]);
+        const char c = ::tolower(answer[0]);
 
         switch(c)
         {
@@ -188,36 +192,6 @@ std::string getPaymentIDFromExtra(std::string extra)
     return paymentID;
 }
 
-/* Note: this is not portable, it only works with terminals that support ANSI
-   codes (e.g., not Windows) */
-std::string yellowANSIMsg(std::string msg)
-{
-    const std::string CYELLOW = "\033[1;33m";
-    const std::string RESET = "\033[0m";
-    return CYELLOW + msg + RESET;
-}
-
-std::string getPrompt(std::shared_ptr<WalletInfo> &walletInfo)
-{
-    const int promptLength = 20;
-    const std::string extension = ".wallet";
-
-    std::string walletName = walletInfo->walletFileName;
-
-    /* Filename ends in .wallet, remove extension */
-    if (std::equal(extension.rbegin(), extension.rend(), 
-                   walletInfo->walletFileName.rbegin()))
-    {
-        const size_t extPos = walletInfo->walletFileName.find_last_of('.');
-
-        walletName = walletInfo->walletFileName.substr(0, extPos);
-    }
-
-    const std::string shortName = walletName.substr(0, promptLength);
-
-    return "[" + WalletConfig::ticker + " " + shortName + "]: ";
-}
-
 std::string unixTimeToDate(uint64_t timestamp)
 {
     const std::time_t time = timestamp;
@@ -252,18 +226,21 @@ uint64_t getScanHeight()
 {
     while (true)
     {
-        std::cout << "What height would you like to begin scanning "
-                  << "your wallet from?"
+        std::cout << InformationMsg("What height would you like to begin ")
+                  << InformationMsg("scanning your wallet from?")
+                  << std::endl
                   << std::endl
                   << "This can greatly speed up the initial wallet "
                   << "scanning process."
                   << std::endl
-                  << "If you do not know the exact height, "
                   << std::endl
+                  << "If you do not know the exact height, "
                   << "err on the side of caution so transactions do not "
                   << "get missed."
                   << std::endl
-                  << "Hit enter for the default of zero: ";
+                  << std::endl
+                  << InformationMsg("Hit enter for the sub-optimal default ")
+                  << InformationMsg("of zero: ");
 
         std::string stringHeight;
 

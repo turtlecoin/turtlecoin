@@ -23,6 +23,8 @@
 #include <unistd.h>
 #endif
 
+#include <zedwallet/ColouredMsg.h>
+
 namespace Tools
 {
   namespace
@@ -71,12 +73,12 @@ namespace Tools
 
     if (msg == "") {
         if (!read_password()) {
-            std::cout << "Failed to read password!";
+            std::cout << WarningMsg("Failed to read password!") << std::endl;
             return false;
         }
     } else {
         if (!read_password(false, msg)) {
-            std::cout << "Failed to read password!";
+            std::cout << WarningMsg("Failed to read password!") << std::endl;
             return false;
         }
     }
@@ -93,14 +95,14 @@ namespace Tools
 
     bool r;
     if (is_cin_tty()) {
-      std::cout << msg;
+      std::cout << InformationMsg(msg);
 
       if (verify) {
         std::string password1;
         std::string password2;
         r = read_from_tty(password1);
         if (r) {
-          std::cout << "Confirm your new password: ";
+          std::cout << InformationMsg("Confirm your new password: ");
           r = read_from_tty(password2);
           if (r) {
             if (password1 == password2) {
@@ -108,7 +110,8 @@ namespace Tools
               m_empty = false;
 	            return true;
             } else {
-              std::cout << "Passwords do not match, try again." << std::endl;
+              std::cout << WarningMsg("Passwords do not match, try again.")
+                        << std::endl;
               clear();
 	            return read_password(true, msg);
             }

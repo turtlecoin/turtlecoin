@@ -33,11 +33,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#ifdef USE_LINENOISE
-#include "linenoise.h"
-#include "utf8.h"
-#endif
-
 using Common::Console::Color;
 
 namespace Common {
@@ -103,7 +98,7 @@ namespace Common {
   }
 
   void AsyncConsoleReader::consoleThread() {
-    #ifndef USE_LINENOISE
+
     while (waitInput()) {
       std::string line;
 
@@ -115,7 +110,6 @@ namespace Common {
         break;
       }
     }
-    #endif
   }
 
   bool AsyncConsoleReader::waitInput() {
@@ -189,7 +183,7 @@ namespace Common {
         m_thread.join();
       }
     } catch (std::exception& e) {
-      //std::cerr << "Exception in ConsoleHandler::wait - " << e.what() << std::endl;
+      std::cerr << "Exception in ConsoleHandler::wait - " << e.what() << std::endl;
     }
   }
 
@@ -219,23 +213,6 @@ namespace Common {
   void ConsoleHandler::setHandler(const std::string& command, const ConsoleCommandHandler& handler, const std::string& usage) {
     m_handlers[command] = std::make_pair(handler, usage);
   }
-  
-  #ifdef USE_LINENOISE
-  void ConsoleHandler::setCommands(std::vector<std::string> cmds){
-    CMDS = cmds;
-  }
-      
-  void ConsoleHandler::completionCallback(const char *buf, linenoiseCompletions *lc){
-    size_t i;
-    for(i=0;i<CMDS.size();i++){
-        std::string name = CMDS[i];
-        if(name.rfind(buf, 0) == 0)
-        {
-             linenoiseAddCompletion(lc, name.c_str());
-        }
-    }
-  }
-  #endif
 
   bool ConsoleHandler::runCommand(const std::vector<std::string>& cmdAndArgs) {
     if (cmdAndArgs.size() == 0) {
@@ -263,33 +240,6 @@ namespace Common {
 
   void ConsoleHandler::handlerThread() {
     std::string line;
-    
-    #ifdef USE_LINENOISE
-    
-    char *cline;
-    linenoiseSetCompletionCallback( completionCallback );
-    linenoiseHistorySetMaxLen(256);
-    linenoiseSetRaiseOnInt(1);
-    linenoiseSetEncodingFunctions(linenoiseUtf8PrevCharLen, linenoiseUtf8NextCharLen, linenoiseUtf8ReadCode);
-    while(!m_consoleReader.stopped() && (cline = linenoise("\033[0m")) != NULL) {
-        try{
-            if (cline[0] != '\0' && cline[0] != '/') {
-                linenoiseHistoryAdd(cline);
-                line = std::string(cline);
-                linenoiseFree(cline);
-                boost::algorithm::trim(line);
-                if (!line.empty()) {
-                    std::cout << "" << std::endl;
-                    handleCommand(line);
-                    std::cout << "" << std::endl;
-                }
-            }
-        } catch (std::exception&) {
-            // do nothing    
-        }
-    }
-    
-    #else
 
     while(!m_consoleReader.stopped()) {
       try {
@@ -319,7 +269,5 @@ namespace Common {
         // ignore errors
       }
     }
-    
-    #endif
   }
 }

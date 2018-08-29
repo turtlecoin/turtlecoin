@@ -2,32 +2,47 @@
 // 
 // Please see the included LICENSE file for more information.
 
-#include <string>
-
-#include <vector>
-
-#include <zedwallet/Types.h>
-
 #pragma once
 
-const Maybe<Command> contains(std::string name,
-                                    std::vector<Command> &commands);
+#include <string>
+#include <vector>
+#include <zedwallet/WalletConfig.h>
 
-const std::vector<Command> filterCommands(std::vector<Command> &commands,
-                                    std::function<bool(Command)> predicate);
+class Command
+{
+    public:
+        Command(std::string commandName, std::string description) :
+                commandName(commandName), description(description) {}
 
-std::vector<Command> allCommands();
+        const std::string commandName;
+        const std::string description;
+};
 
-const std::vector<Command> availableCommands(bool viewWallet,
-                                       std::vector<Command> &commands);
+class AdvancedCommand : public Command
+{
+    public:
+        AdvancedCommand(std::string commandName, std::string description,
+                        bool viewWalletSupport, bool advanced) :
+                        Command(commandName, description),
+                        viewWalletSupport(viewWalletSupport),
+                        advanced(advanced) {}
 
-void listCommands(std::vector<Command> &commands, bool advanced);
+        const bool viewWalletSupport;
+        const bool advanced;
+};
 
-uint64_t numBasicCommands(std::vector<Command> &commands);
+std::vector<Command> startupCommands();
 
-const Maybe<Command> resolveCommand(std::string command,
-                                    std::vector<Command> &allCommands,
-                                    std::vector<Command> &available);
+std::vector<Command> nodeDownCommands();
 
-bool dispatchCommand(std::shared_ptr<WalletInfo> &walletInfo,
-                     CryptoNote::INode &node, std::string command);
+std::vector<AdvancedCommand> allCommands();
+
+std::vector<AdvancedCommand> basicCommands();
+
+std::vector<AdvancedCommand> advancedCommands();
+
+std::vector<AdvancedCommand> basicViewWalletCommands();
+
+std::vector<AdvancedCommand> advancedViewWalletCommands();
+
+std::vector<AdvancedCommand> allViewWalletCommands();

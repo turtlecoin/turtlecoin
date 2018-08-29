@@ -32,14 +32,9 @@ endif()
 
 ## We only build static binaries -- this is left here for our dependencies
 set(STATIC ON CACHE BOOL FORCE "Link libraries statically? Forced to ON")
-set(ENABLE_LINENOISE ON CACHE FORCE BOOL "Enable line editing support (completion & history) support? Forced to ON")
 
 # This section helps us set up RocksDB for maximum portability
 set(ENABLE_AVX OFF CACHE STRING "Enable RocksDB AVX/AVX2 support detection? Defaults to OFF")
-
-if(NOT MSVC AND ENABLE_LINENOISE)
-    add_definitions(-DUSE_LINENOISE)
-endif()
 
 ## This section helps us tag our builds with the git commit information
 set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")

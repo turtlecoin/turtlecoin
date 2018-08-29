@@ -22,16 +22,19 @@
 
 #include <Mnemonics/Mnemonics.h>
 
+#include <zedwallet/AddressBook.h>
 #include <zedwallet/ColouredMsg.h>
-#include <zedwallet/Open.h>
+#include <zedwallet/Commands.h>
 #include <zedwallet/Fusion.h>
+#include <zedwallet/Menu.h>
+#include <zedwallet/Open.h>
 #include <zedwallet/Sync.h>
 #include <zedwallet/Tools.h>
 #include <zedwallet/Transfer.h>
 #include <zedwallet/Types.h>
 #include <zedwallet/WalletConfig.h>
 
-void changePassword(std::shared_ptr<WalletInfo> &walletInfo)
+void changePassword(std::shared_ptr<WalletInfo> walletInfo)
 {
     /* Check the user knows the current password */
     confirmPassword(walletInfo->walletPass, "Confirm your current password: ");
@@ -52,7 +55,7 @@ void changePassword(std::shared_ptr<WalletInfo> &walletInfo)
     std::cout << SuccessMsg("Your password has been changed!") << std::endl;
 }
 
-void exportKeys(std::shared_ptr<WalletInfo> &walletInfo)
+void exportKeys(std::shared_ptr<WalletInfo> walletInfo)
 {
     confirmPassword(walletInfo->walletPass);
     printPrivateKeys(walletInfo->wallet, walletInfo->viewWallet);
@@ -303,11 +306,12 @@ void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     printSyncSummary(localHeight, remoteHeight, walletHeight);
 }
 
-void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo)
+void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> walletInfo)
 {
     uint64_t scanHeight = getScanHeight();
 
-    std::cout << InformationMsg("This process may take some time to complete.")
+    std::cout << std::endl
+              << InformationMsg("This process may take some time to complete.")
               << std::endl
               << InformationMsg("You can't make any transactions during the ")
               << InformationMsg("process.")
@@ -541,4 +545,32 @@ void createIntegratedAddress()
 
     std::cout << InformationMsg(createIntegratedAddress(address, paymentID))
               << std::endl;
+}
+
+void help(std::shared_ptr<WalletInfo> wallet)
+{
+    if (wallet->viewWallet)
+    {
+        printCommands(basicViewWalletCommands());
+    }
+    else
+    {
+        printCommands(basicCommands());
+    }
+}
+
+void advanced(std::shared_ptr<WalletInfo> wallet)
+{
+    /* We pass the offset of the command to know what index to print for
+       command numbers */
+    if (wallet->viewWallet)
+    {
+        printCommands(advancedViewWalletCommands(),
+                      basicViewWalletCommands().size());
+    }
+    else
+    {
+        printCommands(advancedCommands(),
+                      basicCommands().size());
+    }
 }
