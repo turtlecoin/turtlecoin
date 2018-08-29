@@ -40,7 +40,7 @@ std::string parseCommand(const std::vector<T> &printableCommands,
 
         try
         {
-            int selectionNum = std::stoi(selection);
+            size_t selectionNum = std::stoi(selection);
 
             /* Input is in 1 based indexing, we need 0 based indexing */
             selectionNum--;
