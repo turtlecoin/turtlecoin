@@ -25,11 +25,11 @@ def rpc(method, params={}):
     try:
         response = requests.post(base_url, data=json.dumps(payload)).json()
     except Exception as e:
-        print("Doesn't seem like walletd is running.", e)
+        print("Doesn't seem like walletd is running. {}".format(response))
         sys.exit(1)
 
     if 'error' in response:
-        print("Failed to talk to server.", response)
+        print("Failed to talk to server. {}".format(response))
         sys.exit(1)
     return response
 
@@ -39,7 +39,7 @@ r = rpc("sendTransaction", {
         "address": to_address,
     }],
     "fee": 10,
-    "anonymity": 5,
+    "anonymity": 7,
     "extra": binascii.hexlify(content.encode()).decode()
 })
 print(r)
