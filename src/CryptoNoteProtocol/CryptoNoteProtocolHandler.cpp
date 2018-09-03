@@ -17,6 +17,8 @@
 #include "CryptoNoteCore/VerificationContext.h"
 #include "P2p/LevinProtocol.h"
 
+#include <Common/FormatTools.h>
+
 using namespace Logging;
 using namespace Common;
 
@@ -229,12 +231,12 @@ bool CryptoNoteProtocolHandler::process_payload_sync_data(const CORE_SYNC_DATA& 
     }
   } else {
     int64_t diff = static_cast<int64_t>(hshd.current_height) - static_cast<int64_t>(get_current_blockchain_height());
-
     logger(diff >= 0 ? (is_inital ? Logging::INFO : Logging::DEBUGGING) : Logging::TRACE, Logging::BRIGHT_GREEN) << context <<
-      "Your TurtleCoin node is syncing with the network. You are "
+      "Your TurtleCoin node is syncing with the network (" << Common::get_sync_percentage(get_current_blockchain_height(), hshd.current_height)
       // << get_current_blockchain_height() << " -> " << hshd.current_height
-      << std::abs(diff) << " blocks (" << std::abs(diff) / (24 * 60 * 60 / m_currency.difficultyTarget()) << " days) "
-      << (diff >= 0 ? std::string("behind") : std::string("ahead of")) << " the Hare. Slow and steady wins the race! " << std::endl;
+      << "% complete) You are " << std::abs(diff) << " blocks (" << std::abs(diff) / (24 * 60 * 60 / m_currency.difficultyTarget())
+      << " days) " << (diff >= 0 ? std::string("behind") : std::string("ahead of"))
+      << " behind the current peer you're connected to. Slow and steady wins the race! " << std::endl;
 
     logger(Logging::DEBUGGING) << "Remote top block height: " << hshd.current_height << ", id: " << hshd.top_id;
     //let the socket to send response to handshake, but request callback, to let send request data after response
