@@ -217,26 +217,64 @@ uint32_t CryptoNoteProtocolHandler::get_current_blockchain_height() {
   return m_core.getTopBlockIndex() + 1;
 }
 
-bool CryptoNoteProtocolHandler::process_payload_sync_data(const CORE_SYNC_DATA& hshd, CryptoNoteConnectionContext& context, bool is_inital) {
-  if (context.m_state == CryptoNoteConnectionContext::state_befor_handshake && !is_inital)
+bool CryptoNoteProtocolHandler::process_payload_sync_data(const CORE_SYNC_DATA& hshd, CryptoNoteConnectionContext& context, bool is_initial) {
+  if (context.m_state == CryptoNoteConnectionContext::state_befor_handshake && !is_initial)
     return true;
 
   if (context.m_state == CryptoNoteConnectionContext::state_synchronizing) {
   } else if (m_core.hasBlock(hshd.top_id)) {
-    if (is_inital) {
+    if (is_initial) {
       on_connection_synchronized();
       context.m_state = CryptoNoteConnectionContext::state_pool_sync_required;
     } else {
       context.m_state = CryptoNoteConnectionContext::state_normal;
     }
   } else {
-    int64_t diff = static_cast<int64_t>(hshd.current_height) - static_cast<int64_t>(get_current_blockchain_height());
-    logger(diff >= 0 ? (is_inital ? Logging::INFO : Logging::DEBUGGING) : Logging::TRACE, Logging::BRIGHT_GREEN) << context <<
-      "Your TurtleCoin node is syncing with the network (" << Common::get_sync_percentage(get_current_blockchain_height(), hshd.current_height)
-      // << get_current_blockchain_height() << " -> " << hshd.current_height
-      << "% complete) You are " << std::abs(diff) << " blocks (" << std::abs(diff) / (24 * 60 * 60 / m_currency.difficultyTarget())
-      << " days) " << (diff >= 0 ? std::string("behind") : std::string("ahead of"))
-      << " behind the current peer you're connected to. Slow and steady wins the race! " << std::endl;
+    uint64_t currentHeight = get_current_blockchain_height();
+
+    uint64_t remoteHeight = hshd.current_height;
+
+    /* Find the difference between the remote and the local height */
+    int64_t diff = static_cast<int64_t>(remoteHeight) - static_cast<int64_t>(currentHeight);
+
+    /* Find out how many days behind/ahead we are from the remote height */
+    uint64_t days = std::abs(diff) / (24 * 60 * 60 / m_currency.difficultyTarget());
+
+    std::stringstream ss;
+
+    ss << "Your " << CRYPTONOTE_NAME << " node is syncing with the network ";
+
+    /* We're behind the remote node */
+    if (diff >= 0)
+    {
+        ss << "(" << Common::get_sync_percentage(currentHeight, remoteHeight)
+          << "% complete) ";
+
+        ss << "You are " << diff << " blocks (" << days << " days) behind ";
+    }
+    /* We're ahead of the remote node, no need to print percentages */
+    else
+    {
+        ss << "You are " << std::abs(diff) << " blocks (" << days << " days) ahead";
+    }
+
+    ss << "the current peer you're connected to. Slow and steady wins the race! ";
+
+    auto logLevel = Logging::TRACE;
+    /* Log at different levels depending upon if we're ahead, behind, and if it's 
+      a newly formed connection */
+    if (diff >= 0)
+    {
+        if (is_initial)
+        {
+            logLevel = Logging::INFO;
+        }
+        else
+        {
+            logLevel = Logging::DEBUGGING;    
+        }
+    }
+    logger(logLevel, Logging::BRIGHT_GREEN) << context << ss.str();
 
     logger(Logging::DEBUGGING) << "Remote top block height: " << hshd.current_height << ", id: " << hshd.top_id;
     //let the socket to send response to handshake, but request callback, to let send request data after response
@@ -247,7 +285,7 @@ bool CryptoNoteProtocolHandler::process_payload_sync_data(const CORE_SYNC_DATA& 
   updateObservedHeight(hshd.current_height, context);
   context.m_remote_blockchain_height = hshd.current_height;
 
-  if (is_inital) {
+  if (is_initial) {
     m_peersCount++;
     m_observerManager.notify(&ICryptoNoteProtocolObserver::peerCountUpdated, m_peersCount.load());
   }
