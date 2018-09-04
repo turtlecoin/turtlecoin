@@ -119,6 +119,9 @@ void Configuration::init(const boost::program_options::variables_map& options) {
   if (options.count("container-file") != 0) {
     containerFile = options["container-file"].as<std::string>();
   }
+  else {
+    throw ConfigurationError("You must specify a wallet file to open!");
+  }
 
   if (!std::ifstream(containerFile) && options.count("generate-container") == 0)
   {
