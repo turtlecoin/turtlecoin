@@ -62,17 +62,4 @@ private:
   bool start_mining(const std::vector<std::string>& args);
   bool stop_mining(const std::vector<std::string>& args);
   bool status(const std::vector<std::string>& args);
-  std::vector<std::string> all_commands = {
-        "help",
-        "status",
-        "exit",
-        "print_pl",
-        "print_cn",
-        "print_bc",
-        "print_block",
-        "print_tx",
-        "print_pool",
-        "print_pool_sh",
-        "set_log",
-  };
 };

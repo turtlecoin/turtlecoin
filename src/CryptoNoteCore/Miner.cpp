@@ -23,6 +23,7 @@
 #include "Common/StringTools.h"
 #include "Serialization/SerializationTools.h"
 
+#include "CheckDifficulty.h"
 #include "CryptoNoteFormatUtils.h"
 #include "TransactionExtra.h"
 
@@ -56,7 +57,7 @@ namespace CryptoNote
     stop();
   }
   //-----------------------------------------------------------------------------------------------------
-  bool miner::set_block_template(const BlockTemplate& bl, const Difficulty& di) {
+  bool miner::set_block_template(const BlockTemplate& bl, const uint64_t& di) {
     std::lock_guard<decltype(m_template_lock)> lk(m_template_lock);
 
     m_template = bl;
@@ -92,7 +93,7 @@ namespace CryptoNote
   //-----------------------------------------------------------------------------------------------------
   bool miner::request_block_template() {
     BlockTemplate bl = boost::value_initialized<BlockTemplate>();
-    Difficulty di = 0;
+    uint64_t di = 0;
     uint32_t height;
     CryptoNote::BinaryArray extra_nonce;
 
@@ -267,7 +268,7 @@ namespace CryptoNote
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
-  bool miner::find_nonce_for_given_block(BlockTemplate& bl, const Difficulty& diffic) {
+  bool miner::find_nonce_for_given_block(BlockTemplate& bl, const uint64_t& diffic) {
 
     unsigned nthreads = std::thread::hardware_concurrency();
 
@@ -362,7 +363,7 @@ namespace CryptoNote
   {
     logger(INFO) << "Miner thread was started ["<< th_local_index << "]";
     uint32_t nonce = m_starter_nonce + th_local_index;
-    Difficulty local_diff = 0;
+    uint64_t local_diff = 0;
     uint32_t local_template_ver = 0;
     BlockTemplate b;
 

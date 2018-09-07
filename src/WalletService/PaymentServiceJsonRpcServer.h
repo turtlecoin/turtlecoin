@@ -34,13 +34,13 @@ private:
 
   template <typename RequestType, typename ResponseType, typename RequestHandler>
   HandlerFunction jsonHandler(RequestHandler handler) {
-    return [handler] (const Common::JsonValue& jsonRpcParams, Common::JsonValue& jsonResponse) mutable {
+    return [handler, this] (const Common::JsonValue& jsonRpcParams, Common::JsonValue& jsonResponse) mutable {
       RequestType request;
       ResponseType response;
 
       try {
         CryptoNote::JsonInputValueSerializer inputSerializer(const_cast<Common::JsonValue&>(jsonRpcParams));
-        serialize(request, inputSerializer);
+        SerializeRequest(request, inputSerializer);
       } catch (std::exception&) {
         makeGenericErrorReponse(jsonResponse, "Invalid Request", -32600);
         return;
@@ -56,6 +56,27 @@ private:
       serialize(response, outputSerializer);
       fillJsonResponse(outputSerializer.getValue(), jsonResponse);
     };
+  }
+
+  template <typename RequestType>
+  void SerializeRequest(RequestType &request, CryptoNote::JsonInputValueSerializer &inputSerializer)
+  {
+      serialize(request, inputSerializer);
+  }
+
+  void SerializeRequest(SendTransaction::Request &request, CryptoNote::JsonInputValueSerializer &inputSerializer)
+  {
+      request.serialize(inputSerializer, service);
+  }
+
+  void SerializeRequest(CreateDelayedTransaction::Request &request, CryptoNote::JsonInputValueSerializer &inputSerializer)
+  {
+      request.serialize(inputSerializer, service);
+  }
+
+  void SerializeRequest(SendFusionTransaction::Request &request, CryptoNote::JsonInputValueSerializer &inputSerializer)
+  {
+      request.serialize(inputSerializer, service);
   }
 
   std::unordered_map<std::string, HandlerFunction> handlers;

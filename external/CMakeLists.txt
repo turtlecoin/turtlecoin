@@ -9,10 +9,6 @@ if (DO_TESTS)
   add_subdirectory(gtest)
 endif()
 
-if(ENABLE_LINENOISE)
-    add_subdirectory(linenoise)
-endif()
-
 if(MSVC)
     include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ../version)
     add_subdirectory(rocksDB EXCLUDE_FROM_ALL)

@@ -133,13 +133,14 @@ public:
   virtual ~IWallet() {}
 
   virtual void initialize(const std::string& path, const std::string& password) = 0;
-  virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey) = 0;
+  virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, const bool newAddress) = 0;
   virtual void load(const std::string& path, const std::string& password, std::string& extra) = 0;
   virtual void load(const std::string& path, const std::string& password) = 0;
   virtual void shutdown() = 0;
 
   virtual void changePassword(const std::string& oldPassword, const std::string& newPassword) = 0;
   virtual void save(WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string& extra = "") = 0;
+  virtual void reset(const uint64_t scanHeight) = 0;
   virtual void exportWallet(const std::string& path, bool encrypt = true, WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string& extra = "") = 0;
 
   virtual size_t getAddressCount() const = 0;
@@ -147,10 +148,13 @@ public:
   virtual KeyPair getAddressSpendKey(size_t index) const = 0;
   virtual KeyPair getAddressSpendKey(const std::string& address) const = 0;
   virtual KeyPair getViewKey() const = 0;
+
   virtual std::string createAddress() = 0;
-  virtual std::string createAddress(const Crypto::SecretKey& spendSecretKey) = 0;
-  virtual std::string createAddress(const Crypto::PublicKey& spendPublicKey) = 0;
-  virtual std::vector<std::string> createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys) = 0;
+  virtual std::string createAddress(const Crypto::SecretKey& spendSecretKey, const uint64_t scanHeight, const bool newAddress) = 0;
+  virtual std::string createAddress(const Crypto::PublicKey& spendPublicKey, const uint64_t scanHeight, const bool newAddress) = 0;
+
+  virtual std::vector<std::string> createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys, const uint64_t scanHeight, const bool newAddress) = 0;
+
   virtual void deleteAddress(const std::string& address) = 0;
 
   virtual uint64_t getActualBalance() const = 0;

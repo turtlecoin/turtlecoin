@@ -395,7 +395,7 @@ struct block_header_response {
   uint32_t height;
   uint32_t depth;
   std::string hash;
-  Difficulty difficulty;
+  uint64_t difficulty;
   uint64_t reward;
   uint32_t num_txes;
   uint64_t block_size;

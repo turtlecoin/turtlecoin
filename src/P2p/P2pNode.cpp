@@ -1,19 +1,7 @@
-// Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers, The TurtleCoin developers
+// Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "P2pNode.h"
 
@@ -26,6 +14,7 @@
 #include <System/TcpConnection.h>
 #include <System/TcpConnector.h>
 
+#include "CryptoNoteConfig.h"
 #include "Common/StdInputStream.h"
 #include "Common/StdOutputStream.h"
 #include "Serialization/BinaryInputStreamSerializer.h"
@@ -165,7 +154,7 @@ void P2pNode::stop() {
 
   m_stopRequested = true;
   // clear prepared connections
-  m_connectionQueue.clear(); 
+  m_connectionQueue.clear();
   // stop processing
   m_queueEvent.set();
   workingContextGroup.interrupt();
@@ -199,7 +188,7 @@ void P2pNode::acceptLoop() {
   while (!m_stopRequested) {
     try {
       auto connection = m_listener.accept();
-      auto ctx = new P2pContext(m_dispatcher, std::move(connection), true, 
+      auto ctx = new P2pContext(m_dispatcher, std::move(connection), true,
         getRemoteAddress(connection), m_cfg.getTimedSyncInterval(), getGenesisPayload());
       logger(INFO) << "Incoming connection from " << ctx->getRemoteAddress();
       workingContextGroup.spawn([this, ctx] {
@@ -306,7 +295,7 @@ bool P2pNode::makeNewConnectionFromPeerlist(const PeerlistManager::Peerlist& pee
 
   return false;
 }
-  
+
 void P2pNode::preprocessIncomingConnection(ContextPtr ctx) {
   try {
     logger(DEBUGGING) << *ctx << "preprocessIncomingConnection";
@@ -402,8 +391,16 @@ bool P2pNode::fetchPeerList(ContextPtr connection) {
     }
 
     if (response.node_data.network_id != request.node_data.network_id) {
-      logger(ERROR) << *connection << "COMMAND_HANDSHAKE failed, wrong network: " << response.node_data.network_id;
+      logger(DEBUGGING) << *connection << "COMMAND_HANDSHAKE failed, wrong network: " << response.node_data.network_id;
       return false;
+    }
+
+    if (response.node_data.version < CryptoNote::P2P_MINIMUM_VERSION) {
+      logger(DEBUGGING) << *connection << "COMMAND_HANDSHAKE Failed, peer is wrong version: " << std::to_string(response.node_data.version);
+      return false;
+    } else if (response.node_data.version > CryptoNote::P2P_CURRENT_VERSION) {
+      logger(WARNING) << *connection << "COMMAND_HANDSHAKE Warning, our software may be out of date. Please visit: "
+        << CryptoNote::LATEST_VERSION_URL << " for the latest version.";
     }
 
     return handleRemotePeerList(response.local_peerlist, response.node_data.local_time);
@@ -450,7 +447,7 @@ std::list<PeerlistEntry> P2pNode::getLocalPeerList() const {
 basic_node_data P2pNode::getNodeData() const {
   basic_node_data nodeData;
   nodeData.network_id = m_cfg.getNetworkId();
-  nodeData.version = P2PProtocolVersion::CURRENT;
+  nodeData.version = CryptoNote::P2P_CURRENT_VERSION;
   nodeData.local_time = time(nullptr);
   nodeData.peer_id = m_myPeerId;
 
@@ -536,6 +533,12 @@ void P2pNode::handleNodeData(const basic_node_data& node, P2pContext& context) {
   if (node.network_id != m_cfg.getNetworkId()) {
     std::ostringstream msg;
     msg << context << "COMMAND_HANDSHAKE Failed, wrong network!  (" << node.network_id << ")";
+    throw std::runtime_error(msg.str());
+  }
+
+  if (node.version < CryptoNote::P2P_MINIMUM_VERSION) {
+    std::ostringstream msg;
+    msg << context << "COMMAND_HANDSHAKE Failed, peer is wrong version! (" << std::to_string(node.version) << ")";
     throw std::runtime_error(msg.str());
   }
 

@@ -55,9 +55,6 @@ namespace WalletConfig
     const long unsigned int integratedAddressLength = standardAddressLength
                                                     + ((64 * 11) / 8);
 
-    /* The mixin value to use with transactions */
-    const uint64_t defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN;
-
     /* The default fee value to use with transactions (in ATOMIC units!) */
     const uint64_t defaultFee = CryptoNote::parameters::MINIMUM_FEE; 
 

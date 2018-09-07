@@ -99,7 +99,8 @@ WalletConfiguration PaymentGateService::getWalletConfig() const {
     config.gateConfiguration.syncFromZero,
     config.gateConfiguration.secretViewKey,
     config.gateConfiguration.secretSpendKey,
-    config.gateConfiguration.mnemonicSeed
+    config.gateConfiguration.mnemonicSeed,
+    config.gateConfiguration.scanHeight,
   };
 }
 

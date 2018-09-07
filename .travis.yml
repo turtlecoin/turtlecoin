@@ -1,8 +1,6 @@
-sudo: true
+sudo: false
 language: cpp
-compiler: gcc
-env:
-- CXXFLAGS="-std=gnu++11"
+
 matrix:
   include:
   - os: linux
@@ -11,30 +9,80 @@ matrix:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        #- g++-4.9
         - libboost1.55-all-dev
     env:
-    - MATRIX_EVAL="CC=gcc && CXX=g++
+    - MATRIX_EVAL="CC=gcc && CXX=g++"
+    - LABEL="linux"
+    - STRIP="strip"
   - os: osx
+    env:
+    - MATRIX_EVAL="CC=gcc && CXX=g++"
+    - CXXFLAGS="-std=gnu++11"
+    - LABEL="osx"
+    - STRIP="strip"
+  - os: linux
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - gcc-aarch64-linux-gnu
+        - g++-aarch64-linux-gnu
+    env:
+    - MATRIX_EVAL="CC=aarch64-linux-gnu-gcc && CXX=aarch64-linux-gnu-g++"
+    - LABEL="aarch64"
+    - STRIP="aarch64-linux-gnu-strip"
+
 before_install:
+- eval $MATRIX_EVAL
+
 install:
+- if [[ "$LABEL" == "aarch64" ]]; then wget http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then tar zxvf boost_1_55_0.tar.gz >/dev/null ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then cd boost_1_55_0 ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then ./bootstrap.sh ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then curl https://gist.githubusercontent.com/brandonlehmann/06a8cebbbd5e91814067fcd741879f2f/raw/41fc014ac53f64a6f465356a5b1e29179101b23f/fix_boost_aarch64.sh | sh ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then ./b2 toolset=gcc-aarch64 --with-system --with-filesystem --with-thread --with-date_time --with-chrono --with-regex --with-serialization --with-program_options >/dev/null ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then export CUSTOM_BOOST_ROOT="-DBOOST_ROOT=`pwd`" ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then cd .. ; fi
+
 script:
 - mkdir build && cd build
-- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. && make -j2
+- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. ${CUSTOM_BOOST_ROOT} && make -j2
+
 before_deploy:
+- if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
 - cd src
-- strip TurtleCoind miner zedwallet turtle-service
+- ${STRIP} TurtleCoind miner zedwallet turtle-service
 - mkdir turtlecoin-${TRAVIS_TAG}
 - mv TurtleCoind miner zedwallet turtle-service  turtlecoin-${TRAVIS_TAG}/
 - cp ../../LICENSE turtlecoin-${TRAVIS_TAG}/
-- tar cvfz turtlecoin-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz turtlecoin-${TRAVIS_TAG}/
+- tar cvfz turtlecoin-${TRAVIS_TAG}-${LABEL}.tar.gz turtlecoin-${TRAVIS_TAG}/
+- mkdir builds
+- cp turtlecoin-${TRAVIS_TAG}-${LABEL}.tar.gz builds
+
 deploy:
-  provider: releases
-  api_key:
-    secure: XyM7qAnX9Slm4bX7WYPOnWGRuXfuwc7wnJHb7wN4WGy+GefXm3xSFoNIZdmTY1XnJ2HpIAXuuHL2aey8KKt+gEXbhp882z6m9jZWOdog3cjObdRCsOuETNE0rbXasDvntdhm1Jn7PM+mkN6O9GoqRVaEnyyIwCGEFA7Cc/d2KgtqpTu0NB6nIPZbTgJnudHDQYEWl0kwA1UjkYrEIRlAOFTaRHBUsUHPTFW8758mgerYitLm27BNJTbo74lYe65iExtguKFN/VRVXDl08/2i3gnAxzWJ2K0qUZu7PD8ePd+2UC1wwE2Dc1uiTOmhDgVeuQO6k0tuipjIA+dh5r7A8/YPyOX4zoZ4ac+g1mWSRO1VS/WQ2Uvq2XU848KACLJ+ky3kHWZKowTSl/v3+3rU4c6kqYJHShkH5XlFp503yRqlaqOow4ogz020eIEHEFCgwLhNxZSEUzKP4rEZPpboZyNJbW7lL92UxMZDZm1zKMvnrY5zi2HltYzIQyOjDvmXUxQD8blz1C66lqfBc6mApjDRZVLUcfTT4WIGAWc6opTYJAJpCg34zGAQgXoFaOG0cH3ApsREmBd1dg9d8cJscedy9qZjn3HsmibmdRiGctB5o08JrjfM5sZVk620iKFgovis7q7XfIKb3rQdSfsiRwsfZEwhE2lvY3bf9B0VMrU=
-  file:
-    - turtlecoin-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz
-  skip_cleanup: true
-  on:
-    repo: turtlecoin/turtlecoin
-    tags: true
+  - provider: releases
+    api_key:
+      secure: XyM7qAnX9Slm4bX7WYPOnWGRuXfuwc7wnJHb7wN4WGy+GefXm3xSFoNIZdmTY1XnJ2HpIAXuuHL2aey8KKt+gEXbhp882z6m9jZWOdog3cjObdRCsOuETNE0rbXasDvntdhm1Jn7PM+mkN6O9GoqRVaEnyyIwCGEFA7Cc/d2KgtqpTu0NB6nIPZbTgJnudHDQYEWl0kwA1UjkYrEIRlAOFTaRHBUsUHPTFW8758mgerYitLm27BNJTbo74lYe65iExtguKFN/VRVXDl08/2i3gnAxzWJ2K0qUZu7PD8ePd+2UC1wwE2Dc1uiTOmhDgVeuQO6k0tuipjIA+dh5r7A8/YPyOX4zoZ4ac+g1mWSRO1VS/WQ2Uvq2XU848KACLJ+ky3kHWZKowTSl/v3+3rU4c6kqYJHShkH5XlFp503yRqlaqOow4ogz020eIEHEFCgwLhNxZSEUzKP4rEZPpboZyNJbW7lL92UxMZDZm1zKMvnrY5zi2HltYzIQyOjDvmXUxQD8blz1C66lqfBc6mApjDRZVLUcfTT4WIGAWc6opTYJAJpCg34zGAQgXoFaOG0cH3ApsREmBd1dg9d8cJscedy9qZjn3HsmibmdRiGctB5o08JrjfM5sZVk620iKFgovis7q7XfIKb3rQdSfsiRwsfZEwhE2lvY3bf9B0VMrU=
+    file:
+      - turtlecoin-${TRAVIS_TAG}-${LABEL}.tar.gz
+    skip_cleanup: true
+    on:
+      repo: turtlecoin/turtlecoin
+      tags: true
+
+  - provider: s3
+    access_key_id:
+      secure: DBwV4byu9+n8ZgIg/ncZBlAKAVrhYe4ozCgIk8oxd4ow4sxvyQ7bmUsRKmBwjmRskStu60xVl2OYHU5rK1fc07a8MC/68jhaa1H3qqwaoowFskDF5PW6LVQEu7VlHJqszI821I/m2vDQhXw87RDP6hIqlsXAth6SNUQvr2xGn3GYG8zgUOURVbjU7fbi2q1dvS2Q5Tx7qZ38q+DxV/5raoQRdccWhk0R7xvsTMC3LkeTc8XF7HrYw+n6/tF5fkx3Vnp3MJNZtqBvljNVxbFcHUHvuwKIhDZXpurUQwWarrxQ9YB2Wm+622EZq0UnJP+N56+qYP+A035MIDuTx7Lf6mkNR0I+cDaU0ywM5avm0oXvgfDVQwFTYCwhkMtmrHsISfkFjIZCp8ZAsGEm/rdwlwUP8Mk9kGAFMJuCfEOK5vAyMiKasXEEGFcYxvD92HQPMIjizGyYBdw0BwjgVut48dLFM3VlDlN8GvGoVXllsv0UfepW5JkJWT9XBuF2T+M74U0X/f+E+g6whLRVGZ0tjSzhga9wTKfP0QyWdxzu9U8kJDaYt9Gvca0Xt8VFCT8s9ij0XsNOtOYUo/DQmCn5/okGsVVXgT5KRUt462gJ7IZUX3Ti09KgdQsFfAu2BllaPLvqmu62FwhFdYmkfL9fWgzfE5F2A6HZbV2Di63dew4=
+    secret_access_key:
+      secure: cmy8eYUr8Hpii10a5fsTzhsBT5YNrQp5DCqaGCl6Ebd4T7t4+DpaHbERSUWjM6JCt9z1nmipT976ViJrnWUCBIxhxS/GAKbLPSSXxe6L7mA97ucwTLsICxZaWYjG/PkZl/7bIXH9GIslkxU/490ghciAk9AjNNjkX2jVt/62JOQiuzQomQvwg++3ececI3SfNKm+pNtL789no309PoEuyFewD0C/g15rsOvNoAZqNREcrSOPYJQXph4KWda/hBSWKIHU+kOKWUcdQQBKOchAoJQGJIFRwj4dDhuUwqb9Fz9DSdu6vyujNAOicUxKmrWV2KTNC2mGVK7Oa7dH2oDWV4WcBpI50bZDYghE4e4lz14mV3xkeuQaGGVF21d63jPxEzbXsLwObKtjx+dNqXpFWaVwyGflEkddvLIyqFd8CUtI45kTAHuoeQg0uRG/ols09AfW5iezHkOI50XxWZLZUwfrScTix0vSRwguHRCEnSolIylu36zMg8+azfmKY/aqLt1XidHGDtDjvNvoWZkKimlhC1thGXqzB+e86sTjs3ETdWuaiM/Pi6zJGcLVEnd7hxF98yxQVpJ4zJZzc5Lrc1yomRWkxgWpM+2dHfUomIYj+WSdsJw3YlNmDFL6Ymizw483FBUhStF0BCSSDafC1YatIx5XRUEoElzMz0zIczs=
+    bucket: turtlecoin
+    skip_cleanup: true
+    acl: public_read
+    region: us-east-2
+    upload-dir: turtlecoin
+    local-dir: builds
+    on:
+      repo: turtlecoin/turtlecoin
+      all_branches: true

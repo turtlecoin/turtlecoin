@@ -487,7 +487,7 @@ void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, s
   missedHashes.insert(missedHashes.end(), leftTransactions.begin(), leftTransactions.end());
 }
 
-Difficulty Core::getBlockDifficulty(uint32_t blockIndex) const {
+uint64_t Core::getBlockDifficulty(uint32_t blockIndex) const {
   throwIfNotInitialized();
   IBlockchainCache* mainChain = chainsLeaves[0];
   auto difficulties = mainChain->getLastCumulativeDifficulties(2, blockIndex, addGenesisBlock);
@@ -500,7 +500,7 @@ Difficulty Core::getBlockDifficulty(uint32_t blockIndex) const {
 }
 
 // TODO: just use mainChain->getDifficultyForNextBlock() ?
-Difficulty Core::getDifficultyForNextBlock() const {
+uint64_t Core::getDifficultyForNextBlock() const {
   throwIfNotInitialized();
   IBlockchainCache* mainChain = chainsLeaves[0];
 
@@ -958,7 +958,12 @@ bool Core::validateMixin(const std::vector<CachedTransaction> transactions,
     /* We also need to ensure that the mixin enforced is for the limit that
      was correct when the block was formed - i.e. if 0 mixin was allowed at
      block 100, but is no longer allowed - we should still validate block 100 */
-    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
+    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
+    {
+        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
+        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
+    }
+    else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
     {
         minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
         maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
@@ -1095,7 +1100,7 @@ bool Core::getPoolChangesLite(const Crypto::Hash& lastBlockHash, const std::vect
 }
 
 bool Core::getBlockTemplate(BlockTemplate& b, const AccountPublicAddress& adr, const BinaryArray& extraNonce,
-                            Difficulty& difficulty, uint32_t& height) const {
+                            uint64_t& difficulty, uint32_t& height) const {
   throwIfNotInitialized();
 
   height = getTopBlockIndex() + 1;

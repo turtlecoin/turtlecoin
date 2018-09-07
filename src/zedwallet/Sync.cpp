@@ -10,11 +10,12 @@
 
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/CommandImplementations.h>
+#include <zedwallet/GetInput.h>
 #include <zedwallet/Tools.h>
 #include <zedwallet/Types.h>
 #include <zedwallet/WalletConfig.h>
 
-void checkForNewTransactions(std::shared_ptr<WalletInfo> &walletInfo)
+void checkForNewTransactions(std::shared_ptr<WalletInfo> walletInfo)
 {
     walletInfo->wallet.updateInternalCache();
 
@@ -51,7 +52,7 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> &walletInfo)
 }
 
 void syncWallet(CryptoNote::INode &node,
-                std::shared_ptr<WalletInfo> &walletInfo)
+                std::shared_ptr<WalletInfo> walletInfo)
 {
     uint32_t localHeight = node.getLastLocalBlockHeight();
     uint32_t walletHeight = walletInfo->wallet.getBlockCount();
@@ -202,8 +203,7 @@ void syncWallet(CryptoNote::INode &node,
     }
 
     std::cout << std::endl
-              << SuccessMsg("Finished scanning blockchain!") << std::endl
-              << std::endl;
+              << SuccessMsg("Finished scanning blockchain!") << std::endl;
 
     /* In case the user force closes, we don't want them to have to rescan
        the whole chain. */

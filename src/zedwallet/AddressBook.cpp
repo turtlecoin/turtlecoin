@@ -6,13 +6,13 @@
 #include <zedwallet/AddressBook.h>
 //////////////////////////////////
 
-#include <boost/algorithm/string.hpp>
-
 #ifndef MSVC
 #include <fstream>
 #endif
 
 #include <Serialization/SerializationTools.h>
+
+#include <Wallet/WalletUtils.h>
 
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/Tools.h>
@@ -29,7 +29,7 @@ const std::string getAddressBookName(AddressBook addressBook)
                   << InformationMsg("give this address book entry?: ");
 
         std::getline(std::cin, friendlyName);
-        boost::algorithm::trim(friendlyName);
+        trim(friendlyName);
 
         const auto it = std::find(addressBook.begin(), addressBook.end(),
                             AddressBookEntry(friendlyName));
@@ -126,7 +126,7 @@ const Maybe<const AddressBookEntry> getAddressBookEntry(AddressBook addressBook)
                   << InformationMsg("address book?: ");
 
         std::getline(std::cin, friendlyName);
-        boost::algorithm::trim(friendlyName);
+        trim(friendlyName);
 
         if (friendlyName == "cancel")
         {
@@ -159,7 +159,7 @@ const Maybe<const AddressBookEntry> getAddressBookEntry(AddressBook addressBook)
     }
 }
 
-void sendFromAddressBook(std::shared_ptr<WalletInfo> &walletInfo,
+void sendFromAddressBook(std::shared_ptr<WalletInfo> walletInfo,
                          uint32_t height, std::string feeAddress,
                          uint32_t feeAmount)
 {
@@ -200,7 +200,7 @@ void sendFromAddressBook(std::shared_ptr<WalletInfo> &walletInfo,
     auto amount = maybeAmount.x;
     auto fee = WalletConfig::defaultFee;
     auto extra = getExtraFromPaymentID(addressBookEntry.paymentID);
-    auto mixin = WalletConfig::defaultMixin;
+    auto mixin = CryptoNote::getDefaultMixinByHeight(height);
     auto integrated = addressBookEntry.integratedAddress;
 
     if (integrated)
@@ -250,7 +250,7 @@ void deleteFromAddressBook()
                   << InformationMsg("delete?: ");
 
         std::getline(std::cin, friendlyName);
-        boost::algorithm::trim(friendlyName);
+        trim(friendlyName);
 
         if (friendlyName == "cancel")
         {
@@ -344,7 +344,7 @@ void listAddressBook()
 
 AddressBook getAddressBook()
 {
-    AddressBook addressBook = boost::value_initialized<decltype(addressBook)>();
+    AddressBook addressBook;
 
     std::ifstream input(WalletConfig::addressBookFilename);
 

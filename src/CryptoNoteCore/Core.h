@@ -76,8 +76,8 @@ public:
   virtual bool hasTransaction(const Crypto::Hash& transactionHash) const override;
   virtual void getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions, std::vector<Crypto::Hash>& missedHashes) const override;
 
-  virtual Difficulty getBlockDifficulty(uint32_t blockIndex) const override;
-  virtual Difficulty getDifficultyForNextBlock() const override;
+  virtual uint64_t getBlockDifficulty(uint32_t blockIndex) const override;
+  virtual uint64_t getDifficultyForNextBlock() const override;
 
   virtual std::error_code addBlock(const CachedBlock& cachedBlock, RawBlock&& rawBlock) override;
   virtual std::error_code addBlock(RawBlock&& rawBlock) override;
@@ -95,7 +95,7 @@ public:
   virtual bool getPoolChangesLite(const Crypto::Hash& lastBlockHash, const std::vector<Crypto::Hash>& knownHashes, std::vector<TransactionPrefixInfo>& addedTransactions,
     std::vector<Crypto::Hash>& deletedTransactions) const override;
 
-  virtual bool getBlockTemplate(BlockTemplate& b, const AccountPublicAddress& adr, const BinaryArray& extraNonce, Difficulty& difficulty, uint32_t& height) const override;
+  virtual bool getBlockTemplate(BlockTemplate& b, const AccountPublicAddress& adr, const BinaryArray& extraNonce, uint64_t& difficulty, uint32_t& height) const override;
 
   virtual CoreStatistics getCoreStatistics() const override;
 

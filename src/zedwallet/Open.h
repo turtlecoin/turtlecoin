@@ -10,8 +10,8 @@ std::shared_ptr<WalletInfo> importFromKeys(CryptoNote::WalletGreen &wallet,
                                            Crypto::SecretKey privateSpendKey,
                                            Crypto::SecretKey privateViewKey);
 
-Maybe<std::shared_ptr<WalletInfo>> openWallet(CryptoNote::WalletGreen &wallet,
-                                              Config &config);
+std::tuple<bool, std::shared_ptr<WalletInfo>>
+    openWallet(CryptoNote::WalletGreen &wallet, Config &config);
 
 std::shared_ptr<WalletInfo> importWallet(CryptoNote::WalletGreen &wallet);
 

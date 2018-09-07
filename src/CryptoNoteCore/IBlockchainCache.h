@@ -23,10 +23,8 @@
 
 #include "CryptoNoteCore/CachedBlock.h"
 #include "CryptoNoteCore/CachedTransaction.h"
-#include "CryptoNoteCore/Difficulty.h"
 #include "CryptoNoteCore/TransactionValidatiorState.h"
 #include "Common/ArrayView.h"
-#include <CryptoNoteCore/Difficulty.h>
 
 namespace CryptoNote {
 
@@ -56,7 +54,7 @@ struct PushedBlockInfo {
   TransactionValidatorState validatorState;
   size_t blockSize;
   uint64_t generatedCoins;
-  Difficulty blockDifficulty;
+  uint64_t blockDifficulty;
 };
 
 class UseGenesis {
@@ -92,7 +90,7 @@ public:
       const TransactionValidatorState& validatorState,
       size_t blockSize,
       uint64_t generatedCoins,
-      Difficulty blockDifficulty,
+      uint64_t blockDifficulty,
       RawBlock&& rawBlock) = 0;
   virtual PushedBlockInfo getPushedBlockInfo(uint32_t index) const = 0;
   virtual bool checkIfSpent(const Crypto::KeyImage& keyImage, uint32_t blockIndex) const = 0;
@@ -125,14 +123,14 @@ public:
   virtual std::vector<uint64_t> getLastBlocksSizes(size_t count) const = 0;
   virtual std::vector<uint64_t> getLastBlocksSizes(size_t count, uint32_t blockIndex, UseGenesis) const = 0;
 
-  virtual std::vector<Difficulty> getLastCumulativeDifficulties(size_t count, uint32_t blockIndex, UseGenesis) const = 0;
-  virtual std::vector<Difficulty> getLastCumulativeDifficulties(size_t count) const = 0;
+  virtual std::vector<uint64_t> getLastCumulativeDifficulties(size_t count, uint32_t blockIndex, UseGenesis) const = 0;
+  virtual std::vector<uint64_t> getLastCumulativeDifficulties(size_t count) const = 0;
 
-  virtual Difficulty getDifficultyForNextBlock() const = 0;
-  virtual Difficulty getDifficultyForNextBlock(uint32_t blockIndex) const = 0;
+  virtual uint64_t getDifficultyForNextBlock() const = 0;
+  virtual uint64_t getDifficultyForNextBlock(uint32_t blockIndex) const = 0;
 
-  virtual Difficulty getCurrentCumulativeDifficulty() const = 0;
-  virtual Difficulty getCurrentCumulativeDifficulty(uint32_t blockIndex) const = 0;
+  virtual uint64_t getCurrentCumulativeDifficulty() const = 0;
+  virtual uint64_t getCurrentCumulativeDifficulty(uint32_t blockIndex) const = 0;
 
   virtual uint64_t getAlreadyGeneratedCoins() const = 0;
   virtual uint64_t getAlreadyGeneratedCoins(uint32_t blockIndex) const = 0;

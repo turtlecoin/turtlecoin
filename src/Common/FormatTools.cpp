@@ -1,13 +1,14 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 
 #include "FormatTools.h"
 #include <cstdio>
 #include <ctime>
+#include "CryptoNoteConfig.h"
 #include "CryptoNoteCore/Core.h"
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
 #include <boost/format.hpp>
@@ -163,7 +164,7 @@ std::string get_upgrade_info(uint64_t supported_height, std::vector<uint64_t> up
     {
         if (upgrade > supported_height)
         {
-            return "The network forked at height " + std::to_string(upgrade) + ", please update your software: https://turtlecoin.lol";
+            return "The network forked at height " + std::to_string(upgrade) + ", please update your software: " + CryptoNote::LATEST_VERSION_URL;
         }
     }
 
@@ -180,7 +181,7 @@ std::string get_status_string(CryptoNote::COMMAND_RPC_GET_INFO::response iresp) 
   ss << "Height: " << iresp.height << "/" << iresp.network_height
      << " (" << get_sync_percentage(iresp.height, iresp.network_height) << "%) "
      << "on " << (iresp.testnet ? "testnet, " : "mainnet, ")
-     << (iresp.synced ? "synced, " : "syncing, ") 
+     << (iresp.synced ? "synced, " : "syncing, ")
      << "net hash " << get_mining_speed(iresp.hashrate) << ", "
      << "v" << +iresp.major_version << ","
      << get_update_status(forkStatus, iresp.network_height, iresp.upgrade_heights)

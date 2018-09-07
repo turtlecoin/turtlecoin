@@ -8,8 +8,6 @@
 
 #include <atomic>
 
-#include <boost/algorithm/string.hpp>
-
 #include <Common/FormatTools.h>
 #include <Common/StringTools.h>
 
@@ -22,16 +20,19 @@
 
 #include <Mnemonics/Mnemonics.h>
 
+#include <zedwallet/AddressBook.h>
 #include <zedwallet/ColouredMsg.h>
-#include <zedwallet/Open.h>
+#include <zedwallet/Commands.h>
 #include <zedwallet/Fusion.h>
+#include <zedwallet/Menu.h>
+#include <zedwallet/Open.h>
 #include <zedwallet/Sync.h>
 #include <zedwallet/Tools.h>
 #include <zedwallet/Transfer.h>
 #include <zedwallet/Types.h>
 #include <zedwallet/WalletConfig.h>
 
-void changePassword(std::shared_ptr<WalletInfo> &walletInfo)
+void changePassword(std::shared_ptr<WalletInfo> walletInfo)
 {
     /* Check the user knows the current password */
     confirmPassword(walletInfo->walletPass, "Confirm your current password: ");
@@ -52,7 +53,7 @@ void changePassword(std::shared_ptr<WalletInfo> &walletInfo)
     std::cout << SuccessMsg("Your password has been changed!") << std::endl;
 }
 
-void exportKeys(std::shared_ptr<WalletInfo> &walletInfo)
+void exportKeys(std::shared_ptr<WalletInfo> walletInfo)
 {
     confirmPassword(walletInfo->walletPass);
     printPrivateKeys(walletInfo->wallet, walletInfo->viewWallet);
@@ -303,29 +304,26 @@ void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     printSyncSummary(localHeight, remoteHeight, walletHeight);
 }
 
-void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo)
+void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> walletInfo)
 {
-    std::cout << InformationMsg("This process may take some time to complete. "
-                                "You can't make any transactions during the process.")
-              << std::endl;
+    uint64_t scanHeight = getScanHeight();
+
+    std::cout << std::endl
+              << InformationMsg("This process may take some time to complete.")
+              << std::endl
+              << InformationMsg("You can't make any transactions during the ")
+              << InformationMsg("process.")
+              << std::endl << std::endl;
     
-    if (!confirm("Are you sure?")){
+    if (!confirm("Are you sure?"))
+    {
         return;
     }
     
     std::cout << InformationMsg("Resetting wallet...") << std::endl;
 
-    walletInfo->knownTransactionCount = 0;
+    walletInfo->wallet.reset(scanHeight);
 
-    /* Wallet is now unitialized. You must reinit with load, initWithKeys,
-       or whatever. This function wipes the cache, then saves the wallet. */
-    walletInfo->wallet.clearCacheAndShutdown();
-
-    /* Now, we reopen the wallet. It now has no cached tx's, and balance */
-    walletInfo->wallet.load(walletInfo->walletFileName,
-                            walletInfo->walletPass);
-
-    /* Now we rescan the chain to re-discover our balance and transactions */
     syncWallet(node, walletInfo);
 }
 
@@ -364,7 +362,7 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
             continue;
         }
 
-        const std::string amount = formatAmountBasic(t.totalAmount);
+        const std::string amount = formatAmountBasic(std::abs(t.totalAmount));
 
         const std::string direction = t.totalAmount > 0 ? "IN" : "OUT";
 
@@ -510,7 +508,7 @@ void createIntegratedAddress()
         std::cout << InformationMsg("Address: ");
 
         std::getline(std::cin, address);
-        boost::algorithm::trim(address);
+        trim(address);
 
         std::cout << std::endl;
 
@@ -525,7 +523,7 @@ void createIntegratedAddress()
         std::cout << InformationMsg("Payment ID: ");
 
         std::getline(std::cin, paymentID);
-        boost::algorithm::trim(paymentID);
+        trim(paymentID);
 
         std::vector<uint8_t> extra;
 
@@ -545,4 +543,32 @@ void createIntegratedAddress()
 
     std::cout << InformationMsg(createIntegratedAddress(address, paymentID))
               << std::endl;
+}
+
+void help(std::shared_ptr<WalletInfo> wallet)
+{
+    if (wallet->viewWallet)
+    {
+        printCommands(basicViewWalletCommands());
+    }
+    else
+    {
+        printCommands(basicCommands());
+    }
+}
+
+void advanced(std::shared_ptr<WalletInfo> wallet)
+{
+    /* We pass the offset of the command to know what index to print for
+       command numbers */
+    if (wallet->viewWallet)
+    {
+        printCommands(advancedViewWalletCommands(),
+                      basicViewWalletCommands().size());
+    }
+    else
+    {
+        printCommands(advancedCommands(),
+                      basicCommands().size());
+    }
 }

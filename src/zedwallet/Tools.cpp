@@ -15,11 +15,15 @@
 #include <CryptoNoteCore/CryptoNoteTools.h>
 #include <CryptoNoteCore/TransactionExtra.h>
 
+#include <fstream>
+
+#include <iostream>
+
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/PasswordContainer.h>
 #include <zedwallet/WalletConfig.h>
 
-void confirmPassword(std::string walletPass, std::string msg)
+void confirmPassword(const std::string &walletPass, const std::string &msg)
 {
     /* Password container requires an rvalue, we don't want to wipe our current
        pass so copy it into a tmp string and std::move that instead */
@@ -39,7 +43,7 @@ uint64_t getDivisor()
     return static_cast<uint64_t>(pow(10, WalletConfig::numDecimalPlaces));
 }
 
-std::string formatAmount(uint64_t amount)
+std::string formatAmount(const uint64_t amount)
 {
     const uint64_t divisor = getDivisor();
     const uint64_t dollars = amount / divisor;
@@ -49,7 +53,7 @@ std::string formatAmount(uint64_t amount)
          + WalletConfig::ticker;
 }
 
-std::string formatAmountBasic(uint64_t amount)
+std::string formatAmountBasic(const uint64_t amount)
 {
     const uint64_t divisor = getDivisor();
     const uint64_t dollars = amount / divisor;
@@ -58,7 +62,7 @@ std::string formatAmountBasic(uint64_t amount)
     return std::to_string(dollars) + "." + formatCents(cents);
 }
 
-std::string formatDollars(uint64_t amount)
+std::string formatDollars(const uint64_t amount)
 {
     /* We want to format our number with comma separators so it's easier to
        use. Now, we could use the nice print_money() function to do this.
@@ -108,7 +112,7 @@ std::string formatDollars(uint64_t amount)
 
 /* Pad to the amount of decimal spaces, e.g. with 2 decimal spaces 5 becomes
    05, 50 remains 50 */
-std::string formatCents(uint64_t amount)
+std::string formatCents(const uint64_t amount)
 {
     std::stringstream stream;
     stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces)
@@ -116,14 +120,14 @@ std::string formatCents(uint64_t amount)
     return stream.str();
 }
 
-bool confirm(std::string msg)
+bool confirm(const std::string &msg)
 {
     return confirm(msg, true);
 }
 
 /* defaultReturn = what value we return on hitting enter, i.e. the "expected"
    workflow */
-bool confirm(std::string msg, bool defaultReturn)
+bool confirm(const std::string &msg, const bool defaultReturn)
 {
     /* In unix programs, the upper case letter indicates the default, for
        example when you hit enter */
@@ -144,7 +148,7 @@ bool confirm(std::string msg, bool defaultReturn)
         std::string answer;
         std::getline(std::cin, answer);
 
-        const char c = std::tolower(answer[0]);
+        const char c = ::tolower(answer[0]);
 
         switch(c)
         {
@@ -160,11 +164,10 @@ bool confirm(std::string msg, bool defaultReturn)
         std::cout << WarningMsg("Bad input: ") << InformationMsg(answer)
                   << WarningMsg(" - please enter either Y or N.")
                   << std::endl;
-
     }
 }
 
-std::string getPaymentIDFromExtra(std::string extra)
+std::string getPaymentIDFromExtra(const std::string &extra)
 {
     std::string paymentID;
 
@@ -172,7 +175,7 @@ std::string getPaymentIDFromExtra(std::string extra)
     {
         std::vector<uint8_t> vecExtra;
 
-        for (auto it : extra)
+        for (const auto it : extra)
         {
             vecExtra.push_back(static_cast<uint8_t>(it));
         }
@@ -188,37 +191,7 @@ std::string getPaymentIDFromExtra(std::string extra)
     return paymentID;
 }
 
-/* Note: this is not portable, it only works with terminals that support ANSI
-   codes (e.g., not Windows) */
-std::string yellowANSIMsg(std::string msg)
-{
-    const std::string CYELLOW = "\033[1;33m";
-    const std::string RESET = "\033[0m";
-    return CYELLOW + msg + RESET;
-}
-
-std::string getPrompt(std::shared_ptr<WalletInfo> &walletInfo)
-{
-    const int promptLength = 20;
-    const std::string extension = ".wallet";
-
-    std::string walletName = walletInfo->walletFileName;
-
-    /* Filename ends in .wallet, remove extension */
-    if (std::equal(extension.rbegin(), extension.rend(), 
-                   walletInfo->walletFileName.rbegin()))
-    {
-        const size_t extPos = walletInfo->walletFileName.find_last_of('.');
-
-        walletName = walletInfo->walletFileName.substr(0, extPos);
-    }
-
-    const std::string shortName = walletName.substr(0, promptLength);
-
-    return "[" + WalletConfig::ticker + " " + shortName + "]: ";
-}
-
-std::string unixTimeToDate(uint64_t timestamp)
+std::string unixTimeToDate(const uint64_t timestamp)
 {
     const std::time_t time = timestamp;
     char buffer[100];
@@ -226,7 +199,8 @@ std::string unixTimeToDate(uint64_t timestamp)
     return std::string(buffer);
 }
 
-std::string createIntegratedAddress(std::string address, std::string paymentID)
+std::string createIntegratedAddress(const std::string &address,
+                                    const std::string &paymentID)
 {
     uint64_t prefix;
 
@@ -246,4 +220,88 @@ std::string createIntegratedAddress(std::string address, std::string paymentID)
         CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
         paymentID + keys
     );
+}
+
+uint64_t getScanHeight()
+{
+    while (true)
+    {
+        std::cout << InformationMsg("What height would you like to begin ")
+                  << InformationMsg("scanning your wallet from?")
+                  << std::endl
+                  << std::endl
+                  << "This can greatly speed up the initial wallet "
+                  << "scanning process."
+                  << std::endl
+                  << std::endl
+                  << "If you do not know the exact height, "
+                  << "err on the side of caution so transactions do not "
+                  << "get missed."
+                  << std::endl
+                  << std::endl
+                  << InformationMsg("Hit enter for the sub-optimal default ")
+                  << InformationMsg("of zero: ");
+
+        std::string stringHeight;
+
+        std::getline(std::cin, stringHeight);
+
+        /* Remove commas so user can enter height as e.g. 200,000 */
+        removeCharFromString(stringHeight, ',');
+
+        if (stringHeight == "")
+        {
+            return 0;
+        }
+
+        try
+        {
+            return std::stoi(stringHeight);
+        }
+        catch (const std::invalid_argument &)
+        {
+            std::cout << WarningMsg("Failed to parse height - input is not ")
+                      << WarningMsg("a number!") << std::endl << std::endl;
+        }
+    }
+}
+
+/* Erases all instances of c from the string. E.g. 2,000,000 becomes 2000000 */
+void removeCharFromString(std::string &str, const char c)
+{
+    str.erase(std::remove(str.begin(), str.end(), c), str.end());
+}
+
+/* Trims any whitespace from left and right */
+void trim(std::string &str)
+{
+    rightTrim(str);
+    leftTrim(str);
+}
+
+void leftTrim(std::string &str)
+{
+    std::string whitespace = " \t\n\r\f\v";
+
+    str.erase(0, str.find_first_not_of(whitespace));
+}
+
+void rightTrim(std::string &str)
+{
+    std::string whitespace = " \t\n\r\f\v";
+
+    str.erase(str.find_last_not_of(whitespace) + 1);
+}
+
+/* Checks if str begins with substring */
+bool startsWith(const std::string &str, const std::string &substring)
+{
+    return str.rfind(substring, 0) == 0;
+}
+
+/* Does the given filename exist on disk? */
+bool fileExists(const std::string &filename)
+{
+    /* Bool conversion needs an explicit cast */
+    return static_cast<bool>(std::ifstream(filename));
 }

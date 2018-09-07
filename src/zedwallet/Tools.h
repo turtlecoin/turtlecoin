@@ -4,26 +4,55 @@
 
 #pragma once
 
-#include <zedwallet/Types.h>
+#include <algorithm>
 
-void confirmPassword(std::string walletPass, std::string msg="");
+#include <string>
 
-bool confirm(std::string msg);
-bool confirm(std::string msg, bool defaultReturn);
+#include <vector>
 
-std::string formatAmountBasic(uint64_t amount);
-std::string formatAmount(uint64_t amount);
-std::string formatDollars(uint64_t amount);
-std::string formatCents(uint64_t amount);
+#include <iterator>
 
-std::string getPaymentIDFromExtra(std::string extra);
+void confirmPassword(const std::string &walletPass, const std::string &msg="");
 
-std::string yellowANSIMsg(std::string msg);
+void removeCharFromString(std::string &str, const char c);
 
-std::string getPrompt(std::shared_ptr<WalletInfo> &walletInfo);
+void trim(std::string &str);
 
-std::string unixTimeToDate(uint64_t timestamp);
+void leftTrim(std::string &str);
 
-std::string createIntegratedAddress(std::string address, std::string paymentID);
+void rightTrim(std::string &str);
+
+bool confirm(const std::string &msg);
+bool confirm(const std::string &msg, const bool defaultReturn);
+
+bool startsWith(const std::string &str, const std::string &substring);
+
+bool fileExists(const std::string &filename);
+
+std::string formatAmountBasic(const uint64_t amount);
+std::string formatAmount(const uint64_t amount);
+std::string formatDollars(const uint64_t amount);
+std::string formatCents(const uint64_t amount);
+
+std::string getPaymentIDFromExtra(const std::string &extra);
+
+std::string unixTimeToDate(const uint64_t timestamp);
+
+std::string createIntegratedAddress(const std::string &address,
+                                    const std::string &paymentID);
 
 uint64_t getDivisor();
+
+uint64_t getScanHeight();
+
+template <typename T, typename Function>
+std::vector<T> filter(const std::vector<T> &input, Function predicate)
+{
+    std::vector<T> result;
+
+    std::copy_if(
+        input.begin(), input.end(), std::back_inserter(result), predicate
+    );
+
+    return result;
+}

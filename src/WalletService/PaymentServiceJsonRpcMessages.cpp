@@ -6,6 +6,7 @@
 
 #include "PaymentServiceJsonRpcMessages.h"
 #include "Serialization/SerializationOverloads.h"
+#include "WalletService.h"
 
 namespace PaymentService {
 
@@ -25,7 +26,21 @@ void Export::Response::serialize(CryptoNote::ISerializer& serializer) {
 }
 
 void Reset::Request::serialize(CryptoNote::ISerializer& serializer) {
-  serializer(viewSecretKey, "viewSecretKey");
+  bool hasKey = serializer(viewSecretKey, "viewSecretKey");
+
+  bool hasScanHeight = serializer(scanHeight, "scanHeight");
+  bool hasNewAddress = serializer(newAddress, "newAddress");
+
+  /* Can't specify both that it is a new address, and a height to begin
+     scanning from */
+  if (hasNewAddress && hasScanHeight) {
+    throw RequestSerializationError();
+  }
+
+  /* It's not a reset if you're not resetting :thinking: */
+  if (!hasKey && hasNewAddress) {
+    throw RequestSerializationError();
+  };
 }
 
 void Reset::Response::serialize(CryptoNote::ISerializer& serializer) {
@@ -69,8 +84,17 @@ void CreateAddress::Request::serialize(CryptoNote::ISerializer& serializer) {
   bool hasSecretKey = serializer(spendSecretKey, "spendSecretKey");
   bool hasPublicKey = serializer(spendPublicKey, "spendPublicKey");
 
+  bool hasNewAddress = serializer(newAddress, "newAddress");
+  bool hasScanHeight = serializer(scanHeight, "scanHeight");
+
   if (hasSecretKey && hasPublicKey) {
     //TODO: replace it with error codes
+    throw RequestSerializationError();
+  }
+
+  /* Can't specify both that it is a new address, and a height to begin
+     scanning from */
+  if (hasNewAddress && hasScanHeight) {
     throw RequestSerializationError();
   }
 }
@@ -82,6 +106,15 @@ void CreateAddress::Response::serialize(CryptoNote::ISerializer& serializer) {
 void CreateAddressList::Request::serialize(CryptoNote::ISerializer& serializer) {
   if (!serializer(spendSecretKeys, "spendSecretKeys")) {
     //TODO: replace it with error codes
+    throw RequestSerializationError();
+  }
+
+  bool hasNewAddress = serializer(newAddress, "newAddress");
+  bool hasScanHeight = serializer(scanHeight, "scanHeight");
+
+  /* Can't specify both that it is a new address, and a height to begin
+     scanning from */
+  if (hasNewAddress && hasScanHeight) {
     throw RequestSerializationError();
   }
 }
@@ -225,7 +258,7 @@ void WalletRpcOrder::serialize(CryptoNote::ISerializer& serializer) {
   }
 }
 
-void SendTransaction::Request::serialize(CryptoNote::ISerializer& serializer) {
+void SendTransaction::Request::serialize(CryptoNote::ISerializer& serializer, const WalletService &service) {
   serializer(sourceAddresses, "addresses");
 
   if (!serializer(transfers, "transfers")) {
@@ -239,7 +272,7 @@ void SendTransaction::Request::serialize(CryptoNote::ISerializer& serializer) {
   }
 
   if (!serializer(anonymity, "anonymity")) {
-    throw RequestSerializationError();
+    anonymity = service.getDefaultMixin();
   }
 
   bool hasExtra = serializer(extra, "extra");
@@ -256,7 +289,7 @@ void SendTransaction::Response::serialize(CryptoNote::ISerializer& serializer) {
   serializer(transactionHash, "transactionHash");
 }
 
-void CreateDelayedTransaction::Request::serialize(CryptoNote::ISerializer& serializer) {
+void CreateDelayedTransaction::Request::serialize(CryptoNote::ISerializer& serializer, const WalletService &service) {
   serializer(addresses, "addresses");
 
   if (!serializer(transfers, "transfers")) {
@@ -270,7 +303,7 @@ void CreateDelayedTransaction::Request::serialize(CryptoNote::ISerializer& seria
   }
 
   if (!serializer(anonymity, "anonymity")) {
-    throw RequestSerializationError();
+    anonymity = service.getDefaultMixin();
   }
 
   bool hasExtra = serializer(extra, "extra");
@@ -312,13 +345,13 @@ void SendDelayedTransaction::Request::serialize(CryptoNote::ISerializer& seriali
 void SendDelayedTransaction::Response::serialize(CryptoNote::ISerializer& serializer) {
 }
 
-void SendFusionTransaction::Request::serialize(CryptoNote::ISerializer& serializer) {
+void SendFusionTransaction::Request::serialize(CryptoNote::ISerializer& serializer, const WalletService &service) {
   if (!serializer(threshold, "threshold")) {
     throw RequestSerializationError();
   }
 
   if (!serializer(anonymity, "anonymity")) {
-    throw RequestSerializationError();
+    anonymity = service.getDefaultMixin();
   }
 
   serializer(addresses, "addresses");

@@ -31,7 +31,6 @@
 #include "BlockchainStorage.h"
 #include "Common/StringView.h"
 #include "Currency.h"
-#include "Difficulty.h"
 #include "IBlockchainCache.h"
 #include "CryptoNoteCore/UpgradeManager.h"
 
@@ -61,7 +60,7 @@ struct CachedTransactionInfo {
 struct CachedBlockInfo {
   Crypto::Hash blockHash;
   uint64_t timestamp;
-  Difficulty cumulativeDifficulty;
+  uint64_t cumulativeDifficulty;
   uint64_t alreadyGeneratedCoins;
   uint64_t alreadyGeneratedTransactions;
   uint32_t blockSize;
@@ -102,7 +101,7 @@ public:
     const TransactionValidatorState& validatorState,
     size_t blockSize,
     uint64_t generatedCoins,
-    Difficulty blockDifficulty,
+    uint64_t blockDifficulty,
     RawBlock&& rawBlock) override;
 
   virtual PushedBlockInfo getPushedBlockInfo(uint32_t index) const override;
@@ -132,14 +131,14 @@ public:
   std::vector<uint64_t> getLastBlocksSizes(size_t count) const override;
   std::vector<uint64_t> getLastBlocksSizes(size_t count, uint32_t blockIndex, UseGenesis) const override;
 
-  std::vector<Difficulty> getLastCumulativeDifficulties(size_t count, uint32_t blockIndex, UseGenesis) const override;
-  std::vector<Difficulty> getLastCumulativeDifficulties(size_t count) const override;
+  std::vector<uint64_t> getLastCumulativeDifficulties(size_t count, uint32_t blockIndex, UseGenesis) const override;
+  std::vector<uint64_t> getLastCumulativeDifficulties(size_t count) const override;
 
-  Difficulty getDifficultyForNextBlock() const override;
-  Difficulty getDifficultyForNextBlock(uint32_t blockIndex) const override;
+  uint64_t getDifficultyForNextBlock() const override;
+  uint64_t getDifficultyForNextBlock(uint32_t blockIndex) const override;
 
-  virtual Difficulty getCurrentCumulativeDifficulty() const override;
-  virtual Difficulty getCurrentCumulativeDifficulty(uint32_t blockIndex) const override;
+  virtual uint64_t getCurrentCumulativeDifficulty() const override;
+  virtual uint64_t getCurrentCumulativeDifficulty(uint32_t blockIndex) const override;
 
   uint64_t getAlreadyGeneratedCoins() const override;
   uint64_t getAlreadyGeneratedCoins(uint32_t blockIndex) const override;
@@ -314,7 +313,7 @@ uint8_t getBlockMajorVersionForHeight(uint32_t height) const;
     const TransactionValidatorState& validatorState,
     size_t blockSize,
     uint64_t generatedCoins,
-    Difficulty blockDifficulty,
+    uint64_t blockDifficulty,
     RawBlock&& rawBlock);
 };
 

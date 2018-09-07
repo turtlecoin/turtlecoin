@@ -49,6 +49,7 @@ PaymentServiceJsonRpcServer::PaymentServiceJsonRpcServer(System::Dispatcher& sys
   handlers.emplace("estimateFusion", jsonHandler<EstimateFusion::Request, EstimateFusion::Response>(std::bind(&PaymentServiceJsonRpcServer::handleEstimateFusion, this, std::placeholders::_1, std::placeholders::_2)));
   handlers.emplace("createIntegratedAddress", jsonHandler<CreateIntegratedAddress::Request, CreateIntegratedAddress::Response>(std::bind(&PaymentServiceJsonRpcServer::handleCreateIntegratedAddress, this, std::placeholders::_1, std::placeholders::_2)));
   handlers.emplace("feeinfo", jsonHandler<NodeFeeInfo::Request, NodeFeeInfo::Response>(std::bind(&PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2)));
+  handlers.emplace("getFeeInfo", jsonHandler<NodeFeeInfo::Request, NodeFeeInfo::Response>(std::bind(&PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2)));
 }
 
 void PaymentServiceJsonRpcServer::processJsonRpcRequest(const Common::JsonValue& req, Common::JsonValue& resp) {
@@ -117,9 +118,9 @@ std::error_code PaymentServiceJsonRpcServer::handleExport(const Export::Request&
 
 std::error_code PaymentServiceJsonRpcServer::handleReset(const Reset::Request& request, Reset::Response& response) {
   if (request.viewSecretKey.empty()) {
-    return service.resetWallet();
+    return service.resetWallet(request.scanHeight);
   } else {
-    return service.replaceWithNewWallet(request.viewSecretKey);
+    return service.replaceWithNewWallet(request.viewSecretKey, request.scanHeight, request.newAddress);
   }
 }
 
@@ -127,14 +128,14 @@ std::error_code PaymentServiceJsonRpcServer::handleCreateAddress(const CreateAdd
   if (request.spendSecretKey.empty() && request.spendPublicKey.empty()) {
     return service.createAddress(response.address);
   } else if (!request.spendSecretKey.empty()) {
-    return service.createAddress(request.spendSecretKey, response.address);
+    return service.createAddress(request.spendSecretKey, request.scanHeight, request.newAddress, response.address);
   } else {
-    return service.createTrackingAddress(request.spendPublicKey, response.address);
+    return service.createTrackingAddress(request.spendPublicKey, request.scanHeight, request.newAddress, response.address);
   }
 }
 
 std::error_code PaymentServiceJsonRpcServer::handleCreateAddressList(const CreateAddressList::Request& request, CreateAddressList::Response& response) {
-  return service.createAddressList(request.spendSecretKeys, response.addresses);
+  return service.createAddressList(request.spendSecretKeys, request.scanHeight, request.newAddress, response.addresses);
 }
 
 std::error_code PaymentServiceJsonRpcServer::handleDeleteAddress(const DeleteAddress::Request& request, DeleteAddress::Response& response) {

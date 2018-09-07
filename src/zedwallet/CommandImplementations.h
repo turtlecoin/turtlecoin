@@ -8,11 +8,15 @@
 
 #include <Wallet/WalletGreen.h>
 
-void changePassword(std::shared_ptr<WalletInfo> &walletInfo);
+bool handleCommand(const std::string command,
+                   std::shared_ptr<WalletInfo> walletInfo,
+                   CryptoNote::INode &node);
+
+void changePassword(std::shared_ptr<WalletInfo> walletInfo);
 
 void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet);
 
-void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> &walletInfo);
+void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> walletInfo);
 
 void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet);
 
@@ -32,7 +36,7 @@ void printHashrate(uint64_t difficulty);
 void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
              bool viewWallet);
 
-void exportKeys(std::shared_ptr<WalletInfo> &walletInfo);
+void exportKeys(std::shared_ptr<WalletInfo> walletInfo);
 
 void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node);
 
@@ -48,3 +52,7 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
                            CryptoNote::INode &node);
 
 void createIntegratedAddress();
+
+void help(std::shared_ptr<WalletInfo> wallet);
+
+void advanced(std::shared_ptr<WalletInfo> wallet);

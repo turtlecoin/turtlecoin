@@ -1,19 +1,7 @@
-// Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers, The TurtleCoin developers
+// Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "NetNode.h"
 
@@ -38,6 +26,7 @@
 #include <System/TcpConnector.h>
 
 #include "version.h"
+#include "CryptoNoteConfig.h"
 #include "Common/StdInputStream.h"
 #include "Common/StdOutputStream.h"
 #include "Common/Util.h"
@@ -586,8 +575,16 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
     context.version = rsp.node_data.version;
 
     if (rsp.node_data.network_id != m_network_id) {
-      logger(Logging::ERROR) << context << "COMMAND_HANDSHAKE Failed, wrong network!  (" << rsp.node_data.network_id << "), closing connection.";
+      logger(Logging::DEBUGGING) << context << "COMMAND_HANDSHAKE Failed, wrong network! (" << rsp.node_data.network_id << "), closing connection.";
       return false;
+    }
+
+    if (rsp.node_data.version < CryptoNote::P2P_MINIMUM_VERSION) {
+      logger(Logging::DEBUGGING) << context << "COMMAND_HANDSHAKE Failed, peer is wrong version! (" << std::to_string(rsp.node_data.version) << "), closing connection.";
+      return false;
+    } else if (rsp.node_data.version > CryptoNote::P2P_CURRENT_VERSION) {
+      logger(Logging::WARNING) << context << "COMMAND_HANDSHAKE Warning, our software may be out of date. Please visit: "
+        << CryptoNote::LATEST_VERSION_URL << " for the latest version.";
     }
 
     if (!handle_remote_peerlist(rsp.local_peerlist, rsp.node_data.local_time, context)) {
@@ -959,7 +956,7 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
 
   bool NodeServer::get_local_node_data(basic_node_data& node_data)
   {
-    node_data.version = P2PProtocolVersion::CURRENT;
+    node_data.version = CryptoNote::P2P_CURRENT_VERSION;
     time_t local_time;
     time(&local_time);
     node_data.local_time = local_time;
@@ -1146,9 +1143,18 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
     context.version = arg.node_data.version;
 
     if (arg.node_data.network_id != m_network_id) {
-      logger(Logging::INFO) << context << "WRONG NETWORK AGENT CONNECTED! id=" << arg.node_data.network_id;
+      logger(Logging::DEBUGGING) << context << "WRONG NETWORK AGENT CONNECTED! id=" << arg.node_data.network_id;
       context.m_state = CryptoNoteConnectionContext::state_shutdown;
       return 1;
+    }
+
+    if (arg.node_data.version < CryptoNote::P2P_MINIMUM_VERSION) {
+      logger(Logging::DEBUGGING) << context << "UNSUPPORTED NETWORK AGENT VERSION CONNECTED! version=" << std::to_string(arg.node_data.version);
+      context.m_state = CryptoNoteConnectionContext::state_shutdown;
+      return 1;
+    } else if (arg.node_data.version > CryptoNote::P2P_CURRENT_VERSION) {
+      logger(Logging::WARNING) << context << "Our software may be out of date. Please visit: "
+        << CryptoNote::LATEST_VERSION_URL << " for the latest version.";
     }
 
     if(!context.m_is_income) {

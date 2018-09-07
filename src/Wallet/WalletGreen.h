@@ -50,13 +50,14 @@ public:
   virtual ~WalletGreen();
 
   virtual void initialize(const std::string& path, const std::string& password) override;
-  virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey) override;
+  virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, bool newAddress) override;
   virtual void load(const std::string& path, const std::string& password, std::string& extra) override;
   virtual void load(const std::string& path, const std::string& password) override;
   virtual void shutdown() override;
 
   virtual void changePassword(const std::string& oldPassword, const std::string& newPassword) override;
   virtual void save(WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string& extra = "") override;
+  virtual void reset(const uint64_t scanHeight) override;
   virtual void exportWallet(const std::string& path, bool encrypt = true, WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string& extra = "") override;
 
   virtual size_t getAddressCount() const override;
@@ -64,10 +65,13 @@ public:
   virtual KeyPair getAddressSpendKey(size_t index) const override;
   virtual KeyPair getAddressSpendKey(const std::string& address) const override;
   virtual KeyPair getViewKey() const override;
+
   virtual std::string createAddress() override;
-  virtual std::string createAddress(const Crypto::SecretKey& spendSecretKey) override;
-  virtual std::string createAddress(const Crypto::PublicKey& spendPublicKey) override;
-  virtual std::vector<std::string> createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys) override;
+  virtual std::string createAddress(const Crypto::SecretKey& spendSecretKey, const uint64_t scanHeight, const bool newAddress) override;
+  virtual std::string createAddress(const Crypto::PublicKey& spendPublicKey, const uint64_t scanHeight, const bool newAddress) override;
+
+  virtual std::vector<std::string> createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys, const uint64_t scanHeight, const bool newAddress) override;
+
   virtual void deleteAddress(const std::string& address) override;
 
   virtual uint64_t getActualBalance() const override;
@@ -104,7 +108,9 @@ public:
   void clearCacheAndShutdown();
   void createViewWallet(const std::string &path, const std::string &password,
                         const std::string address, 
-                        const Crypto::SecretKey &viewSecretKey);
+                        const Crypto::SecretKey &viewSecretKey,
+                        const uint64_t scanHeight,
+                        const bool newAddress);
   uint64_t getBalanceMinusDust(const std::vector<std::string>& addresses);
 
   virtual void start() override;
@@ -120,7 +126,6 @@ protected:
   struct NewAddressData {
     Crypto::PublicKey spendPublicKey;
     Crypto::SecretKey spendSecretKey;
-    uint64_t creationTimestamp;
   };
 
   void throwIfNotInitialized() const;
@@ -137,10 +142,15 @@ protected:
   Crypto::chacha8_iv getNextIv() const;
   static void incIv(Crypto::chacha8_iv& iv);
   void incNextIv();
-  void initWithKeys(const std::string& path, const std::string& password, const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey);
-  std::string doCreateAddress(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, uint64_t creationTimestamp);
-  std::vector<std::string> doCreateAddressList(const std::vector<NewAddressData>& addressDataList);
+  void initWithKeys(const std::string& path, const std::string& password, const Crypto::PublicKey& viewPublicKey, const Crypto::SecretKey& viewSecretKey, const uint64_t scanHeight, const bool newAddress);
+  std::string doCreateAddress(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, const uint64_t scanHeight, const bool newAddress);
+  std::vector<std::string> doCreateAddressList(const std::vector<NewAddressData>& addressDataList, const uint64_t scanHeight, const bool newAddress);
 
+  CryptoNote::BlockDetails getBlock(const uint64_t blockHeight);
+
+  uint64_t scanHeightToTimestamp(const uint64_t scanHeight);
+
+  uint64_t getCurrentTimestampAdjusted();
 
   struct InputInfo {
     TransactionTypes::InputKeyInfo keyInfo;
@@ -225,7 +235,7 @@ protected:
   const WalletRecord& getWalletRecord(CryptoNote::ITransfersContainer* container) const;
 
   CryptoNote::AccountPublicAddress parseAddress(const std::string& address) const;
-  std::string addWallet(const Crypto::PublicKey& spendPublicKey, const Crypto::SecretKey& spendSecretKey, uint64_t creationTimestamp);
+  std::string addWallet(const NewAddressData &addressData, uint64_t scanHeight, bool newAddress);
   AccountKeys makeAccountKeys(const WalletRecord& wallet) const;
   size_t getTransactionId(const Crypto::Hash& transactionHash) const;
   void pushEvent(const WalletEvent& event);

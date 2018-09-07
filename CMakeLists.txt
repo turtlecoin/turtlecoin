@@ -16,6 +16,14 @@ set(CMAKE_SKIP_INSTALL_RULES OFF FORCE)
 set(CMAKE_SKIP_PACKAGE_ALL_DEPENDENCY ON FORCE)
 set(CMAKE_SUPPRESS_REGENERATION ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set(FIND_BOOST_VERSION 1.55)
+
+# We need to set the label and import it into CMake if it exists
+set(LABEL "")
+if(DEFINED ENV{LABEL})
+  set(LABEL $ENV{LABEL})
+  message(STATUS "Found LABEL: ${LABEL}")
+endif()
 
 # We do not support 32-bit builds. When and if we do, this can be removed.
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -23,15 +31,10 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 ## We only build static binaries -- this is left here for our dependencies
-set(STATIC ON CACHE BOOL FORCE "Link libraries statically? Forced to ON") 
-set(ENABLE_LINENOISE ON CACHE FORCE BOOL "Enable line editing support (completion & history) support? Forced to ON")
+set(STATIC ON CACHE BOOL FORCE "Link libraries statically? Forced to ON")
 
 # This section helps us set up RocksDB for maximum portability
 set(ENABLE_AVX OFF CACHE STRING "Enable RocksDB AVX/AVX2 support detection? Defaults to OFF")
-
-if(NOT MSVC AND ENABLE_LINENOISE)
-    add_definitions(-DUSE_LINENOISE)
-endif()
 
 ## This section helps us tag our builds with the git commit information
 set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")
@@ -86,7 +89,7 @@ if(NOT MSVC)
     # Since glibc 2.20 _BSD_SOURCE is deprecated, this macro is recomended instead
     add_definitions("-D_DEFAULT_SOURCE -D_GNU_SOURCE")
   endif()
-  
+
   ## This is here to support building for multiple architecture types... but we all know how well that usually goes...
   set(ARCH default CACHE STRING "CPU to build for: -march value or default")
   if("${ARCH}" STREQUAL "default")
@@ -94,7 +97,7 @@ if(NOT MSVC)
   else()
     set(ARCH_FLAG "-march=${ARCH}")
   endif()
-  
+
   ## These options generate all those nice warnings we see while building
   set(WARNINGS "-Wall -Wextra -Wpointer-arith -Wundef -Wvla -Wwrite-strings  -Wno-error=extra -Wno-error=unused-function -Wno-error=deprecated-declarations -Wno-error=sign-compare -Wno-error=strict-aliasing -Wno-error=type-limits -Wno-unused-parameter -Wno-error=unused-variable -Wno-error=undef -Wno-error=uninitialized -Wno-error=unused-result")
   if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
@@ -102,38 +105,37 @@ if(NOT MSVC)
   else()
     set(WARNINGS "${WARNINGS} -Wlogical-op -Wno-error=maybe-uninitialized -Wno-error=clobbered -Wno-error=unused-but-set-variable")
   endif()
-  
+
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 5.1))
     set(WARNINGS "${WARNINGS} -Wno-error=odr")
   endif()
   set(C_WARNINGS "-Waggregate-return -Wnested-externs -Wold-style-definition -Wstrict-prototypes")
   set(CXX_WARNINGS "-Wno-reorder -Wno-missing-field-initializers")
 
-  message(STATUS "Targeting system architecture: ${CMAKE_SYSTEM_PROCESSOR}")
-  if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64") # Need this to build on aarch64 (aka Arm64) - you must have a 64bit ARM CPU.
+  if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64" OR "${LABEL}" STREQUAL "aarch64")
     set(MAES_FLAG "")
-  elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64") # -maes is not supported on some ARM cpus
+  elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64" AND NOT "${LABEL}" STREQUAL "aarch64")
     set(MAES_FLAG "-maes")
   endif()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 ${STATICASSERTC_FLAG} ${WARNINGS} ${C_WARNINGS} ${ARCH_FLAG} ${MAES_FLAG}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${STATICASSERTCPP_FLAG} ${WARNINGS} ${CXX_WARNINGS} ${ARCH_FLAG} ${MAES_FLAG}")
-  
+
   if(APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DGTEST_HAS_TR1_TUPLE=0")
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   endif()
-  
+
   ## Setting up DEBUG flags
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.8))
     set(DEBUG_FLAGS "-g3 -Og -gdwarf-4 -fvar-tracking -fvar-tracking-assignments -fno-inline -fno-omit-frame-pointer")
   else()
     set(DEBUG_FLAGS "-g3 -O0 -fno-omit-frame-pointer")
   endif()
-  
+
   ## Setting up RELEASE flags
   set(RELEASE_FLAGS "-Ofast -DNDEBUG -Wno-unused-variable")
-  
+
   if(NOT APPLE)
     # There is a clang bug that does not allow to compile code that uses AES-NI intrinsics if -flto is enabled
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_NAME STREQUAL "Linux"
@@ -143,13 +145,13 @@ if(NOT MSVC)
       set(CMAKE_RANLIB gcc-ranlib)
     endif()
   endif()
-  
+
   ## Set up the normal CMake flags as we've built them
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${DEBUG_FLAGS}")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEBUG_FLAGS}")
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${RELEASE_FLAGS}")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${RELEASE_FLAGS}")
-  
+
   ## Statically link our binaries
   if(NOT APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++")
@@ -159,7 +161,8 @@ endif()
 ## Go get us some static BOOST libraries
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost 1.55 REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options)
+find_package(Boost ${FIND_BOOST_VERSION} REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options)
+message(STATUS "Boost Found: ${Boost_INCLUDE_DIRS}")
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 if(APPLE)
   set(Boost_LIBRARIES "${Boost_LIBRARIES}")

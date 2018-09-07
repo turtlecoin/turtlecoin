@@ -1,19 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -52,12 +40,6 @@ namespace CryptoNote
     uint32_t send_peerlist_sz;
   };
 
-  enum P2PProtocolVersion : uint8_t {
-    V0 = 0,
-    V1 = 1,
-    CURRENT = V1
-  };
-
   struct basic_node_data
   {
     uuid network_id;
@@ -77,7 +59,7 @@ namespace CryptoNote
       KV_MEMBER(my_port)
     }
   };
-  
+
   struct CORE_SYNC_DATA
   {
     uint32_t current_height;
@@ -114,7 +96,7 @@ namespace CryptoNote
     {
       basic_node_data node_data;
       CORE_SYNC_DATA payload_data;
-      std::list<PeerlistEntry> local_peerlist; 
+      std::list<PeerlistEntry> local_peerlist;
 
       void serialize(ISerializer& s) {
         KV_MEMBER(node_data)
@@ -163,7 +145,7 @@ namespace CryptoNote
   struct COMMAND_PING
   {
     /*
-      Used to make "callback" connection, to be sure that opponent node 
+      Used to make "callback" connection, to be sure that opponent node
       have accessible connection point. Only other nodes can add peer to peerlist,
       and ONLY in case when peer has accepted connection and answered to ping.
     */
@@ -189,9 +171,9 @@ namespace CryptoNote
     };
   };
 
-  
+
 #ifdef ALLOW_DEBUG_COMMANDS
-  //These commands are considered as insecure, and made in debug purposes for a limited lifetime. 
+  //These commands are considered as insecure, and made in debug purposes for a limited lifetime.
   //Anyone who feel unsafe with this commands can disable the ALLOW_GET_STAT_COMMAND macro.
 
   struct proof_of_trust
@@ -226,7 +208,7 @@ namespace CryptoNote
         KV_MEMBER(tr)
       }
     };
-    
+
     struct response
     {
       std::string version;

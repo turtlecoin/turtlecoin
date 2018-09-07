@@ -31,16 +31,7 @@
 #include <sys/select.h>
 #endif
 
-#ifdef USE_LINENOISE
-#include "linenoise.h"
-#include "utf8.h"
-#endif
-
 namespace Common {
-
-  #ifdef USE_LINENOISE
-  static std::vector<std::string> CMDS = {};
-  #endif
 
   class AsyncConsoleReader {
 
@@ -84,11 +75,6 @@ namespace Common {
       void wait(); 
       void pause();
       void unpause();
-      
-      #ifdef USE_LINENOISE
-      void setCommands(std::vector<std::string> cmds);
-      static void completionCallback(const char *buf, linenoiseCompletions *lc);
-      #endif
 
     private:
 
