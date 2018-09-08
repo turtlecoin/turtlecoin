@@ -32,13 +32,53 @@ using json = nlohmann::json;
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
 
-void prependMagicIdentifier(std::string &data, const uint8_t* magicIdentifier,
-                            const size_t magicIdentifierSize)
-{
-    std::string tmp(magicIdentifier, magicIdentifier + magicIdentifierSize);
+/* Anonymous namespace so it doesn't clash with anything else */
+namespace {
 
-    data = tmp + data;
+template <class Iterator, class Buffer>
+WalletError hasMagicIdentifier(Buffer &data, Iterator first, Iterator last,
+                               WalletError tooSmallError,
+                               WalletError wrongIdentifierError)
+{
+    size_t identifierSize = std::distance(first, last);
+
+    /* Check we've got space for the identifier */
+    if (data.size() < identifierSize)
+    {
+        return tooSmallError;
+    }
+
+    for (size_t i = 0; i < identifierSize; i++)
+    {
+        if ((int)data[i] != *(first + i))
+        {
+            return wrongIdentifierError;
+        }
+    }
+
+    /* Remove the identifier from the string */
+    data.erase(data.begin(), data.begin() + identifierSize);
+
+    return SUCCESS;
 }
+
+/* Generates a public address from the given private keys */
+std::string addressFromPrivateKeys(const Crypto::SecretKey &privateSpendKey,
+                                   const Crypto::SecretKey &privateViewKey)
+{
+    Crypto::PublicKey publicSpendKey;
+    Crypto::PublicKey publicViewKey;
+
+    Crypto::secret_key_to_public_key(privateSpendKey, publicSpendKey);
+    Crypto::secret_key_to_public_key(privateViewKey, publicViewKey);
+
+    return CryptoNote::getAccountAddressAsStr(
+        CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
+        { publicSpendKey, publicViewKey }
+    );
+}
+
+} // namespace
 
 /////////////////////
 /* CLASS FUNCTIONS */
@@ -46,9 +86,9 @@ void prependMagicIdentifier(std::string &data, const uint8_t* magicIdentifier,
 
 /* Have to provide definition of the static member in C++11...
    https://stackoverflow.com/a/8016853/8737306 */
-constexpr uint8_t WalletBackend::isAWalletIdentifier[];
+constexpr std::array<uint8_t, 64> WalletBackend::isAWalletIdentifier;
 
-constexpr uint8_t WalletBackend::isCorrectPasswordIdentifier[];
+constexpr std::array<uint8_t, 26> WalletBackend::isCorrectPasswordIdentifier;
 
 /* Imports a wallet from a mnemonic seed. Returns the wallet class,
            or an error. */
@@ -93,8 +133,6 @@ std::tuple<WalletError, WalletBackend> WalletBackend::createWallet(
     const std::string filename, const std::string password,
     const std::string daemonHost, const uint16_t daemonPort)
 {
-    WalletBackend wallet;
-
     CryptoNote::KeyPair spendKey;
     Crypto::SecretKey privateViewKey;
     Crypto::PublicKey publicViewKey;
@@ -110,19 +148,13 @@ std::tuple<WalletError, WalletBackend> WalletBackend::createWallet(
         { spendKey.publicKey, publicViewKey }
     );
 
-    wallet.m_filename = filename;
-    wallet.m_password = password;
+    WalletBackend wallet(filename, password, spendKey.secretKey,
+                         privateViewKey, false);
 
-    wallet.m_privateViewKey = privateViewKey;
-    wallet.m_privateSpendKeys.push_back(spendKey.secretKey);
+    /* Saving can fail */
+    WalletError error = wallet.save();
 
-    wallet.m_addresses.push_back(address);
-
-    wallet.m_isViewWallet = false;
-
-    wallet.save();
-
-    return std::make_tuple(SUCCESS, wallet);
+    return std::make_tuple(error, wallet);
 }
 
 /* Opens a wallet already on disk with the given filename + password */
@@ -131,10 +163,12 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     const std::string daemonHost, const uint16_t daemonPort)
 {
     WalletBackend wallet;
+    WalletError error;
 
     /* Open in binary mode, since we have encrypted data */
     std::ifstream file(filename, std::ios::binary);
 
+    /* Check we successfully opened the file */
     if (!file)
     {
         return std::make_tuple(FILENAME_NON_EXISTENT, wallet);
@@ -144,24 +178,17 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     std::vector<char> buffer((std::istreambuf_iterator<char>(file)),
                              (std::istreambuf_iterator<char>()));
 
-    /* Check the file is large enough for the wallet identifier so we don't
-       go out of bounds */
-    if (buffer.size() < sizeof(isAWalletIdentifier))
-    {
-        return std::make_tuple(NOT_A_WALLET_FILE, wallet);
-    }
+    /* Check that the decrypted data has the 'isAWallet' identifier,
+       and remove it it does. If it doesn't, return an error. */
+    error = hasMagicIdentifier(
+        buffer, isAWalletIdentifier.begin(), isAWalletIdentifier.end(),
+        NOT_A_WALLET_FILE, NOT_A_WALLET_FILE
+    );
 
-    /* Check the file has the correct prefix identifying it as a wallet file */
-    for (size_t i = 0; i < sizeof(isAWalletIdentifier); i++)
+    if (error)
     {
-        if ((int)buffer[i] != isAWalletIdentifier[i])
-        {
-            return std::make_tuple(NOT_A_WALLET_FILE, wallet);
-        }
+        return std::make_tuple(error, wallet);
     }
-
-    /* Remove the prefix, don't need it anymore */
-    buffer.erase(buffer.begin(), buffer.begin() + sizeof(isAWalletIdentifier));
 
     /* The salt we use for both PBKDF2, and AES decryption */
     CryptoPP::byte salt[16];
@@ -188,15 +215,18 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     pbkdf2.DeriveKey(key, sizeof(key), 0, (CryptoPP::byte *)password.data(),
                      password.size(), salt, sizeof(salt), PBKDF2_ITERATIONS);
 
+    /* Intialize aesDecryption with the AES Key */
     CryptoPP::AES::Decryption aesDecryption(key, sizeof(key));
 
+    /* Using CBC encryption, pass in the salt */
     CryptoPP::CBC_Mode_ExternalCipher::Decryption cbcDecryption(
         aesDecryption, salt
     );
 
-    /* This will store the encrypted data */
+    /* This will store the decrypted data */
     std::string decryptedData;
 
+    /* Stream the decrypted data into the decryptedData string */
     CryptoPP::StreamTransformationFilter stfDecryptor(
         cbcDecryption, new CryptoPP::StringSink(decryptedData)
     );
@@ -207,27 +237,21 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
 
     stfDecryptor.MessageEnd();
 
-    /* Check we've got space for the identifier */
-    if (decryptedData.size() < sizeof(isCorrectPasswordIdentifier))
-    {
-        return std::make_tuple(WALLET_FILE_CORRUPTED, wallet);
-    }
+    /* Check that the decrypted data has the 'isCorrectPassword' identifier,
+       and remove it it does. If it doesn't, return an error. */
+    error = hasMagicIdentifier(
+        decryptedData, isCorrectPasswordIdentifier.begin(),
+        isCorrectPasswordIdentifier.end(), WALLET_FILE_CORRUPTED,
+        WRONG_PASSWORD
+    );
 
-    for (size_t i = 0; i < sizeof(isCorrectPasswordIdentifier); i++)
+    if (error)
     {
-        if ((int)decryptedData[i] != isCorrectPasswordIdentifier[i])
-        {
-            return std::make_tuple(WRONG_PASSWORD, wallet);
-        }
+        return std::make_tuple(error, wallet);
     }
-
-    /* Remove the isCorrectPasswordIdentifier from the string */
-    decryptedData.erase(decryptedData.begin(),
-                        decryptedData.begin()
-                      + sizeof(isCorrectPasswordIdentifier));
 
     /* Try and parse the decrypted json */
-    auto error = wallet.fromJson(decryptedData);
+    error = wallet.fromJson(decryptedData);
 
     wallet.m_filename = filename;
     wallet.m_password = password;
@@ -235,6 +259,20 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     return std::make_tuple(error, wallet);
 }
 
+WalletBackend::WalletBackend(std::string filename, std::string password,
+                             Crypto::SecretKey privateSpendKey,
+                             Crypto::SecretKey privateViewKey,
+                             bool isViewWallet) :
+    m_filename(filename),
+    m_password(password),
+    m_privateViewKey(privateViewKey),
+    m_privateSpendKeys({privateSpendKey}),
+    m_isViewWallet(isViewWallet),
+    m_addresses({addressFromPrivateKeys(privateSpendKey, privateViewKey)})
+{
+}
+
+/* Convert the wallet class data to json */
 json WalletBackend::toJson() const
 {
     json j = {
@@ -253,7 +291,8 @@ json WalletBackend::toJson() const
     return j;
 }
 
-WalletError WalletBackend::fromJson(std::string jsonStr)
+/* Populate the wallet class from the given json string */
+WalletError WalletBackend::fromJson(const std::string jsonStr)
 {
     try
     {
@@ -313,13 +352,13 @@ WalletError WalletBackend::fromJson(std::string jsonStr)
 
 WalletError WalletBackend::save() const
 {
-    /* Serialize wallet to json, and get it as a string */
-    std::string walletData = toJson().dump();
-
     /* Add an identifier to the start of the string so we can verify the wallet
        has been correctly decrypted */
-    prependMagicIdentifier(walletData, isCorrectPasswordIdentifier,
-                           sizeof(isCorrectPasswordIdentifier));
+    std::string identiferAsString(isCorrectPasswordIdentifier.begin(),
+                                  isCorrectPasswordIdentifier.end());
+
+    /* Serialize wallet to json, and get it as a string */
+    std::string walletData = identiferAsString + toJson().dump();
 
     /* The key we use for AES encryption, generated with PBKDF2 */
     CryptoPP::byte key[32];
@@ -352,8 +391,10 @@ WalletError WalletBackend::save() const
     );
 
     /* Write the data to the AES stream */
-    stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte *>(walletData.c_str()),
-                     walletData.length());
+    stfEncryptor.Put(
+        reinterpret_cast<const CryptoPP::byte *>(walletData.c_str()),
+        walletData.length()
+    );
 
     stfEncryptor.MessageEnd();
 
@@ -365,9 +406,8 @@ WalletError WalletBackend::save() const
     }
 
     /* Get the isAWalletIdentifier array as a string */
-    std::string walletPrefix = std::string(
-        isAWalletIdentifier, isAWalletIdentifier + sizeof(isAWalletIdentifier)
-    );
+    std::string walletPrefix = std::string(isAWalletIdentifier.begin(),
+                                           isAWalletIdentifier.end());
 
     /* Get the salt array as a string */
     std::string saltString = std::string(salt, salt + sizeof(salt));
