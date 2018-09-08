@@ -1,3 +1,7 @@
+// Copyright (c) 2018, The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
+
 enum WalletError
 {
     /* No error, operation suceeded. */
@@ -21,4 +25,8 @@ enum WalletError
        data does not have the correct prefix indicating the password is
        correct. */
     WRONG_PASSWORD,
+
+    /* The wallet file is using a different version than the version supported
+       by this version of the software. (Also could be potential corruption.) */
+    UNSUPPORTED_WALLET_FILE_FORMAT_VERSION,
 };

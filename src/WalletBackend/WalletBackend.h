@@ -20,8 +20,6 @@
 
 using nlohmann::json;
 
-namespace WBackend {
-
 /* Adds the given magic identifier to the string data */
 void prependMagicIdentifier(std::string &data,
                             const uint8_t* magicIdentifier,
@@ -126,6 +124,8 @@ class WalletBackend
         /* The number of iterations of PBKDF2 to perform on the wallet
            password. */
         static constexpr uint64_t PBKDF2_ITERATIONS = 500000;
-};
 
-} // namespace WalletBackend
+        /* What version of the file format are we on (to make it easier to
+           upgrade the wallet format in the future) */
+        static constexpr uint16_t WALLET_FILE_FORMAT_VERSION = 0;
+};

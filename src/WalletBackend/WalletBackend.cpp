@@ -28,8 +28,6 @@
 
 using json = nlohmann::json;
 
-namespace WBackend {
-
 //////////////////////////
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
@@ -45,6 +43,12 @@ void prependMagicIdentifier(std::string &data, const uint8_t* magicIdentifier,
 /////////////////////
 /* CLASS FUNCTIONS */
 /////////////////////
+
+/* Have to provide definition of the static member in C++11...
+   https://stackoverflow.com/a/8016853/8737306 */
+constexpr uint8_t WalletBackend::isAWalletIdentifier[];
+
+constexpr uint8_t WalletBackend::isCorrectPasswordIdentifier[];
 
 /* Imports a wallet from a mnemonic seed. Returns the wallet class,
            or an error. */
@@ -199,7 +203,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
 
     /* Write the data to the AES decryptor stream */
     stfDecryptor.Put(reinterpret_cast<const CryptoPP::byte *>(buffer.data()),
-                     buffer.size() + 1);
+                     buffer.size());
 
     stfDecryptor.MessageEnd();
 
@@ -234,6 +238,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
 json WalletBackend::toJson() const
 {
     json j = {
+        {"walletFileFormatVersion", WALLET_FILE_FORMAT_VERSION},
         {"privateViewKey", m_privateViewKey.data},
         {"isViewWallet", m_isViewWallet},
         {"addresses", m_addresses},
@@ -254,6 +259,13 @@ WalletError WalletBackend::fromJson(std::string jsonStr)
     {
         json j = json::parse(jsonStr);
 
+        uint16_t version = j.at("walletFileFormatVersion").get<uint16_t>();
+
+        if (version != WALLET_FILE_FORMAT_VERSION)
+        {
+            return UNSUPPORTED_WALLET_FILE_FORMAT_VERSION;
+        }
+
         /* TODO: Is there a way to go directly to a C array from json? */
         auto tmpViewKey = j.at("privateViewKey").get<std::vector<uint8_t>>();
 
@@ -267,7 +279,7 @@ WalletError WalletBackend::fromJson(std::string jsonStr)
 
         /* TODO: Is there a better way to do this? */
         /* Bless me father for I have sinned */
-        auto tmpSpendKeys = j.at("privateSpendKey").get<std::vector<
+        auto tmpSpendKeys = j.at("privateSpendKeys").get<std::vector<
             std::array<uint8_t, sizeof(Crypto::SecretKey::data)>
         >>();
 
@@ -306,8 +318,8 @@ WalletError WalletBackend::save() const
 
     /* Add an identifier to the start of the string so we can verify the wallet
        has been correctly decrypted */
-    prependMagicIdentifier(walletData, isAWalletIdentifier,
-                           sizeof(isAWalletIdentifier));
+    prependMagicIdentifier(walletData, isCorrectPasswordIdentifier,
+                           sizeof(isCorrectPasswordIdentifier));
 
     /* The key we use for AES encryption, generated with PBKDF2 */
     CryptoPP::byte key[32];
@@ -341,7 +353,7 @@ WalletError WalletBackend::save() const
 
     /* Write the data to the AES stream */
     stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte *>(walletData.c_str()),
-                     walletData.length() + 1);
+                     walletData.length());
 
     stfEncryptor.MessageEnd();
 
@@ -373,5 +385,3 @@ WalletError WalletBackend::save() const
 
     return SUCCESS;
 }
-
-} // namespace WalletBackend
