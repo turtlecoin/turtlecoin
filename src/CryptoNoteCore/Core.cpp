@@ -32,6 +32,8 @@
 
 #include "TransactionApi.h"
 
+#include <WalletTypes.h>
+
 using namespace Crypto;
 
 namespace CryptoNote {
@@ -446,6 +448,262 @@ bool Core::queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, ui
     logger(Logging::ERROR) << "Failed to query blocks: " << e.what();
     return false;
   }
+}
+
+/* Known block hashes = The hashes the wallet knows about. We'll give blocks starting from this hash.
+   Timestamp = The timestamp to start giving blocks from, if knownBlockHashes is empty. Used for syncing a new wallet.
+   Blocks = The returned vector of blocks */
+bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes,
+                             uint64_t startHeight, uint64_t startTimestamp,
+                             std::vector<WalletTypes::WalletBlockInfo> &blocks) const
+{
+    throwIfNotInitialized();
+
+    try
+    {
+        IBlockchainCache *mainChain = chainsLeaves[0];
+
+        /* Current height */
+        uint64_t currentIndex = mainChain->getTopBlockIndex();
+
+        /* If a height was given, start from there, else convert the timestamp
+           to a block */
+        uint64_t firstBlockHeight = startHeight == 0 ?
+                                    mainChain->getTimestampLowerBoundBlockIndex(startTimestamp) :
+                                    startHeight;
+
+        /* Start returning either from the start height, or the height of the
+           last block we know about, whichever is higher */
+        uint64_t startIndex = std::max(
+            /* Plus one so we return the next block */
+            static_cast<uint64_t>(findBlockchainSupplement(knownBlockHashes)) + 1,
+            firstBlockHeight
+        );
+
+        blocks = getRequestedWalletBlocks(startIndex, currentIndex);
+
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        logger(Logging::ERROR) << "Failed to get wallet info: " << e.what();
+        return false;
+    }
+}
+
+std::vector<WalletTypes::WalletBlockInfo>
+    Core::getRequestedWalletBlocks(uint64_t startIndex, uint64_t currentIndex) const
+{
+    std::vector<WalletTypes::WalletBlockInfo> blocks;
+
+    /* Difference between the start and end */
+    uint64_t blockDifference = currentIndex - startIndex + 1;
+
+    /* Sync BLOCKS_SYNCHRONIZING_DEFAULT_COUNT or the amount of blocks between
+       start and end, whichever is smaller */
+    uint64_t endIndex = std::min(
+        static_cast<uint64_t>(BLOCKS_SYNCHRONIZING_DEFAULT_COUNT),
+        blockDifference
+    ) + startIndex;
+
+    for (uint64_t blockHeight = startIndex; blockHeight < endIndex; blockHeight++)
+    {
+        IBlockchainCache *segment = findMainChainSegmentContainingBlock(blockHeight);
+        
+        WalletTypes::WalletBlockInfo walletBlock;
+
+        /* The hash of this block */
+        walletBlock.blockHash = segment->getBlockHash(blockHeight);
+
+        /* The height of this block */
+        walletBlock.blockHeight = blockHeight;
+
+        /* Raw block, as a binary array */
+        RawBlock rawBlock = getRawBlock(segment, blockHeight);
+
+        BlockTemplate block;
+
+        /* Convert the raw block to a block template */
+        fromBinaryArray(block, rawBlock.block);
+
+        /* Get the timestamp of the block */
+        walletBlock.blockTimestamp = block.timestamp;
+
+        /* Put the coinbase transaction in the block */
+        walletBlock.coinbaseTransaction = getRawCoinbaseTransaction(
+            block.baseTransaction
+        );
+
+        for (const auto &transaction : rawBlock.transactions)
+        {
+            walletBlock.transactions.push_back(getRawTransaction(transaction));
+        }
+
+        blocks.push_back(walletBlock);
+    }
+
+    return blocks;
+}
+
+WalletTypes::RawCoinbaseTransaction
+    Core::getRawCoinbaseTransaction(const CryptoNote::Transaction t)
+{
+    WalletTypes::RawCoinbaseTransaction transaction;
+
+    transaction.hash = getBinaryArrayHash(toBinaryArray(t));
+
+    /* Ignoring whether it succeeded - it makes no sense for a coinbase
+       transaction to not have a public key */
+    transaction.transactionPublicKey = getPubKeyFromExtra(t.extra);
+
+    /* Fill in the simplified key outputs */
+    for (const auto &output : t.outputs)
+    {
+        WalletTypes::KeyOutput keyOutput;
+
+        keyOutput.amount = output.amount;
+        keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
+
+        transaction.keyOutputs.push_back(keyOutput);
+    }
+
+    return transaction;
+}
+
+WalletTypes::RawTransaction Core::getRawTransaction(const std::vector<uint8_t> rawTX)
+{
+    Transaction t;
+
+    /* Convert the binary array to a transaction */
+    fromBinaryArray(t, rawTX);
+
+    WalletTypes::RawTransaction transaction;
+
+    /* Get the transaction hash from the binary array */
+    transaction.hash = getBinaryArrayHash(rawTX);
+
+    /* Transaction public key, used for decrypting transactions along with
+       private view key */
+    transaction.transactionPublicKey = getPubKeyFromExtra(t.extra);
+
+    /* Get the payment ID if it exists (Empty string if it doesn't) */
+    transaction.paymentID = getPaymentIDFromExtra(t.extra);
+    
+    /* Simplify the outputs */
+    for (const auto &output : t.outputs)
+    {
+        WalletTypes::KeyOutput keyOutput;
+
+        keyOutput.amount = output.amount;
+        keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
+
+        transaction.keyOutputs.push_back(keyOutput);
+    }
+
+    /* Simplify the inputs */
+    for (const auto &input : t.inputs)
+    {
+        transaction.keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
+    }
+
+    return transaction;
+}
+
+/* Public key looks like this
+
+   [...data...] 0x01 [public key] [...data...]
+
+*/
+Crypto::PublicKey Core::getPubKeyFromExtra(std::vector<uint8_t> extra)
+{
+    Crypto::PublicKey publicKey;
+
+    const int pubKeySize = 32;
+
+    for (size_t i = 0; i < extra.size(); i++)
+    {
+        /* If the following data is the transaction public key, this is
+           indicated by the preceding value being 0x01. */
+        if (extra[i] == 0x01)
+        {
+            /* The amount of data remaining in the vector (minus one because
+               we start reading the public key from the next character) */
+            size_t dataRemaining = extra.size() - i - 1;
+
+            /* We need to check that there is enough space following the tag,
+               as someone could just pop a random 0x01 in there and make our
+               code mess up */
+            if (dataRemaining < pubKeySize)
+            {
+                return publicKey;
+            }
+
+            const auto dataBegin = extra.begin() + i + 1;
+            const auto dataEnd = dataBegin + pubKeySize;
+
+            /* Copy the data from the vector to the array */
+            std::copy(dataBegin, dataEnd, std::begin(publicKey.data));
+
+            return publicKey;
+        }
+    }
+
+    /* Couldn't find the tag */
+    return publicKey;
+}
+
+/* Payment ID looks like this (payment ID is stored in extra nonce)
+
+   [...data...] 0x02 [size of extra nonce] 0x00 [payment ID] [...data...]
+
+*/
+std::string Core::getPaymentIDFromExtra(std::vector<uint8_t> extra)
+{
+    const int paymentIDSize = 32;
+
+    for (size_t i = 0; i < extra.size(); i++)
+    {
+        /* Extra nonce tag found */
+        if (extra[i] == 0x02)
+        {
+            /* Skip the extra nonce tag */
+            size_t dataRemaining = extra.size() - i - 1;
+
+            /* Not found, not enough space. We need a +1, since payment ID
+               is stored inside extra nonce, with a special tag for it,
+               and there is a size parameter right after the extra nonce
+               tag */
+            if (dataRemaining < paymentIDSize + 1 + 1)
+            {
+                return std::string();
+            }
+            
+            /* Payment ID in extra nonce */
+            if (extra[i+2] == 0x00)
+            {
+                /* Plus two to skip the two 0x02 0x00 tags and the size value */
+                const auto dataBegin = extra.begin() + i + 3;
+                const auto dataEnd = dataBegin + paymentIDSize;
+
+                Crypto::Hash paymentIDHash;
+
+                /* Copy the payment ID into the hash */
+                std::copy(dataBegin, dataEnd, std::begin(paymentIDHash.data));
+
+                /* Convert to a string */
+                std::string paymentID = Common::podToHex(paymentIDHash);
+
+                /* Convert it to lower case */
+                std::transform(paymentID.begin(), paymentID.end(),
+                               paymentID.begin(), ::tolower);
+
+                return paymentID;
+            }
+        }
+    }
+
+    /* Not found */
+    return std::string();
 }
 
 void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions,
@@ -1437,6 +1695,12 @@ std::error_code Core::validateSemantic(const Transaction& transaction, uint64_t&
 }
 
 uint32_t Core::findBlockchainSupplement(const std::vector<Crypto::Hash>& remoteBlockIds) const {
+  /* Requester doesn't know anything about the chain yet */
+  if (remoteBlockIds.empty())
+  {
+      return 0;
+  }
+
   // TODO: check for genesis blocks match
   for (auto& hash : remoteBlockIds) {
     IBlockchainCache* blockchainSegment = findMainChainSegmentContainingBlock(hash);
@@ -1749,43 +2013,34 @@ RawBlock Core::getRawBlock(IBlockchainCache* segment, uint32_t blockIndex) const
 size_t Core::pushBlockHashes(uint32_t startIndex, uint32_t fullOffset, size_t maxItemsCount,
                              std::vector<BlockShortInfo>& entries) const {
   assert(fullOffset >= startIndex);
-
   uint32_t itemsCount = std::min(fullOffset - startIndex, static_cast<uint32_t>(maxItemsCount));
   if (itemsCount == 0) {
     return 0;
   }
-
   std::vector<Crypto::Hash> blockIds = getBlockHashes(startIndex, itemsCount);
-
   entries.reserve(entries.size() + blockIds.size());
   for (auto& blockHash : blockIds) {
     BlockShortInfo entry;
     entry.blockId = std::move(blockHash);
     entries.emplace_back(std::move(entry));
   }
-
   return blockIds.size();
 }
-
 //TODO: decompose these two methods
 size_t Core::pushBlockHashes(uint32_t startIndex, uint32_t fullOffset, size_t maxItemsCount,
                              std::vector<BlockFullInfo>& entries) const {
   assert(fullOffset >= startIndex);
-
   uint32_t itemsCount = std::min(fullOffset - startIndex, static_cast<uint32_t>(maxItemsCount));
   if (itemsCount == 0) {
     return 0;
   }
-
   std::vector<Crypto::Hash> blockIds = getBlockHashes(startIndex, itemsCount);
-
   entries.reserve(entries.size() + blockIds.size());
   for (auto& blockHash : blockIds) {
     BlockFullInfo entry;
     entry.block_id = std::move(blockHash);
     entries.emplace_back(std::move(entry));
   }
-
   return blockIds.size();
 }
 
@@ -2219,7 +2474,7 @@ TransactionDetails Core::getTransactionDetails(const Crypto::Hash& transactionHa
       outputReferences.reserve(txInToKeyDetails.input.outputIndexes.size());
       std::vector<uint32_t> globalIndexes = relativeOutputOffsetsToAbsolute(txInToKeyDetails.input.outputIndexes);
       ExtractOutputKeysResult result = segment->extractKeyOtputReferences(txInToKeyDetails.input.amount, { globalIndexes.data(), globalIndexes.size() }, outputReferences);
-      if (result == result) {}
+      (void)result;
       assert(result == ExtractOutputKeysResult::SUCCESS);
       assert(txInToKeyDetails.input.outputIndexes.size() == outputReferences.size());
 

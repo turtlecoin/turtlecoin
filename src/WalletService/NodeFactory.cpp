@@ -57,6 +57,11 @@ public:
     callback(std::error_code());
   };
 
+  virtual void getWalletSyncData(std::vector<Crypto::Hash>&& knownblockIds, uint64_t startHeight, uint64_t startTimestamp, std::vector<WalletTypes::WalletBlockInfo>& newBlocks,
+    const Callback& callback) override {
+    callback(std::error_code());
+  };
+
   virtual void getPoolSymmetricDifference(std::vector<Crypto::Hash>&& knownPoolTxIds, Crypto::Hash knownBlockId, bool& isBcActual,
           std::vector<std::unique_ptr<CryptoNote::ITransactionReader>>& newTxs, std::vector<Crypto::Hash>& deletedTxIds, const Callback& callback) override {
     isBcActual = true;

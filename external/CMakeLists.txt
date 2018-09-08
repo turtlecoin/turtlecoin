@@ -4,6 +4,7 @@ set(UPNPC_BUILD_TESTS OFF CACHE BOOL "Build test executables")
 set(WITH_MD_LIBRARY OFF CACHE BOOL "Code Generation for static library")
 
 add_subdirectory(miniupnpc)
+add_subdirectory(cryptopp)
 
 if (DO_TESTS)
   add_subdirectory(gtest)
@@ -12,9 +13,9 @@ endif()
 if(MSVC)
     include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR} ../version)
     add_subdirectory(rocksDB EXCLUDE_FROM_ALL)
-    set_property(TARGET upnpc-static rocksdb PROPERTY FOLDER "external")
+    set_property(TARGET upnpc-static cryptopp-static rocksdb PROPERTY FOLDER "external")
 elseif(NOT MSVC)
-    set_property(TARGET upnpc-static PROPERTY FOLDER "external")
+    set_property(TARGET upnpc-static cryptopp-static PROPERTY FOLDER "external")
     add_custom_target(
        rocksdb
        COMMAND $(MAKE) rocksdb

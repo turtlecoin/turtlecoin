@@ -5,10 +5,14 @@
 
 #pragma once
 
-#include "CachedTransaction.h"
-#include "TransactionApi.h"
-#include "Wallet/WalletErrors.h"
+#include <Common/StringTools.h>
+
 #include <config/CryptoNoteConfig.h>
+
+#include <CryptoNoteCore/CachedTransaction.h>
+#include <CryptoNoteCore/TransactionApi.h>
+
+#include <Wallet/WalletErrors.h>
 
 namespace CryptoNote
 {
@@ -126,13 +130,13 @@ namespace CryptoNote
         std::stringstream str;
 
         if (mixin > maxMixin) {
-          str << "Transaction " << transaction.getTransactionHash()
+          str << "Transaction " << Common::podToHex(transaction.getTransactionHash())
             << " is not valid. Reason: transaction mixin is too large (" << mixin
             << "). Maximum mixin allowed is " << maxMixin;
 
           return std::make_tuple(false, str.str());
         } else if (mixin < minMixin) {
-          str << "Transaction " << transaction.getTransactionHash()
+          str << "Transaction " << Common::podToHex(transaction.getTransactionHash())
             << " is not valid. Reason: transaction mixin is too small (" << mixin
             << "). Minimum mixin allowed is " << minMixin;
 
@@ -140,6 +144,26 @@ namespace CryptoNote
         }
 
         return std::make_tuple(true, std::string());
+      }
+
+      static uint64_t getDefaultMixin(const uint64_t height)
+      {
+          if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
+          {
+              return CryptoNote::parameters::DEFAULT_MIXIN_V3;
+          }
+          if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
+          {
+              return CryptoNote::parameters::DEFAULT_MIXIN_V2;
+          }
+          else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
+          {
+              return CryptoNote::parameters::DEFAULT_MIXIN_V1;
+          }
+          else
+          {
+              return CryptoNote::parameters::DEFAULT_MIXIN_V0;
+          }
       }
   };
 }

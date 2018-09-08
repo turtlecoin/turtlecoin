@@ -16,9 +16,9 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 option (UPNPC_BUILD_STATIC "Build static library" TRUE)
-option (UPNPC_BUILD_SHARED "Build shared library" TRUE)
+option (UPNPC_BUILD_SHARED "Build shared library" FALSE)
 if (NOT WIN32)
-  option (UPNPC_BUILD_TESTS "Build test executables" TRUE)
+  option (UPNPC_BUILD_TESTS "Build test executables" FALSE)
 endif (NOT WIN32)
 option (NO_GETADDRINFO "Define NO_GETADDRINFO" FALSE)
 

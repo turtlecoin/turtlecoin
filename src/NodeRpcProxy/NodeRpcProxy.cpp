@@ -464,6 +464,18 @@ void NodeRpcProxy::queryBlocks(std::vector<Crypto::Hash>&& knownBlockIds, uint64
           std::ref(newBlocks), std::ref(startHeight)), callback);
 }
 
+void NodeRpcProxy::getWalletSyncData(std::vector<Crypto::Hash>&& knownBlockIds, uint64_t startHeight, uint64_t startTimestamp, std::vector<WalletTypes::WalletBlockInfo>& newBlocks,
+  const Callback& callback) {
+  std::lock_guard<std::mutex> lock(m_mutex);
+  if (m_state != STATE_INITIALIZED) {
+    callback(make_error_code(error::NOT_INITIALIZED));
+    return;
+  }
+
+  scheduleRequest(std::bind(&NodeRpcProxy::doGetWalletSyncData, this, std::move(knownBlockIds), startHeight, startTimestamp, std::ref(newBlocks)), callback);
+}
+
+
 void NodeRpcProxy::getPoolSymmetricDifference(std::vector<Crypto::Hash>&& knownPoolTxIds, Crypto::Hash knownBlockId, bool& isBcActual,
         std::vector<std::unique_ptr<ITransactionReader>>& newTxs, std::vector<Crypto::Hash>& deletedTxIds, const Callback& callback) {
   std::lock_guard<std::mutex> lock(m_mutex);
@@ -645,6 +657,32 @@ std::error_code NodeRpcProxy::doQueryBlocksLite(const std::vector<Crypto::Hash>&
 
   return std::error_code();
 }
+
+std::error_code NodeRpcProxy::doGetWalletSyncData(const std::vector<Crypto::Hash>& knownBlockIds, uint64_t startHeight, uint64_t startTimestamp, std::vector<WalletTypes::WalletBlockInfo>& newBlocks) {
+
+  CryptoNote::COMMAND_RPC_GET_WALLET_SYNC_DATA::request req = AUTO_VAL_INIT(req);
+  CryptoNote::COMMAND_RPC_GET_WALLET_SYNC_DATA::response rsp = AUTO_VAL_INIT(rsp);
+
+  req.blockIds = knownBlockIds;
+  req.startHeight = startHeight;
+  req.startTimestamp = startTimestamp;
+
+  m_logger(TRACE) << "Send getwalletsyncdata request, start timestamp: " << req.startTimestamp
+                  << ", start height: " << req.startHeight;
+
+  std::error_code ec = jsonCommand("/getwalletsyncdata", req, rsp);
+  if (ec) {
+    m_logger(TRACE) << "getwalletsyncdata failed: " << ec << ", " << ec.message();
+    return ec;
+  }
+
+  m_logger(TRACE) << "queryblockslite complete, block count " << rsp.items.size();
+
+  newBlocks = rsp.items;
+
+  return std::error_code();
+}
+
 
 std::error_code NodeRpcProxy::doGetPoolSymmetricDifference(std::vector<Crypto::Hash>&& knownPoolTxIds, Crypto::Hash knownBlockId, bool& isBcActual,
         std::vector<std::unique_ptr<ITransactionReader>>& newTxs, std::vector<Crypto::Hash>& deletedTxIds) {

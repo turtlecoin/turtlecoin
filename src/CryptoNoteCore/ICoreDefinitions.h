@@ -20,7 +20,7 @@
 #include <vector>
 #include <CryptoNote.h>
 #include <CryptoTypes.h>
-//#include <Serialization/ISerializer.h>
+#include <WalletTypes.h>
 
 namespace CryptoNote {
 
@@ -42,5 +42,10 @@ struct BlockShortInfo {
 void serialize(BlockFullInfo&, ISerializer&);
 void serialize(TransactionPrefixInfo&, ISerializer&);
 void serialize(BlockShortInfo&, ISerializer&);
+
+void serialize(WalletTypes::WalletBlockInfo &walletBlockInfo, ISerializer &s);
+void serialize(WalletTypes::RawTransaction &rawTransaction, ISerializer &s);
+void serialize(WalletTypes::RawCoinbaseTransaction &rawCoinbaseTransaction, ISerializer &s);
+void serialize(WalletTypes::KeyOutput &keyOutput, ISerializer &s);
 
 }
