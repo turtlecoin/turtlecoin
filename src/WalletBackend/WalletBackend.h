@@ -79,7 +79,8 @@ class WalletBackend
         WalletBackend(std::string filename, std::string password,
                       Crypto::SecretKey privateSpendKey,
                       Crypto::SecretKey privateViewKey, bool isViewWallet,
-                      uint64_t scanHeight, bool newWallet);
+                      uint64_t scanHeight, bool newWallet,
+                      std::string daemonHost, uint16_t daemonPort);
 
         /* The filename the wallet is saved to */
         std::string m_filename;

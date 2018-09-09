@@ -82,6 +82,23 @@ std::string addressFromPrivateKeys(const Crypto::SecretKey &privateSpendKey,
     );
 }
 
+WalletError checkNewWalletFilename(std::string filename)
+{
+    /* Check the file doesn't exist */
+    if (std::ifstream(filename))
+    {
+        return WALLET_FILE_ALREADY_EXISTS;
+    }
+
+    /* Check we can open the file */
+    if (!std::ofstream(filename))
+    {
+        return INVALID_WALLET_FILENAME;
+    }
+    
+    return SUCCESS;
+}
+
 } // namespace
 
 /////////////////////
@@ -103,24 +120,43 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
 {
     WalletBackend wallet;
 
-    std::string error;
+    /* Check the filename is valid */
+    WalletError error = checkNewWalletFilename(filename);
+
+    if (error)
+    {
+        return std::make_tuple(error, wallet);
+    }
+
+    std::string mnemonicError;
 
     Crypto::SecretKey privateSpendKey;
-    Crypto::SecretKey privateViewKey;
-    
+
     /* Convert the mnemonic into a private spend key */
-    std::tie(error, privateSpendKey)
+    std::tie(mnemonicError, privateSpendKey)
         = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
 
     /* TODO: Return a more informative error */
-    if (!error.empty())
+    if (!mnemonicError.empty())
     {
         return std::make_tuple(INVALID_MNEMONIC, wallet);
     }
 
+    Crypto::SecretKey privateViewKey;
+
     /* Derive the private view key from the private spend key */
     CryptoNote::AccountBase::generateViewFromSpend(privateSpendKey,
                                                    privateViewKey);
+
+    /* Just defining here so it's more obvious what we're doing in the
+       constructor */
+    bool newWallet = false;
+    bool isViewWallet = false;
+
+    wallet = WalletBackend(
+        filename, password, privateSpendKey, privateViewKey, isViewWallet,
+        scanHeight, newWallet, daemonHost, daemonPort
+    );
 
     return std::make_tuple(SUCCESS, wallet);
 }
@@ -135,6 +171,14 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromKeys(
 {
     WalletBackend wallet;
 
+    /* Check the filename is valid */
+    WalletError error = checkNewWalletFilename(filename);
+
+    if (error)
+    {
+        return std::make_tuple(error, wallet);
+    }
+
     return std::make_tuple(SUCCESS, wallet);
 }
 
@@ -148,6 +192,14 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importViewWallet(
 {
     WalletBackend wallet;
 
+    /* Check the filename is valid */
+    WalletError error = checkNewWalletFilename(filename);
+
+    if (error)
+    {
+        return std::make_tuple(error, wallet);
+    }
+
     return std::make_tuple(SUCCESS, wallet);
 }
 
@@ -156,28 +208,40 @@ std::tuple<WalletError, WalletBackend> WalletBackend::createWallet(
     const std::string filename, const std::string password,
     const std::string daemonHost, const uint16_t daemonPort)
 {
+    WalletBackend wallet;
+
+    /* Check the filename is valid */
+    WalletError error = checkNewWalletFilename(filename);
+
+    if (error)
+    {
+        return std::make_tuple(error, wallet);
+    }
+    
     CryptoNote::KeyPair spendKey;
     Crypto::SecretKey privateViewKey;
     Crypto::PublicKey publicViewKey;
 
+    /* Generate a spend key */
     Crypto::generate_keys(spendKey.publicKey, spendKey.secretKey);
 
-    CryptoNote::AccountBase::generateViewFromSpend(spendKey.secretKey,
-                                                   privateViewKey,
-                                                   publicViewKey);
-
-    std::string address = CryptoNote::getAccountAddressAsStr(
-        CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
-        { spendKey.publicKey, publicViewKey }
+    /* Derive the view key from the spend key */
+    CryptoNote::AccountBase::generateViewFromSpend(
+        spendKey.secretKey, privateViewKey, publicViewKey
     );
 
-    WalletBackend wallet(filename, password, spendKey.secretKey,
-                         privateViewKey, false, 0, true);
+    /* Just defining here so it's more obvious what we're doing in the
+       constructor */
+    bool newWallet = true;
+    bool isViewWallet = false;
+    uint64_t scanHeight = 0;
 
-    /* Saving can fail */
-    WalletError error = wallet.save();
+    wallet = WalletBackend(
+        filename, password, spendKey.secretKey, privateViewKey, isViewWallet,
+        scanHeight, newWallet, daemonHost, daemonPort
+    );
 
-    return std::make_tuple(error, wallet);
+    return std::make_tuple(SUCCESS, wallet);
 }
 
 /* Opens a wallet already on disk with the given filename + password */
@@ -285,7 +349,8 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
                              Crypto::SecretKey privateSpendKey,
                              Crypto::SecretKey privateViewKey,
                              bool isViewWallet, uint64_t scanHeight,
-                             bool newWallet) :
+                             bool newWallet, std::string daemonHost,
+                             uint16_t daemonPort) :
     m_filename(filename),
     m_password(password),
     m_privateViewKey(privateViewKey),
@@ -299,6 +364,14 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
 
     /* Add to the subwallet map */
     m_subWallets[address] = s;
+
+    /* Save to disk */
+    WalletError error = save();
+
+    if (error)
+    {
+        throw std::invalid_argument("Failed to save wallet to disk!");
+    }
 }
 
 WalletError WalletBackend::save() const
@@ -356,7 +429,7 @@ WalletError WalletBackend::save() const
 
     if (!file)
     {
-        return FAILED_TO_SAVE_WALLET;
+        return INVALID_WALLET_FILENAME;
     }
 
     /* Get the isAWalletIdentifier array as a string */

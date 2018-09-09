@@ -13,8 +13,9 @@ enum WalletError
        permission to view it */
     FILENAME_NON_EXISTENT = 1,
 
-    /* The output filename was unable to be opened for saving */
-    FAILED_TO_SAVE_WALLET,
+    /* The output filename was unable to be opened for saving, probably due
+       to invalid characters */
+    INVALID_WALLET_FILENAME,
 
     /* The wallet does not have the wallet identifier prefix */
     NOT_A_WALLET_FILE,
@@ -35,4 +36,7 @@ enum WalletError
     /* The mnemonic seed is invalid for some reason, for example, it has the
        wrong length, or an invalid checksum */
     INVALID_MNEMONIC,
+
+    /* Trying to create a wallet file which already exists */
+    WALLET_FILE_ALREADY_EXISTS,
 };
