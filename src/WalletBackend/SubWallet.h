@@ -6,6 +6,9 @@
 
 #include "CryptoTypes.h"
 
+/* TODO: Kill IWallet.h */
+#include "IWallet.h"
+
 #include "json.hpp"
 
 #include <string>
@@ -41,4 +44,7 @@ class SubWallet
 
         /* The timestamp this wallet was created at */
         uint64_t m_creationTimestamp = 0;
+
+        /* TODO: Trim down WalletTransaction to be a tad more concise */
+        std::vector<CryptoNote::WalletTransaction> m_transactions;
 };

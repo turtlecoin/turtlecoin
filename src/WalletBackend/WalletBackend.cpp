@@ -109,7 +109,8 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
     Crypto::SecretKey privateViewKey;
     
     /* Convert the mnemonic into a private spend key */
-    std::tie(error, privateSpendKey) = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
+    std::tie(error, privateSpendKey)
+        = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
 
     /* TODO: Return a more informative error */
     if (!error.empty())
@@ -171,7 +172,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::createWallet(
     );
 
     WalletBackend wallet(filename, password, spendKey.secretKey,
-                         privateViewKey, false);
+                         privateViewKey, false, 0, true);
 
     /* Saving can fail */
     WalletError error = wallet.save();
@@ -283,12 +284,21 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
 WalletBackend::WalletBackend(std::string filename, std::string password,
                              Crypto::SecretKey privateSpendKey,
                              Crypto::SecretKey privateViewKey,
-                             bool isViewWallet) :
+                             bool isViewWallet, uint64_t scanHeight,
+                             bool newWallet) :
     m_filename(filename),
     m_password(password),
     m_privateViewKey(privateViewKey),
     m_isViewWallet(isViewWallet)
 {
+    std::string address = addressFromPrivateKeys(privateSpendKey,
+                                                 privateViewKey);
+
+    /* Create the sub wallet */
+    SubWallet s(privateSpendKey, address, scanHeight, newWallet);
+
+    /* Add to the subwallet map */
+    m_subWallets[address] = s;
 }
 
 WalletError WalletBackend::save() const

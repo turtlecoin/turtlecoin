@@ -25,6 +25,8 @@ void from_json(const json &j, SubWallet &s)
     s.fromJson(j);
 }
 
+/* We use member functions so we can access the private variables, and the
+   functions above are defined so json() can auto convert between types */
 json SubWallet::toJson() const
 {
     return
@@ -33,6 +35,7 @@ json SubWallet::toJson() const
         {"address", m_address},
         {"scanHeight", m_scanHeight},
         {"creationTimestamp", m_creationTimestamp},
+        {"transactions", m_transactions},
     };
 }
 
@@ -42,6 +45,7 @@ void SubWallet::fromJson(const json &j)
     m_address = j.at("address").get<std::string>();
     m_scanHeight = j.at("scanHeight").get<uint64_t>();
     m_creationTimestamp = j.at("creationTimestamp").get<uint64_t>();
+    m_transactions = j.at("transactions").get<std::vector<CryptoNote::WalletTransaction>>();
 }
 
 ///////////////////
@@ -88,30 +92,62 @@ void WalletBackend::fromJson(const json &j)
     m_isViewWallet = j.at("isViewWallet").get<bool>();
 }
 
-///////////////////////
-/* Crypto::SecretKey */
-///////////////////////
-
 /* Declaration of to_json and from_json have to be in the same namespace as
    the type itself was declared in */
 namespace Crypto
 {
+    ///////////////////////
+    /* Crypto::SecretKey */
+    ///////////////////////
 
-void to_json(json &j, const Crypto::SecretKey &s)
-{
-    j = json{
-        {"secretKey", s.data}
-    };
-}
-
-void from_json(const json &j, Crypto::SecretKey &s)
-{
-    auto data = j.at("secretKey").get<std::array<uint8_t, sizeof(Crypto::SecretKey::data)>>();
-
-    for (size_t i = 0; i < data.size(); i++)
+    void to_json(json &j, const SecretKey &s)
     {
-        s.data[i] = data[i];
+        hashToJson(j, s, "secretKey");
+    }
+
+    void from_json(const json &j, SecretKey &s)
+    {
+        jsonToHash(j, s, "secretKey");
+    }
+
+    //////////////////
+    /* Crypto::Hash */
+    //////////////////
+
+    void to_json(json &j, const Hash &h)
+    {
+        hashToJson(j, h, "hash");
+    }
+
+    void from_json(const json &j, Hash &h)
+    {
+        jsonToHash(j, h, "hash");
     }
 }
 
+///////////////////////////////
+/* CryptoNote::WalletTransaction */
+///////////////////////////////
+
+namespace CryptoNote
+{
+    void to_json(json &j, const WalletTransaction &t)
+    {
+        j = json {
+            {"timestamp", t.timestamp},
+            {"blockHeight", t.blockHeight},
+            {"hash", t.hash},
+            {"totalAmount", t.totalAmount},
+            {"fee", t.fee},
+        };
+    }
+
+    void from_json(const json &j, WalletTransaction &t)
+    {
+        t.timestamp = j.at("timestamp").get<uint64_t>();
+        t.blockHeight = j.at("blockHeight").get<uint32_t>();
+        t.hash = j.at("hash").get<Crypto::Hash>();
+        t.totalAmount = j.at("totalAmount").get<int64_t>();
+        t.fee = j.at("fee").get<uint64_t>();
+    }
 }
