@@ -39,6 +39,8 @@ using json = nlohmann::json;
 /* Anonymous namespace so it doesn't clash with anything else */
 namespace {
 
+/* Check data has the magic indicator from first : last, and remove it if
+   it does. Else, return an error depending on where we failed */
 template <class Iterator, class Buffer>
 WalletError hasMagicIdentifier(Buffer &data, Iterator first, Iterator last,
                                WalletError tooSmallError,
@@ -82,6 +84,7 @@ std::string addressFromPrivateKeys(const Crypto::SecretKey &privateSpendKey,
     );
 }
 
+/* Check the wallet filename for the new wallet to be created is valid */
 WalletError checkNewWalletFilename(std::string filename)
 {
     /* Check the file doesn't exist */
@@ -179,11 +182,22 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromKeys(
         return std::make_tuple(error, wallet);
     }
 
+    /* Just defining here so it's more obvious what we're doing in the
+       constructor */
+    bool newWallet = false;
+    bool isViewWallet = false;
+
+    wallet = WalletBackend(
+        filename, password, privateSpendKey, privateViewKey, isViewWallet,
+        scanHeight, newWallet, daemonHost, daemonPort
+    );
+
     return std::make_tuple(SUCCESS, wallet);
 }
 
 /* Imports a view wallet from a private view key and an address.
    Returns the wallet class, or an error. */
+/* TODO: What do we need the address parameter for / or how do we use it? */
 std::tuple<WalletError, WalletBackend> WalletBackend::importViewWallet(
     const Crypto::SecretKey privateViewKey, const std::string address,
     const std::string filename, const std::string password,
@@ -199,6 +213,16 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importViewWallet(
     {
         return std::make_tuple(error, wallet);
     }
+
+    /* Just defining here so it's more obvious what we're doing in the
+       constructor */
+    bool newWallet = false;
+    bool isViewWallet = true;
+
+    wallet = WalletBackend(
+        filename, password, CryptoNote::NULL_SECRET_KEY, privateViewKey,
+        isViewWallet, scanHeight, newWallet, daemonHost, daemonPort
+    );
 
     return std::make_tuple(SUCCESS, wallet);
 }
