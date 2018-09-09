@@ -26,6 +26,10 @@
 
 #include "json.hpp"
 
+#include <Mnemonics/Mnemonics.h>
+
+#include <WalletBackend/JsonSerialization.h>
+
 using json = nlohmann::json;
 
 //////////////////////////
@@ -98,6 +102,24 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
     const std::string daemonHost, const uint16_t daemonPort)
 {
     WalletBackend wallet;
+
+    std::string error;
+
+    Crypto::SecretKey privateSpendKey;
+    Crypto::SecretKey privateViewKey;
+    
+    /* Convert the mnemonic into a private spend key */
+    std::tie(error, privateSpendKey) = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
+
+    /* TODO: Return a more informative error */
+    if (!error.empty())
+    {
+        return std::make_tuple(INVALID_MNEMONIC, wallet);
+    }
+
+    /* Derive the private view key from the private spend key */
+    CryptoNote::AccountBase::generateViewFromSpend(privateSpendKey,
+                                                   privateViewKey);
 
     return std::make_tuple(SUCCESS, wallet);
 }
@@ -250,8 +272,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
         return std::make_tuple(error, wallet);
     }
 
-    /* Try and parse the decrypted json */
-    error = wallet.fromJson(decryptedData);
+    wallet = json::parse(decryptedData);
 
     wallet.m_filename = filename;
     wallet.m_password = password;
@@ -266,88 +287,8 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
     m_filename(filename),
     m_password(password),
     m_privateViewKey(privateViewKey),
-    m_privateSpendKeys({privateSpendKey}),
-    m_isViewWallet(isViewWallet),
-    m_addresses({addressFromPrivateKeys(privateSpendKey, privateViewKey)})
+    m_isViewWallet(isViewWallet)
 {
-}
-
-/* Convert the wallet class data to json */
-json WalletBackend::toJson() const
-{
-    json j = {
-        {"walletFileFormatVersion", WALLET_FILE_FORMAT_VERSION},
-        {"privateViewKey", m_privateViewKey.data},
-        {"isViewWallet", m_isViewWallet},
-        {"addresses", m_addresses},
-        {"privateSpendKeys", json::array()},
-    };
-
-    for (const auto &key : m_privateSpendKeys)
-    {
-        j["privateSpendKeys"].push_back(key.data);
-    }
-
-    return j;
-}
-
-/* Populate the wallet class from the given json string */
-WalletError WalletBackend::fromJson(const std::string jsonStr)
-{
-    try
-    {
-        json j = json::parse(jsonStr);
-
-        uint16_t version = j.at("walletFileFormatVersion").get<uint16_t>();
-
-        if (version != WALLET_FILE_FORMAT_VERSION)
-        {
-            return UNSUPPORTED_WALLET_FILE_FORMAT_VERSION;
-        }
-
-        /* TODO: Is there a way to go directly to a C array from json? */
-        auto tmpViewKey = j.at("privateViewKey").get<std::vector<uint8_t>>();
-
-        for (size_t i = 0; i < tmpViewKey.size(); i++)
-        {
-            m_privateViewKey.data[i] = tmpViewKey[i];
-        }
-
-        m_isViewWallet = j.at("isViewWallet").get<bool>();
-        m_addresses = j.at("addresses").get<std::vector<std::string>>();
-
-        /* TODO: Is there a better way to do this? */
-        /* Bless me father for I have sinned */
-        auto tmpSpendKeys = j.at("privateSpendKeys").get<std::vector<
-            std::array<uint8_t, sizeof(Crypto::SecretKey::data)>
-        >>();
-
-        for (const auto &key : tmpSpendKeys)
-        {
-            Crypto::SecretKey tmp;
-
-            for (size_t i = 0; i < key.size(); i++)
-            {
-                tmp.data[i] = key[i];
-            }
-
-            m_privateSpendKeys.push_back(tmp);
-        }
-    }
-    catch (const json::type_error &e)
-    {
-        return WALLET_FILE_CORRUPTED;
-    }
-    catch (const json::out_of_range &e)
-    {
-        return WALLET_FILE_CORRUPTED;
-    }
-    catch (const json::parse_error &e)
-    {
-        return WALLET_FILE_CORRUPTED;
-    }
-
-    return SUCCESS;
 }
 
 WalletError WalletBackend::save() const
@@ -357,8 +298,11 @@ WalletError WalletBackend::save() const
     std::string identiferAsString(isCorrectPasswordIdentifier.begin(),
                                   isCorrectPasswordIdentifier.end());
 
-    /* Serialize wallet to json, and get it as a string */
-    std::string walletData = identiferAsString + toJson().dump();
+    /* Serialize wallet to json */
+    json walletJson = *this;
+
+    /* Add magic identifier, and get json as a string */
+    std::string walletData = identiferAsString + walletJson.dump();
 
     /* The key we use for AES encryption, generated with PBKDF2 */
     CryptoPP::byte key[32];

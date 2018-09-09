@@ -2,6 +2,8 @@
 // 
 // Please see the included LICENSE file for more information.
 
+#pragma once
+
 enum WalletError
 {
     /* No error, operation suceeded. */
@@ -29,4 +31,8 @@ enum WalletError
     /* The wallet file is using a different version than the version supported
        by this version of the software. (Also could be potential corruption.) */
     UNSUPPORTED_WALLET_FILE_FORMAT_VERSION,
+
+    /* The mnemonic seed is invalid for some reason, for example, it has the
+       wrong length, or an invalid checksum */
+    INVALID_MNEMONIC,
 };

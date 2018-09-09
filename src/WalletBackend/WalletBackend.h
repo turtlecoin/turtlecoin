@@ -16,6 +16,7 @@
 
 #include <vector>
 
+#include <WalletBackend/SubWallet.h>
 #include <WalletBackend/WalletErrors.h>
 
 using nlohmann::json;
@@ -23,6 +24,11 @@ using nlohmann::json;
 class WalletBackend
 {
     public:
+        /* Very heavily suggested to not call this directly. Call one of the
+           below functions to correctly initialize a wallet. This is left
+           public so the json serialization works correctly. */
+        WalletBackend() {};
+
         /* Imports a wallet from a mnemonic seed. Returns the wallet class,
            or an error. */
         static std::tuple<WalletError, WalletBackend> importWalletFromSeed(
@@ -63,16 +69,16 @@ class WalletBackend
 
         WalletError save() const;
 
-    private:
-        WalletBackend() {};
+        /* Converts the class to a json object */
+        json toJson() const;
 
+        /* Initializes the class from a json string */
+        void fromJson(const json &j);
+
+    private:
         WalletBackend(std::string filename, std::string password,
                       Crypto::SecretKey privateSpendKey,
                       Crypto::SecretKey privateViewKey, bool isViewWallet);
-
-        json toJson() const;
-
-        WalletError fromJson(const std::string jsonStr);
 
         /* The filename the wallet is saved to */
         std::string m_filename;
@@ -80,15 +86,11 @@ class WalletBackend
         /* The password the wallet is encrypted with */
         std::string m_password;
 
-        /* Each wallet has one shared private view key */
+        /* Each subwallet shares one private view key */
         Crypto::SecretKey m_privateViewKey;
 
-        /* Each individual wallet has a separate private spend key */
-        std::vector<Crypto::SecretKey> m_privateSpendKeys;
-
-        /* Each wallet address is a combo of the shared private view key, and
-           the individual private spend key */
-        std::vector<std::string> m_addresses;
+        /* A mapping of addresses to sub wallets */
+        std::unordered_map<std::string, SubWallet> m_subWallets;
 
         /* A view wallet has a private view key, and a single address */
         bool m_isViewWallet;
