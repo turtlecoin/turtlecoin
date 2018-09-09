@@ -250,7 +250,6 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     const std::string daemonHost, const uint16_t daemonPort)
 {
     WalletBackend wallet;
-    WalletError error;
 
     /* Open in binary mode, since we have encrypted data */
     std::ifstream file(filename, std::ios::binary);
@@ -267,7 +266,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
 
     /* Check that the decrypted data has the 'isAWallet' identifier,
        and remove it it does. If it doesn't, return an error. */
-    error = hasMagicIdentifier(
+    WalletError error = hasMagicIdentifier(
         buffer, isAWalletIdentifier.begin(), isAWalletIdentifier.end(),
         NOT_A_WALLET_FILE, NOT_A_WALLET_FILE
     );

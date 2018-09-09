@@ -23,11 +23,13 @@ int main()
     std::string walletName = "test.wallet";
     std::string walletPass = "password";
     std::string daemonHost = "127.0.0.1";
+    std::string seed = "biggest yields peeled pawnshop godfather likewise hickory queen exit trying buying island wagtail vitals lucky theatrics dewdrop licks update pivot digit foes ensign estate queen";
+
     uint16_t daemonPort = 11898;
 
     std::tuple<WalletError, WalletBackend> maybeWallet
         = read ? WalletBackend::openWallet(walletName, walletPass, daemonHost, daemonPort)
-               : WalletBackend::createWallet(walletName, walletPass, daemonHost, daemonPort);
+               : WalletBackend::importWalletFromSeed(seed, walletName, walletPass, 0, daemonHost, daemonPort);
 
     WalletError error = std::get<0>(maybeWallet);
     WalletBackend wallet = std::get<1>(maybeWallet);
