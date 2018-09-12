@@ -92,7 +92,7 @@ target_link_libraries(CryptoNoteCore Common Crypto Logging Serialization)
 target_link_libraries(P2P CryptoNoteCore Logging ${Boost_LIBRARIES} upnpc-static)
 target_link_libraries(Rpc CryptoNoteCore Logging P2P)
 target_link_libraries(WalletService Mnemonics)
-target_link_libraries(WalletBackend Crypto CryptoNoteCore Mnemonics ${CRYPTOPP_LIBRARIES})
+
 if(MSVC)
 	target_link_libraries(TurtleCoind P2P Rpc Serialization System Http Logging CryptoNoteCore Crypto Common rocksdb ${Boost_LIBRARIES} )
 else()
@@ -100,10 +100,11 @@ else()
 endif()
 
 target_link_libraries(zedwallet Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${Boost_LIBRARIES})
-target_link_libraries(zedwallet2 WalletBackend)
 target_link_libraries(service WalletService JsonRpcServer Wallet NodeRpcProxy Transfers CryptoNoteCore Crypto Rpc Http System Logging Common ${Boost_LIBRARIES})
 target_link_libraries(Wallet NodeRpcProxy Transfers Rpc P2P upnpc-static Http Serialization CryptoNoteCore System Logging Common Crypto ${Boost_LIBRARIES})
 target_link_libraries(miner CryptoNoteCore Rpc Serialization System Http Logging Common Crypto ${Boost_LIBRARIES})
+target_link_libraries(WalletBackend Mnemonics Wallet NodeRpcProxy Transfers Rpc Http CryptoNoteCore System Logging Common ${Boost_LIBRARIES} ${CRYPTOPP_LIBRARIES})
+target_link_libraries(zedwallet2 WalletBackend)
 
 # Add dependencies means we have to build the latter before we build the former
 # In this case it's because we need to have the current version name rather

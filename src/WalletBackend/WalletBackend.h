@@ -8,6 +8,8 @@
 
 #include "json.hpp"
 
+#include <Logging/LoggerManager.h>
+
 #include <NodeRpcProxy/NodeRpcProxy.h>
 
 #include <string>
@@ -27,7 +29,7 @@ class WalletBackend
         /* Very heavily suggested to not call this directly. Call one of the
            below functions to correctly initialize a wallet. This is left
            public so the json serialization works correctly. */
-        WalletBackend() {};
+        WalletBackend();
 
         /* Imports a wallet from a mnemonic seed. Returns the wallet class,
            or an error. */
@@ -82,6 +84,13 @@ class WalletBackend
                       uint64_t scanHeight, bool newWallet,
                       std::string daemonHost, uint16_t daemonPort);
 
+        WalletError initDaemon();
+
+        WalletError initializeAfterLoad(std::string filename,
+                                        std::string password,
+                                        std::string daemonHost,
+                                        uint16_t daemonPort);
+
         /* The filename the wallet is saved to */
         std::string m_filename;
 
@@ -99,6 +108,14 @@ class WalletBackend
 
         /* The daemon connection */
         std::shared_ptr<CryptoNote::NodeRpcProxy> m_daemon;
+
+        /* The log manager */
+        std::shared_ptr<Logging::LoggerManager> m_logManager;
+
+        /* The logger instance (Need to keep around because the daemon
+           constructor takes a reference to the variable, so if it goes out
+           of scope we segfault... :facepalm: */
+        std::shared_ptr<Logging::LoggerRef> m_logger;
 
         /* We use this to check that the file is a wallet file, this bit does
            not get encrypted, and we can check if it exists before decrypting.

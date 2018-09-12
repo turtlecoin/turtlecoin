@@ -39,4 +39,11 @@ enum WalletError
 
     /* Trying to create a wallet file which already exists */
     WALLET_FILE_ALREADY_EXISTS,
+
+    /* The call to NodeRpcProxy::init() failed */
+    FAILED_TO_INIT_DAEMON,
+
+    /* The call to NodeRpcProxy::init() did not complete after a length of time
+       (Currently 10 seconds, may be changed) */
+    DAEMON_INIT_TIMED_OUT,
 };
