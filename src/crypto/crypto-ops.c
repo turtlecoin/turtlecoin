@@ -24,7 +24,6 @@
 
 static void fe_mul(fe, const fe, const fe);
 static void fe_sq(fe, const fe);
-static void fe_tobytes(unsigned char *, const fe);
 static void ge_madd(ge_p1p1 *, const ge_p3 *, const ge_precomp *);
 static void ge_msub(ge_p1p1 *, const ge_p3 *, const ge_precomp *);
 static void ge_p2_0(ge_p2 *);
@@ -33,7 +32,7 @@ static void fe_divpowm1(fe, const fe, const fe);
 
 /* Common functions */
 
-static uint64_t load_3(const unsigned char *in) {
+uint64_t load_3(const unsigned char *in) {
   uint64_t result;
   result = (uint64_t) in[0];
   result |= ((uint64_t) in[1]) << 8;
@@ -41,7 +40,7 @@ static uint64_t load_3(const unsigned char *in) {
   return result;
 }
 
-static uint64_t load_4(const unsigned char *in)
+uint64_t load_4(const unsigned char *in)
 {
   uint64_t result;
   result = (uint64_t) in[0];
@@ -103,7 +102,7 @@ Postconditions:
    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
 */
 
-static void fe_add(fe h, const fe f, const fe g) {
+void fe_add(fe h, const fe f, const fe g) {
   int32_t f0 = f[0];
   int32_t f1 = f[1];
   int32_t f2 = f[2];
@@ -241,7 +240,7 @@ static void fe_copy(fe h, const fe f) {
 
 /* From fe_invert.c */
 
-static void fe_invert(fe out, const fe z) {
+void fe_invert(fe out, const fe z) {
   fe t0;
   fe t1;
   fe t2;
@@ -944,7 +943,7 @@ Postconditions:
    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
 */
 
-static void fe_sub(fe h, const fe f, const fe g) {
+void fe_sub(fe h, const fe f, const fe g) {
   int32_t f0 = f[0];
   int32_t f1 = f[1];
   int32_t f2 = f[2];
@@ -1014,7 +1013,7 @@ Proof:
   so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q.
 */
 
-static void fe_tobytes(unsigned char *s, const fe h) {
+void fe_tobytes(unsigned char *s, const fe h) {
   int32_t h0 = h[0];
   int32_t h1 = h[1];
   int32_t h2 = h[2];
