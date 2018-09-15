@@ -34,6 +34,26 @@ struct EllipticCurveScalar {
   uint8_t data[32];
 };
 
+///////////////////////////////////////
+
+struct PublicKeyV {
+    std::vector<PublicKey> keys;
+    int rows;
+  };
+
+struct SecretKeyV {
+    std::vector<SecretKey> keys;
+    int rows;
+  };
+ 
+struct PublicKeyM { 
+    int cols; 
+    int rows; 
+    std::vector<SecretKeyV> column_vectors; 
+  };
+
+///////////////////////////////////////  
+  
   class crypto_ops {
     crypto_ops();
     crypto_ops(const crypto_ops &);
