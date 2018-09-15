@@ -241,7 +241,7 @@ static void fe_copy(fe h, const fe f) {
 
 /* From fe_invert.c */
 
-static void fe_invert(fe out, const fe z) {
+void fe_invert(fe out, const fe z) {
   fe t0;
   fe t1;
   fe t2;
