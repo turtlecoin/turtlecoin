@@ -1025,7 +1025,7 @@ bool Core::validateMixin(const CachedTransaction& cachedTransaction,
 }
 
 bool Core::isTransactionValidForPool(const CachedTransaction& cachedTransaction, TransactionValidatorState& validatorState) {
-  if (!validateMixin({cachedTransaction}, getTopBlockIndex()))
+if (!validateMixin({cachedTransaction}, getTopBlockIndex()))
   {
       return false;
   }
