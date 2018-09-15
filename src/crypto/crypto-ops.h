@@ -119,10 +119,7 @@ void sc_mulsub(unsigned char *, const unsigned char *, const unsigned char *, co
 int sc_check(const unsigned char *);
 int sc_isnonzero(const unsigned char *); /* Doesn't normalize */
 
-//////////////////////
-//					//
-//////////////////////
-
+/* Internal */ 
 uint64_t load_3(const unsigned char *in); 
 uint64_t load_4(const unsigned char *in); 
 void ge_sub(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q); 
