@@ -20,6 +20,7 @@
 
 #include <WalletBackend/SubWallet.h>
 #include <WalletBackend/WalletErrors.h>
+#include <WalletBackend/WalletSynchronizer.h>
 
 using nlohmann::json;
 
@@ -30,6 +31,21 @@ class WalletBackend
            below functions to correctly initialize a wallet. This is left
            public so the json serialization works correctly. */
         WalletBackend();
+
+        /* Deconstructor */
+        ~WalletBackend();
+
+        /* Delete the copy constructor */
+        WalletBackend(const WalletBackend &) = delete;
+
+        /* Delete the Assignment operator */
+        WalletBackend & operator=(const WalletBackend &) = delete;
+
+        /* Move constructor */
+        WalletBackend(WalletBackend && old);
+
+        /* Move Assignment Operator */
+        WalletBackend & operator=(WalletBackend && old);
 
         /* Imports a wallet from a mnemonic seed. Returns the wallet class,
            or an error. */
@@ -91,6 +107,8 @@ class WalletBackend
                                         std::string daemonHost,
                                         uint16_t daemonPort);
 
+        void sync();
+
         /* The filename the wallet is saved to */
         std::string m_filename;
 
@@ -116,6 +134,24 @@ class WalletBackend
            constructor takes a reference to the variable, so if it goes out
            of scope we segfault... :facepalm: */
         std::shared_ptr<Logging::LoggerRef> m_logger;
+
+        /* We use a shared pointer here, because we start the thread in the
+           class, with the class as a context, hence, when we go to move the
+           WalletSynchronizer class, the thread gets moved() across, but it
+           is still pointing to a class which has been moved from, which
+           is undefined behaviour. So, none of our changes to the
+           WalletSynchronizer class reflect in the thread.
+
+           The ideal way to fix this would probably to disable move semantics,
+           and just assign once - however this is pretty tricky to do, as
+           we want to use the factory pattern so we're not initializing
+           with crappy data, and can return a meaningful error to the user
+           rather than having to throw() or check isInitialized() everywhere.
+
+           More info here: https://stackoverflow.com/q/43203869/8737306
+           
+           PS: I want to die */
+        std::shared_ptr<WalletSynchronizer> m_walletSynchronizer;
 
         /* We use this to check that the file is a wallet file, this bit does
            not get encrypted, and we can check if it exists before decrypting.

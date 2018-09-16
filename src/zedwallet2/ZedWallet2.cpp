@@ -10,7 +10,7 @@ int main()
 {
     std::string walletName = "test.wallet";
     std::string walletPass = "password";
-    std::string daemonHost = "public.turtlenode.io";
+    std::string daemonHost = "127.0.0.1";
     std::string seed = "biggest yields peeled pawnshop godfather likewise hickory queen exit trying buying island wagtail vitals lucky theatrics dewdrop licks update pivot digit foes ensign estate queen";
     std::string address = "TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW";
 
@@ -65,6 +65,12 @@ int main()
     {
         std::cout << "Operation failed, error code: " <<  error << std::endl;
     }
+
+    std::cout << "Sleeping for 10 seconds" << std::endl;
+
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    std::cout << "Done" << std::endl;
 
     return 0;
 }
