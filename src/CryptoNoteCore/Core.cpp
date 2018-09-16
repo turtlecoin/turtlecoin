@@ -1500,6 +1500,12 @@ std::error_code Core::validateSemantic(const Transaction& transaction, uint64_t&
 }
 
 uint32_t Core::findBlockchainSupplement(const std::vector<Crypto::Hash>& remoteBlockIds) const {
+  /* Requester doesn't know anything about the chain yet */
+  if (remoteBlockIds.empty())
+  {
+      return 0;
+  }
+
   // TODO: check for genesis blocks match
   for (auto& hash : remoteBlockIds) {
     IBlockchainCache* blockchainSegment = findMainChainSegmentContainingBlock(hash);
