@@ -8,6 +8,8 @@
 
 #include <NodeRpcProxy/NodeRpcProxy.h>
 
+#include <WalletBackend/MultiThreadedDeque.h>
+
 class WalletSynchronizer
 {
     public:
@@ -15,7 +17,8 @@ class WalletSynchronizer
         WalletSynchronizer();
 
         /* Parameterized constructor */
-        WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon);
+        WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
+                           uint64_t startTimestamp);
 
         /* Delete the copy constructor */
         WalletSynchronizer(const WalletSynchronizer &) = delete;
@@ -60,6 +63,14 @@ class WalletSynchronizer
            to the front of the queue, and remove from the back of the queue,
            if we have reached capacity. */
         std::deque<Crypto::Hash> m_lastKnownBlockHeights;
+
+        /* Blocks to be processed are added to the front, and are removed
+           from the back */
+        MultiThreadedDeque<Crypto::Hash> m_blockProcessingQueue;
+
+        /* The timestamp to start scanning downloading the full block data
+           from */
+        uint64_t m_startTimestamp;
 
         /* The size of the m_lastKnownBlockHeights container */
         static constexpr int LAST_KNOWN_BLOCK_HEIGHTS_SIZE = 100;

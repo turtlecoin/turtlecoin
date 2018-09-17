@@ -33,8 +33,7 @@ json SubWallet::toJson() const
     {
         {"privateSpendKey", m_privateSpendKey},
         {"address", m_address},
-        {"scanHeight", m_scanHeight},
-        {"creationTimestamp", m_creationTimestamp},
+        {"syncStartTimestamp", m_syncStartTimestamp},
         {"transactions", m_transactions},
     };
 }
@@ -43,8 +42,7 @@ void SubWallet::fromJson(const json &j)
 {
     m_privateSpendKey = j.at("privateSpendKey").get<Crypto::SecretKey>();
     m_address = j.at("address").get<std::string>();
-    m_scanHeight = j.at("scanHeight").get<uint64_t>();
-    m_creationTimestamp = j.at("creationTimestamp").get<uint64_t>();
+    m_syncStartTimestamp = j.at("syncStartTimestamp").get<uint64_t>();
     m_transactions = j.at("transactions").get<std::vector<CryptoNote::WalletTransaction>>();
 }
 

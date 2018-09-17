@@ -160,15 +160,18 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
     m_filename(filename),
     m_password(password),
     m_privateViewKey(privateViewKey),
-    m_isViewWallet(isViewWallet),
-    m_logManager(std::make_shared<Logging::LoggerManager>()),
-    m_logger(std::make_shared<Logging::LoggerRef>(
-        *m_logManager, "WalletBackend")
-    ),
-    m_daemon(std::make_shared<CryptoNote::NodeRpcProxy>(
-        daemonHost, daemonPort, m_logger->getLogger())
-    )
+    m_isViewWallet(isViewWallet)
 {
+    m_logManager = std::make_shared<Logging::LoggerManager>();
+
+    m_logger = std::make_shared<Logging::LoggerRef>(
+        *m_logManager, "WalletBackend"
+    );
+
+    m_daemon = std::make_shared<CryptoNote::NodeRpcProxy>(
+        daemonHost, daemonPort, m_logger->getLogger()
+    );
+
     /* Generate the address from the two private keys */
     std::string address = addressFromPrivateKeys(privateSpendKey,
                                                  privateViewKey);
@@ -184,7 +187,7 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
 
     if (error)
     {
-        throw std::invalid_argument("Failed to save wallet to disk!");
+        throw std::runtime_error("Failed to save wallet to disk!");
     }
 }
 
@@ -243,7 +246,11 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
         scanHeight, newWallet, daemonHost, daemonPort
     );
 
+    std::cout << "Initting daemon" << std::endl;
+
     error = wallet.initDaemon();
+
+    std::cout << "boop" << std::endl;
 
     return std::make_tuple(error, std::move(wallet));
 }
@@ -323,7 +330,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::createWallet(
     {
         return std::make_tuple(error, WalletBackend());
     }
-    
+
     CryptoNote::KeyPair spendKey;
     Crypto::SecretKey privateViewKey;
     Crypto::PublicKey publicViewKey;
@@ -468,6 +475,11 @@ WalletError WalletBackend::initializeAfterLoad(std::string filename,
 
 WalletError WalletBackend::initDaemon()
 {
+    if (m_daemon == nullptr)
+    {
+        throw std::runtime_error("Daemon has not been initialized!");
+    }
+
     std::promise<std::error_code> errorPromise;
     std::future<std::error_code> error = errorPromise.get_future();
 
@@ -497,12 +509,30 @@ WalletError WalletBackend::initDaemon()
                                                       : initDaemon.get();
 
     /* Init the wallet synchronizer */
-    m_walletSynchronizer = std::make_shared<WalletSynchronizer>(m_daemon);
+    m_walletSynchronizer = std::make_shared<WalletSynchronizer>(
+        m_daemon, 
+        getMinSyncTimestamp()
+    );
 
     /* Launch the wallet sync process in a background thread */
     m_walletSynchronizer->start();
 
     return result;
+}
+
+/* Gets the smallest timestamp of all the sub wallets */
+uint64_t WalletBackend::getMinSyncTimestamp()
+{
+    /* Get the smallest sub wallet (by timestamp) */
+    auto min = *std::min_element(m_subWallets.begin(), m_subWallets.end(),
+    [](const std::pair<std::string, SubWallet> &lhs,
+       const std::pair<std::string, SubWallet> &rhs)
+    {
+        return lhs.second.m_syncStartTimestamp < rhs.second.m_syncStartTimestamp;
+    });
+
+    /* Return the smallest wallets timestamp */
+    return min.second.m_syncStartTimestamp;
 }
 
 WalletError WalletBackend::save() const

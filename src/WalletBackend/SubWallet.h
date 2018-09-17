@@ -20,7 +20,7 @@ using nlohmann::json;
 class SubWallet
 {
     public:
-        SubWallet() {};
+        SubWallet();
 
         SubWallet(Crypto::SecretKey privateSpendKey,
                   std::string address,
@@ -32,18 +32,16 @@ class SubWallet
         /* Initializes the class from a json string */
         void fromJson(const json &j);
 
+        /* The timestamp to begin syncing the wallet at
+           (usually creation time) */
+        uint64_t m_syncStartTimestamp = 0;
+
     private:
         /* This subwallet's private spend key */
         Crypto::SecretKey m_privateSpendKey;
 
         /* This subwallet's public address */
         std::string m_address;
-
-        /* The height to begin scanning for transactions at in this wallet */
-        uint64_t m_scanHeight = 0;
-
-        /* The timestamp this wallet was created at */
-        uint64_t m_creationTimestamp = 0;
 
         /* TODO: Trim down WalletTransaction to be a tad more concise */
         std::vector<CryptoNote::WalletTransaction> m_transactions;

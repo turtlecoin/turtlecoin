@@ -376,20 +376,11 @@ bool Core::queryBlocks(const std::vector<Crypto::Hash>& blockHashes, uint64_t ti
 
   try {
     IBlockchainCache* mainChain = chainsLeaves[0];
+
     currentIndex = mainChain->getTopBlockIndex();
 
-    startIndex = findBlockchainSupplement(blockHashes); // throws
-
-    fullOffset = mainChain->getTimestampLowerBoundBlockIndex(timestamp);
-    if (fullOffset < startIndex) {
-      fullOffset = startIndex;
-    }
-
-    size_t hashesPushed = pushBlockHashes(startIndex, fullOffset, BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT, entries);
-
-    if (startIndex + hashesPushed != fullOffset) {
-      return true;
-    }
+    /* Where should we start returning blocks from */
+    startIndex = std::max(findBlockchainSupplement(blockHashes), mainChain->getTimestampLowerBoundBlockIndex(timestamp));
 
     fillQueryBlockFullInfo(fullOffset, currentIndex, BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, entries);
 
@@ -410,35 +401,13 @@ bool Core::queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, ui
 
   try {
     IBlockchainCache* mainChain = chainsLeaves[0];
+
     currentIndex = mainChain->getTopBlockIndex();
+    
+    /* Where should we start returning blocks from */
+    startIndex = std::max(findBlockchainSupplement(knownBlockHashes), mainChain->getTimestampLowerBoundBlockIndex(timestamp));
 
-    startIndex = findBlockchainSupplement(knownBlockHashes); // throws
-
-    // Stops bug where wallets fail to sync, because timestamps have been adjusted after syncronisation.
-    // check for a query of the blocks where the block index is non-zero, but the timestamp is zero
-    // indicating that the originator did not know the internal time of the block, but knew which block
-    // was wanted by index.  Fullfill this by getting the time of m_blocks[startIndex].timestamp.
-
-    if (startIndex > 0 && timestamp == 0) {
-      if (startIndex <= mainChain->getTopBlockIndex()) {
-        RawBlock block = mainChain->getBlockByIndex(startIndex);
-        auto blockTemplate = extractBlockTemplate(block);
-        timestamp = blockTemplate.timestamp;
-      }
-    }
-
-    fullOffset = mainChain->getTimestampLowerBoundBlockIndex(timestamp);
-    if (fullOffset < startIndex) {
-      fullOffset = startIndex;
-    }
-
-    size_t hashesPushed = pushBlockHashes(startIndex, fullOffset, BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT, entries);
-
-    if (startIndex + static_cast<uint32_t>(hashesPushed) != fullOffset) {
-      return true;
-    }
-
-    fillQueryBlockShortInfo(fullOffset, currentIndex, BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, entries);
+    fillQueryBlockShortInfo(startIndex, currentIndex, BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, entries);
 
     return true;
   } catch (std::exception& e) {
@@ -1812,50 +1781,6 @@ RawBlock Core::getRawBlock(IBlockchainCache* segment, uint32_t blockIndex) const
   assert(blockIndex >= segment->getStartBlockIndex() && blockIndex <= segment->getTopBlockIndex());
 
   return segment->getBlockByIndex(blockIndex);
-}
-
-//TODO: decompose these two methods
-size_t Core::pushBlockHashes(uint32_t startIndex, uint32_t fullOffset, size_t maxItemsCount,
-                             std::vector<BlockShortInfo>& entries) const {
-  assert(fullOffset >= startIndex);
-
-  uint32_t itemsCount = std::min(fullOffset - startIndex, static_cast<uint32_t>(maxItemsCount));
-  if (itemsCount == 0) {
-    return 0;
-  }
-
-  std::vector<Crypto::Hash> blockIds = getBlockHashes(startIndex, itemsCount);
-
-  entries.reserve(entries.size() + blockIds.size());
-  for (auto& blockHash : blockIds) {
-    BlockShortInfo entry;
-    entry.blockId = std::move(blockHash);
-    entries.emplace_back(std::move(entry));
-  }
-
-  return blockIds.size();
-}
-
-//TODO: decompose these two methods
-size_t Core::pushBlockHashes(uint32_t startIndex, uint32_t fullOffset, size_t maxItemsCount,
-                             std::vector<BlockFullInfo>& entries) const {
-  assert(fullOffset >= startIndex);
-
-  uint32_t itemsCount = std::min(fullOffset - startIndex, static_cast<uint32_t>(maxItemsCount));
-  if (itemsCount == 0) {
-    return 0;
-  }
-
-  std::vector<Crypto::Hash> blockIds = getBlockHashes(startIndex, itemsCount);
-
-  entries.reserve(entries.size() + blockIds.size());
-  for (auto& blockHash : blockIds) {
-    BlockFullInfo entry;
-    entry.block_id = std::move(blockHash);
-    entries.emplace_back(std::move(entry));
-  }
-
-  return blockIds.size();
 }
 
 void Core::fillQueryBlockFullInfo(uint32_t fullOffset, uint32_t currentIndex, size_t maxItemsCount,

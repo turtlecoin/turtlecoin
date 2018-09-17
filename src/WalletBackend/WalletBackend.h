@@ -109,6 +109,8 @@ class WalletBackend
 
         void sync();
 
+        uint64_t getMinSyncTimestamp();
+
         /* The filename the wallet is saved to */
         std::string m_filename;
 

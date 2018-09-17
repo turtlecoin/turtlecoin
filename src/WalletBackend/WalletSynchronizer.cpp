@@ -6,6 +6,8 @@
 #include <WalletBackend/WalletSynchronizer.h>
 ////////////////////////////////////////
 
+#include <Common/StringTools.h>
+
 #include <future>
 
 //////////////////////////
@@ -21,14 +23,17 @@ namespace {
 
 /* Default constructor */
 WalletSynchronizer::WalletSynchronizer() :
-    m_workerThreadShouldStop(false)
+    m_workerThreadShouldStop(false),
+    m_startTimestamp(0)
 {
 }
 
 /* Parameterized constructor */
-WalletSynchronizer::WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon) :
+WalletSynchronizer::WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
+                                       uint64_t startTimestamp) :
     m_daemon(daemon),
-    m_workerThreadShouldStop(false)
+    m_workerThreadShouldStop(false),
+    m_startTimestamp(startTimestamp)
 {
 }
 
@@ -77,13 +82,18 @@ WalletSynchronizer::~WalletSynchronizer()
    and if we do any inheritance, things don't go awry. */
 void WalletSynchronizer::start()
 {
+    if (m_daemon == nullptr)
+    {
+        throw std::runtime_error("Daemon has not been initialized!");
+    }
+
     m_workerThread = std::thread(&WalletSynchronizer::sync, this);
 }
 
 /* This returns a vector of hashes, used to be passed to queryBlocks(), to
    determine where to begin syncing from. We could just pass in the last known
    block hash, but if this block was on a forked chain, we would have to
-   discard all our progres, and begin again from the genesis block.
+   discard all our progress, and begin again from the genesis block.
 
    Instead, we store the last 100 block hashes we know about (since forks
    are most likely going to be quite shallow forks, usually 1 or 2 blocks max),
@@ -142,7 +152,8 @@ void WalletSynchronizer::sync()
     uint32_t startHeight = 0;
 
     /* The timestamp to begin searching at */
-    uint64_t startTimestamp = 0;
+    uint64_t startTimestamp = m_startTimestamp;
+    //uint64_t startTimestamp = 0;
 
     std::promise<std::error_code> errorPromise;
 
@@ -184,15 +195,18 @@ void WalletSynchronizer::sync()
         {
             for (size_t i = 0; i < newBlocks.size(); i++)
             {
-                storeBlockHashCheckpoint(newBlocks[i].blockHash, i + startHeight);
-            }
+                uint32_t height = i + startHeight;
 
-            std::cout << "Start height: " << startHeight << std::endl;
+                storeBlockHashCheckpoint(newBlocks[i].blockHash, height);
+
+                std::cout << "Block " << height
+                          << " has a hash of "
+                          << Common::podToHex(newBlocks[i].blockHash)
+                          << std::endl;
+            }
 
             /* Empty the vector so we're not re-iterating the old ones */
             newBlocks.clear();
         }
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
