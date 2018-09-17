@@ -14,7 +14,7 @@ template <typename T>
 class MultiThreadedDeque
 {
     public:
-        void addFront(T item)
+        void push_front(T item)
         {
             /* Aquire the lock */
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -29,7 +29,7 @@ class MultiThreadedDeque
         }
 
         /* Take an item from the end of the queue */
-        T popBack()
+        T pop_back()
         {
             /* Aquire the lock */
             std::unique_lock<std::mutex> lock(m_mutex);

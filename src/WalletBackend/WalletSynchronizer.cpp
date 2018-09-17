@@ -23,7 +23,7 @@ namespace {
 
 /* Default constructor */
 WalletSynchronizer::WalletSynchronizer() :
-    m_workerThreadShouldStop(false),
+    m_shouldStop(false),
     m_startTimestamp(0)
 {
 }
@@ -32,7 +32,7 @@ WalletSynchronizer::WalletSynchronizer() :
 WalletSynchronizer::WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
                                        uint64_t startTimestamp) :
     m_daemon(daemon),
-    m_workerThreadShouldStop(false),
+    m_shouldStop(false),
     m_startTimestamp(startTimestamp)
 {
 }
@@ -47,14 +47,20 @@ WalletSynchronizer::WalletSynchronizer(WalletSynchronizer && old)
 /* Move assignment operator */
 WalletSynchronizer & WalletSynchronizer::operator=(WalletSynchronizer && old)
 {
-    /* Join the current thread, if it exists */
-    if (m_workerThread.joinable())
-    {
-        m_workerThread.join();
-    }
+    /* Stop any running threads */
+    stop();
 
-    /* Assign the new thread */
-    m_workerThread = std::move(old.m_workerThread);
+    m_daemon = std::move(old.m_daemon);
+
+    m_blockDownloaderThread = std::move(old.m_blockDownloaderThread);
+    m_transactionSynchronizerThread = std::move(old.m_transactionSynchronizerThread);
+
+    m_shouldStop.store(old.m_shouldStop.load());
+
+    m_blockDownloaderStatus = std::move(old.m_blockDownloaderStatus);
+    m_transactionSynchronizerStatus = std::move(old.m_transactionSynchronizerStatus);
+
+    m_startTimestamp = std::move(old.m_startTimestamp);
 
     return *this;
 }
@@ -62,15 +68,7 @@ WalletSynchronizer & WalletSynchronizer::operator=(WalletSynchronizer && old)
 /* Deconstructor */
 WalletSynchronizer::~WalletSynchronizer()
 {
-    /* If the thread is running (and not detached) */
-    if (m_workerThread.joinable())
-    {
-        /* Tell the worker thread to stop */
-        m_workerThreadShouldStop.store(true);
-
-        /* Wait for the worker thread to stop */
-        m_workerThread.join();
-    }
+    stop();
 }
 
 /////////////////////
@@ -87,63 +85,43 @@ void WalletSynchronizer::start()
         throw std::runtime_error("Daemon has not been initialized!");
     }
 
-    m_workerThread = std::thread(&WalletSynchronizer::sync, this);
+    m_blockDownloaderThread = std::thread(
+        &WalletSynchronizer::downloadBlocks, this
+    );
+
+    m_transactionSynchronizerThread = std::thread(
+        &WalletSynchronizer::findTransactionsInBlocks, this
+    );
 }
 
-/* This returns a vector of hashes, used to be passed to queryBlocks(), to
-   determine where to begin syncing from. We could just pass in the last known
-   block hash, but if this block was on a forked chain, we would have to
-   discard all our progress, and begin again from the genesis block.
-
-   Instead, we store the last 100 block hashes we know about (since forks
-   are most likely going to be quite shallow forks, usually 1 or 2 blocks max),
-   and then we store one hash every 5000 blocks, in case we have a very
-   deep fork.
-   
-   Note that the first items in this vector are the latest block. On the
-   daemon side, it loops through the vector, looking for the hash in its
-   database, then returns the height it found. So, if you put your earliest
-   block at the start of the vector, you're just going to start syncing from
-   that block every time. */
-std::vector<Crypto::Hash> WalletSynchronizer::getBlockHashCheckpoints()
+void WalletSynchronizer::stop()
 {
-    std::vector<Crypto::Hash> result;
-
-    /* Copy the contents of m_lastKnownBlockHeights to result, these are the
-       last 100 known block hashes we have synced. For example, if the top
-       block we know about is 110, this contains [110, 109, 108.. 10]. */
-    std::copy(m_lastKnownBlockHeights.begin(), m_lastKnownBlockHeights.end(),
-              back_inserter(result));
-
-    /* Append the contents of m_blockCheckpoints to result, these are the
-       checkpoints we make every 5k blocks in case of deep forks */
-    std::copy(m_blockCheckpoints.begin(), m_blockCheckpoints.end(),
-              back_inserter(result));
-
-    return result;
-}
-
-void WalletSynchronizer::storeBlockHashCheckpoint(Crypto::Hash hash,
-                                                  uint32_t height)
-{
-    /* If we're at a height interval, add a block checkpoint (to the front
-       of the vector) */
-    if (height % BLOCK_CHECKPOINTS_INTERVAL)
+    /* If either of the threads are running (and not detached) */
+    if (m_blockDownloaderThread.joinable() || 
+        m_transactionSynchronizerThread.joinable())
     {
-        m_blockCheckpoints.insert(m_blockCheckpoints.begin(), hash);
-    }
+        /* Tell the threads to stop */
+        m_shouldStop.store(true);
 
-    /* Add the hash to the beginning of the queue */
-    m_lastKnownBlockHeights.push_front(hash);
+        /* Wait for the block downloader thread to finish (if applicable) */
+        if (m_blockDownloaderThread.joinable())
+        {
+            m_blockDownloaderThread.join();
+        }
 
-    /* If we're exceeding capacity, remove the last (oldest) hash */
-    if (m_lastKnownBlockHeights.size() > LAST_KNOWN_BLOCK_HEIGHTS_SIZE)
-    {
-        m_lastKnownBlockHeights.pop_back();
+        /* Wait for the transaction synchronizer thread to finish (if applicable) */
+        if (m_transactionSynchronizerThread.joinable())
+        {
+            m_transactionSynchronizerThread.join();
+        }
     }
 }
 
-void WalletSynchronizer::sync()
+void WalletSynchronizer::findTransactionsInBlocks()
+{
+}
+
+void WalletSynchronizer::downloadBlocks()
 {
     /* Stores the results from the queryBlocks() call */
     std::vector<CryptoNote::BlockShortEntry> newBlocks;
@@ -153,7 +131,6 @@ void WalletSynchronizer::sync()
 
     /* The timestamp to begin searching at */
     uint64_t startTimestamp = m_startTimestamp;
-    //uint64_t startTimestamp = 0;
 
     std::promise<std::error_code> errorPromise;
 
@@ -164,7 +141,7 @@ void WalletSynchronizer::sync()
     };
 
     /* While we haven't been told to stop */
-    while (!m_workerThreadShouldStop.load())
+    while (!m_shouldStop.load())
     {
         /* Re-assign promise (can't reuse) */
         errorPromise = std::promise<std::error_code>();
@@ -173,7 +150,7 @@ void WalletSynchronizer::sync()
         auto error = errorPromise.get_future();
 
         /* The block hashes to try begin syncing from */
-        std::vector<Crypto::Hash> blockCheckpoints = getBlockHashCheckpoints();
+        auto blockCheckpoints = m_blockDownloaderStatus.getBlockHashCheckpoints();
 
         m_daemon->queryBlocks(
             std::move(blockCheckpoints), startTimestamp, newBlocks,
@@ -197,13 +174,14 @@ void WalletSynchronizer::sync()
             {
                 uint32_t height = i + startHeight;
 
-                storeBlockHashCheckpoint(newBlocks[i].blockHash, height);
+                m_blockDownloaderStatus.storeBlockHash(newBlocks[i].blockHash,
+                                                       height);
 
-                std::cout << "Block " << height
-                          << " has a hash of "
-                          << Common::podToHex(newBlocks[i].blockHash)
-                          << std::endl;
+                /* TODO: Push the actual data here, not the hash */
+                m_blockProcessingQueue.push_front(newBlocks[i].blockHash);
             }
+
+            std::cout << "Syncing blocks: " << startHeight << std::endl;
 
             /* Empty the vector so we're not re-iterating the old ones */
             newBlocks.clear();

@@ -9,6 +9,7 @@
 #include <NodeRpcProxy/NodeRpcProxy.h>
 
 #include <WalletBackend/MultiThreadedDeque.h>
+#include <WalletBackend/SynchronizationStatus.h>
 
 class WalletSynchronizer
 {
@@ -38,31 +39,42 @@ class WalletSynchronizer
         void start();
 
     private:
-        void sync();
+        void downloadBlocks();
 
-        std::vector<Crypto::Hash> getBlockHashCheckpoints();
+        void findTransactionsInBlocks();
 
-        void storeBlockHashCheckpoint(Crypto::Hash hash, uint32_t height);
+        void stop();
 
         /* The daemon connection */
         std::shared_ptr<CryptoNote::NodeRpcProxy> m_daemon;
 
-        /* The thread ID of the sync thread */
-        std::thread m_workerThread;
+        /* The thread ID of the block downloader thread */
+        std::thread m_blockDownloaderThread;
+
+        /* The thread ID of the transaction synchronizer thread */
+        std::thread m_transactionSynchronizerThread;
 
         /* An atomic bool to signal if we should stop the sync thread */
-        std::atomic<bool> m_workerThreadShouldStop;
+        std::atomic<bool> m_shouldStop;
 
-        /* A mapping of block heights to hashes, used to know where to resume
-           the sync progress from in the case of forked blocks */
-        std::vector<Crypto::Hash> m_blockCheckpoints;
+        /* We have two threads, the block downloader thread (the producer),
+           which grabs blocks from a daemon, and pushes them into the work
+           queue, and the transaction syncher thread, which takes blocks from
+           the work queue, and searches for transactions belonging to the
+           user.
+           
+           We need to store the status that they are both at, since we need
+           both to provide the last known block hashes to the node, to get
+           the next newest blocks, and we need to be able to resume the sync
+           progress from where we have decrypted transactions from, rather
+           than simply where we have downloaded blocks to.
+           
+           If we stored the block download status, if the queue was not empty
+           when closing the program, we could miss transactions which had
+           been downloaded, but not processed. */
+        SynchronizationStatus m_blockDownloaderStatus;
 
-        /* A double ended queue for storing the 100 (or some other number) of
-           last known block heights. We use this to store the sync progress,
-           and resume cleanly when a fork occurs. We add the latest blocks
-           to the front of the queue, and remove from the back of the queue,
-           if we have reached capacity. */
-        std::deque<Crypto::Hash> m_lastKnownBlockHeights;
+        SynchronizationStatus m_transactionSynchronizerStatus;
 
         /* Blocks to be processed are added to the front, and are removed
            from the back */
@@ -71,10 +83,4 @@ class WalletSynchronizer
         /* The timestamp to start scanning downloading the full block data
            from */
         uint64_t m_startTimestamp;
-
-        /* The size of the m_lastKnownBlockHeights container */
-        static constexpr int LAST_KNOWN_BLOCK_HEIGHTS_SIZE = 100;
-
-        /* Save a block checkpoint every BLOCK_CHECKPOINTS_INTERVAL blocks */
-        static constexpr int BLOCK_CHECKPOINTS_INTERVAL = 5000;
 };
