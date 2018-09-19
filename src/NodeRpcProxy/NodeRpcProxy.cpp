@@ -279,7 +279,7 @@ void NodeRpcProxy::getFeeInfo() {
   CryptoNote::COMMAND_RPC_GET_FEE_ADDRESS::request ireq = AUTO_VAL_INIT(ireq);
   CryptoNote::COMMAND_RPC_GET_FEE_ADDRESS::response iresp = AUTO_VAL_INIT(iresp);
 
-  std::error_code ec = jsonCommand("/getFeeInfo", ireq, iresp);
+  std::error_code ec = jsonCommand("/getNodeFeeInfo", ireq, iresp);
 
   if (ec || iresp.status != CORE_RPC_STATUS_OK) {
     return;
