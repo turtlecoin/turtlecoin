@@ -59,7 +59,11 @@ NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort,
   m_pullInterval(5000),
   m_nodeHost(nodeHost),
   m_nodePort(nodePort),
-  m_connected(true) {
+  m_connected(true),
+  m_peerCount(0),
+  m_networkHeight(0),
+  m_nodeHeight(0)
+{
   resetInternalState();
 }
 
