@@ -41,7 +41,7 @@ install:
 - if [[ "$LABEL" == "aarch64" ]]; then tar zxvf boost_1_55_0.tar.gz >/dev/null ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then cd boost_1_55_0 ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then ./bootstrap.sh ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then curl https://gist.githubusercontent.com/brandonlehmann/06a8cebbbd5e91814067fcd741879f2f/raw/41fc014ac53f64a6f465356a5b1e29179101b23f/fix_boost_aarch64.sh | sh ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then ../scripts/fix_boost_aarch64.sh ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then ./b2 toolset=gcc-aarch64 --with-system --with-filesystem --with-thread --with-date_time --with-chrono --with-regex --with-serialization --with-program_options >/dev/null ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then export CUSTOM_BOOST_ROOT="-DBOOST_ROOT=`pwd`" ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then cd .. ; fi
