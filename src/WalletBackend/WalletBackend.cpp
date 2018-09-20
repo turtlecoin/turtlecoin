@@ -508,11 +508,20 @@ WalletError WalletBackend::initDaemon()
     auto result = status != std::future_status::ready ? DAEMON_INIT_TIMED_OUT
                                                       : initDaemon.get();
 
-    /* Init the wallet synchronizer */
-    m_walletSynchronizer = std::make_shared<WalletSynchronizer>(
-        m_daemon, 
-        getMinSyncTimestamp()
-    );
+    /* Init the wallet synchronizer if it hasn't been loaded from the wallet
+       file */
+    if (m_walletSynchronizer == nullptr)
+    {
+        m_walletSynchronizer = std::make_shared<WalletSynchronizer>(
+            m_daemon, 
+            getMinSyncTimestamp()
+        );
+    }
+    /* If it has, just set the daemon */
+    else
+    {
+        m_walletSynchronizer->m_daemon = m_daemon;
+    }
 
     /* Launch the wallet sync process in a background thread */
     m_walletSynchronizer->start();

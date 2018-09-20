@@ -35,6 +35,14 @@ void from_json(const json &j, CryptoNote::WalletTransaction &t);
 void to_json(json &j, const Crypto::Hash &h);
 void from_json(const json &j, Crypto::Hash &h);
 
+/* WalletSynchronizer */
+void to_json(json &j, const std::shared_ptr<WalletSynchronizer> &w);
+void from_json(const json &j, std::shared_ptr<WalletSynchronizer> &w);
+
+/* SynchronizationStatus */
+void to_json(json &j, const SynchronizationStatus &s);
+void from_json(const json &j, SynchronizationStatus &s);
+
 /* Generic serializers for any hash type with a data member
    (e.g., CryptoTypes.h) */
 template<typename Data>

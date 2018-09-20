@@ -7,7 +7,9 @@
 ////////////////////////////////////////////
 
 #include <WalletBackend/WalletBackend.h>
+#include <WalletBackend/WalletSynchronizer.h>
 #include <WalletBackend/SubWallet.h>
+#include <WalletBackend/SynchronizationStatus.h>
 
 using nlohmann::json;
 
@@ -68,6 +70,7 @@ json WalletBackend::toJson() const
         {"privateViewKey", m_privateViewKey},
         {"subWallets", m_subWallets},
         {"isViewWallet", m_isViewWallet},
+        {"walletSynchronizer", m_walletSynchronizer}
     };
 }
 
@@ -123,9 +126,9 @@ namespace Crypto
     }
 }
 
-///////////////////////////////
+///////////////////////////////////
 /* CryptoNote::WalletTransaction */
-///////////////////////////////
+///////////////////////////////////
 
 namespace CryptoNote
 {
@@ -148,4 +151,75 @@ namespace CryptoNote
         t.totalAmount = j.at("totalAmount").get<int64_t>();
         t.fee = j.at("fee").get<uint64_t>();
     }
+}
+
+////////////////////////
+/* WalletSynchronizer */
+///////////////////////
+
+void to_json(json &j, const std::shared_ptr<WalletSynchronizer> &w)
+{
+    if (w == nullptr)
+    {
+        return;
+    }
+
+    j = w->toJson();
+}
+
+void from_json(const json &j, std::shared_ptr<WalletSynchronizer> &w)
+{
+    if (w == nullptr)
+    {
+        return;
+    }
+
+    w->fromJson(j);
+}
+
+json WalletSynchronizer::toJson() const
+{
+    return
+    {
+        {"transactionSynchronizerStatus", m_transactionSynchronizerStatus},
+        {"startTimestamp", m_startTimestamp}
+    };
+}
+
+void WalletSynchronizer::fromJson(const json &j)
+{
+    m_blockDownloaderStatus = j.at("transactionSynchronizerStatus").get<SynchronizationStatus>();
+    m_transactionSynchronizerStatus = m_blockDownloaderStatus;
+    m_startTimestamp = j.at("startTimestamp").get<uint64_t>();
+}
+
+///////////////////////////
+/* SynchronizationStatus */
+///////////////////////////
+
+void to_json(json &j, const SynchronizationStatus &s)
+{
+    j = s.toJson();
+}
+
+void from_json(const json &j, SynchronizationStatus &s)
+{
+    s.fromJson(j);
+}
+
+json SynchronizationStatus::toJson() const
+{
+    return
+    {
+        {"blockHashCheckpoints", m_blockHashCheckpoints},
+        {"lastKnownBlockHashes", m_lastKnownBlockHashes},
+        {"lastKnownBlockHeight", m_lastKnownBlockHashes}
+    };
+}
+
+void SynchronizationStatus::fromJson(const json &j)
+{
+    m_blockHashCheckpoints = j.at("blockHashCheckpoints").get<std::deque<Crypto::Hash>>();
+    m_lastKnownBlockHashes = j.at("lastKnownBlockHashes").get<std::deque<Crypto::Hash>>();
+    m_lastKnownBlockHeight = j.at("lastKnownBlockHeight").get<uint64_t>();
 }

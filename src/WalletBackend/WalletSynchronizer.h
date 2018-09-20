@@ -39,18 +39,19 @@ class WalletSynchronizer
 
         void start();
 
+        json toJson() const;
+
+        void fromJson(const json &j);
+
+        /* The daemon connection */
+        std::shared_ptr<CryptoNote::NodeRpcProxy> m_daemon;
+
     private:
         void downloadBlocks();
 
         void findTransactionsInBlocks();
 
         void stop();
-
-        RawBlock trimBlockShortEntry(CryptoNote::BlockShortEntry b,
-                                     uint64_t height);
-
-        /* The daemon connection */
-        std::shared_ptr<CryptoNote::NodeRpcProxy> m_daemon;
 
         /* The thread ID of the block downloader thread */
         std::thread m_blockDownloaderThread;

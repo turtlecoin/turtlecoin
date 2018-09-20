@@ -8,7 +8,11 @@
 
 #include <deque>
 
+#include "json.hpp"
+
 #include <vector>
+
+using nlohmann::json;
 
 class SynchronizationStatus
 {
@@ -16,6 +20,10 @@ class SynchronizationStatus
         void storeBlockHash(Crypto::Hash hash, uint64_t blockHeight);
 
         std::vector<Crypto::Hash> getBlockHashCheckpoints();
+
+        json toJson() const;
+
+        void fromJson(const json &j);
 
     private:
         /* A store of block hashes (later blocks first, i.e. block 2 comes

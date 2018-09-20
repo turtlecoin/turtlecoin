@@ -14,7 +14,28 @@
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
 
-namespace {
+namespace
+{
+
+    RawBlock trimBlockShortEntry(CryptoNote::BlockShortEntry b,
+                                                     uint64_t height)
+    {
+        /* The coinbase transaction, which is the miner reward. Has no inputs. */
+        RawCoinbaseTransaction coinbaseTransaction = getRawCoinbaseTransaction(
+            b.block.baseTransaction
+        );
+
+        /* Standard transactions */
+        std::vector<RawTransaction> transactions;
+
+        for (const auto &tx : b.txsShortInfo)
+        {
+            transactions.push_back(getRawTransaction(tx.txPrefix));
+        }
+
+        return RawBlock(coinbaseTransaction, transactions, height, b.blockHash);
+    }
+
 } // namespace
 
 ///////////////////////////////////
@@ -190,22 +211,3 @@ void WalletSynchronizer::downloadBlocks()
     }
 }
 
-/* TODO: Should this be a free function? */
-RawBlock WalletSynchronizer::trimBlockShortEntry(CryptoNote::BlockShortEntry b,
-                                                 uint64_t height)
-{
-    /* The coinbase transaction, which is the miner reward. Has no inputs. */
-    RawCoinbaseTransaction coinbaseTransaction = getRawCoinbaseTransaction(
-        b.block.baseTransaction
-    );
-
-    /* Standard transactions */
-    std::vector<RawTransaction> transactions;
-
-    for (const auto &tx : b.txsShortInfo)
-    {
-        transactions.push_back(getRawTransaction(tx.txPrefix));
-    }
-
-    return RawBlock(coinbaseTransaction, transactions, height, b.blockHash);
-}
