@@ -10,6 +10,7 @@
 
 #include <WalletBackend/MultiThreadedDeque.h>
 #include <WalletBackend/SynchronizationStatus.h>
+#include <WalletBackend/RawData.h>
 
 class WalletSynchronizer
 {
@@ -45,6 +46,9 @@ class WalletSynchronizer
 
         void stop();
 
+        RawBlock trimBlockShortEntry(CryptoNote::BlockShortEntry b,
+                                     uint64_t height);
+
         /* The daemon connection */
         std::shared_ptr<CryptoNote::NodeRpcProxy> m_daemon;
 
@@ -78,7 +82,7 @@ class WalletSynchronizer
 
         /* Blocks to be processed are added to the front, and are removed
            from the back */
-        MultiThreadedDeque<Crypto::Hash> m_blockProcessingQueue;
+        MultiThreadedDeque<RawBlock> m_blockProcessingQueue;
 
         /* The timestamp to start scanning downloading the full block data
            from */

@@ -2,9 +2,9 @@
 // 
 // Please see the included LICENSE file for more information.
 
-////////////////////////////////////////
+/////////////////////////////////////////////
 #include <WalletBackend/WalletSynchronizer.h>
-////////////////////////////////////////
+/////////////////////////////////////////////
 
 #include <Common/StringTools.h>
 
@@ -174,11 +174,12 @@ void WalletSynchronizer::downloadBlocks()
             {
                 uint32_t height = i + startHeight;
 
-                m_blockDownloaderStatus.storeBlockHash(newBlocks[i].blockHash,
+                RawBlock block = trimBlockShortEntry(newBlocks[i], height);
+
+                m_blockDownloaderStatus.storeBlockHash(block.blockHash,
                                                        height);
 
-                /* TODO: Push the actual data here, not the hash */
-                m_blockProcessingQueue.push_front(newBlocks[i].blockHash);
+                m_blockProcessingQueue.push_front(block);
             }
 
             std::cout << "Syncing blocks: " << startHeight << std::endl;
@@ -187,4 +188,24 @@ void WalletSynchronizer::downloadBlocks()
             newBlocks.clear();
         }
     }
+}
+
+/* TODO: Should this be a free function? */
+RawBlock WalletSynchronizer::trimBlockShortEntry(CryptoNote::BlockShortEntry b,
+                                                 uint64_t height)
+{
+    /* The coinbase transaction, which is the miner reward. Has no inputs. */
+    RawCoinbaseTransaction coinbaseTransaction = getRawCoinbaseTransaction(
+        b.block.baseTransaction
+    );
+
+    /* Standard transactions */
+    std::vector<RawTransaction> transactions;
+
+    for (const auto &tx : b.txsShortInfo)
+    {
+        transactions.push_back(getRawTransaction(tx.txPrefix));
+    }
+
+    return RawBlock(coinbaseTransaction, transactions, height, b.blockHash);
 }
