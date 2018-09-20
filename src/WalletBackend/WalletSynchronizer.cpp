@@ -18,7 +18,7 @@ namespace
 {
 
     RawBlock trimBlockShortEntry(CryptoNote::BlockShortEntry b,
-                                                     uint64_t height)
+                                 uint64_t height)
     {
         /* The coinbase transaction, which is the miner reward. Has no inputs. */
         RawCoinbaseTransaction coinbaseTransaction = getRawCoinbaseTransaction(
