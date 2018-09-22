@@ -126,6 +126,12 @@ WalletBackend::WalletBackend() :
 /* Deconstructor */
 WalletBackend::~WalletBackend()
 {
+    /* Save, but only if the non default constructor was used - else things
+       will be uninitialized, and crash */
+    if (m_daemon != nullptr)
+    {
+        save();
+    }
 }
 
 /* Move constructor */
@@ -146,6 +152,12 @@ WalletBackend & WalletBackend::operator=(WalletBackend && old)
     m_daemon = old.m_daemon;
     m_subWallets = old.m_subWallets;
     m_walletSynchronizer = std::move(old.m_walletSynchronizer);
+
+    /* Invalidate the old pointers */
+    old.m_daemon = nullptr;
+    old.m_logManager = nullptr;
+    old.m_logger = nullptr;
+    old.m_walletSynchronizer = nullptr;
 
     return *this;
 }

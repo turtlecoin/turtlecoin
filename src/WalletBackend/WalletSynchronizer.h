@@ -54,6 +54,8 @@ class WalletSynchronizer
 
         void stop();
 
+        void invalidateTransactions(uint64_t height);
+
         /* The thread ID of the block downloader thread */
         std::thread m_blockDownloaderThread;
 

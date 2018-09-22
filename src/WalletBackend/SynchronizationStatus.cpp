@@ -32,6 +32,11 @@ namespace {
 /* CLASS FUNCTIONS */
 /////////////////////
 
+uint64_t SynchronizationStatus::getHeight()
+{
+    return m_lastKnownBlockHeight;
+}
+
 void SynchronizationStatus::storeBlockHash(Crypto::Hash hash, uint64_t height)
 {
     m_lastKnownBlockHeight = height;

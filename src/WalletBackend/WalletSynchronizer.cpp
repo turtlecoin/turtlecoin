@@ -144,6 +144,12 @@ void WalletSynchronizer::stop()
     }
 }
 
+/* Remove any transactions at this height or above, they were on a forked
+   chain */
+void WalletSynchronizer::invalidateTransactions(uint64_t height)
+{
+}
+
 void WalletSynchronizer::findTransactionsInBlocks()
 {
     while (!m_shouldStop.load())
@@ -157,6 +163,12 @@ void WalletSynchronizer::findTransactionsInBlocks()
         }
 
         std::cout << "Block " << b.blockHeight << " has a hash of " << Common::podToHex(b.blockHash) << std::endl;
+
+        /* Chain forked, invalidate previous transactions */
+        if (m_transactionSynchronizerStatus.getHeight() >= b.blockHeight)
+        {
+            invalidateTransactions(b.blockHeight);
+        }
 
         /* Make sure to do this at the end, once the transactions are fully
            processed! Otherwise, we could miss a transaction depending upon
@@ -201,10 +213,23 @@ void WalletSynchronizer::downloadBlocks()
             startHeight, callback
         );
 
-        /* Check if the call succeeded (synchronously waiting on the future)
+        while (true)
+        {
+            /* Don't hang if the daemon doesn't respond */
+            auto status = error.wait_for(std::chrono::milliseconds(50));
 
-           TODO: Add a wait_for() so if the node hangs up, we still exit
-           correctly. (i.e., checking the m_shouldStop flag) */
+            if (m_shouldStop.load())
+            {
+                return;
+            }
+            
+            /* queryBlocks() has returned */
+            if (status == std::future_status::ready)
+            {
+                break;
+            }
+        }
+
         auto err = error.get();
 
         if (err)
@@ -216,6 +241,8 @@ void WalletSynchronizer::downloadBlocks()
         }
         else
         {
+            /* Iterating through with a standard loop makes it a bit easier
+               to get the height of the block */
             for (size_t i = 0; i < newBlocks.size(); i++)
             {
                 if (m_shouldStop.load())
@@ -225,17 +252,28 @@ void WalletSynchronizer::downloadBlocks()
 
                 uint32_t height = startHeight + i;
 
+                /* Trim the info we get from the daemon down */
                 RawBlock block = trimBlockShortEntry(newBlocks[i], height);
 
                 /* The daemon sometimes serves us duplicate blocks ;___; */
                 if (m_blockDownloaderStatus.haveSeenBlock(block.blockHash))
                 {
+                    /* If we only get the one (dupe) block then we are fully
+                       synced. Sleep a bit before asking for another block.
+                       Not too long - don't want to block shutdown */
+                    if (newBlocks.size() == 1)
+                    {
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+
                     continue;
                 }
 
+                /* Store that we've downloaded the block */
                 m_blockDownloaderStatus.storeBlockHash(block.blockHash,
                                                        height);
 
+                /* Add the block to the queue for processing */
                 m_blockProcessingQueue.push_front(block);
             }
 
@@ -244,4 +282,3 @@ void WalletSynchronizer::downloadBlocks()
         }
     }
 }
-

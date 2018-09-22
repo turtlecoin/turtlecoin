@@ -27,6 +27,8 @@ class SynchronizationStatus
 
         bool haveSeenBlock(const Crypto::Hash blockHash);
 
+        uint64_t getHeight();
+
     private:
         /* A store of block hashes (later blocks first, i.e. block 2 comes
            before block 1) These are stored every 5000 blocks or so, used
