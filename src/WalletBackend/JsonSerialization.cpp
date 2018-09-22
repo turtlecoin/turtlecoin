@@ -70,7 +70,7 @@ json WalletBackend::toJson() const
         {"privateViewKey", m_privateViewKey},
         {"subWallets", m_subWallets},
         {"isViewWallet", m_isViewWallet},
-        {"walletSynchronizer", m_walletSynchronizer}
+        {"walletSynchronizer", *m_walletSynchronizer}
     };
 }
 
@@ -91,6 +91,7 @@ void WalletBackend::fromJson(const json &j)
     m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
     m_subWallets = j.at("subWallets").get<std::unordered_map<std::string, SubWallet>>();
     m_isViewWallet = j.at("isViewWallet").get<bool>();
+    m_walletSynchronizer = std::make_shared<WalletSynchronizer>(j.at("walletSynchronizer").get<WalletSynchronizer>());
 }
 
 /* Declaration of to_json and from_json have to be in the same namespace as
@@ -157,24 +158,14 @@ namespace CryptoNote
 /* WalletSynchronizer */
 ///////////////////////
 
-void to_json(json &j, const std::shared_ptr<WalletSynchronizer> &w)
+void to_json(json &j, const WalletSynchronizer &w)
 {
-    if (w == nullptr)
-    {
-        return;
-    }
-
-    j = w->toJson();
+    j = w.toJson();
 }
 
-void from_json(const json &j, std::shared_ptr<WalletSynchronizer> &w)
+void from_json(const json &j, WalletSynchronizer &w)
 {
-    if (w == nullptr)
-    {
-        return;
-    }
-
-    w->fromJson(j);
+    w.fromJson(j);
 }
 
 json WalletSynchronizer::toJson() const
@@ -182,15 +173,18 @@ json WalletSynchronizer::toJson() const
     return
     {
         {"transactionSynchronizerStatus", m_transactionSynchronizerStatus},
-        {"startTimestamp", m_startTimestamp}
+        {"startTimestamp", m_startTimestamp},
+        {"privateViewKey", m_privateViewKey}
     };
 }
 
 void WalletSynchronizer::fromJson(const json &j)
 {
     m_blockDownloaderStatus = j.at("transactionSynchronizerStatus").get<SynchronizationStatus>();
+
     m_transactionSynchronizerStatus = m_blockDownloaderStatus;
     m_startTimestamp = j.at("startTimestamp").get<uint64_t>();
+    m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
 }
 
 ///////////////////////////
@@ -213,7 +207,7 @@ json SynchronizationStatus::toJson() const
     {
         {"blockHashCheckpoints", m_blockHashCheckpoints},
         {"lastKnownBlockHashes", m_lastKnownBlockHashes},
-        {"lastKnownBlockHeight", m_lastKnownBlockHashes}
+        {"lastKnownBlockHeight", m_lastKnownBlockHeight}
     };
 }
 

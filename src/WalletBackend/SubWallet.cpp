@@ -6,7 +6,7 @@
 #include <WalletBackend/SubWallet.h>
 ////////////////////////////////////
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 
 #include <CryptoNoteCore/Account.h>
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>

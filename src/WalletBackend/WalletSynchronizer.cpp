@@ -51,10 +51,12 @@ WalletSynchronizer::WalletSynchronizer() :
 
 /* Parameterized constructor */
 WalletSynchronizer::WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
-                                       uint64_t startTimestamp) :
+                                       uint64_t startTimestamp,
+                                       Crypto::SecretKey privateViewKey) :
     m_daemon(daemon),
     m_shouldStop(false),
-    m_startTimestamp(startTimestamp)
+    m_startTimestamp(startTimestamp),
+    m_privateViewKey(privateViewKey)
 {
 }
 
@@ -124,6 +126,10 @@ void WalletSynchronizer::stop()
         /* Tell the threads to stop */
         m_shouldStop.store(true);
 
+        /* Stop the block processing queue so the threads don't hang trying
+           to push/pull from the queue */
+        m_blockProcessingQueue.stop();
+
         /* Wait for the block downloader thread to finish (if applicable) */
         if (m_blockDownloaderThread.joinable())
         {
@@ -140,6 +146,23 @@ void WalletSynchronizer::stop()
 
 void WalletSynchronizer::findTransactionsInBlocks()
 {
+    while (!m_shouldStop.load())
+    {
+        RawBlock b = m_blockProcessingQueue.pop_back();
+
+        /* Could have stopped between entering the loop and getting a block */
+        if (m_shouldStop.load())
+        {
+            return;
+        }
+
+        std::cout << "Block " << b.blockHeight << " has a hash of " << Common::podToHex(b.blockHash) << std::endl;
+
+        /* Make sure to do this at the end, once the transactions are fully
+           processed! Otherwise, we could miss a transaction depending upon
+           when we save */
+        m_transactionSynchronizerStatus.storeBlockHash(b.blockHash, b.blockHeight);
+    }
 }
 
 void WalletSynchronizer::downloadBlocks()
@@ -181,29 +204,40 @@ void WalletSynchronizer::downloadBlocks()
         /* Check if the call succeeded (synchronously waiting on the future)
 
            TODO: Add a wait_for() so if the node hangs up, we still exit
-           correctly. (i.e., checking the m_workerThreadShouldStop flag) */
+           correctly. (i.e., checking the m_shouldStop flag) */
         auto err = error.get();
 
         if (err)
         {
             std::cout << "Failed to query blocks: " << err << ", "
                       << err.message() << std::endl;
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         else
         {
             for (size_t i = 0; i < newBlocks.size(); i++)
             {
-                uint32_t height = i + startHeight;
+                if (m_shouldStop.load())
+                {
+                    return;
+                }
+
+                uint32_t height = startHeight + i;
 
                 RawBlock block = trimBlockShortEntry(newBlocks[i], height);
+
+                /* The daemon sometimes serves us duplicate blocks ;___; */
+                if (m_blockDownloaderStatus.haveSeenBlock(block.blockHash))
+                {
+                    continue;
+                }
 
                 m_blockDownloaderStatus.storeBlockHash(block.blockHash,
                                                        height);
 
                 m_blockProcessingQueue.push_front(block);
             }
-
-            std::cout << "Syncing blocks: " << startHeight << std::endl;
 
             /* Empty the vector so we're not re-iterating the old ones */
             newBlocks.clear();

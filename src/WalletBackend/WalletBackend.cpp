@@ -6,9 +6,9 @@
 #include <WalletBackend/WalletBackend.h>
 ////////////////////////////////////////
 
-#include <crypto/random.h>
+#include <config/CryptoNoteConfig.h>
 
-#include "CryptoNoteConfig.h"
+#include <crypto/random.h>
 
 #include <CryptoNoteCore/Account.h>
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
@@ -246,11 +246,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
         scanHeight, newWallet, daemonHost, daemonPort
     );
 
-    std::cout << "Initting daemon" << std::endl;
-
     error = wallet.initDaemon();
-
-    std::cout << "boop" << std::endl;
 
     return std::make_tuple(error, std::move(wallet));
 }
@@ -514,7 +510,8 @@ WalletError WalletBackend::initDaemon()
     {
         m_walletSynchronizer = std::make_shared<WalletSynchronizer>(
             m_daemon, 
-            getMinSyncTimestamp()
+            getMinSyncTimestamp(),
+            m_privateViewKey
         );
     }
     /* If it has, just set the daemon */

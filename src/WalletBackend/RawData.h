@@ -33,6 +33,17 @@ struct RawTransaction : RawCoinbaseTransaction
 /* A 'block' with the very basics needed to sync the transactions */
 struct RawBlock
 {
+    /* We just use this for returning a null item in our MultiThreadedDeque,
+       as we need a parameterless constructor, but lets initialize the
+       items which can be unintialized anyway to keep the compiler (and future
+       users) happy */
+    RawBlock() :
+        blockHeight(0)
+    {
+        /* Is there a better way to do this? */
+        std::fill_n(blockHash.data, sizeof(Crypto::Hash::data), 0);
+    };
+
     RawBlock(RawCoinbaseTransaction coinbaseTransaction,
              std::vector<RawTransaction> transactions,
              uint64_t blockHeight,
@@ -49,7 +60,7 @@ struct RawBlock
     std::vector<RawTransaction> transactions;
 
     /* The block height (duh!) */
-    uint64_t blockHeight;
+    uint64_t blockHeight = 0;
 
     /* The hash of the block */
     Crypto::Hash blockHash;

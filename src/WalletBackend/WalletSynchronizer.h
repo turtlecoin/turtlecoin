@@ -20,7 +20,8 @@ class WalletSynchronizer
 
         /* Parameterized constructor */
         WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
-                           uint64_t startTimestamp);
+                           uint64_t startTimestamp,
+                           Crypto::SecretKey privateViewKey);
 
         /* Delete the copy constructor */
         WalletSynchronizer(const WalletSynchronizer &) = delete;
@@ -88,4 +89,7 @@ class WalletSynchronizer
         /* The timestamp to start scanning downloading the full block data
            from */
         uint64_t m_startTimestamp;
+
+        /* The private view key we use for decrypting transactions */
+        Crypto::SecretKey m_privateViewKey;
 };

@@ -11,6 +11,16 @@
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
 
+/* Needs to be in the crypto namespace so std::find() finds it */
+namespace Crypto
+{
+    bool operator==(const Hash &lhs, const Hash &rhs)
+    {
+        return std::equal(std::begin(lhs.data), std::end(lhs.data),
+                          std::begin(rhs.data));
+    }
+}
+
 namespace {
 } // namespace
 
@@ -73,4 +83,21 @@ std::vector<Crypto::Hash> SynchronizationStatus::getBlockHashCheckpoints()
               back_inserter(result));
 
     return result;
+}
+
+bool SynchronizationStatus::haveSeenBlock(const Crypto::Hash blockHash)
+{
+    /* See if we can find it in the lastKnownBlockHashes (It's most likely
+       the first item if it's present, but lets check every to be sure) */
+    if (std::find(m_lastKnownBlockHashes.begin(), m_lastKnownBlockHashes.end(),
+                  blockHash) != m_lastKnownBlockHashes.end())
+    {
+        return true;
+    }
+
+    /* Lets check the blockHashCheckpoints if we didn't find it (even more
+       unlikely) */
+    return std::find(m_blockHashCheckpoints.begin(),
+                     m_blockHashCheckpoints.end(), blockHash)
+                  != m_blockHashCheckpoints.end();
 }

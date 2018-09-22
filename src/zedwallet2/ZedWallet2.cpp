@@ -72,5 +72,7 @@ int main()
 
     std::cout << "Done" << std::endl;
 
+    wallet.save();
+
     return 0;
 }
