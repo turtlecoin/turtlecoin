@@ -40,7 +40,7 @@ struct RawBlock
     RawBlock() :
         blockHeight(0)
     {
-        /* Is there a better way to do this? */
+        /* TODO: Is there a better way to do this? */
         std::fill_n(blockHash.data, sizeof(Crypto::Hash::data), 0);
     };
 

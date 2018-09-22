@@ -36,6 +36,45 @@ namespace
         return RawBlock(coinbaseTransaction, transactions, height, b.blockHash);
     }
 
+    std::tuple<bool, Crypto::PublicKey>
+        getPubKeyFromExtra(std::vector<uint8_t> extra)
+    {
+        Crypto::PublicKey publicKey;
+
+        const int pubKeySize = 32;
+
+        for (size_t i = 0; i < extra.size(); i++)
+        {
+            /* If the following data is the transaction public key, this is
+               indicated by the preceding value being 0x01. */
+            if (extra[i] == 0x01)
+            {
+                /* The amount of data remaining in the vector (minus one because
+                   we start reading the public key from the next character) */
+                size_t dataRemaining = extra.size() - i - 1;
+
+                /* We need to check that there is enough space following the tag,
+                   as someone could just pop a random 0x01 in there and make our
+                   code mess up */
+                if (dataRemaining < pubKeySize)
+                {
+                    return std::make_tuple(false, publicKey);
+                }
+
+                const auto dataBegin = extra.begin() + i + 1;
+                const auto dataEnd = dataBegin + pubKeySize;
+
+                /* Copy the data from the vector to the array */
+                std::copy(dataBegin, dataEnd, std::begin(publicKey.data));
+
+                return std::make_tuple(true, publicKey);
+            }
+        }
+
+        /* Couldn't find the tag */
+        return std::make_tuple(false, publicKey);
+    }
+
 } // namespace
 
 ///////////////////////////////////
@@ -144,10 +183,28 @@ void WalletSynchronizer::stop()
     }
 }
 
+
 /* Remove any transactions at this height or above, they were on a forked
    chain */
 void WalletSynchronizer::invalidateTransactions(uint64_t height)
 {
+}
+
+void WalletSynchronizer::processCoinbaseTransaction(RawCoinbaseTransaction tx)
+{
+}
+
+void WalletSynchronizer::processTransaction(RawTransaction tx)
+{
+    Crypto::PublicKey transactionPublicKey;
+    bool success;
+    
+    std::tie(success, transactionPublicKey) = getPubKeyFromExtra(tx.extra);
+
+    if (!success)
+    {
+        return;
+    }
 }
 
 void WalletSynchronizer::findTransactionsInBlocks()
@@ -162,6 +219,15 @@ void WalletSynchronizer::findTransactionsInBlocks()
             return;
         }
 
+        /* Process the coinbase transaction */
+        processCoinbaseTransaction(b.coinbaseTransaction);
+
+        /* Process the rest of the transactions */
+        for (const auto &tx : b.transactions)
+        {
+            processTransaction(tx);
+        }
+
         std::cout << "Block " << b.blockHeight << " has a hash of " << Common::podToHex(b.blockHash) << std::endl;
 
         /* Chain forked, invalidate previous transactions */
@@ -173,7 +239,9 @@ void WalletSynchronizer::findTransactionsInBlocks()
         /* Make sure to do this at the end, once the transactions are fully
            processed! Otherwise, we could miss a transaction depending upon
            when we save */
-        m_transactionSynchronizerStatus.storeBlockHash(b.blockHash, b.blockHeight);
+        m_transactionSynchronizerStatus.storeBlockHash(
+            b.blockHash, b.blockHeight
+        );
     }
 }
 

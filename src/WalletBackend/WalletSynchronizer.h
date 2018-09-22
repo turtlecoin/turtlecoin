@@ -56,6 +56,10 @@ class WalletSynchronizer
 
         void invalidateTransactions(uint64_t height);
 
+        void processTransaction(RawTransaction tx);
+
+        void processCoinbaseTransaction(RawCoinbaseTransaction tx);
+
         /* The thread ID of the block downloader thread */
         std::thread m_blockDownloaderThread;
 
