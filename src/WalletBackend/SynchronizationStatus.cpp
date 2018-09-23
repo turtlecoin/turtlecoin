@@ -7,19 +7,11 @@
 #include <WalletBackend/SynchronizationStatus.h>
 ////////////////////////////////////////////////
 
+#include <crypto/crypto.h>
+
 //////////////////////////
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
-
-/* Needs to be in the crypto namespace so std::find() finds it */
-namespace Crypto
-{
-    bool operator==(const Hash &lhs, const Hash &rhs)
-    {
-        return std::equal(std::begin(lhs.data), std::end(lhs.data),
-                          std::begin(rhs.data));
-    }
-}
 
 namespace {
 } // namespace

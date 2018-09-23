@@ -14,8 +14,6 @@ RawCoinbaseTransaction getRawCoinbaseTransaction(CryptoNote::Transaction t)
     /* Copy over the extra */
     transaction.extra = t.extra;
 
-    std::vector<KeyOutput> keyOutputs;
-
     /* Fill in the simplified key outputs */
     for (const auto &output : t.outputs)
     {
@@ -24,7 +22,7 @@ RawCoinbaseTransaction getRawCoinbaseTransaction(CryptoNote::Transaction t)
         keyOutput.amount = output.amount;
         keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
 
-        keyOutputs.push_back(keyOutput);
+        transaction.keyOutputs.push_back(keyOutput);
     }
 
     return transaction;
@@ -52,11 +50,9 @@ RawTransaction getRawTransaction(CryptoNote::TransactionPrefix t)
     transaction.extra = coinbase.extra;
 
     /* Fill in the missing field */
-    std::vector<CryptoNote::KeyInput> keyInputs;
-
     for (const auto &input : t.inputs)
     {
-        keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
+        transaction.keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
     }
 
     return transaction;

@@ -22,7 +22,7 @@ class SubWallet
     public:
         SubWallet();
 
-        SubWallet(Crypto::SecretKey privateSpendKey,
+        SubWallet(Crypto::PublicKey publicSpendKey,
                   std::string address,
                   uint64_t scanHeight, bool newWallet);
 
@@ -36,9 +36,11 @@ class SubWallet
            (usually creation time) */
         uint64_t m_syncStartTimestamp = 0;
 
+        void addTransfer(uint64_t amount);
+
     private:
         /* This subwallet's private spend key */
-        Crypto::SecretKey m_privateSpendKey;
+        Crypto::PublicKey m_publicSpendKey;
 
         /* This subwallet's public address */
         std::string m_address;

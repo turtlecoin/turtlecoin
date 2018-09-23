@@ -14,6 +14,8 @@ int main()
     std::string seed = "biggest yields peeled pawnshop godfather likewise hickory queen exit trying buying island wagtail vitals lucky theatrics dewdrop licks update pivot digit foes ensign estate queen";
     std::string address = "TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW";
 
+    uint64_t scanHeight = 820000;
+
     Crypto::SecretKey privateSpendKey;
     Crypto::SecretKey privateViewKey;
 
@@ -41,15 +43,15 @@ int main()
     }
     else if (selection == "seed")
     {
-        std::tie(error, wallet) = WalletBackend::importWalletFromSeed(seed, walletName, walletPass, 0, daemonHost, daemonPort);
+        std::tie(error, wallet) = WalletBackend::importWalletFromSeed(seed, walletName, walletPass, scanHeight, daemonHost, daemonPort);
     }
     else if (selection == "keys")
     {
-        std::tie(error, wallet) = WalletBackend::importWalletFromKeys(privateSpendKey, privateViewKey, walletName, walletPass, 0, daemonHost, daemonPort);
+        std::tie(error, wallet) = WalletBackend::importWalletFromKeys(privateSpendKey, privateViewKey, walletName, walletPass, scanHeight, daemonHost, daemonPort);
     }
     else if (selection == "view")
     {
-        std::tie(error, wallet) = WalletBackend::importViewWallet(privateSpendKey, address, walletName, walletPass, 0, daemonHost, daemonPort);
+        std::tie(error, wallet) = WalletBackend::importViewWallet(privateSpendKey, address, walletName, walletPass, scanHeight, daemonHost, daemonPort);
     }
     else
     {
@@ -57,20 +59,16 @@ int main()
         return 1;
     }
 
-    if (!error)
-    {
-        std::cout << "Operation succeeded!" << std::endl;
-    }
-    else
+    if (error)
     {
         std::cout << "Operation failed, error code: " <<  error << std::endl;
+        return 1;
     }
 
-    std::cout << "Sleeping for 10 seconds" << std::endl;
+    std::string input;
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
-    std::cout << "Done" << std::endl;
+    /* Wait for input */
+    std::getline(std::cin, input);
 
     return 0;
 }

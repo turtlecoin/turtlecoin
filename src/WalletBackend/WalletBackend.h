@@ -18,7 +18,7 @@
 
 #include <vector>
 
-#include <WalletBackend/SubWallet.h>
+#include <WalletBackend/SubWallets.h>
 #include <WalletBackend/WalletErrors.h>
 #include <WalletBackend/WalletSynchronizer.h>
 
@@ -58,8 +58,8 @@ class WalletBackend
         /* Imports a wallet from a private spend key and a view key. Returns
            the wallet class, or an error. */
         static std::tuple<WalletError, WalletBackend> importWalletFromKeys(
-            const Crypto::SecretKey privateViewKey,
-            const Crypto::SecretKey privateSpendKey, const std::string filename,
+            const Crypto::SecretKey privateSpendKey,
+            const Crypto::SecretKey privateViewKey, const std::string filename,
             const std::string password, const uint64_t scanHeight,
             const std::string daemonHost, const uint16_t daemonPort
         );
@@ -100,7 +100,7 @@ class WalletBackend
                       uint64_t scanHeight, bool newWallet,
                       std::string daemonHost, uint16_t daemonPort);
 
-        WalletError initDaemon();
+        WalletError init();
 
         WalletError initializeAfterLoad(std::string filename,
                                         std::string password,
@@ -108,8 +108,6 @@ class WalletBackend
                                         uint16_t daemonPort);
 
         void sync();
-
-        uint64_t getMinSyncTimestamp();
 
         /* The filename the wallet is saved to */
         std::string m_filename;
@@ -120,8 +118,9 @@ class WalletBackend
         /* Each subwallet shares one private view key */
         Crypto::SecretKey m_privateViewKey;
 
-        /* A mapping of addresses to sub wallets */
-        std::unordered_map<std::string, SubWallet> m_subWallets;
+        /* A mapping of addresses to sub wallets (Using a shared_ptr here so
+           the WalletSynchronizer has access to it) */
+        std::shared_ptr<SubWallets> m_subWallets;
 
         /* A view wallet has a private view key, and a single address */
         bool m_isViewWallet;

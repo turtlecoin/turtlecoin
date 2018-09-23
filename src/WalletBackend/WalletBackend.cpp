@@ -112,12 +112,14 @@ WalletError checkNewWalletFilename(std::string filename)
 ///////////////////////////////////
 
 /* Constructor */
-WalletBackend::WalletBackend() :
-    m_logManager(std::make_shared<Logging::LoggerManager>()),
-    m_logger(std::make_shared<Logging::LoggerRef>(
-        *m_logManager, "WalletBackend")
-    )
+WalletBackend::WalletBackend()
 {
+    m_logManager = std::make_shared<Logging::LoggerManager>();
+
+    m_logger = std::make_shared<Logging::LoggerRef>(
+        *m_logManager, "WalletBackend"
+    );
+
     /* Remember to call initializeAfterLoad() to initialize the daemon - 
     we can't do it here since we don't have the host/port, and the json
     serialization uses the default constructor */
@@ -151,12 +153,13 @@ WalletBackend & WalletBackend::operator=(WalletBackend && old)
     m_logManager = old.m_logManager;
     m_daemon = old.m_daemon;
     m_subWallets = old.m_subWallets;
-    m_walletSynchronizer = std::move(old.m_walletSynchronizer);
+    m_walletSynchronizer = old.m_walletSynchronizer;
 
     /* Invalidate the old pointers */
-    old.m_daemon = nullptr;
     old.m_logManager = nullptr;
+    old.m_daemon = nullptr;
     old.m_logger = nullptr;
+    old.m_subWallets = nullptr;
     old.m_walletSynchronizer = nullptr;
 
     return *this;
@@ -188,19 +191,9 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
     std::string address = addressFromPrivateKeys(privateSpendKey,
                                                  privateViewKey);
 
-    /* Create the sub wallet */
-    SubWallet s(privateSpendKey, address, scanHeight, newWallet);
-
-    /* Add to the subwallet map */
-    m_subWallets[address] = s;
-
-    /* Save to disk */
-    WalletError error = save();
-
-    if (error)
-    {
-        throw std::runtime_error("Failed to save wallet to disk!");
-    }
+    m_subWallets = std::make_shared<SubWallets>(
+        privateSpendKey, address, scanHeight, newWallet
+    );
 }
 
 /////////////////////
@@ -253,12 +246,20 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
     bool newWallet = false;
     bool isViewWallet = false;
 
-    auto wallet = WalletBackend(
+    WalletBackend wallet(
         filename, password, privateSpendKey, privateViewKey, isViewWallet,
         scanHeight, newWallet, daemonHost, daemonPort
     );
 
-    error = wallet.initDaemon();
+    error = wallet.init();
+
+    if (error)
+    {
+        return std::make_tuple(error, WalletBackend());
+    }
+
+    /* Save to disk */
+    error = wallet.save();
 
     return std::make_tuple(error, std::move(wallet));
 }
@@ -266,7 +267,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromSeed(
 /* Imports a wallet from a private spend key and a view key. Returns
    the wallet class, or an error. */
 std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromKeys(
-    Crypto::SecretKey privateViewKey, Crypto::SecretKey privateSpendKey,
+    Crypto::SecretKey privateSpendKey, Crypto::SecretKey privateViewKey,
     const std::string filename, const std::string password,
     const uint64_t scanHeight, const std::string daemonHost,
     const uint16_t daemonPort)
@@ -289,7 +290,15 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromKeys(
         scanHeight, newWallet, daemonHost, daemonPort
     );
 
-    error = wallet.initDaemon();
+    error = wallet.init();
+
+    if (error)
+    {
+        return std::make_tuple(error, WalletBackend());
+    }
+
+    /* Save to disk */
+    error = wallet.save();
 
     return std::make_tuple(error, std::move(wallet));
 }
@@ -321,7 +330,15 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importViewWallet(
         isViewWallet, scanHeight, newWallet, daemonHost, daemonPort
     );
 
-    error = wallet.initDaemon();
+    error = wallet.init();
+
+    if (error)
+    {
+        return std::make_tuple(error, WalletBackend());
+    }
+
+    /* Save to disk */
+    error = wallet.save();
 
     return std::make_tuple(error, std::move(wallet));
 }
@@ -362,7 +379,15 @@ std::tuple<WalletError, WalletBackend> WalletBackend::createWallet(
         scanHeight, newWallet, daemonHost, daemonPort
     );
 
-    error = wallet.initDaemon();
+    error = wallet.init();
+
+    if (error)
+    {
+        return std::make_tuple(error, WalletBackend());
+    }
+
+    /* Save to disk */
+    error = wallet.save();
 
     return std::make_tuple(error, std::move(wallet));
 }
@@ -478,10 +503,10 @@ WalletError WalletBackend::initializeAfterLoad(std::string filename,
         daemonHost, daemonPort, m_logger->getLogger()
     );
 
-    return initDaemon();
+    return init();
 }
 
-WalletError WalletBackend::initDaemon()
+WalletError WalletBackend::init()
 {
     if (m_daemon == nullptr)
     {
@@ -522,7 +547,7 @@ WalletError WalletBackend::initDaemon()
     {
         m_walletSynchronizer = std::make_shared<WalletSynchronizer>(
             m_daemon, 
-            getMinSyncTimestamp(),
+            m_subWallets->getMinSyncTimestamp(),
             m_privateViewKey
         );
     }
@@ -532,25 +557,12 @@ WalletError WalletBackend::initDaemon()
         m_walletSynchronizer->m_daemon = m_daemon;
     }
 
+    m_walletSynchronizer->m_subWallets = m_subWallets;
+
     /* Launch the wallet sync process in a background thread */
     m_walletSynchronizer->start();
 
     return result;
-}
-
-/* Gets the smallest timestamp of all the sub wallets */
-uint64_t WalletBackend::getMinSyncTimestamp()
-{
-    /* Get the smallest sub wallet (by timestamp) */
-    auto min = *std::min_element(m_subWallets.begin(), m_subWallets.end(),
-    [](const std::pair<std::string, SubWallet> &lhs,
-       const std::pair<std::string, SubWallet> &rhs)
-    {
-        return lhs.second.m_syncStartTimestamp < rhs.second.m_syncStartTimestamp;
-    });
-
-    /* Return the smallest wallets timestamp */
-    return min.second.m_syncStartTimestamp;
 }
 
 WalletError WalletBackend::save() const

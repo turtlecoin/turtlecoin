@@ -9,6 +9,7 @@
 #include <NodeRpcProxy/NodeRpcProxy.h>
 
 #include <WalletBackend/MultiThreadedDeque.h>
+#include <WalletBackend/SubWallets.h>
 #include <WalletBackend/SynchronizationStatus.h>
 #include <WalletBackend/RawData.h>
 
@@ -46,6 +47,9 @@ class WalletSynchronizer
 
         /* The daemon connection */
         std::shared_ptr<CryptoNote::NodeRpcProxy> m_daemon;
+
+        /* The sub wallets (shared with the main class) */
+        std::shared_ptr<SubWallets> m_subWallets;
 
     private:
         void downloadBlocks();

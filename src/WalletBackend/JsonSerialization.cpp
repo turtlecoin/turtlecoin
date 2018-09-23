@@ -6,9 +6,12 @@
 #include <WalletBackend/JsonSerialization.h>
 ////////////////////////////////////////////
 
+#include <Common/StringTools.h>
+
 #include <WalletBackend/WalletBackend.h>
 #include <WalletBackend/WalletSynchronizer.h>
 #include <WalletBackend/SubWallet.h>
+#include <WalletBackend/SubWallets.h>
 #include <WalletBackend/SynchronizationStatus.h>
 
 using nlohmann::json;
@@ -33,7 +36,7 @@ json SubWallet::toJson() const
 {
     return
     {
-        {"privateSpendKey", m_privateSpendKey},
+        {"privateSpendKey", m_publicSpendKey},
         {"address", m_address},
         {"syncStartTimestamp", m_syncStartTimestamp},
         {"transactions", m_transactions},
@@ -42,10 +45,39 @@ json SubWallet::toJson() const
 
 void SubWallet::fromJson(const json &j)
 {
-    m_privateSpendKey = j.at("privateSpendKey").get<Crypto::SecretKey>();
+    m_publicSpendKey = j.at("privateSpendKey").get<Crypto::PublicKey>();
     m_address = j.at("address").get<std::string>();
     m_syncStartTimestamp = j.at("syncStartTimestamp").get<uint64_t>();
     m_transactions = j.at("transactions").get<std::vector<CryptoNote::WalletTransaction>>();
+}
+
+///////////////
+/* SubWallets */
+///////////////
+
+void to_json(json &j, const SubWallets &s)
+{
+    j = s.toJson();
+}
+
+void from_json(const json &j, SubWallets &s)
+{
+    s.fromJson(j);
+}
+
+json SubWallets::toJson() const
+{
+    return
+    {
+        {"publicSpendKeys", m_publicSpendKeys},
+        {"subWallets", m_subWallets}
+    };
+}
+
+void SubWallets::fromJson(const json &j)
+{
+    m_publicSpendKeys = j.at("publicSpendKeys").get<std::vector<Crypto::PublicKey>>();
+    m_subWallets = j.at("subWallets").get<std::unordered_map<Crypto::PublicKey, SubWallet>>();
 }
 
 ///////////////////
@@ -68,7 +100,7 @@ json WalletBackend::toJson() const
     {
         {"walletFileFormatVersion", WALLET_FILE_FORMAT_VERSION},
         {"privateViewKey", m_privateViewKey},
-        {"subWallets", m_subWallets},
+        {"subWallets", *m_subWallets},
         {"isViewWallet", m_isViewWallet},
         {"walletSynchronizer", *m_walletSynchronizer}
     };
@@ -89,9 +121,16 @@ void WalletBackend::fromJson(const json &j)
     }
 
     m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
-    m_subWallets = j.at("subWallets").get<std::unordered_map<std::string, SubWallet>>();
+
+    m_subWallets = std::make_shared<SubWallets>(
+        j.at("subWallets").get<SubWallets>()
+    );
+
     m_isViewWallet = j.at("isViewWallet").get<bool>();
-    m_walletSynchronizer = std::make_shared<WalletSynchronizer>(j.at("walletSynchronizer").get<WalletSynchronizer>());
+
+    m_walletSynchronizer = std::make_shared<WalletSynchronizer>(
+        j.at("walletSynchronizer").get<WalletSynchronizer>()
+    );
 }
 
 /* Declaration of to_json and from_json have to be in the same namespace as
@@ -110,6 +149,20 @@ namespace Crypto
     void from_json(const json &j, SecretKey &s)
     {
         jsonToHash(j, s, "secretKey");
+    }
+
+    ///////////////////////
+    /* Crypto::PublicKey */
+    ///////////////////////
+
+    void to_json(json &j, const PublicKey &s)
+    {
+        hashToJson(j, s, "publicKey");
+    }
+
+    void from_json(const json &j, PublicKey &s)
+    {
+        jsonToHash(j, s, "publicKey");
     }
 
     //////////////////
@@ -183,6 +236,7 @@ void WalletSynchronizer::fromJson(const json &j)
     m_blockDownloaderStatus = j.at("transactionSynchronizerStatus").get<SynchronizationStatus>();
 
     m_transactionSynchronizerStatus = m_blockDownloaderStatus;
+
     m_startTimestamp = j.at("startTimestamp").get<uint64_t>();
     m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
 }

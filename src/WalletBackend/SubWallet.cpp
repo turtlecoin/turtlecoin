@@ -21,7 +21,28 @@ using json = nlohmann::json;
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
 
-namespace {
+namespace
+{
+
+    uint64_t getCurrentTimestampAdjusted()
+    {
+        /* Get the current time as a unix timestamp */
+        std::time_t time = std::time(nullptr);
+
+        /* Take the amount of time a block can potentially be in the past/future */
+        std::initializer_list<uint64_t> limits =
+        {
+            CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT,
+            CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3,
+            CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4
+        };
+
+        /* Get the largest adjustment possible */
+        uint64_t adjust = std::max(limits);
+
+        /* Take the earliest timestamp that will include all possible blocks */
+        return time - adjust;
+    }
 
     /* Converts a height to a timestamp, conservatively */
     uint64_t scanHeightToTimestamp(const uint64_t scanHeight)
@@ -35,23 +56,19 @@ namespace {
         uint64_t secondsSinceLaunch = scanHeight * 
                                       CryptoNote::parameters::DIFFICULTY_TARGET;
 
-        /* Add a bit of a buffer in case of difficulty weirdness, blocks coming
-           out too fast */
-        secondsSinceLaunch *= 0.95;
-
         /* Get the genesis block timestamp and add the time since launch */
         uint64_t timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP
                            + secondsSinceLaunch;
 
-        /* Timestamp in the future */
-        if (timestamp >= static_cast<uint64_t>(std::time(nullptr)))
+        /* Don't make timestamp too large or daemon throws an error */
+        if (timestamp >= getCurrentTimestampAdjusted())
         {
-            return std::time(nullptr);
+            return getCurrentTimestampAdjusted();
         }
 
         return timestamp;
     }
-
+    
 } // namespace
 
 ///////////////////////////////////
@@ -62,17 +79,23 @@ SubWallet::SubWallet()
 {
 }
 
-SubWallet::SubWallet(const Crypto::SecretKey privateSpendKey,
+SubWallet::SubWallet(const Crypto::PublicKey publicSpendKey,
                      const std::string address,
                      const uint64_t scanHeight, const bool newWallet) :
-    m_privateSpendKey(privateSpendKey),
+    m_publicSpendKey(publicSpendKey),
     m_address(address),
     /* If we're making a new wallet, sync from now, else sync from the scan
        height (normally creation height) */
-    m_syncStartTimestamp(newWallet ? std::time(nullptr) : scanHeightToTimestamp(scanHeight))
+    m_syncStartTimestamp(newWallet ? getCurrentTimestampAdjusted() 
+                                   : scanHeightToTimestamp(scanHeight))
 {
 }
 
 /////////////////////
 /* CLASS FUNCTIONS */
 /////////////////////
+
+void SubWallet::addTransfer(uint64_t amount)
+{
+    std::cout << "Adding transfer of " << amount << std::endl;
+}

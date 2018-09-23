@@ -8,6 +8,8 @@
 
 #include <Common/StringTools.h>
 
+#include <crypto/crypto.h>
+
 #include <future>
 
 //////////////////////////
@@ -89,9 +91,10 @@ WalletSynchronizer::WalletSynchronizer() :
 }
 
 /* Parameterized constructor */
-WalletSynchronizer::WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
-                                       uint64_t startTimestamp,
-                                       Crypto::SecretKey privateViewKey) :
+WalletSynchronizer::WalletSynchronizer(
+    std::shared_ptr<CryptoNote::NodeRpcProxy> daemon, uint64_t startTimestamp,
+    Crypto::SecretKey privateViewKey) :
+
     m_daemon(daemon),
     m_shouldStop(false),
     m_startTimestamp(startTimestamp),
@@ -123,6 +126,8 @@ WalletSynchronizer & WalletSynchronizer::operator=(WalletSynchronizer && old)
     m_transactionSynchronizerStatus = std::move(old.m_transactionSynchronizerStatus);
 
     m_startTimestamp = std::move(old.m_startTimestamp);
+
+    m_privateViewKey = std::move(old.m_privateViewKey);
 
     return *this;
 }
@@ -183,7 +188,6 @@ void WalletSynchronizer::stop()
     }
 }
 
-
 /* Remove any transactions at this height or above, they were on a forked
    chain */
 void WalletSynchronizer::invalidateTransactions(uint64_t height)
@@ -196,14 +200,53 @@ void WalletSynchronizer::processCoinbaseTransaction(RawCoinbaseTransaction tx)
 
 void WalletSynchronizer::processTransaction(RawTransaction tx)
 {
-    Crypto::PublicKey transactionPublicKey;
+    Crypto::PublicKey txPublicKey;
+
     bool success;
-    
-    std::tie(success, transactionPublicKey) = getPubKeyFromExtra(tx.extra);
+
+    std::tie(success, txPublicKey) = getPubKeyFromExtra(tx.extra);
 
     if (!success)
     {
         return;
+    }
+
+    Crypto::KeyDerivation derivation;
+
+    /* Generate the derivation from the random tx public key, and our private
+       key */
+    if (!Crypto::generate_key_derivation(txPublicKey, m_privateViewKey, derivation))
+    {
+        return;
+    }
+
+    std::unordered_map<Crypto::PublicKey, uint64_t> transfers;
+
+    for (size_t i = 0; i < tx.keyOutputs.size(); i++)
+    {
+        Crypto::PublicKey spendKey;
+
+        /* Check if the output belongs to one of our spend public keys */
+        Crypto::underive_public_key(
+            derivation, i, tx.keyOutputs[i].key, spendKey
+        );
+
+        const auto spendKeys = m_subWallets->m_publicSpendKeys;
+
+        auto it = std::find(spendKeys.begin(), spendKeys.end(), spendKey);
+        
+        if (it != spendKeys.end())
+        {
+            /* Add the amount to the current amount (If a key doesn't exist,
+               it will default to zero, so this is just setting the value
+               to the amount in that case */
+            transfers[*it] += tx.keyOutputs[i].amount;
+        }
+    }
+
+    if (!transfers.empty())
+    {
+        m_subWallets->addTransfers(transfers);
     }
 }
 
@@ -227,8 +270,6 @@ void WalletSynchronizer::findTransactionsInBlocks()
         {
             processTransaction(tx);
         }
-
-        std::cout << "Block " << b.blockHeight << " has a hash of " << Common::podToHex(b.blockHash) << std::endl;
 
         /* Chain forked, invalidate previous transactions */
         if (m_transactionSynchronizerStatus.getHeight() >= b.blockHeight)
@@ -309,6 +350,8 @@ void WalletSynchronizer::downloadBlocks()
         }
         else
         {
+            std::cout << "Syncing blocks: " << startHeight << std::endl;
+
             /* Iterating through with a standard loop makes it a bit easier
                to get the height of the block */
             for (size_t i = 0; i < newBlocks.size(); i++)
