@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <crypto/crypto.h>
+
 #include "CryptoTypes.h"
 
 /* TODO: Kill IWallet.h */
@@ -12,6 +14,8 @@
 #include "json.hpp"
 
 #include <string>
+
+#include <unordered_set>
 
 #include <WalletBackend/WalletErrors.h>
 
@@ -22,9 +26,14 @@ class SubWallet
     public:
         SubWallet();
 
-        SubWallet(Crypto::PublicKey publicSpendKey,
-                  std::string address,
-                  uint64_t scanHeight, bool newWallet);
+        SubWallet(const Crypto::PublicKey publicSpendKey,
+                  const std::string address,
+                  const uint64_t scanHeight, const bool newWallet);
+
+        SubWallet(const Crypto::PublicKey publicSpendKey,
+                  const Crypto::SecretKey privateSpendKey,
+                  const std::string address,
+                  const uint64_t scanHeight, const bool newWallet);
 
         /* Converts the class to a json object */
         json toJson() const;
@@ -32,15 +41,27 @@ class SubWallet
         /* Initializes the class from a json string */
         void fromJson(const json &j);
 
+        void generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
+                                      size_t outputIndex);
+
+        void addTransfer(int64_t amount);
+
         /* The timestamp to begin syncing the wallet at
            (usually creation time) */
         uint64_t m_syncStartTimestamp = 0;
 
-        void addTransfer(uint64_t amount);
+        /* Whether this is a view only wallet */
+        bool m_isViewWallet;
+
+        /* A set of the stored key images we own (Key images are unique) */
+        std::unordered_set<Crypto::KeyImage> m_keyImages;
+
+        /* This subwallet's public spend key */
+        Crypto::PublicKey m_publicSpendKey;
 
     private:
-        /* This subwallet's private spend key */
-        Crypto::PublicKey m_publicSpendKey;
+        /* The subwallet's private spend key */
+        Crypto::SecretKey m_privateSpendKey;
 
         /* This subwallet's public address */
         std::string m_address;

@@ -36,19 +36,25 @@ json SubWallet::toJson() const
 {
     return
     {
-        {"privateSpendKey", m_publicSpendKey},
+        {"publicSpendKey", m_publicSpendKey},
+        {"privateSpendKey", m_privateSpendKey},
         {"address", m_address},
         {"syncStartTimestamp", m_syncStartTimestamp},
         {"transactions", m_transactions},
+        {"isViewWallet", m_isViewWallet},
+        {"keyImages", m_keyImages},
     };
 }
 
 void SubWallet::fromJson(const json &j)
 {
-    m_publicSpendKey = j.at("privateSpendKey").get<Crypto::PublicKey>();
+    m_publicSpendKey = j.at("publicSpendKey").get<Crypto::PublicKey>();
+    m_privateSpendKey = j.at("privateSpendKey").get<Crypto::SecretKey>();
     m_address = j.at("address").get<std::string>();
     m_syncStartTimestamp = j.at("syncStartTimestamp").get<uint64_t>();
     m_transactions = j.at("transactions").get<std::vector<CryptoNote::WalletTransaction>>();
+    m_isViewWallet = j.at("isViewWallet").get<bool>();
+    m_keyImages = j.at("keyImages").get<std::unordered_set<Crypto::KeyImage>>();
 }
 
 ///////////////
@@ -175,6 +181,20 @@ namespace Crypto
     }
 
     void from_json(const json &j, Hash &h)
+    {
+        jsonToHash(j, h, "hash");
+    }
+
+    //////////////////////
+    /* Crypto::KeyImage */
+    //////////////////////
+
+    void to_json(json &j, const KeyImage &h)
+    {
+        hashToJson(j, h, "hash");
+    }
+
+    void from_json(const json &j, KeyImage &h)
     {
         jsonToHash(j, h, "hash");
     }

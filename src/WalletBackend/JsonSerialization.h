@@ -27,6 +27,18 @@ void from_json(const json &j, WalletBackend &w);
 void to_json(json &j, const Crypto::SecretKey &s);
 void from_json(const json &j, Crypto::SecretKey &s);
 
+/* Crypto::PublicKey */
+void to_json(json &j, const Crypto::PublicKey &s);
+void from_json(const json &j, Crypto::PublicKey &s);
+
+/* Crypto::Hash */
+void to_json(json &j, const Crypto::Hash &s);
+void from_json(const json &j, Crypto::Hash &s);
+
+/* Crypto::KeyImage */
+void to_json(json &j, const Crypto::KeyImage &s);
+void from_json(const json &j, Crypto::KeyImage &s);
+
 /* CryptoNote::WalletTransaction */
 void to_json(json &j, const CryptoNote::WalletTransaction &t);
 void from_json(const json &j, CryptoNote::WalletTransaction &t);

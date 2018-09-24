@@ -213,37 +213,77 @@ void WalletSynchronizer::processTransaction(RawTransaction tx)
 
     Crypto::KeyDerivation derivation;
 
-    /* Generate the derivation from the random tx public key, and our private
-       key */
+    /* Generate the key derivation from the random tx public key, and our private
+       view key */
     if (!Crypto::generate_key_derivation(txPublicKey, m_privateViewKey, derivation))
     {
         return;
     }
 
-    std::unordered_map<Crypto::PublicKey, uint64_t> transfers;
+    /* TODO: Input is a uint64_t, but we store it as an int64_t so it can be
+       negative - need to handle overflow */
+    std::unordered_map<Crypto::PublicKey, int64_t> transfers;
 
-    for (size_t i = 0; i < tx.keyOutputs.size(); i++)
+    for (size_t outputIndex = 0; outputIndex < tx.keyOutputs.size(); outputIndex++)
     {
         Crypto::PublicKey spendKey;
 
-        /* Check if the output belongs to one of our spend public keys */
+        /* Derive the spend key from the transaction, using the previous
+           derivation */
         Crypto::underive_public_key(
-            derivation, i, tx.keyOutputs[i].key, spendKey
+            derivation, outputIndex, tx.keyOutputs[outputIndex].key, spendKey
         );
 
         const auto spendKeys = m_subWallets->m_publicSpendKeys;
 
-        auto it = std::find(spendKeys.begin(), spendKeys.end(), spendKey);
+        /* See if the derived spend key matches any of our spend keys */
+        auto ourSpendKey = std::find(spendKeys.begin(), spendKeys.end(), spendKey);
         
-        if (it != spendKeys.end())
+        /* If it does, the transaction belongs to us */
+        if (ourSpendKey != spendKeys.end())
         {
             /* Add the amount to the current amount (If a key doesn't exist,
                it will default to zero, so this is just setting the value
                to the amount in that case */
-            transfers[*it] += tx.keyOutputs[i].amount;
+            transfers[*ourSpendKey] += tx.keyOutputs[outputIndex].amount;
+
+            /* Next we get the key image for this transaction. We store these,
+               and thus can then detect when an outgoing transaction is made
+               by us. We need a private spend key for this. 
+               
+               If the wallet this spend key belongs to is a view wallet, this
+               won't do anything! */
+            m_subWallets->generateAndStoreKeyImage(
+                *ourSpendKey, derivation, outputIndex
+            );
         }
     }
 
+    for (const auto keyInput : tx.keyInputs)
+    {
+        Crypto::PublicKey publicSpendKey;
+
+        bool found;
+
+        /* See if any of the sub wallets contain this key image. If they do,
+           it means this keyInput is an outgoing transfer from that wallet.
+           
+           We grab the spendKey so we can index the transfers array and then
+           notify the subwallets all at once */
+        std::tie(found, publicSpendKey) = m_subWallets->getKeyImageOwner(
+            keyInput.keyImage
+        );
+
+        if (found)
+        {
+            /* Take the amount off the current amount (If a key doesn't exist,
+               it will default to zero, so this is just setting the value
+               to the negative amount in that case */
+            transfers[publicSpendKey] -= keyInput.amount;
+        }
+    }
+
+    /* Process any transactions we found belonging to us */
     if (!transfers.empty())
     {
         m_subWallets->addTransfers(transfers);
@@ -262,6 +302,12 @@ void WalletSynchronizer::findTransactionsInBlocks()
             return;
         }
 
+        /* Chain forked, invalidate previous transactions */
+        if (m_transactionSynchronizerStatus.getHeight() >= b.blockHeight)
+        {
+            invalidateTransactions(b.blockHeight);
+        }
+
         /* Process the coinbase transaction */
         processCoinbaseTransaction(b.coinbaseTransaction);
 
@@ -269,12 +315,6 @@ void WalletSynchronizer::findTransactionsInBlocks()
         for (const auto &tx : b.transactions)
         {
             processTransaction(tx);
-        }
-
-        /* Chain forked, invalidate previous transactions */
-        if (m_transactionSynchronizerStatus.getHeight() >= b.blockHeight)
-        {
-            invalidateTransactions(b.blockHeight);
         }
 
         /* Make sure to do this at the end, once the transactions are fully
