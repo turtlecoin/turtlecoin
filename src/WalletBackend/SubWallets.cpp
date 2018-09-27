@@ -106,23 +106,33 @@ void SubWallets::addTransaction(Transaction tx)
 
     /* We can regenerate the balance from the transactions, but this will be
        faster, as getting the balance is a common operation */
-    for (const auto &x : tx.transfers)
+    for (const auto &transfer : tx.transfers)
     {
-        m_subWallets[x.first].balance += x.second;
+        auto pubKey = transfer.first;
+        auto amount = transfer.second;
 
-        if (x.second > 0)
+        m_subWallets[pubKey].balance += amount;
+
+        if (amount != 0 && tx.fee == 0)
+        {
+            std::cout << "Coinbase transfer:" << std::endl
+                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
+                      << "Amount: " << amount << std::endl
+                      << std::endl;
+        }
+        else if (amount > 0)
         {
             std::cout << "Incoming transfer:" << std::endl
                       << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                      << "Amount: " << x.second << std::endl
+                      << "Amount: " << amount << std::endl
                       << "Fee: " << tx.fee << std::endl
                       << std::endl;
         }
-        else if (x.second < 0)
+        else if (amount < 0)
         {
             std::cout << "Outgoing transfer:" << std::endl
                       << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                      << "Spent: " << std::abs(x.second) << std::endl
+                      << "Spent: " << std::abs(amount) << std::endl
                       << "Fee: " << tx.fee << std::endl
                       << std::endl;
         }

@@ -175,10 +175,40 @@ void WalletSynchronizer::invalidateTransactions(uint64_t height)
 {
 }
 
-void WalletSynchronizer::processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction tx)
+void WalletSynchronizer::processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction rawTX)
 {
+    Crypto::PublicKey txPublicKey;
+
+    bool success;
+
+    std::tie(success, txPublicKey) = getPubKeyFromExtra(rawTX.extra);
+
+    if (!success)
+    {
+        return;
+    }
+
+    /* TODO: Input is a uint64_t, but we store it as an int64_t so it can be
+       negative - need to handle overflow */
+    std::unordered_map<Crypto::PublicKey, int64_t> transfers;
+
+    processTransactionOutputs(rawTX.keyOutputs, transfers, txPublicKey);
+
+    /* Process any transactions we found belonging to us */
+    if (!transfers.empty())
+    {
+        /* Coinbase transactions don't have a fee */
+        uint64_t fee = 0;
+
+        /* Form the actual transaction */
+        Transaction tx(transfers, rawTX.hash, fee);
+
+        /* Store the transaction */
+        m_subWallets->addTransaction(tx);
+    }
 }
 
+/* Find inputs that belong to us (i.e., outgoing transactions) */
 uint64_t WalletSynchronizer::processTransactionInputs(
     std::vector<CryptoNote::KeyInput> keyInputs,
     std::unordered_map<Crypto::PublicKey, int64_t> &transfers)
@@ -214,21 +244,12 @@ uint64_t WalletSynchronizer::processTransactionInputs(
     return sumOfInputs;
 }
 
+/* Find outputs that belong to us (i.e., incoming transactions) */
 std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
-    WalletTypes::RawTransaction tx,
-    std::unordered_map<Crypto::PublicKey, int64_t> &transfers)
+    std::vector<WalletTypes::KeyOutput> keyOutputs,
+    std::unordered_map<Crypto::PublicKey, int64_t> &transfers,
+    Crypto::PublicKey txPublicKey)
 {
-    Crypto::PublicKey txPublicKey;
-
-    bool success;
-
-    std::tie(success, txPublicKey) = getPubKeyFromExtra(tx.extra);
-
-    if (!success)
-    {
-        return std::make_tuple(false, 0);
-    }
-
     Crypto::KeyDerivation derivation;
 
     /* Generate the key derivation from the random tx public key, and our private
@@ -241,17 +262,17 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
     /* The sum of all the outputs in the transaction */
     uint64_t sumOfOutputs = 0;
 
-    for (size_t outputIndex = 0; outputIndex < tx.keyOutputs.size(); outputIndex++)
+    for (size_t outputIndex = 0; outputIndex < keyOutputs.size(); outputIndex++)
     {
         /* Add the amount to the sum of outputs, used for calculating fee later */
-        sumOfOutputs += tx.keyOutputs[outputIndex].amount;
+        sumOfOutputs += keyOutputs[outputIndex].amount;
 
         Crypto::PublicKey spendKey;
 
         /* Derive the spend key from the transaction, using the previous
            derivation */
         if (!Crypto::underive_public_key(
-            derivation, outputIndex, tx.keyOutputs[outputIndex].key, spendKey))
+            derivation, outputIndex, keyOutputs[outputIndex].key, spendKey))
         {
             return std::make_tuple(false, 0);
         }
@@ -267,7 +288,7 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
             /* Add the amount to the current amount (If a key doesn't exist,
                it will default to zero, so this is just setting the value
                to the amount in that case */
-            transfers[*ourSpendKey] += tx.keyOutputs[outputIndex].amount;
+            transfers[*ourSpendKey] += keyOutputs[outputIndex].amount;
 
             /* Next we get the key image for this transaction. We store these,
                and thus can then detect when an outgoing transaction is made
@@ -284,6 +305,27 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
     return std::make_tuple(true, sumOfOutputs);
 }
 
+/* Split into a separate function so the coinbase code can reuse the other
+   processTransactionsOutputs() function */
+std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
+    WalletTypes::RawTransaction tx,
+    std::unordered_map<Crypto::PublicKey, int64_t> &transfers)
+{
+    Crypto::PublicKey txPublicKey;
+
+    bool success;
+
+    std::tie(success, txPublicKey) = getPubKeyFromExtra(tx.extra);
+
+    if (!success)
+    {
+        return std::make_tuple(false, 0);
+    }
+
+    return processTransactionOutputs(tx.keyOutputs, transfers, txPublicKey);
+}
+
+/* Find the inputs and outputs of a transaction that belong to us */
 void WalletSynchronizer::processTransaction(WalletTypes::RawTransaction rawTX)
 {
     /* TODO: Input is a uint64_t, but we store it as an int64_t so it can be

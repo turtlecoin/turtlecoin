@@ -69,9 +69,14 @@ class WalletSynchronizer
             WalletTypes::RawTransaction tx,
             std::unordered_map<Crypto::PublicKey, int64_t> &transfers);
 
-        void processTransaction(WalletTypes::RawTransaction tx);
+        std::tuple<bool, uint64_t> processTransactionOutputs(
+            std::vector<WalletTypes::KeyOutput> keyOutputs,
+            std::unordered_map<Crypto::PublicKey, int64_t> &transfers,
+            Crypto::PublicKey txPublicKey);
 
-        void processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction tx);
+        void processTransaction(WalletTypes::RawTransaction rawTX);
+
+        void processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction rawTX);
 
         /* The thread ID of the block downloader thread */
         std::thread m_blockDownloaderThread;
