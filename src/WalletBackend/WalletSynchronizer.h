@@ -11,7 +11,8 @@
 #include <WalletBackend/MultiThreadedDeque.h>
 #include <WalletBackend/SubWallets.h>
 #include <WalletBackend/SynchronizationStatus.h>
-#include <WalletBackend/RawData.h>
+
+#include <WalletTypes.h>
 
 class WalletSynchronizer
 {
@@ -60,9 +61,17 @@ class WalletSynchronizer
 
         void invalidateTransactions(uint64_t height);
 
-        void processTransaction(RawTransaction tx);
+        uint64_t processTransactionInputs(
+            std::vector<CryptoNote::KeyInput> keyInputs,
+            std::unordered_map<Crypto::PublicKey, int64_t> &transfers);
 
-        void processCoinbaseTransaction(RawCoinbaseTransaction tx);
+        std::tuple<bool, uint64_t> processTransactionOutputs(
+            WalletTypes::RawTransaction tx,
+            std::unordered_map<Crypto::PublicKey, int64_t> &transfers);
+
+        void processTransaction(WalletTypes::RawTransaction tx);
+
+        void processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction tx);
 
         /* The thread ID of the block downloader thread */
         std::thread m_blockDownloaderThread;
@@ -94,7 +103,7 @@ class WalletSynchronizer
 
         /* Blocks to be processed are added to the front, and are removed
            from the back */
-        MultiThreadedDeque<RawBlock> m_blockProcessingQueue;
+        MultiThreadedDeque<WalletTypes::WalletBlockInfo> m_blockProcessingQueue;
 
         /* The timestamp to start scanning downloading the full block data
            from */

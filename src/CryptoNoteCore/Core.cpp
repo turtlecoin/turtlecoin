@@ -32,6 +32,8 @@
 
 #include "TransactionApi.h"
 
+#include <WalletTypes.h>
+
 using namespace Crypto;
 
 namespace CryptoNote {
@@ -377,11 +379,20 @@ bool Core::queryBlocks(const std::vector<Crypto::Hash>& blockHashes, uint64_t ti
 
   try {
     IBlockchainCache* mainChain = chainsLeaves[0];
-
     currentIndex = mainChain->getTopBlockIndex();
 
-    /* Where should we start returning blocks from */
-    startIndex = std::max(findBlockchainSupplement(blockHashes), mainChain->getTimestampLowerBoundBlockIndex(timestamp));
+    startIndex = findBlockchainSupplement(blockHashes); // throws
+
+    fullOffset = mainChain->getTimestampLowerBoundBlockIndex(timestamp);
+    if (fullOffset < startIndex) {
+      fullOffset = startIndex;
+    }
+
+    size_t hashesPushed = pushBlockHashes(startIndex, fullOffset, BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT, entries);
+
+    if (startIndex + hashesPushed != fullOffset) {
+      return true;
+    }
 
     fillQueryBlockFullInfo(fullOffset, currentIndex, BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, entries);
 
@@ -402,19 +413,176 @@ bool Core::queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, ui
 
   try {
     IBlockchainCache* mainChain = chainsLeaves[0];
-
     currentIndex = mainChain->getTopBlockIndex();
-    
-    /* Where should we start returning blocks from */
-    startIndex = std::max(findBlockchainSupplement(knownBlockHashes), mainChain->getTimestampLowerBoundBlockIndex(timestamp));
 
-    fillQueryBlockShortInfo(startIndex, currentIndex, BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, entries);
+    startIndex = findBlockchainSupplement(knownBlockHashes); // throws
+
+    // Stops bug where wallets fail to sync, because timestamps have been adjusted after syncronisation.
+    // check for a query of the blocks where the block index is non-zero, but the timestamp is zero
+    // indicating that the originator did not know the internal time of the block, but knew which block
+    // was wanted by index.  Fullfill this by getting the time of m_blocks[startIndex].timestamp.
+
+    if (startIndex > 0 && timestamp == 0) {
+      if (startIndex <= mainChain->getTopBlockIndex()) {
+        RawBlock block = mainChain->getBlockByIndex(startIndex);
+        auto blockTemplate = extractBlockTemplate(block);
+        timestamp = blockTemplate.timestamp;
+      }
+    }
+
+    fullOffset = mainChain->getTimestampLowerBoundBlockIndex(timestamp);
+    if (fullOffset < startIndex) {
+      fullOffset = startIndex;
+    }
+
+    size_t hashesPushed = pushBlockHashes(startIndex, fullOffset, BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT, entries);
+
+    if (startIndex + static_cast<uint32_t>(hashesPushed) != fullOffset) {
+      return true;
+    }
+
+    fillQueryBlockShortInfo(fullOffset, currentIndex, BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, entries);
 
     return true;
   } catch (std::exception& e) {
     logger(Logging::ERROR) << "Failed to query blocks: " << e.what();
     return false;
   }
+}
+
+/* Known block hashes = The hashes the wallet knows about. We'll give blocks starting from this hash.
+   Timestamp = The timestamp to start giving blocks from, if knownBlockHashes is empty. Used for syncing a new wallet.
+   Blocks = The returned vector of blocks */
+bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, uint64_t timestamp, std::vector<WalletTypes::WalletBlockInfo> &blocks) const
+{
+    throwIfNotInitialized();
+
+    try
+    {
+        IBlockchainCache *mainChain = chainsLeaves[0];
+
+        /* Current height */
+        uint64_t currentIndex = mainChain->getTopBlockIndex();
+
+        /* Where we should start returning blocks from */
+        uint64_t startIndex = std::max(findBlockchainSupplement(knownBlockHashes), mainChain->getTimestampLowerBoundBlockIndex(timestamp));
+
+        /* Prevents us from getting the last hash we passed in every time -
+           but need to make sure the user does actually get block 0 if needed */
+        if (startIndex != 0)
+        {
+            startIndex++;
+        }
+
+        blocks = getRequestedWalletBlocks(startIndex, currentIndex);
+
+        return true;
+    }
+    catch (std::exception &e)
+    {
+        logger(Logging::ERROR) << "Failed to get wallet info: " << e.what();
+        return false;
+    }
+}
+
+std::vector<WalletTypes::WalletBlockInfo> Core::getRequestedWalletBlocks(uint64_t startIndex, uint64_t currentIndex) const
+{
+    std::vector<WalletTypes::WalletBlockInfo> blocks;
+
+    uint64_t endIndex = std::min(BLOCKS_SYNCHRONIZING_DEFAULT_COUNT, currentIndex - startIndex + 1) + startIndex;
+
+    for (uint64_t blockHeight = startIndex; blockHeight < endIndex; blockHeight++)
+    {
+        IBlockchainCache *segment = findMainChainSegmentContainingBlock(blockHeight);
+        
+        WalletTypes::WalletBlockInfo walletBlock;
+
+        /* The hash of this block */
+        walletBlock.blockHash = segment->getBlockHash(blockHeight);
+
+        /* The height of this block */
+        walletBlock.blockHeight = blockHeight;
+
+        /* Raw block, as a binary array */
+        RawBlock rawBlock = getRawBlock(segment, blockHeight);
+
+        BlockTemplate block;
+
+        /* Convert the raw block to a block template */
+        fromBinaryArray(block, rawBlock.block);
+
+        /* Put the coinbase transaction in the block */
+        walletBlock.coinbaseTransaction = getRawCoinbaseTransaction(
+            block.baseTransaction
+        );
+
+        for (const auto &transaction : rawBlock.transactions)
+        {
+            walletBlock.transactions.push_back(getRawTransaction(transaction));
+        }
+
+        blocks.push_back(walletBlock);
+    }
+
+    return blocks;
+}
+
+WalletTypes::RawCoinbaseTransaction Core::getRawCoinbaseTransaction(const CryptoNote::Transaction t)
+{
+    WalletTypes::RawCoinbaseTransaction transaction;
+
+    transaction.hash = getBinaryArrayHash(toBinaryArray(t));
+
+    /* Copy over the extra */
+    transaction.extra = t.extra;
+
+    /* Fill in the simplified key outputs */
+    for (const auto &output : t.outputs)
+    {
+        WalletTypes::KeyOutput keyOutput;
+
+        keyOutput.amount = output.amount;
+        keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
+
+        transaction.keyOutputs.push_back(keyOutput);
+    }
+
+    return transaction;
+}
+
+WalletTypes::RawTransaction Core::getRawTransaction(const std::vector<uint8_t> rawTX)
+{
+    Transaction t;
+
+    /* Convert the binary array to a transaction */
+    fromBinaryArray(t, rawTX);
+
+    WalletTypes::RawTransaction transaction;
+
+    /* Get the transaction hash from the binary array */
+    transaction.hash = getBinaryArrayHash(rawTX);
+
+    /* Copy over the extra */
+    transaction.extra = t.extra;
+
+    /* Simplify the outputs */
+    for (const auto &output : t.outputs)
+    {
+        WalletTypes::KeyOutput keyOutput;
+
+        keyOutput.amount = output.amount;
+        keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
+
+        transaction.keyOutputs.push_back(keyOutput);
+    }
+
+    /* Simplify the inputs */
+    for (const auto &input : t.inputs)
+    {
+        transaction.keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
+    }
+
+    return transaction;
 }
 
 void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions,
@@ -1718,6 +1886,41 @@ RawBlock Core::getRawBlock(IBlockchainCache* segment, uint32_t blockIndex) const
   assert(blockIndex >= segment->getStartBlockIndex() && blockIndex <= segment->getTopBlockIndex());
 
   return segment->getBlockByIndex(blockIndex);
+}
+
+//TODO: decompose these two methods
+size_t Core::pushBlockHashes(uint32_t startIndex, uint32_t fullOffset, size_t maxItemsCount,
+                             std::vector<BlockShortInfo>& entries) const {
+  assert(fullOffset >= startIndex);
+  uint32_t itemsCount = std::min(fullOffset - startIndex, static_cast<uint32_t>(maxItemsCount));
+  if (itemsCount == 0) {
+    return 0;
+  }
+  std::vector<Crypto::Hash> blockIds = getBlockHashes(startIndex, itemsCount);
+  entries.reserve(entries.size() + blockIds.size());
+  for (auto& blockHash : blockIds) {
+    BlockShortInfo entry;
+    entry.blockId = std::move(blockHash);
+    entries.emplace_back(std::move(entry));
+  }
+  return blockIds.size();
+}
+//TODO: decompose these two methods
+size_t Core::pushBlockHashes(uint32_t startIndex, uint32_t fullOffset, size_t maxItemsCount,
+                             std::vector<BlockFullInfo>& entries) const {
+  assert(fullOffset >= startIndex);
+  uint32_t itemsCount = std::min(fullOffset - startIndex, static_cast<uint32_t>(maxItemsCount));
+  if (itemsCount == 0) {
+    return 0;
+  }
+  std::vector<Crypto::Hash> blockIds = getBlockHashes(startIndex, itemsCount);
+  entries.reserve(entries.size() + blockIds.size());
+  for (auto& blockHash : blockIds) {
+    BlockFullInfo entry;
+    entry.block_id = std::move(blockHash);
+    entries.emplace_back(std::move(entry));
+  }
+  return blockIds.size();
 }
 
 void Core::fillQueryBlockFullInfo(uint32_t fullOffset, uint32_t currentIndex, size_t maxItemsCount,

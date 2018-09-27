@@ -17,6 +17,8 @@
 #include "Serialization/BlockchainExplorerDataSerialization.h"
 #include <CryptoNoteCore/ICoreDefinitions.h>
 
+#include <WalletTypes.h>
+
 namespace CryptoNote {
 //-----------------------------------------------
 #define CORE_RPC_STATUS_OK "OK"
@@ -722,6 +724,29 @@ struct COMMAND_RPC_QUERY_BLOCKS_LITE {
     }
   };
 };
+
+struct COMMAND_RPC_GET_WALLET_SYNC_DATA {
+  struct request {
+    std::vector<Crypto::Hash> blockIds;
+    uint64_t timestamp;
+
+    void serialize(ISerializer &s) {
+      KV_MEMBER(blockIds);
+      KV_MEMBER(timestamp)
+    }
+  };
+
+  struct response {
+    std::string status;
+    std::vector<WalletTypes::WalletBlockInfo> items;
+
+    void serialize(ISerializer &s) {
+      KV_MEMBER(status)
+      KV_MEMBER(items)
+    }
+  };
+};
+
 
 struct COMMAND_RPC_GET_BLOCKS_DETAILS_BY_HEIGHTS {
   struct request {
