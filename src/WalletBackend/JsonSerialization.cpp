@@ -40,7 +40,6 @@ json SubWallet::toJson() const
         {"privateSpendKey", m_privateSpendKey},
         {"address", m_address},
         {"syncStartTimestamp", m_syncStartTimestamp},
-        {"transactions", m_transactions},
         {"isViewWallet", m_isViewWallet},
         {"keyImages", m_keyImages},
     };
@@ -52,7 +51,6 @@ void SubWallet::fromJson(const json &j)
     m_privateSpendKey = j.at("privateSpendKey").get<Crypto::SecretKey>();
     m_address = j.at("address").get<std::string>();
     m_syncStartTimestamp = j.at("syncStartTimestamp").get<uint64_t>();
-    m_transactions = j.at("transactions").get<std::vector<CryptoNote::WalletTransaction>>();
     m_isViewWallet = j.at("isViewWallet").get<bool>();
     m_keyImages = j.at("keyImages").get<std::unordered_set<Crypto::KeyImage>>();
 }
@@ -76,7 +74,8 @@ json SubWallets::toJson() const
     return
     {
         {"publicSpendKeys", m_publicSpendKeys},
-        {"subWallets", m_subWallets}
+        {"subWallets", m_subWallets},
+        {"transactions", m_transactions},
     };
 }
 
@@ -84,6 +83,7 @@ void SubWallets::fromJson(const json &j)
 {
     m_publicSpendKeys = j.at("publicSpendKeys").get<std::vector<Crypto::PublicKey>>();
     m_subWallets = j.at("subWallets").get<std::unordered_map<Crypto::PublicKey, SubWallet>>();
+    m_transactions = j.at("transactions").get<std::vector<Transaction>>();
 }
 
 ///////////////////
@@ -200,31 +200,34 @@ namespace Crypto
     }
 }
 
-///////////////////////////////////
-/* CryptoNote::WalletTransaction */
-///////////////////////////////////
+/////////////////
+/* Transaction */
+/////////////////
 
-namespace CryptoNote
+void to_json(json &j, const Transaction &t)
 {
-    void to_json(json &j, const WalletTransaction &t)
-    {
-        j = json {
-            {"timestamp", t.timestamp},
-            {"blockHeight", t.blockHeight},
-            {"hash", t.hash},
-            {"totalAmount", t.totalAmount},
-            {"fee", t.fee},
-        };
-    }
+    j = json {
+        {"transfers", t.transfers},
+        {"hash", t.hash},
+        {"fee", t.fee},
+        /*
+        {"timestamp", t.timestamp},
+        {"blockHeight", t.blockHeight},
+        {"paymentID", t.paymentID},
+        */
+    };
+}
 
-    void from_json(const json &j, WalletTransaction &t)
-    {
-        t.timestamp = j.at("timestamp").get<uint64_t>();
-        t.blockHeight = j.at("blockHeight").get<uint32_t>();
-        t.hash = j.at("hash").get<Crypto::Hash>();
-        t.totalAmount = j.at("totalAmount").get<int64_t>();
-        t.fee = j.at("fee").get<uint64_t>();
-    }
+void from_json(const json &j, Transaction &t)
+{
+    t.transfers = j.at("transfers").get<std::unordered_map<Crypto::PublicKey, int64_t>>();
+    t.hash = j.at("hash").get<Crypto::Hash>();
+    t.fee = j.at("fee").get<uint64_t>();
+    /*
+    t.timestamp = j.at("timestamp").get<uint64_t>();
+    t.blockHeight = j.at("blockHeight").get<uint32_t>();
+    t.paymentID = j.at("paymentID").get<std::string>();
+    */
 }
 
 ////////////////////////

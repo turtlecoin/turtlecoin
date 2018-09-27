@@ -42,6 +42,8 @@
 
 #include <System/ContextGroup.h>
 
+#include <WalletTypes.h>
+
 namespace CryptoNote {
 
 class Core : public ICore, public ICoreInformation {
@@ -72,6 +74,8 @@ public:
     uint32_t& startIndex, uint32_t& currentIndex, uint32_t& fullOffset, std::vector<BlockFullInfo>& entries) const override;
   virtual bool queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, uint64_t timestamp,
     uint32_t& startIndex, uint32_t& currentIndex, uint32_t& fullOffset, std::vector<BlockShortInfo>& entries) const override;
+  virtual bool getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, uint64_t timestamp, std::vector<WalletTypes::WalletBlockInfo> &blocks) const override;
+
 
   virtual bool hasTransaction(const Crypto::Hash& transactionHash) const override;
   virtual void getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions, std::vector<Crypto::Hash>& missedHashes) const override;
@@ -181,6 +185,11 @@ private:
   bool notifyObservers(BlockchainMessage&& msg);
   void fillQueryBlockFullInfo(uint32_t fullOffset, uint32_t currentIndex, size_t maxItemsCount, std::vector<BlockFullInfo>& entries) const;
   void fillQueryBlockShortInfo(uint32_t fullOffset, uint32_t currentIndex, size_t maxItemsCount, std::vector<BlockShortInfo>& entries) const;
+  std::vector<WalletTypes::WalletBlockInfo> getRequestedWalletBlocks(uint64_t startIndex, uint64_t currentIndex) const;
+
+  static WalletTypes::RawCoinbaseTransaction getRawCoinbaseTransaction(const CryptoNote::Transaction t);
+
+  static WalletTypes::RawTransaction getRawTransaction(const std::vector<uint8_t> rawTX);
 
   void getTransactionPoolDifference(const std::vector<Crypto::Hash>& knownHashes, std::vector<Crypto::Hash>& newTransactions, std::vector<Crypto::Hash>& deletedTransactions) const;
 

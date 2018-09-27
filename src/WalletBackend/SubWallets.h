@@ -41,8 +41,7 @@ class SubWallets
         /* Initializes the class from a json string */
         void fromJson(const json &j);
 
-        void addTransfers(std::unordered_map<Crypto::PublicKey, int64_t>
-                          transfers);
+        void addTransaction(Transaction tx);
 
         /* Generates a key image using the public+private spend key of the
            subwallet. Wallet must not be a view wallet (and must exist, but
@@ -56,4 +55,7 @@ class SubWallets
     private:
         /* The subwallets, indexed by public spend key */ 
         std::unordered_map<Crypto::PublicKey, SubWallet> m_subWallets;
+
+        /* A vector of transactions */
+        std::vector<Transaction> m_transactions;
 };

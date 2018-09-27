@@ -6,7 +6,13 @@
 #include <WalletBackend/SubWallets.h>
 /////////////////////////////////////
 
+/* TODO: Remove */
+#include <Common/StringTools.h>
+
 #include <crypto/crypto.h>
+
+/* TODO: Remove */
+#include <iostream>
 
 //////////////////////////
 /* NON MEMBER FUNCTIONS */
@@ -94,12 +100,39 @@ uint64_t SubWallets::getMinSyncTimestamp()
     return min.second.m_syncStartTimestamp;
 }
 
-void SubWallets::addTransfers(std::unordered_map<Crypto::PublicKey, int64_t>
-                              transfers)
+void SubWallets::addTransaction(Transaction tx)
 {
-    for (const auto &x : transfers)
+    m_transactions.push_back(tx);
+
+    /* We can regenerate the balance from the transactions, but this will be
+       faster, as getting the balance is a common operation */
+    for (const auto &x : tx.transfers)
     {
-        m_subWallets[x.first].addTransfer(x.second);
+        m_subWallets[x.first].balance += x.second;
+
+        if (x.second > 0)
+        {
+            std::cout << "Incoming transfer:" << std::endl
+                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
+                      << "Amount: " << x.second << std::endl
+                      << "Fee: " << tx.fee << std::endl
+                      << std::endl;
+        }
+        else if (x.second < 0)
+        {
+            std::cout << "Outgoing transfer:" << std::endl
+                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
+                      << "Spent: " << std::abs(x.second) << std::endl
+                      << "Fee: " << tx.fee << std::endl
+                      << std::endl;
+        }
+        else
+        {
+            std::cout << "Fusion transfer:" << std::endl
+                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
+                      << "Fee: " << tx.fee << std::endl
+                      << std::endl;
+        }
     }
 }
 

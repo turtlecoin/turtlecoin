@@ -54,6 +54,35 @@ void serialize(BlockShortInfo& blockShortInfo, ISerializer& s) {
   KV_MEMBER(blockShortInfo.txPrefixes);
 }
 
+void serialize(WalletTypes::WalletBlockInfo &walletBlockInfo, ISerializer &s)
+{
+    KV_MEMBER(walletBlockInfo.coinbaseTransaction);
+    KV_MEMBER(walletBlockInfo.transactions);
+    KV_MEMBER(walletBlockInfo.blockHeight);
+    KV_MEMBER(walletBlockInfo.blockHash);
+}
+
+void serialize(WalletTypes::RawTransaction &rawTransaction, ISerializer &s)
+{
+    KV_MEMBER(rawTransaction.keyInputs);
+    KV_MEMBER(rawTransaction.keyOutputs);
+    KV_MEMBER(rawTransaction.extra);
+    KV_MEMBER(rawTransaction.hash);
+}
+
+void serialize(WalletTypes::RawCoinbaseTransaction &rawCoinbaseTransaction, ISerializer &s)
+{
+    KV_MEMBER(rawCoinbaseTransaction.keyOutputs);
+    KV_MEMBER(rawCoinbaseTransaction.extra);
+    KV_MEMBER(rawCoinbaseTransaction.hash);
+}
+
+void serialize(WalletTypes::KeyOutput &keyOutput, ISerializer &s)
+{
+    KV_MEMBER(keyOutput.key);
+    KV_MEMBER(keyOutput.amount);
+}
+
 namespace {
 
 template <typename Command>
@@ -91,6 +120,7 @@ std::unordered_map<std::string, RpcServer::RpcHandler<RpcServer::HandlerFunction
   { "/getblocks", { jsonMethod<COMMAND_RPC_GET_BLOCKS_FAST>(&RpcServer::on_get_blocks), false } },
   { "/queryblocks", { jsonMethod<COMMAND_RPC_QUERY_BLOCKS>(&RpcServer::on_query_blocks), false } },
   { "/queryblockslite", { jsonMethod<COMMAND_RPC_QUERY_BLOCKS_LITE>(&RpcServer::on_query_blocks_lite), false } },
+  { "/getwalletsyncdata", { jsonMethod<COMMAND_RPC_GET_WALLET_SYNC_DATA>(&RpcServer::on_get_wallet_sync_data), false} },
   { "/get_o_indexes", { jsonMethod<COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES>(&RpcServer::on_get_indexes), false } },
   { "/getrandom_outs", { jsonMethod<COMMAND_RPC_GET_RANDOM_OUTPUTS_FOR_AMOUNTS>(&RpcServer::on_get_random_outs), false } },
   { "/get_pool_changes", { jsonMethod<COMMAND_RPC_GET_POOL_CHANGES>(&RpcServer::onGetPoolChanges), false } },
@@ -269,6 +299,19 @@ bool RpcServer::on_query_blocks_lite(const COMMAND_RPC_QUERY_BLOCKS_LITE::reques
   res.status = CORE_RPC_STATUS_OK;
 
   return true;
+}
+
+bool RpcServer::on_get_wallet_sync_data(const COMMAND_RPC_GET_WALLET_SYNC_DATA::request &req, COMMAND_RPC_GET_WALLET_SYNC_DATA::response &res)
+{
+    if (!m_core.getWalletSyncData(req.blockIds, req.timestamp, res.items))
+    {
+        res.status = "Failed to perform query";
+        return false;
+    }
+
+    res.status = CORE_RPC_STATUS_OK;
+
+    return true;
 }
 
 bool RpcServer::on_get_indexes(const COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES::request& req, COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES::response& res) {

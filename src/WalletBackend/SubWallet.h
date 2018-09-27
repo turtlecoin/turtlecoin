@@ -17,6 +17,7 @@
 
 #include <unordered_set>
 
+#include <WalletBackend/Transaction.h>
 #include <WalletBackend/WalletErrors.h>
 
 using nlohmann::json;
@@ -41,10 +42,9 @@ class SubWallet
         /* Initializes the class from a json string */
         void fromJson(const json &j);
 
+        /* Generates a key image from the derivation, and stores it */
         void generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
                                       size_t outputIndex);
-
-        void addTransfer(int64_t amount);
 
         /* The timestamp to begin syncing the wallet at
            (usually creation time) */
@@ -59,13 +59,13 @@ class SubWallet
         /* This subwallet's public spend key */
         Crypto::PublicKey m_publicSpendKey;
 
+        /* This wallets balance */
+        uint64_t balance = 0;
+
     private:
         /* The subwallet's private spend key */
         Crypto::SecretKey m_privateSpendKey;
 
         /* This subwallet's public address */
         std::string m_address;
-
-        /* TODO: Trim down WalletTransaction to be a tad more concise */
-        std::vector<CryptoNote::WalletTransaction> m_transactions;
 };

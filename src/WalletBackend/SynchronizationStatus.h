@@ -25,8 +25,6 @@ class SynchronizationStatus
 
         void fromJson(const json &j);
 
-        bool haveSeenBlock(const Crypto::Hash blockHash);
-
         uint64_t getHeight();
 
     private:

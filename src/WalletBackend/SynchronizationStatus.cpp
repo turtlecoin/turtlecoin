@@ -81,20 +81,3 @@ std::vector<Crypto::Hash> SynchronizationStatus::getBlockHashCheckpoints()
 
     return result;
 }
-
-bool SynchronizationStatus::haveSeenBlock(const Crypto::Hash blockHash)
-{
-    /* See if we can find it in the lastKnownBlockHashes (It's most likely
-       the first item if it's present, but lets check every to be sure) */
-    if (std::find(m_lastKnownBlockHashes.begin(), m_lastKnownBlockHashes.end(),
-                  blockHash) != m_lastKnownBlockHashes.end())
-    {
-        return true;
-    }
-
-    /* Lets check the blockHashCheckpoints if we didn't find it (even more
-       unlikely) */
-    return std::find(m_blockHashCheckpoints.begin(),
-                     m_blockHashCheckpoints.end(), blockHash)
-                  != m_blockHashCheckpoints.end();
-}

@@ -114,11 +114,6 @@ SubWallet::SubWallet(const Crypto::PublicKey publicSpendKey,
 /* CLASS FUNCTIONS */
 /////////////////////
 
-void SubWallet::addTransfer(int64_t amount)
-{
-    std::cout << "Adding transfer of " << amount << std::endl;
-}
-
 void SubWallet::generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
                                          size_t outputIndex)
 {
