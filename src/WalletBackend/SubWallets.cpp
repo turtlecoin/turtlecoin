@@ -11,6 +11,8 @@
 
 #include <config/CryptoNoteConfig.h>
 
+#include <ctime>
+
 /* TODO: Remove */
 #include <iostream>
 
