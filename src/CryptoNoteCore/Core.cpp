@@ -492,7 +492,7 @@ std::vector<WalletTypes::WalletBlockInfo> Core::getRequestedWalletBlocks(uint64_
     /* Sync BLOCKS_SYNCHRONIZING_DEFAULT_COUNT or the amount of blocks between
        start and end, whichever is smaller */
     uint64_t endIndex = std::min(
-        static_cast<uint64_t>(BLOCKS_SYNCHRONIZING_DEFAULT_COUNT)
+        static_cast<uint64_t>(BLOCKS_SYNCHRONIZING_DEFAULT_COUNT),
         blockDifference
     ) + startIndex;
 
