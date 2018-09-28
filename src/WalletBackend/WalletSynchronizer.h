@@ -23,6 +23,7 @@ class WalletSynchronizer
         /* Parameterized constructor */
         WalletSynchronizer(std::shared_ptr<CryptoNote::NodeRpcProxy> daemon,
                            uint64_t startTimestamp,
+                           uint64_t startHeight,
                            Crypto::SecretKey privateViewKey);
 
         /* Delete the copy constructor */
@@ -122,9 +123,11 @@ class WalletSynchronizer
            from the back */
         MultiThreadedDeque<WalletTypes::WalletBlockInfo> m_blockProcessingQueue;
 
-        /* The timestamp to start scanning downloading the full block data
-           from */
+        /* The timestamp to start scanning downloading block data from */
         uint64_t m_startTimestamp;
+
+        /* The height to start downloading block data from */
+        uint64_t m_startHeight;
 
         /* The private view key we use for decrypting transactions */
         Crypto::SecretKey m_privateViewKey;

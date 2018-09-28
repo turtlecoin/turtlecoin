@@ -33,7 +33,9 @@ class SubWallets
            ours */
         std::vector<Crypto::PublicKey> m_publicSpendKeys;
 
-        uint64_t getMinSyncTimestamp();
+        /* Returns (height, timestamp) to begin syncing at. Only one (if any)
+           of the values will be non zero */
+        std::tuple<uint64_t, uint64_t> getMinInitialSyncStart();
 
         /* Converts the class to a json object */
         json toJson() const;
@@ -41,6 +43,7 @@ class SubWallets
         /* Initializes the class from a json string */
         void fromJson(const json &j);
 
+        /* Store a transaction */
         void addTransaction(Transaction tx);
 
         /* Generates a key image using the public+private spend key of the
@@ -49,6 +52,7 @@ class SubWallets
         void generateAndStoreKeyImage(Crypto::PublicKey, Crypto::KeyDerivation,
                                       size_t outputIndex);
 
+        /* Get the owner of the key image, if any */
         std::tuple<bool, Crypto::PublicKey>
             getKeyImageOwner(Crypto::KeyImage keyImage);
 

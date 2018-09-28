@@ -728,11 +728,14 @@ struct COMMAND_RPC_QUERY_BLOCKS_LITE {
 struct COMMAND_RPC_GET_WALLET_SYNC_DATA {
   struct request {
     std::vector<Crypto::Hash> blockIds;
-    uint64_t timestamp;
+
+    uint64_t startHeight;
+    uint64_t startTimestamp;
 
     void serialize(ISerializer &s) {
       KV_MEMBER(blockIds);
-      KV_MEMBER(timestamp)
+      KV_MEMBER(startHeight);
+      KV_MEMBER(startTimestamp);
     }
   };
 

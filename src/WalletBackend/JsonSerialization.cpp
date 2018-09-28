@@ -42,6 +42,8 @@ json SubWallet::toJson() const
         {"syncStartTimestamp", m_syncStartTimestamp},
         {"isViewWallet", m_isViewWallet},
         {"keyImages", m_keyImages},
+        {"balance", m_balance},
+        {"syncStartHeight", m_syncStartHeight},
     };
 }
 
@@ -53,6 +55,8 @@ void SubWallet::fromJson(const json &j)
     m_syncStartTimestamp = j.at("syncStartTimestamp").get<uint64_t>();
     m_isViewWallet = j.at("isViewWallet").get<bool>();
     m_keyImages = j.at("keyImages").get<std::unordered_set<Crypto::KeyImage>>();
+    m_balance = j.at("balance").get<uint64_t>();
+    m_syncStartHeight = j.at("syncStartHeight").get<uint64_t>();
 }
 
 ///////////////
@@ -250,6 +254,7 @@ json WalletSynchronizer::toJson() const
     {
         {"transactionSynchronizerStatus", m_transactionSynchronizerStatus},
         {"startTimestamp", m_startTimestamp},
+        {"startHeight", m_startHeight},
         {"privateViewKey", m_privateViewKey}
     };
 }
@@ -261,6 +266,8 @@ void WalletSynchronizer::fromJson(const json &j)
     m_transactionSynchronizerStatus = m_blockDownloaderStatus;
 
     m_startTimestamp = j.at("startTimestamp").get<uint64_t>();
+    m_startHeight = j.at("startHeight").get<uint64_t>();
+
     m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
 }
 

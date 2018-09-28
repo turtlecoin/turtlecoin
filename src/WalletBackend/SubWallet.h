@@ -29,12 +29,12 @@ class SubWallet
 
         SubWallet(const Crypto::PublicKey publicSpendKey,
                   const std::string address,
-                  const uint64_t scanHeight, const bool newWallet);
+                  const uint64_t scanHeight, const uint64_t scanTimestamp);
 
         SubWallet(const Crypto::PublicKey publicSpendKey,
                   const Crypto::SecretKey privateSpendKey,
                   const std::string address,
-                  const uint64_t scanHeight, const bool newWallet);
+                  const uint64_t scanHeight, const uint64_t scanTimestamp);
 
         /* Converts the class to a json object */
         json toJson() const;
@@ -46,10 +46,6 @@ class SubWallet
         void generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
                                       size_t outputIndex);
 
-        /* The timestamp to begin syncing the wallet at
-           (usually creation time) */
-        uint64_t m_syncStartTimestamp = 0;
-
         /* Whether this is a view only wallet */
         bool m_isViewWallet;
 
@@ -60,7 +56,14 @@ class SubWallet
         Crypto::PublicKey m_publicSpendKey;
 
         /* This wallets balance */
-        uint64_t balance = 0;
+        uint64_t m_balance = 0;
+
+        /* The timestamp to begin syncing the wallet at
+           (usually creation time or zero) */
+        uint64_t m_syncStartTimestamp = 0;
+
+        /* The height to begin syncing the wallet at */
+        uint64_t m_syncStartHeight = 0;
 
     private:
         /* The subwallet's private spend key */

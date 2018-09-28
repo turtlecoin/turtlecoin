@@ -67,17 +67,19 @@ namespace
 /* Default constructor */
 WalletSynchronizer::WalletSynchronizer() :
     m_shouldStop(false),
-    m_startTimestamp(0)
+    m_startTimestamp(0),
+    m_startHeight(0)
 {
 }
 
 /* Parameterized constructor */
 WalletSynchronizer::WalletSynchronizer(
-    std::shared_ptr<CryptoNote::NodeRpcProxy> daemon, uint64_t startTimestamp,
-    Crypto::SecretKey privateViewKey) :
+    std::shared_ptr<CryptoNote::NodeRpcProxy> daemon, uint64_t startHeight,
+    uint64_t startTimestamp, Crypto::SecretKey privateViewKey) :
 
     m_daemon(daemon),
     m_shouldStop(false),
+    m_startHeight(startHeight),
     m_startTimestamp(startTimestamp),
     m_privateViewKey(privateViewKey)
 {
@@ -107,6 +109,7 @@ WalletSynchronizer & WalletSynchronizer::operator=(WalletSynchronizer && old)
     m_transactionSynchronizerStatus = std::move(old.m_transactionSynchronizerStatus);
 
     m_startTimestamp = std::move(old.m_startTimestamp);
+    m_startHeight = std::move(old.m_startHeight);
 
     m_privateViewKey = std::move(old.m_privateViewKey);
 
@@ -412,9 +415,6 @@ void WalletSynchronizer::downloadBlocks()
     /* Stores the results from the getWalletSyncData call */
     std::vector<WalletTypes::WalletBlockInfo> newBlocks;
 
-    /* The timestamp to begin searching at */
-    uint64_t startTimestamp = m_startTimestamp;
-
     std::promise<std::error_code> errorPromise;
 
     /* Once the function is complete, set the error value from the promise */
@@ -436,7 +436,8 @@ void WalletSynchronizer::downloadBlocks()
         auto blockCheckpoints = m_blockDownloaderStatus.getBlockHashCheckpoints();
 
         m_daemon->getWalletSyncData(
-            std::move(blockCheckpoints), startTimestamp, newBlocks, callback
+            std::move(blockCheckpoints), m_startHeight, m_startTimestamp,
+            newBlocks, callback
         );
 
         while (true)

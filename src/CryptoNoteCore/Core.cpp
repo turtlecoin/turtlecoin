@@ -453,7 +453,7 @@ bool Core::queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, ui
 /* Known block hashes = The hashes the wallet knows about. We'll give blocks starting from this hash.
    Timestamp = The timestamp to start giving blocks from, if knownBlockHashes is empty. Used for syncing a new wallet.
    Blocks = The returned vector of blocks */
-bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, uint64_t timestamp, std::vector<WalletTypes::WalletBlockInfo> &blocks) const
+bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, uint64_t startHeight, uint64_t startTimestamp, std::vector<WalletTypes::WalletBlockInfo> &blocks) const
 {
     throwIfNotInitialized();
 
@@ -464,11 +464,18 @@ bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, 
         /* Current height */
         uint64_t currentIndex = mainChain->getTopBlockIndex();
 
-        /* Where we should start returning blocks from */
+        /* If a height was given, start from there, else convert the timestamp
+           to a block */
+        uint64_t firstBlockHeight = startHeight == 0 ?
+                                    mainChain->getTimestampLowerBoundBlockIndex(startTimestamp) :
+                                    startHeight;
+
+        /* Start returning either from the start height, or the height of the
+           last block we know about, whichever is higher */
         uint64_t startIndex = std::max(
             /* Plus one so we return the next block */
-            findBlockchainSupplement(knownBlockHashes) + 1,
-            mainChain->getTimestampLowerBoundBlockIndex(timestamp)
+            static_cast<uint64_t>(findBlockchainSupplement(knownBlockHashes)) + 1,
+            firstBlockHeight
         );
 
         blocks = getRequestedWalletBlocks(startIndex, currentIndex);
