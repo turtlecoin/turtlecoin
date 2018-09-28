@@ -62,7 +62,7 @@ option(USE_INTERMEDIATE_OBJECTS_TARGET "Use a common intermediate objects target
 
 # These are IA-32 options. TODO: Add ARM A-32, Aarch64 and Power8 options.
 option(DISABLE_ASM "Disable ASM" OFF)
-option(DISABLE_SSSE3 "Disable SSSE3" OFF)
+option(DISABLE_SSSE3 "Disable SSSE3" ON)
 option(DISABLE_SSE4 "Disable SSE4" ON)
 option(DISABLE_AESNI "Disable AES-NI" OFF)
 option(DISABLE_SHA "Disable SHA" OFF)
