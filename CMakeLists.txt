@@ -170,9 +170,6 @@ elseif(NOT MSVC)
   set(Boost_LIBRARIES "${Boost_LIBRARIES};rt")
 endif()
 
-# CryptoPP
-find_package(CryptoPP REQUIRED)
-
 add_subdirectory(external)
 add_subdirectory(src)
 
