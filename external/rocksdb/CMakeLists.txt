@@ -172,9 +172,11 @@ else()
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fno-omit-frame-pointer")
     include(CheckCXXCompilerFlag)
-    CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
     if(HAVE_OMIT_LEAF_FRAME_POINTER)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
+      CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
+      if(HAVE_OMIT_LEAF_FRAME_POINTER)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
+      endif()
     endif()
   endif()
 endif()
@@ -210,39 +212,43 @@ else()
 endif()
 
 include(CheckCXXSourceCompiles)
-if(NOT MSVC)
-  set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
-endif()
-CHECK_CXX_SOURCE_COMPILES("
-#include <cstdint>
-#include <nmmintrin.h>
-#include <wmmintrin.h>
-int main() {
-  volatile uint32_t x = _mm_crc32_u32(0, 0);
-  const auto a = _mm_set_epi64x(0, 0);
-  const auto b = _mm_set_epi64x(0, 0);
-  const auto c = _mm_clmulepi64_si128(a, b, 0x00);
-  auto d = _mm_cvtsi128_si64(c);
-}
-" HAVE_SSE42)
-unset(CMAKE_REQUIRED_FLAGS)
-if(HAVE_SSE42)
-  add_definitions(-DHAVE_SSE42)
-  add_definitions(-DHAVE_PCLMUL)
-elseif(FORCE_SSE42)
-  message(FATAL_ERROR "FORCE_SSE42=ON but unable to compile with SSE4.2 enabled")
+if(ENABLE_SSE42)
+  if(NOT MSVC)
+    set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
+  endif()
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <cstdint>
+  #include <nmmintrin.h>
+  #include <wmmintrin.h>
+  int main() {
+    volatile uint32_t x = _mm_crc32_u32(0, 0);
+    const auto a = _mm_set_epi64x(0, 0);
+    const auto b = _mm_set_epi64x(0, 0);
+    const auto c = _mm_clmulepi64_si128(a, b, 0x00);
+    auto d = _mm_cvtsi128_si64(c);
+  }
+  " HAVE_SSE42)
+  unset(CMAKE_REQUIRED_FLAGS)
+  if(HAVE_SSE42)
+    add_definitions(-DHAVE_SSE42)
+    add_definitions(-DHAVE_PCLMUL)
+  elseif(FORCE_SSE42)
+    message(FATAL_ERROR "FORCE_SSE42=ON but unable to compile with SSE4.2 enabled")
+  endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES("
-#if defined(_MSC_VER) && !defined(__thread)
-#define __thread __declspec(thread)
-#endif
-int main() {
-  static __thread int tls;
-}
-" HAVE_THREAD_LOCAL)
-if(HAVE_THREAD_LOCAL)
-  add_definitions(-DROCKSDB_SUPPORT_THREAD_LOCAL)
+if(ENABLE_THREAD_LOCAL)
+  CHECK_CXX_SOURCE_COMPILES("
+  #if defined(_MSC_VER) && !defined(__thread)
+  #define __thread __declspec(thread)
+  #endif
+  int main() {
+    static __thread int tls;
+  }
+  " HAVE_THREAD_LOCAL)
+  if(HAVE_THREAD_LOCAL)
+    add_definitions(-DROCKSDB_SUPPORT_THREAD_LOCAL)
+  endif()
 endif()
 
 option(FAIL_ON_WARNINGS "Treat compile warnings as errors" ON)
@@ -389,7 +395,7 @@ if(NOT WIN32)
   add_definitions(-DROCKSDB_PLATFORM_POSIX -DROCKSDB_LIB_IO_POSIX)
 endif()
 
-option(WITH_FALLOCATE "build with fallocate" ON)
+option(WITH_FALLOCATE "build with fallocate" OFF)
 if(WITH_FALLOCATE)
   CHECK_CXX_SOURCE_COMPILES("
 #include <fcntl.h>
@@ -404,36 +410,44 @@ int main() {
   endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES("
-#include <fcntl.h>
-int main() {
-  int fd = open(\"/dev/null\", 0);
-  sync_file_range(fd, 0, 1024, SYNC_FILE_RANGE_WRITE);
-}
-" HAVE_SYNC_FILE_RANGE_WRITE)
-if(HAVE_SYNC_FILE_RANGE_WRITE)
-  add_definitions(-DROCKSDB_RANGESYNC_PRESENT)
+if(ENABLE_SYNC_FILE_RANGE_WRITE)
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <fcntl.h>
+  int main() {
+    int fd = open(\"/dev/null\", 0);
+    sync_file_range(fd, 0, 1024, SYNC_FILE_RANGE_WRITE);
+  }
+  " HAVE_SYNC_FILE_RANGE_WRITE)
+  if(HAVE_SYNC_FILE_RANGE_WRITE)
+    add_definitions(-DROCKSDB_RANGESYNC_PRESENT)
+  endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES("
-#include <pthread.h>
-int main() {
-  (void) PTHREAD_MUTEX_ADAPTIVE_NP;
-}
-" HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-if(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-  add_definitions(-DROCKSDB_PTHREAD_ADAPTIVE_MUTEX)
+if(ENABLE_PTHREAD_MUTEX_ADAPTIVE_NP)
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <pthread.h>
+  int main() {
+    (void) PTHREAD_MUTEX_ADAPTIVE_NP;
+  }
+  " HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+  if(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+    add_definitions(-DROCKSDB_PTHREAD_ADAPTIVE_MUTEX)
+  endif()
 endif()
 
 include(CheckCXXSymbolExists)
-check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
-if(HAVE_MALLOC_USABLE_SIZE)
-  add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
+if(ENABLE_MALLOC_USABLE_SIZE)
+  check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
+  if(HAVE_MALLOC_USABLE_SIZE)
+    add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
+  endif()
 endif()
 
-check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
-if(HAVE_SCHED_GETCPU)
-  add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
+if(ENABLE_SCHED_GETCPU)
+  check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
+  if(HAVE_SCHED_GETCPU)
+    add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
+  endif()
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
@@ -1041,7 +1055,7 @@ if(WITH_TESTS)
   endforeach(sourcefile ${C_TEST_EXES})
 endif()
 
-option(WITH_TOOLS "build with tools" ON)
+option(WITH_TOOLS "build with tools" OFF)
 if(WITH_TOOLS)
   add_subdirectory(tools)
 endif()
