@@ -8,11 +8,12 @@
 
 #include <Common/StringTools.h>
 
-#include <WalletBackend/WalletBackend.h>
-#include <WalletBackend/WalletSynchronizer.h>
+#include <WalletBackend/Constants.h>
 #include <WalletBackend/SubWallet.h>
 #include <WalletBackend/SubWallets.h>
 #include <WalletBackend/SynchronizationStatus.h>
+#include <WalletBackend/WalletBackend.h>
+#include <WalletBackend/WalletSynchronizer.h>
 
 using nlohmann::json;
 
@@ -108,7 +109,7 @@ json WalletBackend::toJson() const
 {
     return
     {
-        {"walletFileFormatVersion", WALLET_FILE_FORMAT_VERSION},
+        {"walletFileFormatVersion", Constants::WALLET_FILE_FORMAT_VERSION},
         {"privateViewKey", m_privateViewKey},
         {"subWallets", *m_subWallets},
         {"isViewWallet", m_isViewWallet},
@@ -120,7 +121,7 @@ void WalletBackend::fromJson(const json &j)
 {
     uint16_t version = j.at("walletFileFormatVersion").get<uint16_t>();
 
-    if (version != WALLET_FILE_FORMAT_VERSION)
+    if (version != Constants::WALLET_FILE_FORMAT_VERSION)
     {
         /* TODO: This should probably be a custom type, throwing an actual
            error we can catch upstream? */

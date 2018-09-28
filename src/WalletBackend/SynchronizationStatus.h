@@ -41,11 +41,4 @@ class SynchronizationStatus
 
         /* The last block height we are aware of */
         uint64_t m_lastKnownBlockHeight = 0;
-
-        /* How large should the m_lastKnownBlockHashes container be */
-        static constexpr uint32_t LAST_KNOWN_BLOCK_HASHES_SIZE = 100;
-
-        /* Save a block hash checkpoint every BLOCK_HASH_CHECKPOINTS_INTERVAL
-           blocks */
-        static constexpr uint32_t BLOCK_HASH_CHECKPOINTS_INTERVAL = 5000;
 };

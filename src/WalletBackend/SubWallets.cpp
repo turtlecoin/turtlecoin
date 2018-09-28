@@ -11,8 +11,6 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <crypto/crypto.h>
-
 /* TODO: Remove */
 #include <iostream>
 
@@ -206,7 +204,7 @@ void SubWallets::addTransaction(Transaction tx)
         auto pubKey = transfer.first;
         auto amount = std::abs(transfer.second);
 
-        m_subWallets[pubKey].balance += amount;
+        m_subWallets[pubKey].m_balance += amount;
 
         
         if (amount != 0 && tx.fee == 0)

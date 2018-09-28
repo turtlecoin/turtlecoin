@@ -9,6 +9,8 @@
 
 #include <crypto/crypto.h>
 
+#include <WalletBackend/Constants.h>
+
 //////////////////////////
 /* NON MEMBER FUNCTIONS */
 //////////////////////////
@@ -35,7 +37,7 @@ void SynchronizationStatus::storeBlockHash(Crypto::Hash hash, uint64_t height)
 
     /* If we're at a checkpoint height, add the hash to the infrequent
        checkpoints (at the beginning of the queue) */
-    if (height % BLOCK_HASH_CHECKPOINTS_INTERVAL)
+    if (height % Constants::BLOCK_HASH_CHECKPOINTS_INTERVAL)
     {
         m_blockHashCheckpoints.push_front(hash);
     }
@@ -43,7 +45,7 @@ void SynchronizationStatus::storeBlockHash(Crypto::Hash hash, uint64_t height)
     m_lastKnownBlockHashes.push_front(hash);
 
     /* If we're exceeding capacity, remove the last (oldest) hash */
-    if (m_lastKnownBlockHashes.size() > LAST_KNOWN_BLOCK_HASHES_SIZE)
+    if (m_lastKnownBlockHashes.size() > Constants::LAST_KNOWN_BLOCK_HASHES_SIZE)
     {
         m_lastKnownBlockHashes.pop_back();
     }

@@ -8,8 +8,6 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <crypto/random.h>
-
 #include <CryptoNoteCore/Account.h>
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
 
@@ -23,14 +21,11 @@
 #include <fstream>
 #include <future>
 
-#include <iterator>
-
 #include "json.hpp"
-
-#include <Logging/LoggerManager.h>
 
 #include <Mnemonics/Mnemonics.h>
 
+#include <WalletBackend/Constants.h>
 #include <WalletBackend/JsonSerialization.h>
 
 using json = nlohmann::json;
@@ -199,12 +194,6 @@ WalletBackend::WalletBackend(std::string filename, std::string password,
 /////////////////////
 /* CLASS FUNCTIONS */
 /////////////////////
-
-/* Have to provide definition of the static member in C++11...
-   https://stackoverflow.com/a/8016853/8737306 */
-constexpr std::array<uint8_t, 64> WalletBackend::isAWalletIdentifier;
-
-constexpr std::array<uint8_t, 26> WalletBackend::isCorrectPasswordIdentifier;
 
 /* Imports a wallet from a mnemonic seed. Returns the wallet class,
    or an error. */
@@ -413,7 +402,8 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     /* Check that the decrypted data has the 'isAWallet' identifier,
        and remove it it does. If it doesn't, return an error. */
     WalletError error = hasMagicIdentifier(
-        buffer, isAWalletIdentifier.begin(), isAWalletIdentifier.end(),
+        buffer, Constants::IS_A_WALLET_IDENTIFIER.begin(),
+        Constants::IS_A_WALLET_IDENTIFIER.end(),
         NOT_A_WALLET_FILE, NOT_A_WALLET_FILE
     );
 
@@ -444,8 +434,10 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA256> pbkdf2;
 
     /* Generate the AES Key using pbkdf2 */
-    pbkdf2.DeriveKey(key, sizeof(key), 0, (CryptoPP::byte *)password.data(),
-                     password.size(), salt, sizeof(salt), PBKDF2_ITERATIONS);
+    pbkdf2.DeriveKey(
+        key, sizeof(key), 0, (CryptoPP::byte *)password.data(),
+        password.size(), salt, sizeof(salt), Constants::PBKDF2_ITERATIONS
+    );
 
     /* Intialize aesDecryption with the AES Key */
     CryptoPP::AES::Decryption aesDecryption(key, sizeof(key));
@@ -472,8 +464,8 @@ std::tuple<WalletError, WalletBackend> WalletBackend::openWallet(
     /* Check that the decrypted data has the 'isCorrectPassword' identifier,
        and remove it it does. If it doesn't, return an error. */
     error = hasMagicIdentifier(
-        decryptedData, isCorrectPasswordIdentifier.begin(),
-        isCorrectPasswordIdentifier.end(), WALLET_FILE_CORRUPTED,
+        decryptedData, Constants::IS_CORRECT_PASSWORD_IDENTIFIER.begin(),
+        Constants::IS_CORRECT_PASSWORD_IDENTIFIER.end(), WALLET_FILE_CORRUPTED,
         WRONG_PASSWORD
     );
 
@@ -580,8 +572,10 @@ WalletError WalletBackend::save() const
 {
     /* Add an identifier to the start of the string so we can verify the wallet
        has been correctly decrypted */
-    std::string identiferAsString(isCorrectPasswordIdentifier.begin(),
-                                  isCorrectPasswordIdentifier.end());
+    std::string identiferAsString(
+        Constants::IS_CORRECT_PASSWORD_IDENTIFIER.begin(),
+        Constants::IS_CORRECT_PASSWORD_IDENTIFIER.end()
+    );
 
     /* Serialize wallet to json */
     json walletJson = *this;
@@ -602,8 +596,10 @@ WalletError WalletBackend::save() const
     CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA256> pbkdf2;
 
     /* Generate the AES Key using pbkdf2 */
-    pbkdf2.DeriveKey(key, sizeof(key), 0, (CryptoPP::byte *)m_password.data(),
-                     m_password.size(), salt, sizeof(salt), PBKDF2_ITERATIONS);
+    pbkdf2.DeriveKey(
+        key, sizeof(key), 0, (CryptoPP::byte *)m_password.data(),
+        m_password.size(), salt, sizeof(salt), Constants::PBKDF2_ITERATIONS
+    );
 
     CryptoPP::AES::Encryption aesEncryption(key, sizeof(key));
 
@@ -635,8 +631,10 @@ WalletError WalletBackend::save() const
     }
 
     /* Get the isAWalletIdentifier array as a string */
-    std::string walletPrefix = std::string(isAWalletIdentifier.begin(),
-                                           isAWalletIdentifier.end());
+    std::string walletPrefix = std::string(
+        Constants::IS_A_WALLET_IDENTIFIER.begin(),
+        Constants::IS_A_WALLET_IDENTIFIER.end()
+    );
 
     /* Get the salt array as a string */
     std::string saltString = std::string(salt, salt + sizeof(salt));
