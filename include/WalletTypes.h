@@ -49,9 +49,12 @@ namespace WalletTypes
         std::vector<RawTransaction> transactions;
 
         /* The block height (duh!) */
-        uint64_t blockHeight = 0;
+        uint64_t blockHeight;
 
         /* The hash of the block */
         Crypto::Hash blockHash;
+
+        /* The timestamp of the block */
+        uint64_t blockTimestamp;
     };
 }

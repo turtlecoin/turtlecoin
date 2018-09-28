@@ -175,38 +175,6 @@ void WalletSynchronizer::invalidateTransactions(uint64_t height)
 {
 }
 
-void WalletSynchronizer::processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction rawTX)
-{
-    Crypto::PublicKey txPublicKey;
-
-    bool success;
-
-    std::tie(success, txPublicKey) = getPubKeyFromExtra(rawTX.extra);
-
-    if (!success)
-    {
-        return;
-    }
-
-    /* TODO: Input is a uint64_t, but we store it as an int64_t so it can be
-       negative - need to handle overflow */
-    std::unordered_map<Crypto::PublicKey, int64_t> transfers;
-
-    processTransactionOutputs(rawTX.keyOutputs, transfers, txPublicKey);
-
-    /* Process any transactions we found belonging to us */
-    if (!transfers.empty())
-    {
-        /* Coinbase transactions don't have a fee */
-        uint64_t fee = 0;
-
-        /* Form the actual transaction */
-        Transaction tx(transfers, rawTX.hash, fee);
-
-        /* Store the transaction */
-        m_subWallets->addTransaction(tx);
-    }
-}
 
 /* Find inputs that belong to us (i.e., outgoing transactions) */
 uint64_t WalletSynchronizer::processTransactionInputs(
@@ -325,8 +293,46 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
     return processTransactionOutputs(tx.keyOutputs, transfers, txPublicKey);
 }
 
+void WalletSynchronizer::processCoinbaseTransaction(
+    WalletTypes::RawCoinbaseTransaction rawTX,
+    uint64_t blockTimestamp,
+    uint64_t blockHeight)
+{
+    Crypto::PublicKey txPublicKey;
+
+    bool success;
+
+    std::tie(success, txPublicKey) = getPubKeyFromExtra(rawTX.extra);
+
+    if (!success)
+    {
+        return;
+    }
+
+    /* TODO: Input is a uint64_t, but we store it as an int64_t so it can be
+       negative - need to handle overflow */
+    std::unordered_map<Crypto::PublicKey, int64_t> transfers;
+
+    processTransactionOutputs(rawTX.keyOutputs, transfers, txPublicKey);
+
+    /* Process any transactions we found belonging to us */
+    if (!transfers.empty())
+    {
+        /* Coinbase transactions don't have a fee */
+        uint64_t fee = 0;
+
+        /* Form the actual transaction */
+        Transaction tx(transfers, rawTX.hash, fee, blockTimestamp, blockHeight);
+
+        /* Store the transaction */
+        m_subWallets->addTransaction(tx);
+    }
+}
+
 /* Find the inputs and outputs of a transaction that belong to us */
-void WalletSynchronizer::processTransaction(WalletTypes::RawTransaction rawTX)
+void WalletSynchronizer::processTransaction(WalletTypes::RawTransaction rawTX,
+                                            uint64_t blockTimestamp,
+                                            uint64_t blockHeight)
 {
     /* TODO: Input is a uint64_t, but we store it as an int64_t so it can be
        negative - need to handle overflow */
@@ -357,7 +363,7 @@ void WalletSynchronizer::processTransaction(WalletTypes::RawTransaction rawTX)
         uint64_t fee = sumOfInputs - sumOfOutputs;
 
         /* Form the actual transaction */
-        Transaction tx(transfers, rawTX.hash, fee);
+        Transaction tx(transfers, rawTX.hash, fee, blockTimestamp, blockHeight);
 
         /* Store the transaction */
         m_subWallets->addTransaction(tx);
@@ -383,12 +389,13 @@ void WalletSynchronizer::findTransactionsInBlocks()
         }
 
         /* Process the coinbase transaction */
-        processCoinbaseTransaction(b.coinbaseTransaction);
+        processCoinbaseTransaction(b.coinbaseTransaction, b.blockTimestamp,
+                                   b.blockHeight);
 
         /* Process the rest of the transactions */
         for (const auto &tx : b.transactions)
         {
-            processTransaction(tx);
+            processTransaction(tx, b.blockTimestamp, b.blockHeight);
         }
 
         /* Make sure to do this at the end, once the transactions are fully

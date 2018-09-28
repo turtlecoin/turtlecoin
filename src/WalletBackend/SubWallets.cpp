@@ -109,40 +109,33 @@ void SubWallets::addTransaction(Transaction tx)
     for (const auto &transfer : tx.transfers)
     {
         auto pubKey = transfer.first;
-        auto amount = transfer.second;
+        auto amount = std::abs(transfer.second);
 
         m_subWallets[pubKey].balance += amount;
 
+        
         if (amount != 0 && tx.fee == 0)
         {
-            std::cout << "Coinbase transfer:" << std::endl
-                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                      << "Amount: " << amount << std::endl
-                      << std::endl;
+            std::cout << "Coinbase transaction found!" << std::endl;
         }
         else if (amount > 0)
         {
-            std::cout << "Incoming transfer:" << std::endl
-                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                      << "Amount: " << amount << std::endl
-                      << "Fee: " << tx.fee << std::endl
-                      << std::endl;
+            std::cout << "Incoming transaction found!" << std::endl;
         }
         else if (amount < 0)
         {
-            std::cout << "Outgoing transfer:" << std::endl
-                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                      << "Spent: " << std::abs(amount) << std::endl
-                      << "Fee: " << tx.fee << std::endl
-                      << std::endl;
+            std::cout << "Outgoing transaction found!" << std::endl;
         }
         else
         {
-            std::cout << "Fusion transfer:" << std::endl
-                      << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                      << "Fee: " << tx.fee << std::endl
-                      << std::endl;
+            std::cout << "Fusion transaction found!" << std::endl;
         }
+
+        std::cout << "Hash: " << Common::podToHex(tx.hash) << std::endl
+                  << "Amount: " << amount << std::endl
+                  << "Fee: " << tx.fee << std::endl
+                  << "Block height: " << tx.blockHeight << std::endl
+                  << "Timestamp: " << tx.timestamp << std::endl << std::endl;
     }
 }
 
