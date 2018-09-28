@@ -10,10 +10,14 @@ struct Transaction
 
     Transaction(std::unordered_map<Crypto::PublicKey, int64_t> transfers,
                 Crypto::Hash hash,
-                uint64_t fee) :
+                uint64_t fee,
+                uint64_t timestamp,
+                uint64_t blockHeight) :
         transfers(transfers),
         hash(hash),
-        fee(fee)
+        fee(fee),
+        timestamp(timestamp),
+        blockHeight(blockHeight)
     {
     }
 
@@ -31,4 +35,10 @@ struct Transaction
 
     /* The fee the transaction was sent with (always positive) */
     uint64_t fee;
+
+    /* The blockheight this transaction is in */
+    uint64_t blockHeight;
+
+    /* The timestamp of this transaction (taken from the block timestamp) */
+    uint64_t timestamp;
 };

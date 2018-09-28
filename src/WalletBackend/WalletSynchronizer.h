@@ -59,24 +59,36 @@ class WalletSynchronizer
 
         void stop();
 
+        /* Invalidate transactions from this height and above, they occured
+           on a forked chain */
         void invalidateTransactions(uint64_t height);
 
+        /* Process the transaction inputs to find transactions which we spent */
         uint64_t processTransactionInputs(
             std::vector<CryptoNote::KeyInput> keyInputs,
             std::unordered_map<Crypto::PublicKey, int64_t> &transfers);
 
+        /* Process the transaction outputs to find incoming transactions */
         std::tuple<bool, uint64_t> processTransactionOutputs(
             WalletTypes::RawTransaction tx,
             std::unordered_map<Crypto::PublicKey, int64_t> &transfers);
 
+        /* Process the transaction outputs to find incoming transactions */
         std::tuple<bool, uint64_t> processTransactionOutputs(
             std::vector<WalletTypes::KeyOutput> keyOutputs,
             std::unordered_map<Crypto::PublicKey, int64_t> &transfers,
             Crypto::PublicKey txPublicKey);
 
-        void processTransaction(WalletTypes::RawTransaction rawTX);
+        /* Process a coinbase transaction to see if it belongs to us */
+        void processCoinbaseTransaction(
+            WalletTypes::RawCoinbaseTransaction rawTX,
+            uint64_t blockTimestamp,
+            uint64_t blockHeight);
 
-        void processCoinbaseTransaction(WalletTypes::RawCoinbaseTransaction rawTX);
+        /* Process a transaction to see if it belongs to us */
+        void processTransaction(WalletTypes::RawTransaction rawTX,
+                                uint64_t blockTimestamp,
+                                uint64_t blockHeight);
 
         /* The thread ID of the block downloader thread */
         std::thread m_blockDownloaderThread;

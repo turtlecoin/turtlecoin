@@ -513,6 +513,8 @@ WalletError WalletBackend::init()
         throw std::runtime_error("Daemon has not been initialized!");
     }
 
+    std::cout << "Initializing daemon, this may hang..." << std::endl;
+
     std::promise<std::error_code> errorPromise;
     std::future<std::error_code> error = errorPromise.get_future();
 
@@ -536,10 +538,11 @@ WalletError WalletBackend::init()
         }
     });
 
-    auto status = initDaemon.wait_for(std::chrono::seconds(10));
 
-    auto result = status != std::future_status::ready ? DAEMON_INIT_TIMED_OUT
-                                                      : initDaemon.get();
+    /* Wait for the daemon to init */
+    /* TODO: This can hang - can't do it in a std::future since that hangs
+       when going of out scope */
+    WalletError result = initDaemon.get();
 
     /* Init the wallet synchronizer if it hasn't been loaded from the wallet
        file */
@@ -561,6 +564,8 @@ WalletError WalletBackend::init()
 
     /* Launch the wallet sync process in a background thread */
     m_walletSynchronizer->start();
+
+    std::cout << "Daemon initialization completed!" << std::endl;
 
     return result;
 }

@@ -464,14 +464,11 @@ bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, 
         uint64_t currentIndex = mainChain->getTopBlockIndex();
 
         /* Where we should start returning blocks from */
-        uint64_t startIndex = std::max(findBlockchainSupplement(knownBlockHashes), mainChain->getTimestampLowerBoundBlockIndex(timestamp));
-
-        /* Prevents us from getting the last hash we passed in every time -
-           but need to make sure the user does actually get block 0 if needed */
-        if (startIndex != 0)
-        {
-            startIndex++;
-        }
+        uint64_t startIndex = std::max(
+            /* Plus one so we return the next block */
+            findBlockchainSupplement(knownBlockHashes) + 1,
+            mainChain->getTimestampLowerBoundBlockIndex(timestamp)
+        );
 
         blocks = getRequestedWalletBlocks(startIndex, currentIndex);
 
@@ -509,6 +506,9 @@ std::vector<WalletTypes::WalletBlockInfo> Core::getRequestedWalletBlocks(uint64_
 
         /* Convert the raw block to a block template */
         fromBinaryArray(block, rawBlock.block);
+
+        /* Get the timestamp of the block */
+        walletBlock.blockTimestamp = block.timestamp;
 
         /* Put the coinbase transaction in the block */
         walletBlock.coinbaseTransaction = getRawCoinbaseTransaction(

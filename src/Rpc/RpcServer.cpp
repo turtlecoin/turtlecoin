@@ -60,6 +60,7 @@ void serialize(WalletTypes::WalletBlockInfo &walletBlockInfo, ISerializer &s)
     KV_MEMBER(walletBlockInfo.transactions);
     KV_MEMBER(walletBlockInfo.blockHeight);
     KV_MEMBER(walletBlockInfo.blockHash);
+    KV_MEMBER(walletBlockInfo.blockTimestamp);
 }
 
 void serialize(WalletTypes::RawTransaction &rawTransaction, ISerializer &s)
