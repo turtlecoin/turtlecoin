@@ -204,7 +204,7 @@ void SubWallets::addTransaction(Transaction tx)
     for (const auto &transfer : tx.transfers)
     {
         auto pubKey = transfer.first;
-        auto amount = std::abs(transfer.second);
+        auto amount = transfer.second;
 
         m_subWallets[pubKey].m_balance += amount;
 
@@ -227,7 +227,7 @@ void SubWallets::addTransaction(Transaction tx)
         }
 
         std::cout << "Hash: " << Common::podToHex(tx.hash) << std::endl
-                  << "Amount: " << amount << std::endl
+                  << "Amount: " << std::abs(amount) << std::endl
                   << "Fee: " << tx.fee << std::endl
                   << "Block height: " << tx.blockHeight << std::endl
                   << "Timestamp: " << tx.timestamp << std::endl << std::endl;

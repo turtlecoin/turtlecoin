@@ -24,16 +24,19 @@ namespace WalletTypes
         /* The outputs of the transaction, amounts and keys */
         std::vector<KeyOutput> keyOutputs;
 
-        /* The "extra" data, includes a pub key, sometimes payment ID's */
-        std::vector<uint8_t> extra;
-
         /* The hash of the transaction */
         Crypto::Hash hash;
+
+        /* The public key of this transaction, taken from the tx extra */
+        Crypto::PublicKey transactionPublicKey;
     };
 
     /* A raw transaction, simply key images and amounts */
     struct RawTransaction : RawCoinbaseTransaction
     {
+        /* The transaction payment ID - may be an empty string */
+        std::string paymentID;
+
         /* The inputs used for a transaction, can be used to track outgoing
            transactions */
         std::vector<CryptoNote::KeyInput> keyInputs;

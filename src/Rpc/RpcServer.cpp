@@ -66,16 +66,17 @@ void serialize(WalletTypes::WalletBlockInfo &walletBlockInfo, ISerializer &s)
 void serialize(WalletTypes::RawTransaction &rawTransaction, ISerializer &s)
 {
     KV_MEMBER(rawTransaction.keyInputs);
+    KV_MEMBER(rawTransaction.paymentID);
     KV_MEMBER(rawTransaction.keyOutputs);
-    KV_MEMBER(rawTransaction.extra);
     KV_MEMBER(rawTransaction.hash);
+    KV_MEMBER(rawTransaction.transactionPublicKey);
 }
 
 void serialize(WalletTypes::RawCoinbaseTransaction &rawCoinbaseTransaction, ISerializer &s)
 {
     KV_MEMBER(rawCoinbaseTransaction.keyOutputs);
-    KV_MEMBER(rawCoinbaseTransaction.extra);
     KV_MEMBER(rawCoinbaseTransaction.hash);
+    KV_MEMBER(rawCoinbaseTransaction.transactionPublicKey);
 }
 
 void serialize(WalletTypes::KeyOutput &keyOutput, ISerializer &s)

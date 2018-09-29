@@ -175,7 +175,9 @@ private:
 
   static WalletTypes::RawCoinbaseTransaction getRawCoinbaseTransaction(const CryptoNote::Transaction t);
 
-  static WalletTypes::RawTransaction getRawTransaction(const std::vector<uint8_t> rawTX);
+  static std::tuple<bool, WalletTypes::RawTransaction> getRawTransaction(const std::vector<uint8_t> rawTX);
+
+  static std::tuple<bool, Crypto::PublicKey> getPubKeyFromExtra(std::vector<uint8_t> extra);
 
   void getTransactionPoolDifference(const std::vector<Crypto::Hash>& knownHashes, std::vector<Crypto::Hash>& newTransactions, std::vector<Crypto::Hash>& deletedTransactions) const;
 

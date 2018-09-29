@@ -14,7 +14,7 @@ int main()
     std::string seed = "biggest yields peeled pawnshop godfather likewise hickory queen exit trying buying island wagtail vitals lucky theatrics dewdrop licks update pivot digit foes ensign estate queen";
     std::string address = "TRTLv2Fyavy8CXG8BPEbNeCHFZ1fuDCYCZ3vW5H5LXN4K2M2MHUpTENip9bbavpHvvPwb4NDkBWrNgURAd5DB38FHXWZyoBh4wW";
 
-    uint64_t scanHeight = 820000;
+    uint64_t scanHeight = 822500;
 
     Crypto::SecretKey privateSpendKey;
     Crypto::SecretKey privateViewKey;

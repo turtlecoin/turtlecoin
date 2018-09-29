@@ -453,7 +453,9 @@ bool Core::queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, ui
 /* Known block hashes = The hashes the wallet knows about. We'll give blocks starting from this hash.
    Timestamp = The timestamp to start giving blocks from, if knownBlockHashes is empty. Used for syncing a new wallet.
    Blocks = The returned vector of blocks */
-bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, uint64_t startHeight, uint64_t startTimestamp, std::vector<WalletTypes::WalletBlockInfo> &blocks) const
+bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes,
+                             uint64_t startHeight, uint64_t startTimestamp,
+                             std::vector<WalletTypes::WalletBlockInfo> &blocks) const
 {
     throwIfNotInitialized();
 
@@ -489,7 +491,8 @@ bool Core::getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, 
     }
 }
 
-std::vector<WalletTypes::WalletBlockInfo> Core::getRequestedWalletBlocks(uint64_t startIndex, uint64_t currentIndex) const
+std::vector<WalletTypes::WalletBlockInfo>
+    Core::getRequestedWalletBlocks(uint64_t startIndex, uint64_t currentIndex) const
 {
     std::vector<WalletTypes::WalletBlockInfo> blocks;
 
@@ -533,7 +536,18 @@ std::vector<WalletTypes::WalletBlockInfo> Core::getRequestedWalletBlocks(uint64_
 
         for (const auto &transaction : rawBlock.transactions)
         {
-            walletBlock.transactions.push_back(getRawTransaction(transaction));
+            bool success;
+
+            /* Name clashing :/ */
+            WalletTypes::RawTransaction tmpTX;
+
+            std::tie(success, tmpTX) = getRawTransaction(transaction);
+
+            /* Couldn't get the pub key */
+            if (success)
+            {
+                walletBlock.transactions.push_back(tmpTX);
+            }
         }
 
         blocks.push_back(walletBlock);
@@ -542,14 +556,16 @@ std::vector<WalletTypes::WalletBlockInfo> Core::getRequestedWalletBlocks(uint64_
     return blocks;
 }
 
-WalletTypes::RawCoinbaseTransaction Core::getRawCoinbaseTransaction(const CryptoNote::Transaction t)
+WalletTypes::RawCoinbaseTransaction
+    Core::getRawCoinbaseTransaction(const CryptoNote::Transaction t)
 {
     WalletTypes::RawCoinbaseTransaction transaction;
 
     transaction.hash = getBinaryArrayHash(toBinaryArray(t));
 
-    /* Copy over the extra */
-    transaction.extra = t.extra;
+    /* Ignoring whether it succeeded - it makes no sense for a coinbase
+       transaction to not have a public key */
+    transaction.transactionPublicKey = std::get<1>(getPubKeyFromExtra(t.extra));
 
     /* Fill in the simplified key outputs */
     for (const auto &output : t.outputs)
@@ -565,7 +581,8 @@ WalletTypes::RawCoinbaseTransaction Core::getRawCoinbaseTransaction(const Crypto
     return transaction;
 }
 
-WalletTypes::RawTransaction Core::getRawTransaction(const std::vector<uint8_t> rawTX)
+std::tuple<bool, WalletTypes::RawTransaction>
+    Core::getRawTransaction(const std::vector<uint8_t> rawTX)
 {
     Transaction t;
 
@@ -577,8 +594,20 @@ WalletTypes::RawTransaction Core::getRawTransaction(const std::vector<uint8_t> r
     /* Get the transaction hash from the binary array */
     transaction.hash = getBinaryArrayHash(rawTX);
 
-    /* Copy over the extra */
-    transaction.extra = t.extra;
+    bool success;
+
+    Crypto::PublicKey transactionPublicKey;
+
+    std::tie(success, transactionPublicKey) = getPubKeyFromExtra(t.extra);
+
+    if (!success)
+    {
+        return std::make_tuple(false, transaction);
+    }
+
+    /* Transaction public key, used for decrypting transactions along with
+       private view key */
+    transaction.transactionPublicKey = transactionPublicKey;
 
     /* Simplify the outputs */
     for (const auto &output : t.outputs)
@@ -597,7 +626,46 @@ WalletTypes::RawTransaction Core::getRawTransaction(const std::vector<uint8_t> r
         transaction.keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
     }
 
-    return transaction;
+    return std::make_tuple(true, transaction);
+}
+
+std::tuple<bool, Crypto::PublicKey>
+    Core::getPubKeyFromExtra(std::vector<uint8_t> extra)
+{
+    Crypto::PublicKey publicKey;
+
+    const int pubKeySize = 32;
+
+    for (size_t i = 0; i < extra.size(); i++)
+    {
+        /* If the following data is the transaction public key, this is
+           indicated by the preceding value being 0x01. */
+        if (extra[i] == 0x01)
+        {
+            /* The amount of data remaining in the vector (minus one because
+               we start reading the public key from the next character) */
+            size_t dataRemaining = extra.size() - i - 1;
+
+            /* We need to check that there is enough space following the tag,
+               as someone could just pop a random 0x01 in there and make our
+               code mess up */
+            if (dataRemaining < pubKeySize)
+            {
+                return std::make_tuple(false, publicKey);
+            }
+
+            const auto dataBegin = extra.begin() + i + 1;
+            const auto dataEnd = dataBegin + pubKeySize;
+
+            /* Copy the data from the vector to the array */
+            std::copy(dataBegin, dataEnd, std::begin(publicKey.data));
+
+            return std::make_tuple(true, publicKey);
+        }
+    }
+
+    /* Couldn't find the tag */
+    return std::make_tuple(false, publicKey);
 }
 
 void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions,
