@@ -12,12 +12,14 @@ struct Transaction
                 Crypto::Hash hash,
                 uint64_t fee,
                 uint64_t timestamp,
-                uint64_t blockHeight) :
+                uint64_t blockHeight,
+                std::string paymentID) :
         transfers(transfers),
         hash(hash),
         fee(fee),
         timestamp(timestamp),
-        blockHeight(blockHeight)
+        blockHeight(blockHeight),
+        paymentID(paymentID)
     {
     }
 
@@ -41,4 +43,6 @@ struct Transaction
 
     /* The timestamp of this transaction (taken from the block timestamp) */
     uint64_t timestamp;
+
+    std::string paymentID;
 };

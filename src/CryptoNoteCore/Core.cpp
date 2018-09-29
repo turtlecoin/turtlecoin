@@ -536,18 +536,7 @@ std::vector<WalletTypes::WalletBlockInfo>
 
         for (const auto &transaction : rawBlock.transactions)
         {
-            bool success;
-
-            /* Name clashing :/ */
-            WalletTypes::RawTransaction tmpTX;
-
-            std::tie(success, tmpTX) = getRawTransaction(transaction);
-
-            /* Couldn't get the pub key */
-            if (success)
-            {
-                walletBlock.transactions.push_back(tmpTX);
-            }
+            walletBlock.transactions.push_back(getRawTransaction(transaction));
         }
 
         blocks.push_back(walletBlock);
@@ -565,7 +554,7 @@ WalletTypes::RawCoinbaseTransaction
 
     /* Ignoring whether it succeeded - it makes no sense for a coinbase
        transaction to not have a public key */
-    transaction.transactionPublicKey = std::get<1>(getPubKeyFromExtra(t.extra));
+    transaction.transactionPublicKey = getPubKeyFromExtra(t.extra);
 
     /* Fill in the simplified key outputs */
     for (const auto &output : t.outputs)
@@ -581,8 +570,7 @@ WalletTypes::RawCoinbaseTransaction
     return transaction;
 }
 
-std::tuple<bool, WalletTypes::RawTransaction>
-    Core::getRawTransaction(const std::vector<uint8_t> rawTX)
+WalletTypes::RawTransaction Core::getRawTransaction(const std::vector<uint8_t> rawTX)
 {
     Transaction t;
 
@@ -594,21 +582,13 @@ std::tuple<bool, WalletTypes::RawTransaction>
     /* Get the transaction hash from the binary array */
     transaction.hash = getBinaryArrayHash(rawTX);
 
-    bool success;
-
-    Crypto::PublicKey transactionPublicKey;
-
-    std::tie(success, transactionPublicKey) = getPubKeyFromExtra(t.extra);
-
-    if (!success)
-    {
-        return std::make_tuple(false, transaction);
-    }
-
     /* Transaction public key, used for decrypting transactions along with
        private view key */
-    transaction.transactionPublicKey = transactionPublicKey;
+    transaction.transactionPublicKey = getPubKeyFromExtra(t.extra);
 
+    /* Get the payment ID if it exists (Empty string if it doesn't) */
+    transaction.paymentID = getPaymentIDFromExtra(t.extra);
+    
     /* Simplify the outputs */
     for (const auto &output : t.outputs)
     {
@@ -626,11 +606,15 @@ std::tuple<bool, WalletTypes::RawTransaction>
         transaction.keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
     }
 
-    return std::make_tuple(true, transaction);
+    return transaction;
 }
 
-std::tuple<bool, Crypto::PublicKey>
-    Core::getPubKeyFromExtra(std::vector<uint8_t> extra)
+/* Public key looks like this
+
+   [...data...] 0x01 [public key] [...data...]
+
+*/
+Crypto::PublicKey Core::getPubKeyFromExtra(std::vector<uint8_t> extra)
 {
     Crypto::PublicKey publicKey;
 
@@ -651,7 +635,7 @@ std::tuple<bool, Crypto::PublicKey>
                code mess up */
             if (dataRemaining < pubKeySize)
             {
-                return std::make_tuple(false, publicKey);
+                return publicKey;
             }
 
             const auto dataBegin = extra.begin() + i + 1;
@@ -660,12 +644,66 @@ std::tuple<bool, Crypto::PublicKey>
             /* Copy the data from the vector to the array */
             std::copy(dataBegin, dataEnd, std::begin(publicKey.data));
 
-            return std::make_tuple(true, publicKey);
+            return publicKey;
         }
     }
 
     /* Couldn't find the tag */
-    return std::make_tuple(false, publicKey);
+    return publicKey;
+}
+
+/* Payment ID looks like this (payment ID is stored in extra nonce)
+
+   [...data...] 0x02 [size of extra nonce] 0x00 [payment ID] [...data...]
+
+*/
+std::string Core::getPaymentIDFromExtra(std::vector<uint8_t> extra)
+{
+    const int paymentIDSize = 32;
+
+    for (size_t i = 0; i < extra.size(); i++)
+    {
+        /* Extra nonce tag found */
+        if (extra[i] == 0x02)
+        {
+            /* Skip the extra nonce tag */
+            size_t dataRemaining = extra.size() - i - 1;
+
+            /* Not found, not enough space. We need a +1, since payment ID
+               is stored inside extra nonce, with a special tag for it,
+               and there is a size parameter right after the extra nonce
+               tag */
+            if (dataRemaining < paymentIDSize + 1 + 1)
+            {
+                return std::string();
+            }
+            
+            /* Payment ID in extra nonce */
+            if (extra[i+2] == 0x00)
+            {
+                /* Plus two to skip the two 0x02 0x00 tags and the size value */
+                const auto dataBegin = extra.begin() + i + 3;
+                const auto dataEnd = dataBegin + paymentIDSize;
+
+                Crypto::Hash paymentIDHash;
+
+                /* Copy the payment ID into the hash */
+                std::copy(dataBegin, dataEnd, std::begin(paymentIDHash.data));
+
+                /* Convert to a string */
+                std::string paymentID = Common::podToHex(paymentIDHash);
+
+                /* Convert it to lower case */
+                std::transform(paymentID.begin(), paymentID.end(),
+                               paymentID.begin(), ::tolower);
+
+                return paymentID;
+            }
+        }
+    }
+
+    /* Not found */
+    return std::string();
 }
 
 void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions,
@@ -2436,7 +2474,7 @@ TransactionDetails Core::getTransactionDetails(const Crypto::Hash& transactionHa
       outputReferences.reserve(txInToKeyDetails.input.outputIndexes.size());
       std::vector<uint32_t> globalIndexes = relativeOutputOffsetsToAbsolute(txInToKeyDetails.input.outputIndexes);
       ExtractOutputKeysResult result = segment->extractKeyOtputReferences(txInToKeyDetails.input.amount, { globalIndexes.data(), globalIndexes.size() }, outputReferences);
-      if (result == result) {}
+      (void)result;
       assert(result == ExtractOutputKeysResult::SUCCESS);
       assert(txInToKeyDetails.input.outputIndexes.size() == outputReferences.size());
 

@@ -217,9 +217,7 @@ void to_json(json &j, const Transaction &t)
         {"fee", t.fee},
         {"timestamp", t.timestamp},
         {"blockHeight", t.blockHeight},
-        /*
         {"paymentID", t.paymentID},
-        */
     };
 }
 
@@ -230,9 +228,7 @@ void from_json(const json &j, Transaction &t)
     t.fee = j.at("fee").get<uint64_t>();
     t.timestamp = j.at("timestamp").get<uint64_t>();
     t.blockHeight = j.at("blockHeight").get<uint32_t>();
-    /*
     t.paymentID = j.at("paymentID").get<std::string>();
-    */
 }
 
 ////////////////////////

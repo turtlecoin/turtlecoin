@@ -230,7 +230,8 @@ void SubWallets::addTransaction(Transaction tx)
                   << "Amount: " << std::abs(amount) << std::endl
                   << "Fee: " << tx.fee << std::endl
                   << "Block height: " << tx.blockHeight << std::endl
-                  << "Timestamp: " << tx.timestamp << std::endl << std::endl;
+                  << "Timestamp: " << tx.timestamp << std::endl
+                  << "Payment ID: " << tx.paymentID << std::endl << std::endl;
     }
 }
 

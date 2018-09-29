@@ -255,8 +255,13 @@ void WalletSynchronizer::processCoinbaseTransaction(
         /* Coinbase transactions don't have a fee */
         uint64_t fee = 0;
 
+        /* Coinbase transactions can't have payment ID's */
+        std::string paymentID;
+
         /* Form the actual transaction */
-        Transaction tx(transfers, rawTX.hash, fee, blockTimestamp, blockHeight);
+        Transaction tx(
+            transfers, rawTX.hash, fee, blockTimestamp, blockHeight, paymentID
+        );
 
         /* Store the transaction */
         m_subWallets->addTransaction(tx);
@@ -301,7 +306,10 @@ void WalletSynchronizer::processTransaction(WalletTypes::RawTransaction rawTX,
         uint64_t fee = sumOfInputs - sumOfOutputs;
 
         /* Form the actual transaction */
-        Transaction tx(transfers, rawTX.hash, fee, blockTimestamp, blockHeight);
+        Transaction tx(
+            transfers, rawTX.hash, fee, blockTimestamp, blockHeight,
+            rawTX.paymentID
+        );
 
         /* Store the transaction */
         m_subWallets->addTransaction(tx);
