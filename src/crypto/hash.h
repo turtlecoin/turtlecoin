@@ -32,11 +32,11 @@ namespace Crypto {
     return h;
   }
 
-  inline void cn_slow_hash_v6(const void *data, size_t length, Hash &hash) {
+  inline void cn_slow_hash_v0(const void *data, size_t length, Hash &hash) {
     cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 0, 0);
   }
 
-  inline void cn_slow_hash_v7(const void *data, size_t length, Hash &hash) {
+  inline void cn_slow_hash_v1(const void *data, size_t length, Hash &hash) {
     cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 1, 0);
   }
 

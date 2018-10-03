@@ -32,6 +32,9 @@ class SequentialFileReader;
 
 namespace test {
 
+extern const uint32_t kDefaultFormatVersion;
+extern const uint32_t kLatestFormatVersion;
+
 // Store in *dst a random string of length "len" and return a Slice that
 // references the generated data.
 extern Slice RandomString(Random* rnd, int len, std::string* dst);
@@ -86,13 +89,6 @@ class PlainInternalKeyComparator : public InternalKeyComparator {
 
   virtual int Compare(const Slice& a, const Slice& b) const override {
     return user_comparator()->Compare(a, b);
-  }
-  virtual void FindShortestSeparator(std::string* start,
-                                     const Slice& limit) const override {
-    user_comparator()->FindShortestSeparator(start, limit);
-  }
-  virtual void FindShortSuccessor(std::string* key) const override {
-    user_comparator()->FindShortSuccessor(key);
   }
 };
 #endif
@@ -179,6 +175,9 @@ class VectorIterator : public InternalIterator {
 
   virtual Status status() const override { return Status::OK(); }
 
+  virtual bool IsKeyPinned() const override { return true; }
+  virtual bool IsValuePinned() const override { return true; }
+
  private:
   std::vector<std::string> keys_;
   std::vector<std::string> values_;
@@ -188,7 +187,8 @@ extern WritableFileWriter* GetWritableFileWriter(WritableFile* wf);
 
 extern RandomAccessFileReader* GetRandomAccessFileReader(RandomAccessFile* raf);
 
-extern SequentialFileReader* GetSequentialFileReader(SequentialFile* se);
+extern SequentialFileReader* GetSequentialFileReader(SequentialFile* se,
+                                                     const std::string& fname);
 
 class StringSink: public WritableFile {
  public:
@@ -247,7 +247,7 @@ class RandomRWStringSink : public RandomRWFile {
  public:
   explicit RandomRWStringSink(StringSink* ss) : ss_(ss) {}
 
-  Status Write(uint64_t offset, const Slice& data) {
+  Status Write(uint64_t offset, const Slice& data) override {
     if (offset + data.size() > ss_->contents_.size()) {
       ss_->contents_.resize(offset + data.size(), '\0');
     }
@@ -258,7 +258,7 @@ class RandomRWStringSink : public RandomRWFile {
   }
 
   Status Read(uint64_t offset, size_t n, Slice* result,
-              char* /*scratch*/) const {
+              char* /*scratch*/) const override {
     *result = Slice(nullptr, 0);
     if (offset < ss_->contents_.size()) {
       size_t str_res_sz =
@@ -268,11 +268,11 @@ class RandomRWStringSink : public RandomRWFile {
     return Status::OK();
   }
 
-  Status Flush() { return Status::OK(); }
+  Status Flush() override { return Status::OK(); }
 
-  Status Sync() { return Status::OK(); }
+  Status Sync() override { return Status::OK(); }
 
-  Status Close() { return Status::OK(); }
+  Status Close() override { return Status::OK(); }
 
   const std::string& contents() const { return ss_->contents(); }
 
