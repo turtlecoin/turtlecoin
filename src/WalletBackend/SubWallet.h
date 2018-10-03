@@ -8,9 +8,6 @@
 
 #include "CryptoTypes.h"
 
-/* TODO: Kill IWallet.h */
-#include "IWallet.h"
-
 #include "json.hpp"
 
 #include <string>
@@ -19,6 +16,8 @@
 
 #include <WalletBackend/Transaction.h>
 #include <WalletBackend/WalletErrors.h>
+
+#include "WalletTypes.h"
 
 using nlohmann::json;
 
@@ -44,13 +43,14 @@ class SubWallet
 
         /* Generates a key image from the derivation, and stores it */
         void generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
-                                      size_t outputIndex);
+                                      size_t outputIndex, uint64_t amount);
 
         /* Whether this is a view only wallet */
         bool m_isViewWallet;
 
-        /* A set of the stored key images we own (Key images are unique) */
-        std::unordered_set<Crypto::KeyImage> m_keyImages;
+        /* A vector of the stored key images we own (Key images are unique) and
+           their amounts */
+        std::vector<WalletTypes::TransactionInput> m_keyImages;
 
         /* This subwallet's public spend key */
         Crypto::PublicKey m_publicSpendKey;

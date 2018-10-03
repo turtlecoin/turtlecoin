@@ -63,6 +63,10 @@ void from_json(const json &j, SynchronizationStatus &s);
 void to_json(json &j, const Transfer &t);
 void from_json(const json &j, Transfer &t);
 
+/* TransactionInput */
+void to_json(json &j, const WalletTypes::TransactionInput &t);
+void from_json(const json &j, WalletTypes::TransactionInput &t);
+
 /* Generic serializers for any hash type with a data member
    (e.g., CryptoTypes.h) */
 template<typename Data>

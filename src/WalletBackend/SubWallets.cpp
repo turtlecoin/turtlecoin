@@ -237,14 +237,17 @@ void SubWallets::addTransaction(Transaction tx)
 
 void SubWallets::generateAndStoreKeyImage(Crypto::PublicKey publicSpendKey,
                                           Crypto::KeyDerivation derivation,
-                                          size_t outputIndex)
+                                          size_t outputIndex,
+                                          uint64_t amount)
 {
     const auto subWallet = m_subWallets.find(publicSpendKey);
 
     /* Check it exists, and it isn't a view wallet */
     if (subWallet != m_subWallets.end() && !subWallet->second.m_isViewWallet)
     {
-        subWallet->second.generateAndStoreKeyImage(derivation, outputIndex);
+        subWallet->second.generateAndStoreKeyImage(
+            derivation, outputIndex, amount
+        );
     }
 }
 
@@ -255,7 +258,14 @@ std::tuple<bool, Crypto::PublicKey>
     {
         const SubWallet subWallet = x.second;
 
-        if (subWallet.m_keyImages.find(keyImage) != subWallet.m_keyImages.end())
+        /* See if the sub wallet contains the key image */
+        auto it = std::find_if(subWallet.m_keyImages.begin(), subWallet.m_keyImages.end(), [&keyImage](const WalletTypes::TransactionInput &input)
+        {
+            return input.keyImage == keyImage;
+        });
+
+        /* Found the key image */
+        if (it != subWallet.m_keyImages.end())
         {
             return std::make_tuple(true, subWallet.m_publicSpendKey);
         }

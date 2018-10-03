@@ -60,4 +60,13 @@ namespace WalletTypes
         /* The timestamp of the block */
         uint64_t blockTimestamp;
     };
+
+    struct TransactionInput
+    {
+        /* The key image of this amount */
+        Crypto::KeyImage keyImage;
+
+        /* The value of this key image */
+        uint64_t amount;
+    };
 }

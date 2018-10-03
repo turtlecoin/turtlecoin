@@ -62,7 +62,8 @@ SubWallet::SubWallet(const Crypto::PublicKey publicSpendKey,
 /////////////////////
 
 void SubWallet::generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
-                                         size_t outputIndex)
+                                         size_t outputIndex,
+                                         uint64_t amount)
 {
     if (m_isViewWallet)
     {
@@ -93,5 +94,10 @@ void SubWallet::generateAndStoreKeyImage(Crypto::KeyDerivation derivation,
         tmp.publicKey, tmp.secretKey, keyImage
     );
 
-    m_keyImages.insert(keyImage);
+    WalletTypes::TransactionInput input;
+
+    input.keyImage = keyImage;
+    input.amount = amount;
+
+    m_keyImages.push_back(input);
 }

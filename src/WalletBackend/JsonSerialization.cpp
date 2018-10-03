@@ -64,7 +64,7 @@ void SubWallet::fromJson(const json &j)
 
     */
 
-    m_keyImages = vectorToContainer<std::unordered_set<Crypto::KeyImage>>(j.at("keyImages").get<std::vector<std::string>>());
+    m_keyImages = j.at("keyImages").get<std::vector<WalletTypes::TransactionInput>>();
     m_balance = j.at("balance").get<uint64_t>();
     m_syncStartHeight = j.at("syncStartHeight").get<uint64_t>();
 }
@@ -286,6 +286,27 @@ void SynchronizationStatus::fromJson(const json &j)
     m_blockHashCheckpoints = vectorToContainer<std::deque<Crypto::Hash>>(j.at("blockHashCheckpoints").get<std::vector<std::string>>());
     m_lastKnownBlockHashes = vectorToContainer<std::deque<Crypto::Hash>>(j.at("lastKnownBlockHashes").get<std::vector<std::string>>());
     m_lastKnownBlockHeight = j.at("lastKnownBlockHeight").get<uint64_t>();
+}
+
+///////////////////////
+/* TransactionInput  */
+///////////////////////
+
+namespace WalletTypes
+{
+    void to_json(json &j, const TransactionInput &t)
+    {
+        j = {
+            {"keyImage", Common::podToHex(t.keyImage)},
+            {"amount", t.amount},
+        };
+    }
+
+    void from_json(const json &j, TransactionInput &t)
+    {
+        Common::podFromHex(j.at("keyImage").get<std::string>(), t.keyImage.data);
+        t.amount = j.at("amount").get<int64_t>();
+    }
 }
 
 //////////////

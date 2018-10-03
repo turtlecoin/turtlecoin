@@ -50,7 +50,7 @@ class SubWallets
            subwallet. Wallet must not be a view wallet (and must exist, but
            the WalletSynchronizer already checks this) */
         void generateAndStoreKeyImage(Crypto::PublicKey, Crypto::KeyDerivation,
-                                      size_t outputIndex);
+                                      size_t outputIndex, uint64_t amount);
 
         /* Get the owner of the key image, if any */
         std::tuple<bool, Crypto::PublicKey>

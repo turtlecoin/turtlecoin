@@ -194,8 +194,10 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
 
     for (size_t outputIndex = 0; outputIndex < keyOutputs.size(); outputIndex++)
     {
+        uint64_t amount = keyOutputs[outputIndex].amount;
+
         /* Add the amount to the sum of outputs, used for calculating fee later */
-        sumOfOutputs += keyOutputs[outputIndex].amount;
+        sumOfOutputs += amount;
 
         Crypto::PublicKey spendKey;
 
@@ -219,7 +221,7 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
             /* Add the amount to the current amount (If a key doesn't exist,
                it will default to zero, so this is just setting the value
                to the amount in that case */
-            transfers[*ourSpendKey] += keyOutputs[outputIndex].amount;
+            transfers[*ourSpendKey] += amount;
 
             /* Next we get the key image for this transaction. We store these,
                and thus can then detect when an outgoing transaction is made
@@ -228,7 +230,7 @@ std::tuple<bool, uint64_t> WalletSynchronizer::processTransactionOutputs(
                If the wallet this spend key belongs to is a view wallet, this
                won't do anything! */
             m_subWallets->generateAndStoreKeyImage(
-                *ourSpendKey, derivation, outputIndex
+                *ourSpendKey, derivation, outputIndex, amount
             );
         }
     }
