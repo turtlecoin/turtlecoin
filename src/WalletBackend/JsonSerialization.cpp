@@ -50,12 +50,21 @@ json SubWallet::toJson() const
 
 void SubWallet::fromJson(const json &j)
 {
-    m_publicSpendKey = j.at("publicSpendKey").get<Crypto::PublicKey>();
-    m_privateSpendKey = j.at("privateSpendKey").get<Crypto::SecretKey>();
+    Common::podFromHex(j.at("publicSpendKey").get<std::string>(), m_publicSpendKey.data);
+    Common::podFromHex(j.at("privateSpendKey").get<std::string>(), m_privateSpendKey.data);
     m_address = j.at("address").get<std::string>();
     m_syncStartTimestamp = j.at("syncStartTimestamp").get<uint64_t>();
     m_isViewWallet = j.at("isViewWallet").get<bool>();
+
+    /* Temporary work around whilst we wait for a fix for
+       https://github.com/nlohmann/json/issues/1267 - parse it as a vector
+       of strings then convert to a set of key images 
+
     m_keyImages = j.at("keyImages").get<std::unordered_set<Crypto::KeyImage>>();
+
+    */
+
+    m_keyImages = vectorToContainer<std::unordered_set<Crypto::KeyImage>>(j.at("keyImages").get<std::vector<std::string>>());
     m_balance = j.at("balance").get<uint64_t>();
     m_syncStartHeight = j.at("syncStartHeight").get<uint64_t>();
 }
@@ -79,15 +88,15 @@ json SubWallets::toJson() const
     return
     {
         {"publicSpendKeys", m_publicSpendKeys},
-        {"subWallets", m_subWallets},
+        {"subWallet", subWalletsToVector(m_subWallets)},
         {"transactions", m_transactions},
     };
 }
 
 void SubWallets::fromJson(const json &j)
 {
-    m_publicSpendKeys = j.at("publicSpendKeys").get<std::vector<Crypto::PublicKey>>();
-    m_subWallets = j.at("subWallets").get<std::unordered_map<Crypto::PublicKey, SubWallet>>();
+    m_publicSpendKeys = vectorToContainer<std::vector<Crypto::PublicKey>>(j.at("publicSpendKeys").get<std::vector<std::string>>());
+    m_subWallets = vectorToSubWallets(j.at("subWallet").get<std::vector<SubWallet>>());
     m_transactions = j.at("transactions").get<std::vector<Transaction>>();
 }
 
@@ -131,7 +140,7 @@ void WalletBackend::fromJson(const json &j)
         );
     }
 
-    m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
+    Common::podFromHex(j.at("privateViewKey").get<std::string>(), m_privateViewKey.data);
 
     m_subWallets = std::make_shared<SubWallets>(
         j.at("subWallets").get<SubWallets>()
@@ -154,12 +163,7 @@ namespace Crypto
 
     void to_json(json &j, const SecretKey &s)
     {
-        hashToJson(j, s, "secretKey");
-    }
-
-    void from_json(const json &j, SecretKey &s)
-    {
-        jsonToHash(j, s, "secretKey");
+        j = Common::podToHex(s);
     }
 
     ///////////////////////
@@ -168,12 +172,7 @@ namespace Crypto
 
     void to_json(json &j, const PublicKey &s)
     {
-        hashToJson(j, s, "publicKey");
-    }
-
-    void from_json(const json &j, PublicKey &s)
-    {
-        jsonToHash(j, s, "publicKey");
+        j = Common::podToHex(s);
     }
 
     //////////////////
@@ -182,12 +181,7 @@ namespace Crypto
 
     void to_json(json &j, const Hash &h)
     {
-        hashToJson(j, h, "hash");
-    }
-
-    void from_json(const json &j, Hash &h)
-    {
-        jsonToHash(j, h, "hash");
+        j = Common::podToHex(h);
     }
 
     //////////////////////
@@ -196,12 +190,7 @@ namespace Crypto
 
     void to_json(json &j, const KeyImage &h)
     {
-        hashToJson(j, h, "hash");
-    }
-
-    void from_json(const json &j, KeyImage &h)
-    {
-        jsonToHash(j, h, "hash");
+        j = Common::podToHex(h);
     }
 }
 
@@ -212,7 +201,7 @@ namespace Crypto
 void to_json(json &j, const Transaction &t)
 {
     j = json {
-        {"transfers", t.transfers},
+        {"transfers", transfersToVector(t.transfers)},
         {"hash", t.hash},
         {"fee", t.fee},
         {"timestamp", t.timestamp},
@@ -223,8 +212,8 @@ void to_json(json &j, const Transaction &t)
 
 void from_json(const json &j, Transaction &t)
 {
-    t.transfers = j.at("transfers").get<std::unordered_map<Crypto::PublicKey, int64_t>>();
-    t.hash = j.at("hash").get<Crypto::Hash>();
+    t.transfers = vectorToTransfers(j.at("transfers").get<std::vector<Transfer>>());
+    Common::podFromHex(j.at("hash").get<std::string>(), t.hash.data);
     t.fee = j.at("fee").get<uint64_t>();
     t.timestamp = j.at("timestamp").get<uint64_t>();
     t.blockHeight = j.at("blockHeight").get<uint32_t>();
@@ -265,7 +254,7 @@ void WalletSynchronizer::fromJson(const json &j)
     m_startTimestamp = j.at("startTimestamp").get<uint64_t>();
     m_startHeight = j.at("startHeight").get<uint64_t>();
 
-    m_privateViewKey = j.at("privateViewKey").get<Crypto::SecretKey>();
+    Common::podFromHex(j.at("privateViewKey").get<std::string>(), m_privateViewKey.data);
 }
 
 ///////////////////////////
@@ -294,7 +283,96 @@ json SynchronizationStatus::toJson() const
 
 void SynchronizationStatus::fromJson(const json &j)
 {
-    m_blockHashCheckpoints = j.at("blockHashCheckpoints").get<std::deque<Crypto::Hash>>();
-    m_lastKnownBlockHashes = j.at("lastKnownBlockHashes").get<std::deque<Crypto::Hash>>();
+    m_blockHashCheckpoints = vectorToContainer<std::deque<Crypto::Hash>>(j.at("blockHashCheckpoints").get<std::vector<std::string>>());
+    m_lastKnownBlockHashes = vectorToContainer<std::deque<Crypto::Hash>>(j.at("lastKnownBlockHashes").get<std::vector<std::string>>());
     m_lastKnownBlockHeight = j.at("lastKnownBlockHeight").get<uint64_t>();
+}
+
+//////////////
+/* Transfer */
+//////////////
+
+void to_json(json &j, const Transfer &t)
+{
+    j = {
+        {"publicKey", Common::podToHex(t.publicKey)},
+        {"amount", t.amount},
+    };
+}
+
+void from_json(const json &j, Transfer &t)
+{
+    Common::podFromHex(j.at("publicKey").get<std::string>(), t.publicKey.data);
+    t.amount = j.at("amount").get<int64_t>();
+}
+
+/* std::map / std::unordered_map don't work great in json - they get serialized
+   like this for example: 
+
+"transfers": [
+    [
+          {
+                "publicKey": "95b86472ef19dcd7e787031ae4e749226c4ea672c8d41ca960cc1b8cd7d4766f"
+          },
+          100
+    ]
+]
+
+This is not very helpful, as it's not obvious that '100' is the amount, and
+it's not easy to access, as there's no key to access it by.
+
+So, lets instead convert to a vector of structs when converting to json, to
+make it easier for people using the wallet file in different languages to
+use */
+
+std::vector<Transfer> transfersToVector(std::unordered_map<Crypto::PublicKey, int64_t> transfers)
+{
+    std::vector<Transfer> vector;
+
+    for (const auto &x : transfers)
+    {
+        Transfer t;
+        t.publicKey = x.first;
+        t.amount = x.second;
+
+        vector.push_back(t);
+    }
+
+    return vector;
+}
+
+std::unordered_map<Crypto::PublicKey, int64_t> vectorToTransfers(std::vector<Transfer> vector)
+{
+    std::unordered_map<Crypto::PublicKey, int64_t> transfers;
+
+    for (const auto &t : vector)
+    {
+        transfers[t.publicKey] = t.amount;
+    }
+
+    return transfers;
+}
+
+std::vector<SubWallet> subWalletsToVector(std::unordered_map<Crypto::PublicKey, SubWallet> subWallets)
+{
+    std::vector<SubWallet> vector;
+
+    for (const auto &x : subWallets)
+    {
+        vector.push_back(x.second);
+    }
+
+    return vector;
+}
+
+std::unordered_map<Crypto::PublicKey, SubWallet> vectorToSubWallets(std::vector<SubWallet> vector)
+{
+    std::unordered_map<Crypto::PublicKey, SubWallet> transfers;
+
+    for (const auto &s : vector)
+    {
+        transfers[s.m_publicSpendKey] = s;
+    }
+
+    return transfers;
 }

@@ -37,7 +37,7 @@ void SynchronizationStatus::storeBlockHash(Crypto::Hash hash, uint64_t height)
 
     /* If we're at a checkpoint height, add the hash to the infrequent
        checkpoints (at the beginning of the queue) */
-    if (height % Constants::BLOCK_HASH_CHECKPOINTS_INTERVAL)
+    if (height % Constants::BLOCK_HASH_CHECKPOINTS_INTERVAL == 0)
     {
         m_blockHashCheckpoints.push_front(hash);
     }

@@ -294,7 +294,7 @@ std::tuple<WalletError, WalletBackend> WalletBackend::importWalletFromKeys(
 
 /* Imports a view wallet from a private view key and an address.
    Returns the wallet class, or an error. */
-/* TODO: What do we need the address parameter for / or how do we use it? */
+/* TODO: Parse address into public spend key, pass to synchronizer */
 std::tuple<WalletError, WalletBackend> WalletBackend::importViewWallet(
     const Crypto::SecretKey privateViewKey, const std::string address,
     const std::string filename, const std::string password,
