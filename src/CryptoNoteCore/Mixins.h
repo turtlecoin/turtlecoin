@@ -47,56 +47,48 @@ namespace CryptoNote
           maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;
         }
 
-        return std::make_tuple(minMixin, maxMixin);
+        return {minMixin, maxMixin};
       }
 
       /* This method is used by WalletService to determine if the mixin amount is correct
          for the current block height */
       static std::tuple<bool, std::string, std::error_code> validate(const uint32_t mixin, const uint32_t height)
       {
-        uint64_t minMixin;
-        uint64_t maxMixin;
-
-        std::tie(minMixin, maxMixin) = getMixinAllowableRange(height);
+        auto [minMixin, maxMixin] = getMixinAllowableRange(height);
 
         std::stringstream str;
 
         if (mixin < minMixin)
         {
           str << "Mixin of " << mixin << " under minimum mixin threshold of " << minMixin;
-          return std::make_tuple(false, str.str(), make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD));
+          return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD)};
         }
         else if (mixin > maxMixin)
         {
           str << "Mixin of " << mixin << " above maximum mixin threshold of " << maxMixin;
-          return std::make_tuple(false, str.str(), make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD));
+          return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD)};
         }
 
-        return std::make_tuple(true, std::string(), std::error_code());
+        return {true, std::string(), std::error_code()};
       }
 
       /* This method is commonly used by the node to determine if the transactions in the vector have
          the correct mixin (anonymity) as defined by the current rules */
       static std::tuple<bool, std::string> validate(std::vector<CachedTransaction> transactions, uint32_t height)
       {
-        uint64_t minMixin;
-        uint64_t maxMixin;
-
-        std::tie(minMixin, maxMixin) = getMixinAllowableRange(height);
+        auto [minMixin, maxMixin] = getMixinAllowableRange(height);
 
         for (const auto& transaction : transactions)
         {
-            bool success;
-            std::string error;
+            auto [success, error] = validate(transaction, minMixin, maxMixin);
 
-            std::tie(success, error) = validate(transaction, minMixin, maxMixin);
             if (!success)
             {
-                return std::make_tuple(false, error);
+                return {false, error};
             }
         }
 
-        return std::make_tuple(true, std::string());
+        return {true, std::string()};
       }
 
       /* This method is commonly used by the node to determine if the transaction has
@@ -130,16 +122,16 @@ namespace CryptoNote
             << " is not valid. Reason: transaction mixin is too large (" << mixin
             << "). Maximum mixin allowed is " << maxMixin;
 
-          return std::make_tuple(false, str.str());
+          return {false, str.str()};
         } else if (mixin < minMixin) {
           str << "Transaction " << transaction.getTransactionHash()
             << " is not valid. Reason: transaction mixin is too small (" << mixin
             << "). Minimum mixin allowed is " << minMixin;
 
-          return std::make_tuple(false, str.str());
+          return {false, str.str()};
         }
 
-        return std::make_tuple(true, std::string());
+        return {true, std::string()};
       }
   };
 }

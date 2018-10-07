@@ -219,7 +219,9 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
     s(m_config.m_peer_id, "peer_id");
   }
 
-#define INVOKE_HANDLER(CMD, Handler) case CMD::ID: { ret = invokeAdaptor<CMD>(cmd.buf, out, ctx,  boost::bind(Handler, this, _1, _2, _3, _4)); break; }
+  using namespace std::placeholders;
+
+  #define INVOKE_HANDLER(CMD, Handler) case CMD::ID: { ret = invokeAdaptor<CMD>(cmd.buf, out, ctx,  std::bind(Handler, this, _1, _2, _3, _4)); break; }
 
   int NodeServer::handleCommand(const LevinProtocol::Command& cmd, BinaryArray& out, P2pConnectionContext& ctx, bool& handled) {
     int ret = 0;
@@ -310,7 +312,7 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
   }
 
   //-----------------------------------------------------------------------------------
-  void NodeServer::for_each_connection(std::function<void(CryptoNoteConnectionContext&, PeerIdType)> f)
+  void NodeServer::for_each_connection(std::function<void(CryptoNoteConnectionContext&, uint64_t)> f)
   {
     for (auto& ctx : m_connections) {
       f(ctx.second, ctx.second.peerId);
@@ -318,7 +320,7 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
   }
 
   //-----------------------------------------------------------------------------------
-  void NodeServer::externalRelayNotifyToAll(int command, const BinaryArray& data_buff, const net_connection_id* excludeConnection) {
+  void NodeServer::externalRelayNotifyToAll(int command, const BinaryArray& data_buff, const boost::uuids::uuid* excludeConnection) {
     m_dispatcher.remoteSpawn([this, command, data_buff, excludeConnection] {
       relay_notify_to_all(command, data_buff, excludeConnection);
     });
@@ -1051,8 +1053,8 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
 
   //-----------------------------------------------------------------------------------
 
-  void NodeServer::relay_notify_to_all(int command, const BinaryArray& data_buff, const net_connection_id* excludeConnection) {
-    net_connection_id excludeId = excludeConnection ? *excludeConnection : boost::value_initialized<net_connection_id>();
+  void NodeServer::relay_notify_to_all(int command, const BinaryArray& data_buff, const boost::uuids::uuid* excludeConnection) {
+    boost::uuids::uuid excludeId = excludeConnection ? *excludeConnection : boost::value_initialized<boost::uuids::uuid>();
 
     forEachConnection([&](P2pConnectionContext& conn) {
       if (conn.peerId && conn.m_connection_id != excludeId &&
@@ -1178,7 +1180,7 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
     context.peerId = arg.node_data.peer_id;
 
     if(arg.node_data.peer_id != m_config.m_peer_id && arg.node_data.my_port) {
-      PeerIdType peer_id_l = arg.node_data.peer_id;
+      uint64_t peer_id_l = arg.node_data.peer_id;
       uint32_t port_l = arg.node_data.my_port;
 
       if (try_ping(arg.node_data, context)) {

@@ -32,7 +32,7 @@ namespace Common {
 //   'data' == 'nullptr' && 'size' > 0 - Undefined
 //   'data' != 'nullptr' && 'size' > 0 - NOTEMPTY NOTNIL
 // For signed integer 'Size', 'ArrayView' with 'size' < 0 is undefined.
-template<class Object = uint8_t, class Size = size_t> class ArrayView {
+template<class Object = uint8_t, class Size = uint64_t> class ArrayView {
 public:
   typedef Object ObjectType;
   typedef Size SizeType;

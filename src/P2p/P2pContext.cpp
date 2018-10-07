@@ -73,7 +73,7 @@ P2pContext::~P2pContext() {
   writeEvent.wait();
 }
 
-PeerIdType P2pContext::getPeerId() const {
+uint64_t P2pContext::getPeerId() const {
   return peerId;
 }
 
@@ -89,7 +89,7 @@ bool P2pContext::isIncoming() const {
   return incoming;
 }
 
-void P2pContext::setPeerInfo(uint8_t protocolVersion, PeerIdType id, uint16_t port) {
+void P2pContext::setPeerInfo(uint8_t protocolVersion, uint64_t id, uint16_t port) {
   version = protocolVersion;
   peerId = id;
   if (isIncoming()) {

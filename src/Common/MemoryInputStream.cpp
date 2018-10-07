@@ -22,10 +22,10 @@
 
 namespace Common {
 
-MemoryInputStream::MemoryInputStream(const void* buffer, size_t bufferSize) : 
+MemoryInputStream::MemoryInputStream(const void* buffer, uint64_t bufferSize) : 
 buffer(static_cast<const char*>(buffer)), bufferSize(bufferSize), position(0) {}
 
-size_t MemoryInputStream::getPosition() const {
+uint64_t MemoryInputStream::getPosition() const {
   return position;
 }
 
@@ -33,9 +33,9 @@ bool MemoryInputStream::endOfStream() const {
   return position == bufferSize;
 }
 
-size_t MemoryInputStream::readSome(void* data, size_t size) {
+uint64_t MemoryInputStream::readSome(void* data, uint64_t size) {
   assert(position <= bufferSize);
-  size_t readSize = std::min(size, bufferSize - position);
+  uint64_t readSize = std::min(size, bufferSize - position);
 
   if (readSize > 0) {
     memcpy(data, buffer + position, readSize);

@@ -48,10 +48,10 @@ JsonValue readIntegerJson(Common::IInputStream& s) {
   return readPodJson<T, int64_t>(s);
 }
 
-size_t readVarint(Common::IInputStream& s) {
+uint64_t readVarint(Common::IInputStream& s) {
   uint8_t b = read<uint8_t>(s);
   uint8_t size_mask = b & PORTABLE_RAW_SIZE_MARK_MASK;
-  size_t bytesLeft = 0;
+  uint64_t bytesLeft = 0;
 
   switch (size_mask){
   case PORTABLE_RAW_SIZE_MARK_BYTE:
@@ -68,10 +68,10 @@ size_t readVarint(Common::IInputStream& s) {
     break;
   }
 
-  size_t value = b;
+  uint64_t value = b;
 
-  for (size_t i = 1; i <= bytesLeft; ++i) {
-    size_t n = read<uint8_t>(s);
+  for (uint64_t i = 1; i <= bytesLeft; ++i) {
+    uint64_t n = read<uint8_t>(s);
     value |= n << (i * 8);
   }
 
@@ -109,7 +109,7 @@ JsonValue loadArray(Common::IInputStream& stream, uint8_t itemType);
 
 JsonValue loadSection(Common::IInputStream& stream) {
   JsonValue sec(JsonValue::OBJECT);
-  size_t count = readVarint(stream);
+  uint64_t count = readVarint(stream);
   std::string name;
 
   while (count--) {
@@ -154,7 +154,7 @@ JsonValue loadEntry(Common::IInputStream& stream) {
 
 JsonValue loadArray(Common::IInputStream& stream, uint8_t itemType) {
   JsonValue arr(JsonValue::ARRAY);
-  size_t count = readVarint(stream);
+  uint64_t count = readVarint(stream);
 
   while (count--) {
     arr.pushBack(loadValue(stream, itemType));
@@ -185,7 +185,7 @@ JsonValue parseBinary(Common::IInputStream& stream) {
 KVBinaryInputStreamSerializer::KVBinaryInputStreamSerializer(Common::IInputStream& strm) : JsonInputValueSerializer(parseBinary(strm)) {
 }
 
-bool KVBinaryInputStreamSerializer::binary(void* value, size_t size, Common::StringView name) {
+bool KVBinaryInputStreamSerializer::binary(void* value, uint64_t size, Common::StringView name) {
   std::string str;
 
   if (!(*this)(str, name)) {

@@ -30,10 +30,12 @@
 #include "IP2pNodeInternal.h"
 #include "IStreamSerializable.h"
 #include "NetNodeConfig.h"
-#include "P2pInterfaces.h"
-#include "P2pNodeConfig.h"
-#include "P2pProtocolDefinitions.h"
-#include "PeerListManager.h"
+
+#include <P2p/P2pInterfaces.h>
+#include <P2p/P2pNodeConfig.h>
+#include <P2p/P2pProtocolDefinitions.h>
+#include <P2p/PeerListManager.h>
+#include <P2p/Peerlist.h>
 
 namespace CryptoNote {
 
@@ -52,7 +54,7 @@ public:
     System::Dispatcher& dispatcher, 
     Logging::ILogger& log, 
     const Crypto::Hash& genesisHash, 
-    PeerIdType peerId);
+    uint64_t peerId);
 
   ~P2pNode();
   
@@ -75,8 +77,7 @@ private:
   Logging::LoggerRef logger;
   bool m_stopRequested;
   const P2pNodeConfig m_cfg;
-  const PeerIdType m_myPeerId;
-  const Crypto::Hash m_genesisHash;
+  const uint64_t m_myPeerId;
   const CORE_SYNC_DATA m_genesisPayload;
 
   System::Dispatcher& m_dispatcher;
@@ -90,9 +91,9 @@ private:
 
   // IP2pNodeInternal
   virtual const CORE_SYNC_DATA& getGenesisPayload() const override;
-  virtual std::list<PeerlistEntry> getLocalPeerList() const override;
+  virtual std::list<PeerlistEntry> getLocalPeerList() override;
   virtual basic_node_data getNodeData() const override;
-  virtual PeerIdType getPeerId() const override;
+  virtual uint64_t getPeerId() const override;
 
   virtual void handleNodeData(const basic_node_data& node, P2pContext& ctx) override;
   virtual bool handleRemotePeerList(const std::list<PeerlistEntry>& peerlist, time_t local_time) override;
@@ -112,8 +113,8 @@ private:
 
   // making and processing connections
   size_t getOutgoingConnectionsCount() const;
-  void makeExpectedConnectionsCount(const PeerlistManager::Peerlist& peerlist, size_t connectionsCount);
-  bool makeNewConnectionFromPeerlist(const PeerlistManager::Peerlist& peerlist);
+  void makeExpectedConnectionsCount(const Peerlist& peerlist, size_t connectionsCount);
+  bool makeNewConnectionFromPeerlist(const Peerlist& peerlist);
   void preprocessIncomingConnection(ContextPtr ctx);
   void enqueueConnection(std::unique_ptr<P2pConnectionProxy> proxy);
   std::unique_ptr<P2pConnectionProxy> createProxy(ContextPtr ctx);

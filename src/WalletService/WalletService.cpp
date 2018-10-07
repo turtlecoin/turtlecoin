@@ -342,13 +342,9 @@ void generateNewWallet(const CryptoNote::Currency& currency, const WalletConfigu
   {
     log(Logging::INFO, Logging::BRIGHT_WHITE) << "Attempting to import wallet from mnemonic seed";
 
-    Crypto::SecretKey private_spend_key;
     Crypto::SecretKey private_view_key;
 
-    std::string error;
-
-    std::tie(error, private_spend_key)
-        = Mnemonics::MnemonicToPrivateKey(conf.mnemonicSeed);
+    auto [error, private_spend_key] = Mnemonics::MnemonicToPrivateKey(conf.mnemonicSeed);
 
     if (!error.empty())
     {
@@ -373,7 +369,7 @@ void generateNewWallet(const CryptoNote::Currency& currency, const WalletConfigu
 		  log(Logging::INFO, Logging::BRIGHT_WHITE) << "Attemping to import wallet from keys";
 		  Crypto::Hash private_spend_key_hash;
 		  Crypto::Hash private_view_key_hash;
-		  size_t size;
+		  uint64_t size;
 		  if (!Common::fromHex(conf.secretSpendKey, &private_spend_key_hash, sizeof(private_spend_key_hash), size) || size != sizeof(private_spend_key_hash)) {
 			  log(Logging::ERROR, Logging::BRIGHT_RED) << "Invalid spend key";
 			  return;
@@ -1044,11 +1040,7 @@ std::error_code WalletService::sendTransaction(SendTransaction::Request& request
       validateAddresses({ request.changeAddress }, currency, logger);
     }
 
-    bool success;
-    std::string error;
-    std::error_code error_code;
-
-    std::tie(success, error, error_code) = CryptoNote::Mixins::validate(request.anonymity, node.getLastKnownBlockHeight());
+    auto [success, error, error_code] = CryptoNote::Mixins::validate(request.anonymity, node.getLastKnownBlockHeight());
 
     if (!success)
     {

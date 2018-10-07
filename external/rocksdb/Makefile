@@ -295,11 +295,6 @@ ifeq ($(PLATFORM), OS_OPENBSD)
 	WARNING_FLAGS += -Wno-unused-lambda-capture
 endif
 
-ifndef DISABLE_WARNING_AS_ERROR
-	WARNING_FLAGS += -Werror
-endif
-
-
 ifdef LUA_PATH
 
 ifndef LUA_INCLUDE

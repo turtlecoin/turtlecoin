@@ -38,7 +38,7 @@ public:
 
   virtual bool beginObject(Common::StringView name) = 0;
   virtual void endObject() = 0;
-  virtual bool beginArray(size_t& size, Common::StringView name) = 0;
+  virtual bool beginArray(uint64_t& size, Common::StringView name) = 0;
   virtual void endArray() = 0;
 
   virtual bool operator()(uint8_t& value, Common::StringView name) = 0;
@@ -53,7 +53,7 @@ public:
   virtual bool operator()(std::string& value, Common::StringView name) = 0;
   
   // read/write binary block
-  virtual bool binary(void* value, size_t size, Common::StringView name) = 0;
+  virtual bool binary(void* value, uint64_t size, Common::StringView name) = 0;
   virtual bool binary(std::string& value, Common::StringView name) = 0;
 
   template<typename T>
@@ -76,17 +76,15 @@ bool serialize(T& value, Common::StringView name, ISerializer& serializer) {
   return true;
 }
 
+/* WARNING: If you get a compiler error pointing to this line, when serializing
+   a uint64_t, or other numeric type, this is due to your compiler treating some
+   typedef's differently, so it does not correspond to one of the numeric
+   types above. I tried using some template hackery to get around this, but
+   it did not work. I resorted to just using a uint64_t instead. */
 template<typename T>
 void serialize(T& value, ISerializer& serializer) {
   value.serialize(serializer);
 }
-
-#ifdef __clang__
-template<> inline
-bool ISerializer::operator()(size_t& value, Common::StringView name) {
-  return operator()(*reinterpret_cast<uint64_t*>(&value), name);
-}
-#endif
 
 #define KV_MEMBER(member) s(member, #member);
 

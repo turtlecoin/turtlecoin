@@ -71,7 +71,7 @@ void JsonInputValueSerializer::endObject() {
   chain.pop_back();
 }
 
-bool JsonInputValueSerializer::beginArray(size_t& size, Common::StringView name) {
+bool JsonInputValueSerializer::beginArray(uint64_t& size, Common::StringView name) {
   const JsonValue* parent = chain.back();
   std::string strName(name);
 
@@ -145,7 +145,7 @@ bool JsonInputValueSerializer::operator()(bool& value, Common::StringView name) 
   return true;
 }
 
-bool JsonInputValueSerializer::binary(void* value, size_t size, Common::StringView name) {
+bool JsonInputValueSerializer::binary(void* value, uint64_t size, Common::StringView name) {
   auto ptr = getValue(name);
   if (ptr == nullptr) {
     return false;

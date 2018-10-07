@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <boost/uuid/uuid.hpp>
 #include <chrono>
 #include "NetNodeConfig.h"
 

@@ -3,23 +3,102 @@ language: cpp
 
 matrix:
   include:
+
+  # Ubuntu, g++-8
   - os: linux
+    compiler: gcc
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
-        packages:
-        - libboost1.55-all-dev
+        packages: 
+          - libboost1.55-all-dev
+          - g++-8
+          - gcc-8
     env:
-    - MATRIX_EVAL="CC=gcc && CXX=g++"
-    - LABEL="linux"
+    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - LABEL="linux-g++-8"
     - STRIP="strip"
+
+  # Ubuntu, g++-7
+  - os: linux
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages: 
+          - libboost1.55-all-dev
+          - g++-7
+          - gcc-7
+    env:
+    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - LABEL="linux-g++-7"
+    - STRIP="strip"
+
+  # Ubuntu, clang-6
+  - os: linux
+    compiler: clang
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-trusty-6.0
+        packages: 
+          - libboost1.55-all-dev
+          - clang-6.0
+          - libstdc++-7-dev
+    env:
+    - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+    - LABEL="linux-clang-6"
+    - STRIP="strip"
+
+  # Ubuntu, clang-5
+  - os: linux
+    compiler: clang
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        - llvm-toolchain-trusty-5.0
+        packages: 
+          - libboost1.55-all-dev
+          - clang-5.0
+          - libstdc++-6-dev
+    env:
+    - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+    - LABEL="linux-clang-5"
+    - STRIP="strip"
+
+  ## OSX, g++-8
   - os: osx
+    osx_image: xcode10
+    compiler: gcc
     env:
-    - MATRIX_EVAL="CC=gcc && CXX=g++"
-    - CXXFLAGS="-std=gnu++11"
-    - LABEL="osx"
+    # Need to uninstall oclint to get newer gcc installed https://github.com/travis-ci/travis-ci/issues/8826
+    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - LABEL="osx-g++-8"
     - STRIP="strip"
+
+  # OSX, g++-7
+  - os: osx
+    osx_image: xcode10
+    compiler: gcc
+    env:
+    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - LABEL="osx-g++-7"
+    - STRIP="strip"
+
+  # OSX, clang
+  - os: osx
+    osx_image: xcode10
+    compiler: clang
+    env:
+    - MATRIX_EVAL="CC=clang && CXX=clang++"
+    - LABEL="osx-clang"
+    - STRIP="strip"
+
+  # Arm (aarch64) cross compile
   - os: linux
     addons:
       apt:
@@ -37,6 +116,13 @@ before_install:
 - eval $MATRIX_EVAL
 
 install:
+# Need to uninstall oclint to get newer gcc installed https://github.com/travis-ci/travis-ci/issues/8826
+- if [[ "${LABEL:0:4}" == "osx-" ]]; then brew cask uninstall --force oclint || true ; fi
+
+# Install the correct gcc version
+- if [[ "$LABEL" == "osx-g++-8" ]]; then brew install gcc@8 ; fi
+- if [[ "$LABEL" == "osx-g++-7" ]]; then brew install gcc@7 ; fi
+
 - if [[ "$LABEL" == "aarch64" ]]; then wget http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then tar zxvf boost_1_55_0.tar.gz >/dev/null ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then cd boost_1_55_0 ; fi
@@ -47,6 +133,7 @@ install:
 - if [[ "$LABEL" == "aarch64" ]]; then cd .. ; fi
 
 script:
+- eval $MATRIX_EVAL
 - mkdir build && cd build
 - cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. ${CUSTOM_BOOST_ROOT} && make -j2
 

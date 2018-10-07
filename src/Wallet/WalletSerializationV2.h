@@ -68,7 +68,6 @@ private:
   void loadUnlockTransactionsJobs(CryptoNote::ISerializer& serializer);
   void saveUnlockTransactionsJobs(CryptoNote::ISerializer& serializer);
 
-  ITransfersObserver& m_transfersObserver;
   uint64_t& m_actualBalance;
   uint64_t& m_pendingBalance;
   WalletsContainer& m_walletsContainer;
@@ -78,7 +77,6 @@ private:
   WalletTransfers& m_transfers;
   UncommitedTransactions& m_uncommitedTransactions;
   std::string& m_extra;
-  uint32_t m_transactionSoftLockTime;
 
   std::unordered_set<Crypto::PublicKey> m_addedKeys;
   std::unordered_set<Crypto::PublicKey> m_deletedKeys;

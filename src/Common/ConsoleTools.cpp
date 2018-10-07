@@ -73,7 +73,7 @@ void setTextColor(Color color) {
     FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY
   };
 
-  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), winColors[static_cast<size_t>(color)]);
+  SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), winColors[static_cast<uint64_t>(color)]);
 
 #else
 
@@ -98,7 +98,7 @@ void setTextColor(Color color) {
     "\033[1;35m"
   };
 
-  std::cout << ansiColors[static_cast<size_t>(color)];
+  std::cout << ansiColors[static_cast<uint64_t>(color)];
 
 #endif
 

@@ -91,22 +91,17 @@ std::shared_ptr<WalletInfo> importWallet(CryptoNote::WalletGreen &wallet)
 std::shared_ptr<WalletInfo> mnemonicImportWallet(CryptoNote::WalletGreen
                                                  &wallet)
 {
-    std::string mnemonicPhrase;
-
-    Crypto::SecretKey privateSpendKey;
-    Crypto::SecretKey privateViewKey;
-
     while (true)
     {
         std::cout << InformationMsg("Enter your mnemonic phrase (25 words): ");
+
+        std::string mnemonicPhrase;
 
         std::getline(std::cin, mnemonicPhrase);
 
         trim(mnemonicPhrase);
         
-        std::string error;
-
-        std::tie(error, privateSpendKey)
+        auto [error, privateSpendKey]
             = Mnemonics::MnemonicToPrivateKey(mnemonicPhrase);
 
         if (!error.empty())
@@ -117,14 +112,15 @@ std::shared_ptr<WalletInfo> mnemonicImportWallet(CryptoNote::WalletGreen
         }
         else
         {
-            break;
+            Crypto::SecretKey privateViewKey;
+
+            CryptoNote::AccountBase::generateViewFromSpend(
+                privateSpendKey, privateViewKey
+            );
+
+            return importFromKeys(wallet, privateSpendKey, privateViewKey);
         }
     }
-
-    CryptoNote::AccountBase::generateViewFromSpend(privateSpendKey, 
-                                                   privateViewKey);
-
-    return importFromKeys(wallet, privateSpendKey, privateViewKey);
 }
 
 std::shared_ptr<WalletInfo> importFromKeys(CryptoNote::WalletGreen &wallet,
@@ -337,8 +333,8 @@ std::shared_ptr<WalletInfo> openWallet(CryptoNote::WalletGreen &wallet,
 
 Crypto::SecretKey getPrivateKey(std::string msg)
 {
-    const size_t privateKeyLen = 64;
-    size_t size;
+    const uint64_t privateKeyLen = 64;
+    uint64_t size;
 
     std::string privateKeyString;
     Crypto::Hash privateKeyHash;
