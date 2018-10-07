@@ -36,7 +36,7 @@ bool BinaryOutputStreamSerializer::beginObject(Common::StringView name) {
 void BinaryOutputStreamSerializer::endObject() {
 }
 
-bool BinaryOutputStreamSerializer::beginArray(size_t& size, Common::StringView name) {
+bool BinaryOutputStreamSerializer::beginArray(uint64_t& size, Common::StringView name) {
   writeVarint(stream, size);
   return true;
 }
@@ -91,7 +91,7 @@ bool BinaryOutputStreamSerializer::operator()(std::string& value, Common::String
   return true;
 }
 
-bool BinaryOutputStreamSerializer::binary(void* value, size_t size, Common::StringView name) {
+bool BinaryOutputStreamSerializer::binary(void* value, uint64_t size, Common::StringView name) {
   checkedWrite(static_cast<const char*>(value), size);
   return true;
 }
@@ -107,7 +107,7 @@ bool BinaryOutputStreamSerializer::operator()(double& value, Common::StringView 
   return false;
 }
 
-void BinaryOutputStreamSerializer::checkedWrite(const char* buf, size_t size) {
+void BinaryOutputStreamSerializer::checkedWrite(const char* buf, uint64_t size) {
   write(stream, buf, size);
 }
 

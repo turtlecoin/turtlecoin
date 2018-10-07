@@ -36,10 +36,6 @@ namespace {
 
 const int RETRY_TIMEOUT = 5;
 
-std::ostream& operator<<(std::ostream& os, const CryptoNote::IBlockchainConsumer* consumer) {
-  return os << "0x" << std::setw(8) << std::setfill('0') << std::hex << reinterpret_cast<uintptr_t>(consumer) << std::dec << std::setfill(' ');
-}
-
 class TransactionReaderListFormatter {
 public:
   explicit TransactionReaderListFormatter(const std::vector<std::unique_ptr<CryptoNote::ITransactionReader>>& transactionList) :

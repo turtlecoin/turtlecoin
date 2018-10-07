@@ -17,7 +17,14 @@
 
 #pragma once
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && defined(__APPLE__)
+
+#define INITIALIZER(name) __attribute__((constructor)) static void name(void)
+#define FINALIZER(name) __attribute__((destructor)) static void name(void)
+#define REGISTER_FINALIZER(name) ((void) 0)
+
+#elif defined(__GNUC__)
+
 #define INITIALIZER(name) __attribute__((constructor(101))) static void name(void)
 #define FINALIZER(name) __attribute__((destructor(101))) static void name(void)
 #define REGISTER_FINALIZER(name) ((void) 0)

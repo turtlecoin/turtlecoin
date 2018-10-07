@@ -7,6 +7,8 @@
 
 #include "P2pProtocolTypes.h"
 
+#include <boost/uuid/uuid.hpp>
+
 #include "crypto/crypto.h"
 #include <config/CryptoNoteConfig.h>
 #include "CryptoNoteCore/CoreStatistics.h"
@@ -18,7 +20,7 @@
 
 namespace CryptoNote
 {
-  inline bool serialize(uuid& v, Common::StringView name, ISerializer& s) {
+  inline bool serialize(boost::uuids::uuid& v, Common::StringView name, ISerializer& s) {
     return s.binary(&v, sizeof(v), name);
   }
 
@@ -42,11 +44,11 @@ namespace CryptoNote
 
   struct basic_node_data
   {
-    uuid network_id;
+    boost::uuids::uuid network_id;
     uint8_t version;
     uint64_t local_time;
     uint32_t my_port;
-    PeerIdType peer_id;
+    uint64_t peer_id;
 
     void serialize(ISerializer& s) {
       KV_MEMBER(network_id)
@@ -162,7 +164,7 @@ namespace CryptoNote
     struct response
     {
       std::string status;
-      PeerIdType peer_id;
+      uint64_t peer_id;
 
       void serialize(ISerializer& s) {
         KV_MEMBER(status)
@@ -178,7 +180,7 @@ namespace CryptoNote
 
   struct proof_of_trust
   {
-    PeerIdType peer_id;
+    uint64_t peer_id;
     uint64_t    time;
     Crypto::Signature sign;
 
@@ -249,7 +251,7 @@ namespace CryptoNote
       std::list<PeerlistEntry> local_peerlist_white;
       std::list<PeerlistEntry> local_peerlist_gray;
       std::list<connection_entry> connections_list;
-      PeerIdType my_id;
+      uint64_t my_id;
       uint64_t local_time;
 
       void serialize(ISerializer& s) {
@@ -276,7 +278,7 @@ namespace CryptoNote
 
     struct response
     {
-      PeerIdType my_id;
+      uint64_t my_id;
 
       void serialize(ISerializer& s) {
         KV_MEMBER(my_id)

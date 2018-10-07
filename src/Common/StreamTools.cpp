@@ -22,9 +22,9 @@
 
 namespace Common {
 
-void read(IInputStream& in, void* data, size_t size) {
+void read(IInputStream& in, void* data, uint64_t size) {
   while (size > 0) {
-    size_t readSize = in.readSome(data, size);
+    uint64_t readSize = in.readSome(data, size);
     if (readSize == 0) {
       throw std::runtime_error("Failed to read from IInputStream");
     }
@@ -72,12 +72,12 @@ void read(IInputStream& in, uint64_t& value) {
   read(in, &value, sizeof(value));
 }
 
-void read(IInputStream& in, std::vector<uint8_t>& data, size_t size) {
+void read(IInputStream& in, std::vector<uint8_t>& data, uint64_t size) {
   data.resize(size);
   read(in, data.data(), size);
 }
 
-void read(IInputStream& in, std::string& data, size_t size) {
+void read(IInputStream& in, std::string& data, uint64_t size) {
   std::vector<char> temp(size);
   read(in, temp.data(), size);
   data.assign(temp.data(), size);
@@ -92,7 +92,7 @@ void readVarint(IInputStream& in, uint8_t& value) {
       throw std::runtime_error("readVarint, value overflow");
     }
 
-    temp |= static_cast<size_t>(piece & 0x7f) << shift;
+    temp |= static_cast<uint64_t>(piece & 0x7f) << shift;
     if ((piece & 0x80) == 0) {
       if (piece == 0 && shift != 0) {
         throw std::runtime_error("readVarint, invalid value representation");
@@ -114,7 +114,7 @@ void readVarint(IInputStream& in, uint16_t& value) {
       throw std::runtime_error("readVarint, value overflow");
     }
 
-    temp |= static_cast<size_t>(piece & 0x7f) << shift;
+    temp |= static_cast<uint64_t>(piece & 0x7f) << shift;
     if ((piece & 0x80) == 0) {
       if (piece == 0 && shift != 0) {
         throw std::runtime_error("readVarint, invalid value representation");
@@ -136,7 +136,7 @@ void readVarint(IInputStream& in, uint32_t& value) {
       throw std::runtime_error("readVarint, value overflow");
     }
 
-    temp |= static_cast<size_t>(piece & 0x7f) << shift;
+    temp |= static_cast<uint64_t>(piece & 0x7f) << shift;
     if ((piece & 0x80) == 0) {
       if (piece == 0 && shift != 0) {
         throw std::runtime_error("readVarint, invalid value representation");
@@ -171,9 +171,9 @@ void readVarint(IInputStream& in, uint64_t& value) {
   value = temp;
 }
 
-void write(IOutputStream& out, const void* data, size_t size) {
+void write(IOutputStream& out, const void* data, uint64_t size) {
   while (size > 0) {
-    size_t writtenSize = out.writeSome(data, size);
+    uint64_t writtenSize = out.writeSome(data, size);
     if (writtenSize == 0) {
       throw std::runtime_error("Failed to write to IOutputStream");
     }

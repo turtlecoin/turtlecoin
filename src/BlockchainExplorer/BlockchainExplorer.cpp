@@ -149,7 +149,6 @@ private:
 BlockchainExplorer::BlockchainExplorer(INode& node, Logging::ILogger& logger) :
   node(node), 
   logger(logger, "BlockchainExplorer"),
-  database(database),
   state(NOT_INITIALIZED), 
   synchronized(false), 
   observersCounter(0) {
@@ -632,7 +631,7 @@ void BlockchainExplorer::blockchainSynchronized(uint32_t topIndex) {
   );
 
   request.performAsync(asyncContextCounter,
-    [this, blockIndexesPtr, blocksPtr, topIndex](std::error_code ec) {
+    [this, blockIndexesPtr, blocksPtr](std::error_code ec) {
       if (ec) {
         logger(ERROR) << "Can't send blockchainSynchronized notification because can't get blocks by height: " << ec.message();
         return;

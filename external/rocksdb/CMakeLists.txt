@@ -181,6 +181,12 @@ else()
   endif()
 endif()
 
+if(APPLE AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    # Need to build against libc++ instead of libstc++ on apple
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -nostdinc++ -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -nodefaultlibs -lc++ -lc++abi -lm -lc -lgcc -lgcc_eh")
+endif()
+
+
 include(CheckCCompilerFlag)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")
   CHECK_C_COMPILER_FLAG("-maltivec" HAS_ALTIVEC)
@@ -251,7 +257,7 @@ if(ENABLE_THREAD_LOCAL)
   endif()
 endif()
 
-option(FAIL_ON_WARNINGS "Treat compile warnings as errors" ON)
+option(FAIL_ON_WARNINGS "Treat compile warnings as errors" OFF)
 if(FAIL_ON_WARNINGS)
   if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")

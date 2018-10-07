@@ -33,7 +33,7 @@ void writePod(IOutputStream& s, const T& value) {
 }
 
 template<class T>
-size_t packVarint(IOutputStream& s, uint8_t type_or, size_t pv) {
+uint64_t packVarint(IOutputStream& s, uint8_t type_or, uint64_t pv) {
   T v = static_cast<T>(pv << 2);
   v |= type_or;
   write(s, &v, sizeof(T));
@@ -50,7 +50,7 @@ void writeElementName(IOutputStream& s, Common::StringView name) {
   write(s, name.getData(), len);
 }
 
-size_t writeArraySize(IOutputStream& s, size_t val) {
+uint64_t writeArraySize(IOutputStream& s, uint64_t val) {
   if (val <= 63) {
     return packVarint<uint8_t>(s, PORTABLE_RAW_SIZE_MARK_BYTE, val);
   } else if (val <= 16383) {
@@ -117,7 +117,7 @@ void KVBinaryOutputStreamSerializer::endObject() {
   write(out, objStream.data(), objStream.size());
 }
 
-bool KVBinaryOutputStreamSerializer::beginArray(size_t& size, Common::StringView name) {
+bool KVBinaryOutputStreamSerializer::beginArray(uint64_t& size, Common::StringView name) {
   m_stack.push_back(Level(name, size));
   return true;
 }
@@ -194,7 +194,7 @@ bool KVBinaryOutputStreamSerializer::operator()(std::string& value, Common::Stri
   return true;
 }
 
-bool KVBinaryOutputStreamSerializer::binary(void* value, size_t size, Common::StringView name) {
+bool KVBinaryOutputStreamSerializer::binary(void* value, uint64_t size, Common::StringView name) {
   if (size > 0) {
     writeElementPrefix(BIN_KV_SERIALIZE_TYPE_STRING, name);
     auto& out = stream();

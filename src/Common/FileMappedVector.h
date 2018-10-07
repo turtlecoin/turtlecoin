@@ -59,7 +59,7 @@ public:
     const_iterator() : m_fileMappedVector(nullptr) {
     }
 
-    const_iterator(const FileMappedVector* fileMappedVector, size_t index) :
+    const_iterator(const FileMappedVector* fileMappedVector, uint64_t index) :
       m_fileMappedVector(fileMappedVector),
       m_index(index) {
     }
@@ -148,13 +148,13 @@ public:
       return m_index >= other.m_index;
     }
 
-    size_t index() const {
+    uint64_t index() const {
       return m_index;
     }
 
   protected:
     const FileMappedVector* m_fileMappedVector;
-    size_t m_index;
+    uint64_t m_index;
   };
 
   class iterator : public const_iterator {
@@ -168,7 +168,7 @@ public:
     iterator() : const_iterator() {
     }
 
-    iterator(const FileMappedVector* fileMappedVector, size_t index) : const_iterator(fileMappedVector, index) {
+    iterator(const FileMappedVector* fileMappedVector, uint64_t index) : const_iterator(fileMappedVector, index) {
     }
 
     T& operator*() const {

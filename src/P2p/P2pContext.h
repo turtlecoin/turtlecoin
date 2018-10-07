@@ -57,12 +57,12 @@ public:
     bool isIncoming, const NetworkAddress& remoteAddress, std::chrono::nanoseconds timedSyncInterval, const CORE_SYNC_DATA& timedSyncData);
   ~P2pContext();
 
-  PeerIdType getPeerId() const;
+  uint64_t getPeerId() const;
   uint16_t getPeerPort() const;
   const NetworkAddress& getRemoteAddress() const;
   bool isIncoming() const;
 
-  void setPeerInfo(uint8_t protocolVersion, PeerIdType id, uint16_t port);
+  void setPeerInfo(uint8_t protocolVersion, uint64_t id, uint16_t port);
   bool readCommand(LevinProtocol::Command& cmd);
   void writeMessage(const Message& msg);
  
@@ -74,7 +74,7 @@ private:
   uint8_t version = 0;
   const bool incoming;
   const NetworkAddress remoteAddress;
-  PeerIdType peerId = 0;
+  uint64_t peerId = 0;
   uint16_t peerPort = 0;
 
   System::Dispatcher& dispatcher;

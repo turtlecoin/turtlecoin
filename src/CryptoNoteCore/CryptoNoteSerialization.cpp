@@ -45,10 +45,10 @@ namespace {
 using namespace CryptoNote;
 using namespace Common;
 
-size_t getSignaturesCount(const TransactionInput& input) {
-  struct txin_signature_size_visitor : public boost::static_visitor < size_t > {
-    size_t operator()(const BaseInput& txin) const { return 0; }
-    size_t operator()(const KeyInput& txin) const { return txin.outputIndexes.size(); }
+uint64_t getSignaturesCount(const TransactionInput& input) {
+  struct txin_signature_size_visitor : public boost::static_visitor < uint64_t > {
+    uint64_t operator()(const BaseInput& txin) const { return 0; }
+    uint64_t operator()(const KeyInput& txin) const { return txin.outputIndexes.size(); }
   };
 
   return boost::apply_visitor(txin_signature_size_visitor(), input);
@@ -110,7 +110,7 @@ bool serializePod(T& v, Common::StringView name, CryptoNote::ISerializer& serial
 }
 
 bool serializeVarintVector(std::vector<uint32_t>& vector, CryptoNote::ISerializer& serializer, Common::StringView name) {
-  size_t size = vector.size();
+  uint64_t size = vector.size();
   
   if (!serializer.beginArray(size, name)) {
     vector.clear();
@@ -119,7 +119,7 @@ bool serializeVarintVector(std::vector<uint32_t>& vector, CryptoNote::ISerialize
 
   vector.resize(size);
 
-  for (size_t i = 0; i < size; ++i) {
+  for (uint64_t i = 0; i < size; ++i) {
     serializer(vector[i], "");
   }
 
@@ -188,7 +188,7 @@ void serialize(BaseTransaction& tx, ISerializer& serializer) {
   serializeAsBinary(tx.extra, "extra", serializer);
 
   if (tx.version >= TRANSACTION_VERSION_2) {
-    size_t ignored = 0;
+    uint64_t ignored = 0;
     serializer(ignored, "ignored");
   }
 }
@@ -196,7 +196,7 @@ void serialize(BaseTransaction& tx, ISerializer& serializer) {
 void serialize(Transaction& tx, ISerializer& serializer) {
   serialize(static_cast<TransactionPrefix&>(tx), serializer);
 
-  size_t sigSize = tx.inputs.size();
+  uint64_t sigSize = tx.inputs.size();
   //TODO: make arrays without sizes
 //  serializer.beginArray(sigSize, "signatures");
 
@@ -210,8 +210,8 @@ void serialize(Transaction& tx, ISerializer& serializer) {
     throw std::runtime_error("Serialization error: unexpected signatures size");
   }
 
-  for (size_t i = 0; i < tx.inputs.size(); ++i) {
-    size_t signatureSize = getSignaturesCount(tx.inputs[i]);
+  for (uint64_t i = 0; i < tx.inputs.size(); ++i) {
+    uint64_t signatureSize = getSignaturesCount(tx.inputs[i]);
     if (signaturesNotExpected) {
       if (signatureSize == 0) {
         continue;
@@ -323,7 +323,7 @@ void serialize(ParentBlockSerializer& pbs, ISerializer& serializer) {
     return;
   }
 
-  size_t branchSize = Crypto::tree_depth(pbs.m_parentBlock.transactionCount);
+  uint64_t branchSize = Crypto::tree_depth(pbs.m_parentBlock.transactionCount);
   if (serializer.type() == ISerializer::OUTPUT) {
     if (pbs.m_parentBlock.baseTransactionBranch.size() != branchSize) {
       throw std::runtime_error("Wrong miner transaction branch size");
@@ -412,7 +412,7 @@ void serialize(AccountKeys& keys, ISerializer& s) {
 void doSerialize(TransactionExtraMergeMiningTag& tag, ISerializer& serializer) {
   uint64_t depth = static_cast<uint64_t>(tag.depth);
   serializer(depth, "depth");
-  tag.depth = static_cast<size_t>(depth);
+  tag.depth = static_cast<uint64_t>(depth);
   serializer(tag.merkleRoot, "merkle_root");
 }
 
@@ -442,9 +442,9 @@ void serialize(RawBlock& rawBlock, ISerializer& serializer) {
   if (serializer.type() == ISerializer::INPUT) {
     uint64_t blockSize;
     serializer(blockSize, "block_size");
-    rawBlock.block.resize(static_cast<size_t>(blockSize));
+    rawBlock.block.resize(static_cast<uint64_t>(blockSize));
   } else {
-    auto blockSize = rawBlock.block.size();
+    uint64_t blockSize = rawBlock.block.size();
     serializer(blockSize, "block_size");
   }
 
@@ -453,7 +453,7 @@ void serialize(RawBlock& rawBlock, ISerializer& serializer) {
   if (serializer.type() == ISerializer::INPUT) {
     uint64_t txCount;
     serializer(txCount, "tx_count");
-    rawBlock.transactions.resize(static_cast<size_t>(txCount));
+    rawBlock.transactions.resize(static_cast<uint64_t>(txCount));
 
     for (auto& txBlob : rawBlock.transactions) {
       uint64_t txSize;
@@ -462,11 +462,11 @@ void serialize(RawBlock& rawBlock, ISerializer& serializer) {
       serializer.binary(txBlob.data(), txBlob.size(), "transaction");
     }
   } else {
-    auto txCount = rawBlock.transactions.size();
+    uint64_t txCount = rawBlock.transactions.size();
     serializer(txCount, "tx_count");
 
     for (auto& txBlob : rawBlock.transactions) {
-      auto txSize = txBlob.size();
+      uint64_t txSize = txBlob.size();
       serializer(txSize, "tx_size");
       serializer.binary(txBlob.data(), txBlob.size(), "transaction");
     }

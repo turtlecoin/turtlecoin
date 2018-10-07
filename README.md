@@ -6,62 +6,92 @@
 #### Development Build Status
 [![Build Status](https://travis-ci.org/turtlecoin/turtlecoin.svg?branch=development)](https://travis-ci.org/turtlecoin/turtlecoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/turtlecoin/turtlecoin?branch=development&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/turtlecoin)
 
+### Installing
+
+We offer binary images of the latest releases here: https://latest.turtlecoin.lol
+
+If you would like to compile yourself, read on.
+
 ### How To Compile
-
-#### Ubuntu LTS and MacOS 10.10+
-
-There is a bash installation script for Ubuntu 16.04+ and MacOS 10.10+ which can be used to checkout and build the project from source:
-
-`$ curl -sL "https://raw.githubusercontent.com/turtlecoin/turtlecoin/master/scripts/multi_installer.sh" | bash `
-
-On Ubuntu you will be asked for sudo rights to install software. The binaries will be in `./src` after compilation is complete.
-
-This script can be used from inside the git repository to build the project from the checked out source, `./multi_installer.sh`
-
-See the script for more installation details and please consider extending it for your operating system and distribution!
-
-If the script doesn't work for you:
-
-#### [new!] Raspberry Pi 3 B+
-The following images are known to work.
-
-##### OS Distribution
-
-- https://github.com/Crazyhead90/pi64/releases
-- https://fedoraproject.org/wiki/Architectures/ARM/Raspberry_Pi#aarch64_supported_images_for_Raspberry_Pi_3
-- https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-3
-
-##### Building
-
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
-- `mkdir build && cd $_`
-- `cmake ..`
-- `make`
-
 
 #### Linux
 
 ##### Prerequisites
 
-- You will need the following packages: boost (1.55 or higher), rocksdb, cmake, git, gcc (4.9 or higher), g++ (4.9 or higher), make, and python. Most of these should already be installed on your system.
-- For example on Ubuntu: `sudo apt-get install -y build-essential python-dev gcc g++ git cmake libboost-all-dev`
+You will need the following packages: boost (1.55 or higher), cmake, make, and git.
 
-##### Building
+You will also need either GCC/G++, or Clang.
+
+If you are using GCC, you will need GCC-6.0 or higher.
+
+If you are using Clang, you will need Clang 5.0 or higher. You will also need libstdc++\-6.0 or higher.
+
+##### GCC setup, on Ubuntu
+
+- `sudo add-apt-repository ppa:ubuntu-toolchain-r/test`
+- `sudo apt-get update`
+- `sudo apt-get install -y build-essential g++-8 gcc-8 git cmake libboost-all-dev`
+- `export CC=gcc-8`
+- `export CXX=g++-8`
+- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
+- `cd turtlecoin`
+- `mkdir build`
+- `cd build`
+- `cmake ..`
+- `make`
+
+The binaries will be in the `src` folder when you are complete.
+
+- `cd src`
+- `./TurtleCoind --version`
+
+##### Clang setup, on Ubuntu
+
+- `sudo add-apt-repository ppa:ubuntu-toolchain-r/test`
+- `sudo add-apt-repository ppa:ubuntu-llvm-toolchain-trusty-6.0`
+- `sudo apt-get update`
+- `sudo apt-get install -y build-essential clang-6.0 libstdc++-7-dev git cmake libboost-all-dev`
+- `export CC=clang-6.0`
+- `export CXX=clang++-6.0`
+- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
+- `cd turtlecoin`
+- `mkdir build`
+- `cd build`
+- `cmake ..`
+- `make`
+
+The binaries will be in the `src` folder when you are complete.
+
+- `cd src`
+- `./TurtleCoind --version`
+
+##### Generic Linux
+
+Ensure you have the dependencies listed above.
+
+If you want to use clang, ensure you set the environment variables `CC` and `CXX`.
+See the ubuntu instructions for an example.
 
 - `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
 - `cd turtlecoin`
-- `mkdir build && cd $_`
+- `mkdir build`
+- `cd build`
 - `cmake ..`
 - `make`
+
+The binaries will be in the `src` folder when you are complete.
+
+- `cd src`
+- `./TurtleCoind --version`
 
 #### Apple
 
 ##### Prerequisites
 
-- Install [cmake](https://cmake.org/). See [here](https://stackoverflow.com/questions/23849962/cmake-installer-for-mac-fails-to-create-usr-bin-symlinks) if you are unable call `cmake` from the terminal after installing.
+- Install [cmake](https://cmake.org/). See [here](https://stackoverflow.com/questions/23849962/cmake-installer-for-mac-fails-to-create-usr-bin-symlinks) if you are unable to call `cmake` from the terminal after installing.
 - Install the [boost](http://www.boost.org/) libraries. Either compile boost manually or run `brew install boost`.
 - Install XCode and Developer Tools.
+
 
 ##### Building
 
@@ -72,16 +102,24 @@ The following images are known to work.
   from a specific boost install. If you used brew to install boost, your path is most likely `/usr/local/include/boost.`
 - `make`
 
-The binaries will be in `./src` after compilation is complete.
+The binaries will be in the `src` folder when you are complete.
 
-Run `./src/TurtleCoind` to connect to the network and let it sync (it may take a while).
+- `cd src`
+- `./TurtleCoind --version`
 
-#### Windows 10
+If your version of gcc is too old, you may need to run:
+
+- `brew install gcc@8`
+- `export CC=gcc-8`
+- `export CXX=g++-8`
+
+#### Windows
 
 ##### Prerequisites
+
 - Install [Visual Studio 2017 Community Edition](https://www.visualstudio.com/thank-you-downloading-visual-studio/?sku=Community&rel=15&page=inlineinstall)
-- When installing Visual Studio, it is **required** that you install **Desktop development with C++** and the **VC++ v140 toolchain** when selecting features. The option to install the v140 toolchain can be found by expanding the "Desktop development with C++" node on the right. You will need this for the project to build correctly. This item will be called something like `VC++ 2015.3 v14.00 (v140) toolset for desktop`
-- Install [Boost 1.59.0](https://sourceforge.net/projects/boost/files/boost-binaries/1.59.0/), ensuring you download the installer for MSVC 14.
+- When installing Visual Studio, it is **required** that you install **Desktop development with C++**
+- Install the latest version of [Boost](https://sourceforge.net/projects/boost/files/boost-binaries/1.68.0/boost_1_68_0-msvc-14.1-64.exe/download) - Currently Boost 1.68.
 
 ##### Building
 
@@ -89,11 +127,40 @@ Run `./src/TurtleCoind` to connect to the network and let it sync (it may take a
 - `cd <your_turtlecoin_directory>`
 - `mkdir build`
 - `cd build`
-- Set the PATH variable for cmake: ie. `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
-- `cmake -G "Visual Studio 14 Win64" .. -DBOOST_ROOT=C:/local/boost_1_59_0` (Or your boost installed dir.)
+- `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
+- `cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT=C:/local/boost_1_68_0` (Or your boost installed dir.)
 - `MSBuild TurtleCoin.sln /p:Configuration=Release /m`
-- If all went well, it will complete successfully, and you will find all your binaries in the '..\build\src\Release' directory.
-- Additionally, a `.sln` file will have been created in the `build` directory. If you wish to open the project in Visual Studio with this, you can.
+
+The binaries will be in the `src/Release` folder when you are complete.
+
+- `cd src`
+- `cd Release`
+- `TurtleCoind.exe --version`
+
+#### Raspberry Pi 3 B+
+The following images are known to work. Your operation system image **MUST** be 64 bit.
+
+##### Known working images
+
+- https://github.com/Crazyhead90/pi64/releases
+- https://fedoraproject.org/wiki/Architectures/ARM/Raspberry_Pi#aarch64_supported_images_for_Raspberry_Pi_3
+- https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-3
+
+Once you have a 64 bit image installed, setup proceeds the same as any Linux distribution. Ensure you have at least 2GB of ram, or the build is likely to fail. You may need to setup swap space.
+
+##### Building
+
+- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
+- `cd turtlecoin`
+- `mkdir build`
+- `cd build`
+- `cmake ..`
+- `make`
+
+The binaries will be in the `src` folder when you are complete.
+
+- `cd src`
+- `./TurtleCoind --version`
 
 #### Thanks
 Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, TurtleCoin Community

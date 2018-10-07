@@ -30,7 +30,7 @@ namespace Common {
 //   'data' == 'nullptr' && 'size' > 0 - Undefined
 //   'data' != 'nullptr' && 'size' > 0 - NOTEMPTY NOTNIL
 // For signed integer 'Size', 'ArrayRef' with 'size' < 0 is undefined.
-template<class ObjectType = uint8_t, class SizeType = size_t> class ArrayRef {
+template<class ObjectType = uint8_t, class SizeType = uint64_t> class ArrayRef {
 public:
   typedef ObjectType Object;
   typedef SizeType Size;
