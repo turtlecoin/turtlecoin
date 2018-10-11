@@ -100,13 +100,6 @@ matrix:
 
   # Arm (aarch64) cross compile
   - os: linux
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - gcc-aarch64-linux-gnu
-        - g++-aarch64-linux-gnu
     env:
     - MATRIX_EVAL="CC=aarch64-linux-gnu-gcc && CXX=aarch64-linux-gnu-g++"
     - LABEL="aarch64"
@@ -123,19 +116,27 @@ install:
 - if [[ "$LABEL" == "osx-g++-8" ]]; then brew install gcc@8 ; fi
 - if [[ "$LABEL" == "osx-g++-7" ]]; then brew install gcc@7 ; fi
 
+- if [[ "$LABEL" == "aarch64" ]]; then export BASEDIR=`pwd` ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then cd $HOME ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then wget https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/8.2-2018.08/gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu.tar.xz ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then wget http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then tar zxvf boost_1_55_0.tar.gz >/dev/null ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then mkdir toolchain && cd toolchain ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then tar xfv ../gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu.tar.xz >/dev/null ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then cd gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then tar zxvf ../../boost_1_55_0.tar.gz >/dev/null ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then cd boost_1_55_0 ; fi
 - if [[ "$LABEL" == "aarch64" ]]; then ./bootstrap.sh ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then curl https://raw.githubusercontent.com/turtlecoin/turtlecoin/development/scripts/fix_boost_aarch64.sh | sh ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then ./b2 toolset=gcc-aarch64 --with-system --with-filesystem --with-thread --with-date_time --with-chrono --with-regex --with-serialization --with-program_options >/dev/null ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then curl https://gist.githubusercontent.com/brandonlehmann/203aa3fee5c6517a5bb395d860e58aa3/raw/07092235a6db8d8ef3507fc9609e55ef79039fbd/fix_boost_aarch64.sh | sh ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then ./b2 toolset=gcc-aarch64 --with-system --with-filesystem --with-thread --with-date_time --with-chrono --with-regex --with-serialization --with-program_options >/dev/null; fi
 - if [[ "$LABEL" == "aarch64" ]]; then export CUSTOM_BOOST_ROOT="-DBOOST_ROOT=`pwd`" ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then cd .. ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then export CUSTOM_TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=../scripts/cross-aarch64.cmake" ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then export STRIP="$HOME/toolchain/gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu/bin/aarch64-linux-gnu-strip" ; fi
+- if [[ "$LABEL" == "aarch64" ]]; then cd $BASEDIR ; fi
 
 script:
 - eval $MATRIX_EVAL
 - mkdir build && cd build
-- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. ${CUSTOM_BOOST_ROOT} && make -j2
+- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. ${CUSTOM_TOOLCHAIN} ${CUSTOM_BOOST_ROOT} && make -j2
 
 before_deploy:
 - if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
