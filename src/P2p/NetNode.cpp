@@ -865,12 +865,12 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
         //start from white list
         if(!make_expected_connections_count(true, expected_white_connections))
           return false;
-        //and then do grey list
+        //and then do gray list
         if(!make_expected_connections_count(false, m_config.m_net_config.connections_count))
           return false;
       }else
       {
-        //start from grey list
+        //start from gray list
         if(!make_expected_connections_count(false, m_config.m_net_config.connections_count))
           return false;
         //and then do white list

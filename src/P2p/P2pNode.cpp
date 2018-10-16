@@ -245,10 +245,10 @@ void P2pNode::connectPeers() {
     if (outgoingConnections < expectedWhiteConnections) {
       //start from white list
       makeExpectedConnectionsCount(m_peerlist.getWhite(), expectedWhiteConnections);
-      //and then do grey list
+      //and then do gray list
       makeExpectedConnectionsCount(m_peerlist.getGray(), totalExpectedConnectionsCount);
     } else {
-      //start from grey list
+      //start from gray list
       makeExpectedConnectionsCount(m_peerlist.getGray(), totalExpectedConnectionsCount);
       //and then do white list
       makeExpectedConnectionsCount(m_peerlist.getWhite(), totalExpectedConnectionsCount);
