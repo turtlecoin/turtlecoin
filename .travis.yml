@@ -33,6 +33,7 @@ matrix:
     - LABEL="aarch64"
     - STRIP="aarch64-linux-gnu-strip"
   - os: windows
+    language: shell
 
 before_install:
 - eval $MATRIX_EVAL
