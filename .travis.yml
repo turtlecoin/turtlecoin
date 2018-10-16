@@ -32,6 +32,7 @@ matrix:
     - MATRIX_EVAL="CC=aarch64-linux-gnu-gcc && CXX=aarch64-linux-gnu-g++"
     - LABEL="aarch64"
     - STRIP="aarch64-linux-gnu-strip"
+  - os: windows
 
 before_install:
 - eval $MATRIX_EVAL
