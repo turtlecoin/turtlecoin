@@ -215,7 +215,7 @@ bool handle_get_daemon_info(po::variables_map& vm) {
       << "outgoing_connections_count: " << res.outgoing_connections_count << ENDL
       << "incoming_connections_count: " << res.incoming_connections_count << ENDL
       << "white_peerlist_size: " << res.white_peerlist_size << ENDL
-      << "grey_peerlist_size: " << res.grey_peerlist_size << ENDL;
+      << "gray_peerlist_size: " << res.gray_peerlist_size << ENDL;
 
   } catch (const std::exception& e) {
     std::cout << "ERROR: " << e.what() << std::endl;
