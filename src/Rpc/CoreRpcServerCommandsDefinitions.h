@@ -269,7 +269,7 @@ struct COMMAND_RPC_GET_INFO {
     uint64_t outgoing_connections_count;
     uint64_t incoming_connections_count;
     uint64_t white_peerlist_size;
-    uint64_t grey_peerlist_size;
+    uint64_t gray_peerlist_size;
     uint32_t last_known_block_index;
     uint32_t network_height;
     std::vector<uint64_t> upgrade_heights;
@@ -292,7 +292,7 @@ struct COMMAND_RPC_GET_INFO {
       KV_MEMBER(outgoing_connections_count)
       KV_MEMBER(incoming_connections_count)
       KV_MEMBER(white_peerlist_size)
-      KV_MEMBER(grey_peerlist_size)
+      KV_MEMBER(gray_peerlist_size)
       KV_MEMBER(last_known_block_index)
       KV_MEMBER(network_height)
       KV_MEMBER(upgrade_heights)
