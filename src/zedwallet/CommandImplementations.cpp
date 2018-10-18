@@ -487,6 +487,14 @@ void listTransfers(bool incoming, bool outgoing,
     {
         const CryptoNote::WalletTransaction t = wallet.getTransaction(i);
 
+        /* Is a fusion transaction (on a view only wallet). It appears to have
+           an incoming amount, because we can't detract the outputs (can't
+           decrypt them) */
+        if (t.fee == 0 && !t.isBase)
+        {
+            continue;
+        }
+
         if (t.totalAmount < 0 && outgoing)
         {
             printOutgoingTransfer(t, node);
