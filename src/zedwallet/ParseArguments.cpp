@@ -12,6 +12,8 @@
 
 #include <config/WalletConfig.h>
 
+#include <zedwallet/Tools.h>
+
 /* Thanks to https://stackoverflow.com/users/85381/iain for this small command
    line parsing snippet! https://stackoverflow.com/a/868894/8737306 */
 char* getCmdOption(char ** begin, char ** end, const std::string & option)
@@ -49,6 +51,36 @@ Config parseArguments(int argc, char **argv)
         std::cout << getVersion() << std::endl;
         config.exit = true;
         return config;
+    }
+
+    const auto commands = getCLICommands();
+
+    for (int i = 0; i < argc; i++)
+    {
+        /* If the argument is a command, for example --foo, check it exists */
+        if (startsWith(argv[i], "--"))
+        {
+            const auto it = std::find_if(commands.begin(), commands.end(),
+            [&argv, &i](const CLICommand command)
+            {
+                /* Only take the first word of the command, so instead of
+                   --remote-daemon <url> we get the actual command,
+                   --remote-daemon */
+                std::string firstWord = command.name.substr(0, command.name.find(" "));
+                return firstWord == argv[i];
+            });
+
+            if (it == commands.end())
+            {
+                std::cout << "Unknown command: " << argv[i] << std::endl
+                          << std::endl;
+
+                helpMessage();
+                
+                config.exit = true;
+                return config;
+            }
+        }
     }
 
     if (cmdOptionExists(argv, argv+argc, "--debug"))
