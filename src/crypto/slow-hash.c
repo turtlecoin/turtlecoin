@@ -23,22 +23,6 @@
 #define INIT_SIZE_BYTE         (INIT_SIZE_BLK * AES_BLOCK_SIZE)
 #define PAGE_SIZE              2097152
 
-
-
-// Standard Cryptonight Definitions
-#define MEMORY                 2097152 // 2MB scratchpad 2^21
-#define ITER                   1048576 // 2^20
-#define ITER_Divided           524288 // 2^19
-#define CN_INIT                (MEMORY / INIT_SIZE_BYTE)
-#define CN_AES_INIT            (MEMORY / AES_BLOCK_SIZE)
-
-// Cryptonight Night Definitions
-#define MEMORY_Light           1048576 // 1MB scratchpad 2^20
-#define ITER_Light             524288 // 2^19
-#define ITER_Light_Divided     262144 // 2^18
-#define CN_LIGHT_INIT          (MEMORY_Light / INIT_SIZE_BYTE)
-#define CN_LIGHT_AES_INIT      (MEMORY_Light / AES_BLOCK_SIZE)
-
 extern int aesb_single_round(const uint8_t *in, uint8_t*out, const uint8_t *expandedKey);
 extern int aesb_pseudo_round(const uint8_t *in, uint8_t *out, const uint8_t *expandedKey);
 
@@ -684,11 +668,11 @@ void slow_hash_free_state(void)
  * @param length the length in bytes of the data
  * @param hash a pointer to a buffer in which the final 256 bit hash will be stored
  */
-void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed)
+void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed, uint32_t scratchpad, uint32_t iterations)
 {
-	size_t init_rounds = (light ? CN_LIGHT_INIT : CN_INIT);
-	size_t aes_rounds = (light ? ITER_Light_Divided : ITER_Divided);
-	size_t lightFlag = (light ? 2 : 1);
+    size_t init_rounds = (scratchpad / INIT_SIZE_BYTE);
+    size_t aes_rounds = (iterations / 2);
+    size_t lightFlag = (light ? 2 : 1);
 
     RDATA_ALIGN16 uint8_t expandedKey[240];  /* These buffers are aligned to use later with SSE functions */
 
@@ -1056,10 +1040,10 @@ STATIC INLINE void aligned_free(void *ptr)
 }
 #endif /* FORCE_USE_HEAP */
 
-void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed)
+void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed, uint32_t scratchpad, uint32_t iterations)
 {
-	size_t init_rounds = (light ? CN_LIGHT_INIT : CN_INIT);
-	size_t aes_rounds = (light ? ITER_Light_Divided : ITER_Divided);
+	size_t init_rounds = (scratchpad / INIT_SIZE_BYTE);
+    size_t aes_rounds = (iterations / 2);
 	size_t lightFlag = (light ? 2 : 1);
 
     RDATA_ALIGN16 uint8_t expandedKey[240];
@@ -1275,10 +1259,10 @@ STATIC INLINE void xor_blocks(uint8_t* a, const uint8_t* b)
   U64(a)[1] ^= U64(b)[1];
 }
 
-void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed)
+void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed, uint32_t scratchpad, uint32_t iterations)
 {
-	size_t init_rounds = (light ? CN_LIGHT_INIT : CN_INIT);
-	size_t aes_rounds = (light ? ITER_Light_Divided : ITER_Divided);
+	size_t init_rounds = (scratchpad / INIT_SIZE_BYTE);
+    size_t aes_rounds = (iterations / 2);
 	size_t lightFlag = (light ? 2 : 1);
 
     uint8_t text[INIT_SIZE_BYTE];
@@ -1480,10 +1464,11 @@ union cn_slow_hash_state {
 };
 #pragma pack(pop)
 
-void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed) {
-  size_t init_rounds = (light ? CN_LIGHT_INIT : CN_INIT);
-  size_t aes_rounds = (light ? ITER_Light_Divided : ITER_Divided);
-  size_t aes_init = (light ? CN_LIGHT_AES_INIT : CN_AES_INIT);
+void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed, uint32_t scratchpad, uint32_t iterations)
+{
+  size_t init_rounds = (scratchpad / INIT_SIZE_BYTE);
+  size_t aes_rounds = (iterations / 2);
+  size_t aes_init = (scratchpad / AES_BLOCK_SIZE);
 
 #ifndef FORCE_USE_HEAP
   uint8_t long_state[PAGE_SIZE];

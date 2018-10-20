@@ -12,6 +12,16 @@
 #include <CryptoTypes.h>
 #include "generic-ops.h"
 
+// CryptoNight Defintions Below
+
+// Standard Cryptonight Definitions
+#define CN_MEMORY                 2097152 // 2MB scratchpad 2^21
+#define CN_ITER                   1048576 // 2^20
+
+// Cryptonight Night Definitions
+#define CN_LITE_MEMORY            1048576 // 1MB scratchpad 2^20
+#define CN_LITE_ITER              524288 // 2^19
+
 namespace Crypto {
 
   extern "C" {
@@ -33,27 +43,27 @@ namespace Crypto {
   }
 
   inline void cn_slow_hash_v0(const void *data, size_t length, Hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 0, 0);
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 0, 0, CN_MEMORY, CN_ITER);
   }
 
   inline void cn_slow_hash_v1(const void *data, size_t length, Hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 1, 0);
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 1, 0, CN_MEMORY, CN_ITER);
   }
 
   inline void cn_slow_hash_v2(const void *data, size_t length, Hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 2, 0);
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 2, 0, CN_MEMORY, CN_ITER);
   }
 
   inline void cn_lite_slow_hash_v0(const void *data, size_t length, Hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 0, 0);
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 0, 0, CN_LITE_MEMORY, CN_LITE_ITER);
   }
 
   inline void cn_lite_slow_hash_v1(const void *data, size_t length, Hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 1, 0);
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 1, 0, CN_LITE_MEMORY, CN_LITE_ITER);
   }
 
   inline void cn_lite_slow_hash_v2(const void *data, size_t length, Hash &hash) {
-    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 2, 0);
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 2, 0, CN_LITE_MEMORY, CN_LITE_ITER);
   }
 
   inline void tree_hash(const Hash *hashes, size_t count, Hash &root_hash) {
