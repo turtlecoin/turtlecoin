@@ -5,8 +5,8 @@
 // Please see the included LICENSE file for more information.
 
 #include <fstream>
+#include <filesystem>
 
-#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
 #include "DaemonCommandsHandler.h"
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
     desc_options.add(desc_cmd_only).add(desc_cmd_sett);
 
     po::variables_map vm;
-    boost::filesystem::path data_dir_path;
+    std::filesystem::path data_dir_path;
     bool r = command_line::handle_error_helper(desc_options, [&]()
     {
       po::store(po::parse_command_line(argc, argv, desc_options), vm);
@@ -195,11 +195,11 @@ int main(int argc, char* argv[])
       }
 
       std::string config = command_line::get_arg(vm, arg_config_file);
-      boost::filesystem::path config_path(config);
+      std::filesystem::path config_path(config);
 
-      boost::system::error_code ec;
-      if (boost::filesystem::exists(config_path, ec)) {
-        po::store(po::parse_config_file<char>(config_path.string<std::string>().c_str(), desc_cmd_sett), vm);
+      std::error_code ec;
+      if (std::filesystem::exists(config_path, ec)) {
+        po::store(po::parse_config_file<char>(config_path.c_str(), desc_cmd_sett), vm);
       }
       po::notify(vm);
 

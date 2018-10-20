@@ -17,8 +17,8 @@
 
 #include "Util.h"
 #include <cstdio>
-
-#include <boost/filesystem.hpp>
+#include <cstring>
+#include <filesystem>
 
 #include <config/CryptoNoteConfig.h>
 
@@ -288,7 +288,7 @@ std::string get_nix_version_display_string()
 #ifdef WIN32
   std::string get_special_folder_path(int nfolder, bool iscreate)
   {
-    namespace fs = boost::filesystem;
+    namespace fs = std::filesystem;
     char psz_path[MAX_PATH] = "";
 
     if(SHGetSpecialFolderPathA(NULL, psz_path, nfolder, iscreate)) {
@@ -333,7 +333,7 @@ std::string get_nix_version_display_string()
   std::string getDefaultCacheFile(const std::string& dataDir) {
     static const std::string name = "cache_file";
 
-    namespace bf = boost::filesystem;
+    namespace bf = std::filesystem;
     bf::path dir = dataDir;
 
     if (!bf::exists(dir) ) {
@@ -341,16 +341,16 @@ std::string get_nix_version_display_string()
     }
 
     if (!bf::exists(dir/name)) {
-      throw std::runtime_error("File \"" + boost::filesystem::path(dir/name).string() + "\" doesn't exist");
+      throw std::runtime_error("File \"" + std::filesystem::path(dir/name).string() + "\" doesn't exist");
     }
 
-    return boost::filesystem::path(dir/name).string();
+    return std::filesystem::path(dir/name).string();
   }
 
   bool create_directories_if_necessary(const std::string& path)
   {
-    namespace fs = boost::filesystem;
-    boost::system::error_code ec;
+    namespace fs = std::filesystem;
+    std::error_code ec;
     fs::path fs_path(path);
     if (fs::is_directory(fs_path, ec)) {
       return true;
@@ -380,8 +380,8 @@ std::string get_nix_version_display_string()
   }
 
   bool directoryExists(const std::string& path) {
-    boost::system::error_code ec;
-    return boost::filesystem::is_directory(path, ec);
+    std::error_code ec;
+    return std::filesystem::is_directory(path, ec);
   }
 
 }

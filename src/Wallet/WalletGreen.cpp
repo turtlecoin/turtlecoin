@@ -415,8 +415,8 @@ void WalletGreen::exportWallet(const std::string& path, bool encrypt, WalletSave
     Tools::ScopeExit failExitHandler([path, &storageCreated] {
       // Don't delete file if it has existed
       if (storageCreated) {
-        boost::system::error_code ignore;
-        boost::filesystem::remove(path, ignore);
+        std::error_code ignore;
+        std::filesystem::remove(path, ignore);
       }
     });
 
@@ -842,16 +842,20 @@ void WalletGreen::convertAndLoadWalletFile(const std::string& path, std::ifstrea
   s.load(m_key, stream);
   walletFileStream.close();
 
-  boost::filesystem::path bakPath = path + ".backup";
-  boost::filesystem::path tmpPath = boost::filesystem::unique_path(path + ".tmp.%%%%-%%%%");
+  std::filesystem::path bakPath = path + ".backup";
+  std::random_device rd;
+  std::uniform_int_distribution<int> dist(10000000, 99999999);
+  std::mt19937 mt(rd());
+  std::string prf = std::to_string(dist(mt));
+  std::filesystem::path tmpPath = path + ".tmp." + prf;
 
-  if (boost::filesystem::exists(bakPath)) {
+  if (std::filesystem::exists(bakPath)) {
     throw std::system_error(make_error_code(std::errc::file_exists), ".backup file already exists");
   }
 
   Tools::ScopeExit tmpFileDeleter([&tmpPath] {
-    boost::system::error_code ignore;
-    boost::filesystem::remove(tmpPath, ignore);
+    std::error_code ignore;
+    std::filesystem::remove(tmpPath, ignore);
   });
 
   m_containerStorage.open(tmpPath.string(), Common::FileMappedVectorOpenMode::CREATE, sizeof(ContainerStoragePrefix));
@@ -869,14 +873,14 @@ void WalletGreen::convertAndLoadWalletFile(const std::string& path, std::ifstrea
 
   saveWalletCache(m_containerStorage, m_key, WalletSaveLevel::SAVE_ALL, "");
 
-  boost::filesystem::rename(path, bakPath);
+  std::filesystem::rename(path, bakPath);
   std::error_code ec;
   m_containerStorage.rename(path, ec);
   if (ec) {
     m_logger(ERROR, BRIGHT_RED) << "Failed to rename " << tmpPath << " to " << path;
 
-    boost::system::error_code ignore;
-    boost::filesystem::rename(bakPath, path, ignore);
+    std::error_code ignore;
+    std::filesystem::rename(bakPath, path, ignore);
     throw std::system_error(ec, "Failed to replace wallet file");
   }
 

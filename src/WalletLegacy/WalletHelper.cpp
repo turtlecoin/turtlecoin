@@ -19,7 +19,8 @@
 #include "Common/PathTools.h"
 
 #include <fstream>
-#include <boost/filesystem.hpp>
+#include <filesystem>
+#include <random>
 
 using namespace CryptoNote;
 
@@ -106,18 +107,23 @@ void WalletHelper::IWalletRemoveObserverGuard::removeObserver() {
 }
 
 void WalletHelper::storeWallet(CryptoNote::IWalletLegacy& wallet, const std::string& walletFilename) {
-  boost::filesystem::path tempFile = boost::filesystem::unique_path(walletFilename + ".tmp.%%%%-%%%%");
+  
+  std::random_device rd;
+  std::uniform_int_distribution<int> dist(10000000, 99999999);
+  std::mt19937 mt(rd());
+  std::string prf = std::to_string(dist(mt));
+  std::filesystem::path tempFile = walletFilename + ".tmp." + prf;
 
-  if (boost::filesystem::exists(walletFilename)) {
-    boost::filesystem::rename(walletFilename, tempFile);
+  if (std::filesystem::exists(walletFilename)) {
+    std::filesystem::rename(walletFilename, tempFile);
   }
 
   std::ofstream file;
   try {
     openOutputFileStream(walletFilename, file);
   } catch (std::exception&) {
-    if (boost::filesystem::exists(tempFile)) {
-      boost::filesystem::rename(tempFile, walletFilename);
+    if (std::filesystem::exists(tempFile)) {
+      std::filesystem::rename(tempFile, walletFilename);
     }
     throw;
   }
@@ -125,13 +131,13 @@ void WalletHelper::storeWallet(CryptoNote::IWalletLegacy& wallet, const std::str
   std::error_code saveError = walletSaveWrapper(wallet, file, true, true);
   if (saveError) {
     file.close();
-    boost::filesystem::remove(walletFilename);
-    boost::filesystem::rename(tempFile, walletFilename);
+    std::filesystem::remove(walletFilename);
+    std::filesystem::rename(tempFile, walletFilename);
     throw std::system_error(saveError);
   }
 
   file.close();
 
-  boost::system::error_code ignore;
-  boost::filesystem::remove(tempFile, ignore);
+  std::error_code ignore;
+  std::filesystem::remove(tempFile, ignore);
 }

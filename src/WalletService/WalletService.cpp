@@ -11,8 +11,7 @@
 #include <assert.h>
 #include <sstream>
 #include <unordered_set>
-
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 
 #include <System/Timer.h>
 #include <System/InterruptedException.h>
@@ -507,8 +506,8 @@ std::error_code WalletService::exportWallet(const std::string& fileName) {
       return make_error_code(CryptoNote::error::NOT_INITIALIZED);
     }
 
-    boost::filesystem::path walletPath(config.walletFile);
-    boost::filesystem::path exportPath = walletPath.parent_path() / fileName;
+    std::filesystem::path walletPath(config.walletFile);
+    std::filesystem::path exportPath = walletPath.parent_path() / fileName;
 
     logger(Logging::INFO, Logging::BRIGHT_WHITE) << "Exporting wallet to " << exportPath.string();
     wallet.exportWallet(exportPath.string());
@@ -1367,14 +1366,14 @@ void WalletService::replaceWithNewWallet(const Crypto::SecretKey& viewSecretKey,
   transactionIdIndex.clear();
 
   for (size_t i = 0; ; ++i) {
-    boost::system::error_code ec;
+    std::error_code ec;
     std::string backup = config.walletFile + ".backup";
     if (i != 0) {
       backup += "." + std::to_string(i);
     }
 
-    if (!boost::filesystem::exists(backup)) {
-      boost::filesystem::rename(config.walletFile, backup);
+    if (!std::filesystem::exists(backup)) {
+      std::filesystem::rename(config.walletFile, backup);
       logger(Logging::DEBUGGING) << "Wallet file '" << config.walletFile  << "' backed up to '" << backup << '\'';
       break;
     }

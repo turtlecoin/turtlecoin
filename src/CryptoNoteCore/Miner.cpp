@@ -10,11 +10,11 @@
 #include <numeric>
 #include <sstream>
 #include <thread>
+#include <filesystem>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/limits.hpp>
 #include <boost/utility/value_init.hpp>
 
@@ -175,7 +175,7 @@ namespace CryptoNote
         if(buff != "0")
           m_extra_messages[i] = ba;
       }
-      m_config_folder_path = boost::filesystem::path(config.extraMessages).parent_path().string();
+      m_config_folder_path = std::filesystem::path(config.extraMessages).parent_path().string();
       m_config = boost::value_initialized<decltype(m_config)>();
 
       std::string filebuf;
