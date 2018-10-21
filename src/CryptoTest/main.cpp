@@ -52,6 +52,30 @@ int main(int argc, char** argv) {
 
       cn_lite_slow_hash_v2(rawData.data(), rawData.size(), hash);
       std::cout << "cn_lite_slow_hash_v2: " << Common::toHex(&hash, sizeof(Hash)) << "\n";
+
+      std::cout << "\n";
+
+      for (uint32_t height = 0; height <= 8192; height = height + 512)
+      {
+        cn_soft_shell_slow_hash_v0(rawData.data(), rawData.size(), hash, height);
+        std::cout << "cn_soft_shell_slow_hash_v0 (" << height << "): " << Common::toHex(&hash, sizeof(Hash)) << "\n";
+      }
+
+      std::cout << "\n";
+
+      for (uint32_t height = 0; height <= 8192; height = height + 512)
+      {
+        cn_soft_shell_slow_hash_v1(rawData.data(), rawData.size(), hash, height);
+        std::cout << "cn_soft_shell_slow_hash_v1 (" << height << "): " << Common::toHex(&hash, sizeof(Hash)) << "\n";
+      }
+
+      std::cout << "\n";
+
+      for (uint32_t height = 0; height <= 8192; height = height + 512)
+      {
+        cn_soft_shell_slow_hash_v2(rawData.data(), rawData.size(), hash, height);
+        std::cout << "cn_soft_shell_slow_hash_v2 (" << height << "): " << Common::toHex(&hash, sizeof(Hash)) << "\n";
+      }
     }
 
     std::cout <<  "\nPerformance Tests: Please wait, this may take a while depending on your system...\n\n";
