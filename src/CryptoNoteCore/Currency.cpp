@@ -427,7 +427,12 @@ bool Currency::parseAmount(const std::string& str, uint64_t& amount) const {
 
 uint64_t Currency::getNextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties) const
 {
-    if (blockIndex >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX_V3)
+    /* nextDifficultyV3 and above are defined in src/CryptoNoteCore/Difficulty.cpp */
+    if (blockIndex >= CryptoNote::parameters::LWMA_3_DIFFICULTY_BLOCK_INDEX)
+    {
+        return nextDifficultyV6(timestamps, cumulativeDifficulties);
+    }
+    else if (blockIndex >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX_V3)
     {
         return nextDifficultyV5(timestamps, cumulativeDifficulties);
     }
