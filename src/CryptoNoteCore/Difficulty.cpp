@@ -26,7 +26,7 @@ uint64_t nextDifficultyV6(std::vector<uint64_t> timestamps, std::vector<uint64_t
     }
 
     /* Don't have the full amount of blocks yet, starting up */
-    if (timestamps.size() < N+1)
+    if (timestamps.size() < CryptoNote::parameters::DIFFICULTY_BLOCKS_COUNT_V3)
     {
         N = timestamps.size() - 1;
     }
