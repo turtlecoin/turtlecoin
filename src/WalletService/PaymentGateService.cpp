@@ -33,7 +33,7 @@
 #undef ERROR
 #endif
 
-#ifdef _WIN32
+#ifdef _WIN32 //why is this still here?
 #include <direct.h>
 #else
 #include <unistd.h>
@@ -109,7 +109,7 @@ const CryptoNote::Currency PaymentGateService::getCurrency() {
 }
 
 void PaymentGateService::run() {
-  
+
   System::Dispatcher localDispatcher;
   System::Event localStopEvent(localDispatcher);
 
@@ -143,10 +143,10 @@ void PaymentGateService::stop() {
 void PaymentGateService::runRpcProxy(Logging::LoggerRef& log) {
   log(Logging::INFO) << "Starting Payment Gate with remote node";
   CryptoNote::Currency currency = currencyBuilder.currency();
-  
+
   std::unique_ptr<CryptoNote::INode> node(
     PaymentService::NodeFactory::createNode(
-      config.remoteNodeConfig.daemonHost, 
+      config.remoteNodeConfig.daemonHost,
       config.remoteNodeConfig.daemonPort,
       log.getLogger()));
 

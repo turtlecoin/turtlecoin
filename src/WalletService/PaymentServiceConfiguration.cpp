@@ -53,11 +53,6 @@ void Configuration::initOptions(boost::program_options::options_description& des
       ("view-key", po::value<std::string>(), "generate a container with this secret key view")
       ("spend-key", po::value<std::string>(), "generate a container with this secret spend key")
       ("mnemonic-seed", po::value<std::string>(), "generate a container with this mnemonic seed")
-      ("daemon,d", "run as daemon in Unix or as service in Windows")
-#ifdef _WIN32
-      ("register-service", "register service and exit (Windows only)")
-      ("unregister-service", "unregister service and exit (Windows only)")
-#endif
       ("log-file,l", po::value<std::string>(), "log file")
       ("server-root", po::value<std::string>(), "server root. The service will use it as working directory. Don't set it if don't want to change it")
       ("log-level", po::value<size_t>(), "log level")
@@ -165,7 +160,7 @@ void Configuration::init(const boost::program_options::variables_map& options) {
     }
     mnemonicSeed = options["mnemonic-seed"].as<std::string>();
   }
-
+ 
   if (options.count("address") != 0) {
     printAddresses = true;
   }
