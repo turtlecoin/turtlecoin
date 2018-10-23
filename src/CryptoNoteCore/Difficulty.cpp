@@ -6,7 +6,7 @@
 
 #include "Difficulty.h"
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 
 // LWMA-2 difficulty algorithm 
 // Copyright (c) 2017-2018 Zawy, MIT License

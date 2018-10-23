@@ -7,7 +7,6 @@
 
 #include <ctime>
 #include "P2p/NetNode.h"
-#include "CryptoNoteCore/Miner.h"
 #include "CryptoNoteCore/Core.h"
 #include "CryptoNoteProtocol/CryptoNoteProtocolHandler.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"

@@ -119,39 +119,33 @@ bool handleCommand(const std::string command,
     return true;
 }
 
-std::tuple<bool, std::shared_ptr<WalletInfo>>
-    handleLaunchCommand(CryptoNote::WalletGreen &wallet,
-                        std::string launchCommand, Config &config)
+std::shared_ptr<WalletInfo> handleLaunchCommand(CryptoNote::WalletGreen &wallet,
+                                                std::string launchCommand,
+                                                Config &config)
 {
-    std::shared_ptr<WalletInfo> walletInfo = nullptr;
-
-    bool success = true;
-
     if (launchCommand == "create")
     {
-        walletInfo = generateWallet(wallet);
+        return generateWallet(wallet);
     }
     else if (launchCommand == "open")
     {
-        std::tie(success, walletInfo) = openWallet(wallet, config);
+        return openWallet(wallet, config);
     }
     else if (launchCommand == "seed_restore")
     {
-        walletInfo = mnemonicImportWallet(wallet);
+        return mnemonicImportWallet(wallet);
     }
     else if (launchCommand == "key_restore")
     {
-        walletInfo = importWallet(wallet);
+        return importWallet(wallet);
     }
     else if (launchCommand == "view_wallet")
     {
-        walletInfo = createViewWallet(wallet);
+        return createViewWallet(wallet);
     }
     /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");
     }
-
-    return std::make_tuple(success, walletInfo);
 }

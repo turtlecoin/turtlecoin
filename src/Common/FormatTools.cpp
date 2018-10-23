@@ -8,7 +8,7 @@
 #include "FormatTools.h"
 #include <cstdio>
 #include <ctime>
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "CryptoNoteCore/Core.h"
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
 #include <boost/format.hpp>

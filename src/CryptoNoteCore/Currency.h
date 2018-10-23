@@ -10,9 +10,9 @@
 #include <string>
 #include <vector>
 #include <boost/utility.hpp>
-#include "../CryptoNoteConfig.h"
-#include "../crypto/hash.h"
-#include "../Logging/LoggerRef.h"
+#include <config/CryptoNoteConfig.h>
+#include "crypto/hash.h"
+#include "Logging/LoggerRef.h"
 #include "CachedBlock.h"
 #include "CryptoNoteBasic.h"
 

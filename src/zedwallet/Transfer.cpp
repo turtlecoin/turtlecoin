@@ -9,7 +9,7 @@
 #include <Common/Base58.h>
 #include <Common/StringTools.h>
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
 #include <CryptoNoteCore/CryptoNoteTools.h>
@@ -27,7 +27,7 @@ namespace NodeErrors
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/Fusion.h>
 #include <zedwallet/Tools.h>
-#include <zedwallet/WalletConfig.h>
+#include <config/WalletConfig.h>
 
 namespace WalletErrors
 {
@@ -331,6 +331,21 @@ void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height,
         extra = getExtraFromPaymentID(addrPaymentIDPair.x.second);
     }
 
+    /* Don't need to prompt for payment ID if they used an integrated
+       address */
+    if (!integratedAddress)
+    {
+        const auto maybeExtra = getExtra();
+
+        if (!maybeExtra.isJust)
+        {
+            std::cout << WarningMsg("Cancelling transaction.") << std::endl;
+            return;
+        }
+
+        extra = maybeExtra.x;
+    }
+
     /* Make sure we set this later if we're sending everything by deducting
        the fee from full balance */
     uint64_t amount = 0;
@@ -438,22 +453,7 @@ void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height,
             amount = balance - fee - nodeFee;
         }
     }
-
-    /* Don't need to prompt for payment ID if they used an integrated
-       address */
-    if (!integratedAddress)
-    {
-        const auto maybeExtra = getExtra();
-
-        if (!maybeExtra.isJust)
-        {
-            std::cout << WarningMsg("Cancelling transaction.") << std::endl;
-            return;
-        }
-
-        extra = maybeExtra.x;
-    }
-
+    
     doTransfer(address, amount, fee, extra, walletInfo, height,
                integratedAddress, mixin, nodeAddress, nodeFee,
                originalAddress);
@@ -741,7 +741,7 @@ Maybe<std::string> getPaymentID(std::string msg)
     {
         std::string paymentID;
 
-        std::cout << msg
+        std::cout << InformationMsg(msg)
                   << WarningMsg("Warning: If you were given a payment ID,")
                   << std::endl
                   << WarningMsg("you MUST use it, or your funds may be lost!")
@@ -805,7 +805,7 @@ Maybe<std::string> getExtra()
     std::stringstream msg;
 
     msg << std::endl
-        << InformationMsg("What payment ID do you want to use?")
+        << "What payment ID do you want to use?"
         << std::endl
         << "These are usually used for sending to exchanges."
         << std::endl;

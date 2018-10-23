@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "version.h"
 
-IDI_ICON1    ICON    DISCARDABLE    "trtl.ico"
+IDI_ICON1    ICON    DISCARDABLE    "../config/icon.ico"
 
 VS_VERSION_INFO VERSIONINFO
   FILEVERSION APP_VER_MAJOR,APP_VER_MINOR,APP_VER_REV,APP_VER_BUILD

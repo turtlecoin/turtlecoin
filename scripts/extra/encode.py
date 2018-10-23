@@ -39,7 +39,7 @@ r = rpc("sendTransaction", {
         "address": to_address,
     }],
     "fee": 10,
-    "anonymity": 7,
+    "anonymity": 3,
     "extra": binascii.hexlify(content.encode()).decode()
 })
 print(r)

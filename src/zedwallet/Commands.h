@@ -6,7 +6,7 @@
 
 #include <string>
 #include <vector>
-#include <zedwallet/WalletConfig.h>
+#include <config/WalletConfig.h>
 
 class Command
 {

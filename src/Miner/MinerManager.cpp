@@ -13,7 +13,7 @@
 #include <chrono>
 
 #include "Common/StringTools.h"
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "CryptoNoteCore/CachedBlock.h"
 #include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"

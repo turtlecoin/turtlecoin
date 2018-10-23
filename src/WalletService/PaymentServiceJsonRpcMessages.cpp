@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "PaymentServiceJsonRpcMessages.h"
@@ -26,21 +26,7 @@ void Export::Response::serialize(CryptoNote::ISerializer& serializer) {
 }
 
 void Reset::Request::serialize(CryptoNote::ISerializer& serializer) {
-  bool hasKey = serializer(viewSecretKey, "viewSecretKey");
-
-  bool hasScanHeight = serializer(scanHeight, "scanHeight");
-  bool hasNewAddress = serializer(newAddress, "newAddress");
-
-  /* Can't specify both that it is a new address, and a height to begin
-     scanning from */
-  if (hasNewAddress && hasScanHeight) {
-    throw RequestSerializationError();
-  }
-
-  /* It's not a reset if you're not resetting :thinking: */
-  if (!hasKey && hasNewAddress) {
-    throw RequestSerializationError();
-  };
+  serializer(scanHeight, "scanHeight");
 }
 
 void Reset::Response::serialize(CryptoNote::ISerializer& serializer) {
@@ -69,6 +55,7 @@ void GetStatus::Request::serialize(CryptoNote::ISerializer& serializer) {
 void GetStatus::Response::serialize(CryptoNote::ISerializer& serializer) {
   serializer(blockCount, "blockCount");
   serializer(knownBlockCount, "knownBlockCount");
+  serializer(localDaemonBlockCount, "localDaemonBlockCount");
   serializer(lastBlockHash, "lastBlockHash");
   serializer(peerCount, "peerCount");
 }

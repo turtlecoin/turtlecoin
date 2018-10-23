@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -95,6 +95,7 @@ struct GetStatus {
   struct Response {
     uint32_t blockCount;
     uint32_t knownBlockCount;
+    uint64_t localDaemonBlockCount;
     std::string lastBlockHash;
     uint32_t peerCount;
 
@@ -323,7 +324,7 @@ struct SendTransaction {
     std::vector<WalletRpcOrder> transfers;
     std::string changeAddress;
     uint64_t fee = 0;
-    uint32_t anonymity;
+    uint64_t anonymity;
     std::string extra;
     std::string paymentId;
     uint64_t unlockTime = 0;
@@ -344,7 +345,7 @@ struct CreateDelayedTransaction {
     std::vector<WalletRpcOrder> transfers;
     std::string changeAddress;
     uint64_t fee = 0;
-    uint32_t anonymity;
+    uint64_t anonymity;
     std::string extra;
     std::string paymentId;
     uint64_t unlockTime = 0;
@@ -398,7 +399,7 @@ struct SendDelayedTransaction {
 struct SendFusionTransaction {
   struct Request {
     uint64_t threshold;
-    uint32_t anonymity;
+    uint64_t anonymity;
     std::vector<std::string> addresses;
     std::string destinationAddress;
 
@@ -447,11 +448,11 @@ struct NodeFeeInfo {
   struct Request {
     void serialize(CryptoNote::ISerializer& serializer);
   };
-  
+
   struct Response {
     std::string address;
     uint32_t amount;
-    
+
     void serialize(CryptoNote::ISerializer& serializer);
   };
 };

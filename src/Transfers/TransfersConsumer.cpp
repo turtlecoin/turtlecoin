@@ -1,23 +1,14 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The BBSCoin Developers
+// Copyright (c) 2018, The Karbo Developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "TransfersConsumer.h"
 
 #include <numeric>
+#include <future>
 
 #include "CommonTypes.h"
 #include "Common/BlockingQueue.h"
@@ -31,6 +22,12 @@
 
 using namespace Crypto;
 using namespace Logging;
+using namespace Common;
+
+
+std::unordered_set<Crypto::Hash> transactions_hash_seen;
+std::unordered_set<Crypto::PublicKey> public_keys_seen;
+std::mutex seen_mutex;
 
 namespace {
 
@@ -360,7 +357,7 @@ uint32_t TransfersConsumer::onNewBlocks(const CompleteBlock* blocks, uint32_t st
 
 std::error_code TransfersConsumer::onPoolUpdated(const std::vector<std::unique_ptr<ITransactionReader>>& addedTransactions, const std::vector<Hash>& deletedTransactions) {
   TransactionBlockInfo unconfirmedBlockInfo;
-  unconfirmedBlockInfo.timestamp = 0; 
+  unconfirmedBlockInfo.timestamp = 0;
   unconfirmedBlockInfo.height = WALLET_UNCONFIRMED_TRANSACTION_HEIGHT;
 
   std::error_code processingError;
@@ -375,7 +372,7 @@ std::error_code TransfersConsumer::onPoolUpdated(const std::vector<std::unique_p
       return processingError;
     }
   }
-  
+
   for (auto& deletedTxHash : deletedTransactions) {
     m_poolTxs.erase(deletedTxHash);
 
@@ -411,26 +408,39 @@ void TransfersConsumer::removeUnconfirmedTransaction(const Crypto::Hash& transac
   m_observerManager.notify(&IBlockchainConsumerObserver::onTransactionDeleteEnd, this, transactionHash);
 }
 
+void TransfersConsumer::addPublicKeysSeen(const Crypto::Hash& transactionHash, const Crypto::PublicKey& outputKey) {
+    std::lock_guard<std::mutex> lk(seen_mutex);
+    transactions_hash_seen.insert(transactionHash);
+    public_keys_seen.insert(outputKey);
+}
+
 std::error_code createTransfers(
   const AccountKeys& account,
   const TransactionBlockInfo& blockInfo,
   const ITransactionReader& tx,
   const std::vector<uint32_t>& outputs,
   const std::vector<uint32_t>& globalIdxs,
-  std::vector<TransactionOutputInformationIn>& transfers) {
+  std::vector<TransactionOutputInformationIn>& transfers,
+  Logging::LoggerRef& m_logger)
+{
 
   auto txPubKey = tx.getTransactionPublicKey();
+  std::vector<PublicKey> temp_keys;
+  std::lock_guard<std::mutex> lk(seen_mutex);
 
-  for (auto idx : outputs) {
+  for (auto idx : outputs)
+  {
+    bool isDuplicate = false;
 
-    if (idx >= tx.getOutputCount()) {
+    if (idx >= tx.getOutputCount())
+    {
       return std::make_error_code(std::errc::argument_out_of_domain);
     }
 
     auto outType = tx.getOutputType(size_t(idx));
 
-    if (
-      outType != TransactionTypes::OutputType::Key) {
+    if (outType != TransactionTypes::OutputType::Key)
+    {
       continue;
     }
 
@@ -442,7 +452,8 @@ std::error_code createTransfers(
     info.globalOutputIndex = (blockInfo.height == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) ?
       UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX : globalIdxs[idx];
 
-    if (outType == TransactionTypes::OutputType::Key) {
+    if (outType == TransactionTypes::OutputType::Key)
+    {
       uint64_t amount;
       KeyOutput out;
       tx.getOutput(idx, out, amount);
@@ -457,30 +468,58 @@ std::error_code createTransfers(
 
       assert(out.key == reinterpret_cast<const PublicKey&>(in_ephemeral.publicKey));
 
+      if (transactions_hash_seen.find(tx.getTransactionHash()) == transactions_hash_seen.end())
+      {
+        if (public_keys_seen.find(out.key) != public_keys_seen.end())
+        {
+          m_logger(WARNING, BRIGHT_RED) << "A duplicate public key was found in " << Common::podToHex(tx.getTransactionHash());
+          isDuplicate = true;
+        }
+        else
+        {
+          temp_keys.push_back(out.key);
+        }
+      }
+
       info.amount = amount;
       info.outputKey = out.key;
-
     }
 
-    transfers.push_back(info);
+    if (!isDuplicate)
+    {
+      transfers.push_back(info);
+    }
   }
 
+  transactions_hash_seen.insert(tx.getTransactionHash());
+  std::copy(temp_keys.begin(), temp_keys.end(), std::inserter(public_keys_seen, public_keys_seen.end()));
   return std::error_code();
 }
 
 std::error_code TransfersConsumer::preprocessOutputs(const TransactionBlockInfo& blockInfo, const ITransactionReader& tx, PreprocessInfo& info) {
   std::unordered_map<PublicKey, std::vector<uint32_t>> outputs;
-  findMyOutputs(tx, m_viewSecret, m_spendKeys, outputs);
+  try
+  {
+    findMyOutputs(tx, m_viewSecret, m_spendKeys, outputs);
+  }
+  catch (const std::exception& e)
+  {
+    m_logger(WARNING, BRIGHT_RED) << "Failed to process transaction: " << e.what() << ", transaction hash " << Common::podToHex(tx.getTransactionHash());
+    return std::error_code();
+  }
 
-  if (outputs.empty()) {
+  if (outputs.empty())
+  {
     return std::error_code();
   }
 
   std::error_code errorCode;
   auto txHash = tx.getTransactionHash();
-  if (blockInfo.height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
+  if (blockInfo.height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT)
+  {
     errorCode = getGlobalIndices(reinterpret_cast<const Hash&>(txHash), info.globalIdxs);
-    if (errorCode) {
+    if (errorCode)
+    {
       return errorCode;
     }
   }
@@ -489,8 +528,9 @@ std::error_code TransfersConsumer::preprocessOutputs(const TransactionBlockInfo&
     auto it = m_subscriptions.find(kv.first);
     if (it != m_subscriptions.end()) {
       auto& transfers = info.outputs[kv.first];
-      errorCode = createTransfers(it->second->getKeys(), blockInfo, tx, kv.second, info.globalIdxs, transfers);
-      if (errorCode) {
+      errorCode = createTransfers(it->second->getKeys(), blockInfo, tx, kv.second, info.globalIdxs, transfers, m_logger);
+      if (errorCode)
+      {
         return errorCode;
       }
     }
@@ -567,7 +607,7 @@ std::error_code TransfersConsumer::getGlobalIndices(const Hash& transactionHash,
   std::promise<std::error_code> prom;
   std::future<std::error_code> f = prom.get_future();
 
-  INode::Callback cb = [&prom](std::error_code ec) { 
+  INode::Callback cb = [&prom](std::error_code ec) {
     std::promise<std::error_code> p(std::move(prom));
     p.set_value(ec);
   };

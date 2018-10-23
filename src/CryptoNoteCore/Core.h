@@ -1,19 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 #include <ctime>
@@ -37,8 +25,6 @@
 #include "MessageQueue.h"
 #include "TransactionValidatiorState.h"
 #include "SwappedVector.h"
-
-#include "CryptoNoteCore/MinerConfig.h"
 
 #include <System/ContextGroup.h>
 
@@ -151,9 +137,7 @@ private:
 
   std::error_code validateSemantic(const Transaction& transaction, uint64_t& fee, uint32_t blockIndex);
   std::error_code validateTransaction(const CachedTransaction& transaction, TransactionValidatorState& state, IBlockchainCache* cache, uint64_t& fee, uint32_t blockIndex);
-  bool validateMixin(const CachedTransaction& transaction, uint64_t minMixin, uint64_t maxMixin);
-  bool validateMixin(std::vector<CachedTransaction> transactions, uint32_t height);
-  
+
   uint32_t findBlockchainSupplement(const std::vector<Crypto::Hash>& remoteBlockIds) const;
   std::vector<Crypto::Hash> getBlockHashes(uint32_t startBlockIndex, uint32_t maxCount) const;
 
@@ -195,7 +179,7 @@ private:
   void notifyOnSuccess(error::AddBlockErrorCode opResult, uint32_t previousBlockIndex, const CachedBlock& cachedBlock,
                        const IBlockchainCache& cache);
   void copyTransactionsToPool(IBlockchainCache* alt);
-  
+
   void actualizePoolTransactions();
   void actualizePoolTransactionsLite(const TransactionValidatorState& validatorState); //Checks pool txs only for double spend.
 

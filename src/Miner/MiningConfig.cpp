@@ -25,7 +25,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "Logging/ILogger.h"
 
 namespace po = boost::program_options;

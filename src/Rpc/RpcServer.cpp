@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018, The TurtleCoin Developers
 // Copyright (c) 2018, The Karai Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "RpcServer.h"
@@ -13,9 +13,8 @@
 #include "Common/StringTools.h"
 #include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/Core.h"
-#include "CryptoNoteCore/Miner.h"
 #include "CryptoNoteCore/TransactionExtra.h"
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "CryptoNoteProtocol/CryptoNoteProtocolHandlerCommon.h"
 #include "P2p/NetNode.h"
 #include "CoreRpcServerErrorCodes.h"
@@ -57,23 +56,6 @@ void serialize(BlockShortInfo& blockShortInfo, ISerializer& s) {
 namespace {
 
 template <typename Command>
-RpcServer::HandlerFunction binMethod(bool (RpcServer::*handler)(typename Command::request const&, typename Command::response&)) {
-  return [handler](RpcServer* obj, const HttpRequest& request, HttpResponse& response) {
-
-    boost::value_initialized<typename Command::request> req;
-    boost::value_initialized<typename Command::response> res;
-
-    if (!loadFromBinaryKeyValue(static_cast<typename Command::request&>(req), request.getBody())) {
-      return false;
-    }
-
-    bool result = (obj->*handler)(req, res);
-    response.setBody(storeToBinaryKeyValue(res.data()));
-    return result;
-  };
-}
-
-template <typename Command>
 RpcServer::HandlerFunction jsonMethod(bool (RpcServer::*handler)(typename Command::request const&, typename Command::response&)) {
   return [handler](RpcServer* obj, const HttpRequest& request, HttpResponse& response) {
 
@@ -98,32 +80,21 @@ RpcServer::HandlerFunction jsonMethod(bool (RpcServer::*handler)(typename Comman
 }
 
 std::unordered_map<std::string, RpcServer::RpcHandler<RpcServer::HandlerFunction>> RpcServer::s_handlers = {
-  // binary handlers
-  // These have been left behind to support legacy wallets during the transition
-  { "/getblocks.bin", { binMethod<COMMAND_RPC_GET_BLOCKS_FAST>(&RpcServer::on_get_blocks), false } },
-  { "/queryblocks.bin", { binMethod<COMMAND_RPC_QUERY_BLOCKS>(&RpcServer::on_query_blocks), false } },
-  { "/queryblockslite.bin", { binMethod<COMMAND_RPC_QUERY_BLOCKS_LITE>(&RpcServer::on_query_blocks_lite), false } },
-  { "/get_o_indexes.bin", { binMethod<COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES>(&RpcServer::on_get_indexes), false } },
-  { "/getrandom_outs.bin", { binMethod<COMMAND_RPC_GET_RANDOM_OUTPUTS_FOR_AMOUNTS>(&RpcServer::on_get_random_outs), false } },
-  { "/get_pool_changes.bin", { binMethod<COMMAND_RPC_GET_POOL_CHANGES>(&RpcServer::onGetPoolChanges), false } },
-  { "/get_pool_changes_lite.bin", { binMethod<COMMAND_RPC_GET_POOL_CHANGES_LITE>(&RpcServer::onGetPoolChangesLite), false } },
-  { "/get_block_details_by_height.bin", { binMethod<COMMAND_RPC_GET_BLOCK_DETAILS_BY_HEIGHT>(&RpcServer::onGetBlockDetailsByHeight), false } },
-  { "/get_blocks_details_by_heights.bin", { binMethod<COMMAND_RPC_GET_BLOCKS_DETAILS_BY_HEIGHTS>(&RpcServer::onGetBlocksDetailsByHeights), false } },
-  { "/get_blocks_details_by_hashes.bin", { binMethod<COMMAND_RPC_GET_BLOCKS_DETAILS_BY_HASHES>(&RpcServer::onGetBlocksDetailsByHashes), false } },
-  { "/get_blocks_hashes_by_timestamps.bin", { binMethod<COMMAND_RPC_GET_BLOCKS_HASHES_BY_TIMESTAMPS>(&RpcServer::onGetBlocksHashesByTimestamps), false } },
-  { "/get_transaction_details_by_hashes.bin", { binMethod<COMMAND_RPC_GET_TRANSACTION_DETAILS_BY_HASHES>(&RpcServer::onGetTransactionDetailsByHashes), false } },
-  { "/get_transaction_hashes_by_payment_id.bin", { binMethod<COMMAND_RPC_GET_TRANSACTION_HASHES_BY_PAYMENT_ID>(&RpcServer::onGetTransactionHashesByPaymentId), false } },
-
-  // json handlers
+  // old json handlers - remove me in 2019
   { "/getinfo", { jsonMethod<COMMAND_RPC_GET_INFO>(&RpcServer::on_get_info), true } },
   { "/getheight", { jsonMethod<COMMAND_RPC_GET_HEIGHT>(&RpcServer::on_get_height), true } },
+  { "/feeinfo", { jsonMethod<COMMAND_RPC_GET_FEE_ADDRESS>(&RpcServer::on_get_fee_info), true } },
+  { "/getpeers", { jsonMethod<COMMAND_RPC_GET_PEERS>(&RpcServer::on_get_peers), true } },
+  
+  // new json handlers
+  { "/info", { jsonMethod<COMMAND_RPC_GET_INFO>(&RpcServer::on_get_info), true } },
+  { "/height", { jsonMethod<COMMAND_RPC_GET_HEIGHT>(&RpcServer::on_get_height), true } },
+  { "/fee", { jsonMethod<COMMAND_RPC_GET_FEE_ADDRESS>(&RpcServer::on_get_fee_info), true } },
+  { "/peers", { jsonMethod<COMMAND_RPC_GET_PEERS>(&RpcServer::on_get_peers), true } },
+  
   { "/gettransactions", { jsonMethod<COMMAND_RPC_GET_TRANSACTIONS>(&RpcServer::on_get_transactions), false } },
   { "/sendrawtransaction", { jsonMethod<COMMAND_RPC_SEND_RAW_TX>(&RpcServer::on_send_raw_tx), false } },
-  { "/stop_daemon", { jsonMethod<COMMAND_RPC_STOP_DAEMON>(&RpcServer::on_stop_daemon), true } },
-  { "/feeinfo", { jsonMethod<COMMAND_RPC_GET_FEE_ADDRESS>(&RpcServer::on_get_fee_info), true } }, 
-  { "/getpeers", { jsonMethod<COMMAND_RPC_GET_PEERS>(&RpcServer::on_get_peers), true } },
-
-  // New copies of the binary handlers but in JSON
+  
   { "/getblocks", { jsonMethod<COMMAND_RPC_GET_BLOCKS_FAST>(&RpcServer::on_get_blocks), false } },
   { "/queryblocks", { jsonMethod<COMMAND_RPC_QUERY_BLOCKS>(&RpcServer::on_query_blocks), false } },
   { "/queryblockslite", { jsonMethod<COMMAND_RPC_QUERY_BLOCKS_LITE>(&RpcServer::on_query_blocks_lite), false } },
@@ -245,10 +216,6 @@ std::vector<std::string> RpcServer::getCorsDomains() {
 bool RpcServer::isCoreReady() {
   return m_core.getCurrency().isTestnet() || m_p2p.get_payload_object().isSynchronized();
 }
-
-//
-// Binary handlers
-//
 
 bool RpcServer::on_get_blocks(const COMMAND_RPC_GET_BLOCKS_FAST::request& req, COMMAND_RPC_GET_BLOCKS_FAST::response& res) {
   // TODO code duplication see InProcessNode::doGetNewBlocks()
@@ -591,18 +558,6 @@ bool RpcServer::on_get_fee_info(const COMMAND_RPC_GET_FEE_ADDRESS::request & req
   return true;
 }
 
-bool RpcServer::on_stop_daemon(const COMMAND_RPC_STOP_DAEMON::request& req, COMMAND_RPC_STOP_DAEMON::response& res) {
-  if (m_core.getCurrency().isTestnet()) {
-    m_p2p.sendStopSignal();
-    res.status = CORE_RPC_STATUS_OK;
-  } else {
-    res.status = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-    return false;
-  }
-
-  return true;
-}
-
 bool RpcServer::on_get_peers(const COMMAND_RPC_GET_PEERS::request& req, COMMAND_RPC_GET_PEERS::response& res) {
   std::list<PeerlistEntry> peers_white;
   std::list<PeerlistEntry> peers_gray;
@@ -614,6 +569,13 @@ bool RpcServer::on_get_peers(const COMMAND_RPC_GET_PEERS::request& req, COMMAND_
     stream << peer.adr;
     res.peers.push_back(stream.str());
   }
+
+  for (const auto& peer : peers_gray) {
+    std::stringstream stream;
+    stream << peer.adr;
+    res.gray_peers.push_back(stream.str());
+  }
+
   res.status = CORE_RPC_STATUS_OK;
   return true;
 }
@@ -723,11 +685,11 @@ bool RpcServer::f_on_block_json(const F_COMMAND_RPC_GET_BLOCK_DETAILS::request& 
   uint64_t maxReward = 0;
   uint64_t currentReward = 0;
   int64_t emissionChange = 0;
-  
+
   if (maxReward) {}
   if (currentReward) {}
   if (emissionChange) {}
-  
+
   size_t blockGrantedFullRewardZone = m_core.getCurrency().blockGrantedFullRewardZoneByBlockVersion(block_header.major_version);
   res.block.effectiveSizeMedian = std::max(res.block.sizeMedian, blockGrantedFullRewardZone);
 
@@ -1125,7 +1087,7 @@ bool RpcServer::on_get_block_headers_range(const COMMAND_RPC_GET_BLOCK_HEADERS_R
 	for (uint32_t h = static_cast<uint32_t>(req.start_height); h <= static_cast<uint32_t>(req.end_height); ++h) {
 		Crypto::Hash block_hash = m_core.getBlockHashByIndex(h);
 		CryptoNote::BlockTemplate blk = m_core.getBlockByHash(block_hash);
-		
+
 		res.headers.push_back(block_header_response());
 		fill_block_header_response(blk, false, h, block_hash, res.headers.back());
 

@@ -26,7 +26,7 @@
 #include <System/TcpConnection.h>
 #include <System/Timer.h>
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "LevinProtocol.h"
 #include "P2pInterfaces.h"
 #include "P2pProtocolDefinitions.h"

@@ -48,6 +48,7 @@ option(WITH_JEMALLOC "build with JeMalloc" OFF)
 option(WITH_SNAPPY "build with SNAPPY" OFF)
 option(WITH_LZ4 "build with lz4" OFF)
 option(WITH_ZLIB "build with zlib" OFF)
+option(WITH_ZSTD "build with zstd" OFF)
 if(MSVC)
   # Defaults currently different for GFLAGS.
   #  We will address find_package work a little later
@@ -69,7 +70,7 @@ else()
   endif()
 
   # No config file for this
-  option(WITH_GFLAGS "build with GFlags" ON)
+  option(WITH_GFLAGS "build with GFlags" OFF)
   if(WITH_GFLAGS)
     find_package(gflags)
     if(gflags_FOUND)
@@ -108,7 +109,6 @@ else()
     list(APPEND THIRDPARTY_LIBS ${LZ4_LIBRARIES})
   endif()
 
-  option(WITH_ZSTD "build with zstd" OFF)
   if(WITH_ZSTD)
     find_package(zstd REQUIRED)
     add_definitions(-DZSTD)
@@ -145,7 +145,7 @@ set(ROCKSDB_VERSION_PATCH ${CMAKE_MATCH_1})
 set(ROCKSDB_VERSION ${ROCKSDB_VERSION_MAJOR}.${ROCKSDB_VERSION_MINOR}.${ROCKSDB_VERSION_PATCH})
 
 
-option(WITH_MD_LIBRARY "build with MD" ON)
+option(WITH_MD_LIBRARY "build with MD" OFF)
 if(WIN32 AND MSVC)
   if(WITH_MD_LIBRARY)
     set(RUNTIME_LIBRARY "MD")
@@ -170,11 +170,13 @@ else()
   endif()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
     include(CheckCXXCompilerFlag)
-    CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
-    if(HAVE_OMIT_LEAF_FRAME_POINTER)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
+    if(ENABLE_LEAF_FRAME)
+      CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
+      if(HAVE_OMIT_LEAF_FRAME_POINTER)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
+      endif()
     endif()
   endif()
 endif()
@@ -210,39 +212,43 @@ else()
 endif()
 
 include(CheckCXXSourceCompiles)
-if(NOT MSVC)
-  set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
-endif()
-CHECK_CXX_SOURCE_COMPILES("
-#include <cstdint>
-#include <nmmintrin.h>
-#include <wmmintrin.h>
-int main() {
-  volatile uint32_t x = _mm_crc32_u32(0, 0);
-  const auto a = _mm_set_epi64x(0, 0);
-  const auto b = _mm_set_epi64x(0, 0);
-  const auto c = _mm_clmulepi64_si128(a, b, 0x00);
-  auto d = _mm_cvtsi128_si64(c);
-}
-" HAVE_SSE42)
-unset(CMAKE_REQUIRED_FLAGS)
-if(HAVE_SSE42)
-  add_definitions(-DHAVE_SSE42)
-  add_definitions(-DHAVE_PCLMUL)
-elseif(FORCE_SSE42)
-  message(FATAL_ERROR "FORCE_SSE42=ON but unable to compile with SSE4.2 enabled")
+if(ENABLE_SSE42)
+  if(NOT MSVC)
+    set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
+  endif()
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <cstdint>
+  #include <nmmintrin.h>
+  #include <wmmintrin.h>
+  int main() {
+    volatile uint32_t x = _mm_crc32_u32(0, 0);
+    const auto a = _mm_set_epi64x(0, 0);
+    const auto b = _mm_set_epi64x(0, 0);
+    const auto c = _mm_clmulepi64_si128(a, b, 0x00);
+    auto d = _mm_cvtsi128_si64(c);
+  }
+  " HAVE_SSE42)
+  unset(CMAKE_REQUIRED_FLAGS)
+  if(HAVE_SSE42)
+    add_definitions(-DHAVE_SSE42)
+    add_definitions(-DHAVE_PCLMUL)
+  elseif(FORCE_SSE42)
+    message(FATAL_ERROR "FORCE_SSE42=ON but unable to compile with SSE4.2 enabled")
+  endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES("
-#if defined(_MSC_VER) && !defined(__thread)
-#define __thread __declspec(thread)
-#endif
-int main() {
-  static __thread int tls;
-}
-" HAVE_THREAD_LOCAL)
-if(HAVE_THREAD_LOCAL)
-  add_definitions(-DROCKSDB_SUPPORT_THREAD_LOCAL)
+if(ENABLE_THREAD_LOCAL)
+  CHECK_CXX_SOURCE_COMPILES("
+  #if defined(_MSC_VER) && !defined(__thread)
+  #define __thread __declspec(thread)
+  #endif
+  int main() {
+    static __thread int tls;
+  }
+  " HAVE_THREAD_LOCAL)
+  if(HAVE_THREAD_LOCAL)
+    add_definitions(-DROCKSDB_SUPPORT_THREAD_LOCAL)
+  endif()
 endif()
 
 option(FAIL_ON_WARNINGS "Treat compile warnings as errors" ON)
@@ -307,14 +313,6 @@ if(DISABLE_STALL_NOTIF)
   add_definitions(-DROCKSDB_DISABLE_STALL_NOTIFICATION)
 endif()
 
-# Used to run CI build and tests so we can run faster
-set(OPTIMIZE_DEBUG_DEFAULT 0)        # Debug build is unoptimized by default use -DOPTDBG=1 to optimize
-
-if(DEFINED OPTDBG)
-   set(OPTIMIZE_DEBUG ${OPTDBG})
-else()
-   set(OPTIMIZE_DEBUG ${OPTIMIZE_DEBUG_DEFAULT})
-endif()
 
 if(DEFINED USE_RTTI)
   if(USE_RTTI)
@@ -322,18 +320,30 @@ if(DEFINED USE_RTTI)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DROCKSDB_USE_RTTI")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DROCKSDB_USE_RTTI")
   else()
-    message(STATUS "Disabling RTTI")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+    if(MSVC)
+      message(STATUS "Disabling RTTI in Release builds. Always on in Debug.")
+      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DROCKSDB_USE_RTTI")
+      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GR-")
+    else()
+      message(STATUS "Disabling RTTI in Release builds")
+      set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-rtti")
+      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+    endif()
   endif()
 else()
   message(STATUS "Enabling RTTI in Debug builds only (default)")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DROCKSDB_USE_RTTI")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+  if(MSVC)
+     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GR-")
+  else()
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+  endif()
 endif()
 
+# Used to run CI build and tests so we can run faster
+option(OPTDBG "Build optimized debug build with MSVC" OFF)
 if(MSVC)
-  if((${OPTIMIZE_DEBUG} EQUAL 1))
+  if(OPTDBG)
     message(STATUS "Debug optimization is enabled")
     set(CMAKE_CXX_FLAGS_DEBUG "/Oxt /${RUNTIME_LIBRARY}d")
   else()
@@ -389,7 +399,7 @@ if(NOT WIN32)
   add_definitions(-DROCKSDB_PLATFORM_POSIX -DROCKSDB_LIB_IO_POSIX)
 endif()
 
-option(WITH_FALLOCATE "build with fallocate" ON)
+option(WITH_FALLOCATE "build with fallocate" OFF)
 if(WITH_FALLOCATE)
   CHECK_CXX_SOURCE_COMPILES("
 #include <fcntl.h>
@@ -404,36 +414,44 @@ int main() {
   endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES("
-#include <fcntl.h>
-int main() {
-  int fd = open(\"/dev/null\", 0);
-  sync_file_range(fd, 0, 1024, SYNC_FILE_RANGE_WRITE);
-}
-" HAVE_SYNC_FILE_RANGE_WRITE)
-if(HAVE_SYNC_FILE_RANGE_WRITE)
-  add_definitions(-DROCKSDB_RANGESYNC_PRESENT)
+if(ENABLE_SYNC_FILE_RANGE_WRITE)
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <fcntl.h>
+  int main() {
+    int fd = open(\"/dev/null\", 0);
+    sync_file_range(fd, 0, 1024, SYNC_FILE_RANGE_WRITE);
+  }
+  " HAVE_SYNC_FILE_RANGE_WRITE)
+  if(HAVE_SYNC_FILE_RANGE_WRITE)
+    add_definitions(-DROCKSDB_RANGESYNC_PRESENT)
+  endif()
 endif()
 
-CHECK_CXX_SOURCE_COMPILES("
-#include <pthread.h>
-int main() {
-  (void) PTHREAD_MUTEX_ADAPTIVE_NP;
-}
-" HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-if(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
-  add_definitions(-DROCKSDB_PTHREAD_ADAPTIVE_MUTEX)
+if(ENABLE_PTHREAD_MUTEX_ADAPTIVE_NP)
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <pthread.h>
+  int main() {
+    (void) PTHREAD_MUTEX_ADAPTIVE_NP;
+  }
+  " HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+  if(HAVE_PTHREAD_MUTEX_ADAPTIVE_NP)
+    add_definitions(-DROCKSDB_PTHREAD_ADAPTIVE_MUTEX)
+  endif()
 endif()
 
 include(CheckCXXSymbolExists)
-check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
-if(HAVE_MALLOC_USABLE_SIZE)
-  add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
+if(ENABLE_MALLOC_USABLE_SIZE)
+  check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
+  if(HAVE_MALLOC_USABLE_SIZE)
+    add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
+  endif()
 endif()
 
-check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
-if(HAVE_SCHED_GETCPU)
-  add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
+if(ENABLE_SCHED_GETCPU)
+  check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
+  if(HAVE_SCHED_GETCPU)
+    add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
+  endif()
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
@@ -471,6 +489,7 @@ set(SOURCES
         db/db_info_dumper.cc
         db/db_iter.cc
         db/dbformat.cc
+        db/error_handler.cc
         db/event_helpers.cc
         db/experimental.cc
         db/external_sst_file_ingestion_job.cc
@@ -483,7 +502,6 @@ set(SOURCES
         db/log_reader.cc
         db/log_writer.cc
         db/malloc_stats.cc
-        db/managed_iterator.cc
         db/memtable.cc
         db/memtable_list.cc
         db/merge_helper.cc
@@ -574,6 +592,7 @@ set(SOURCES
         util/coding.cc
         util/compaction_job_stats_impl.cc
         util/comparator.cc
+        util/compression_context_cache.cc
         util/concurrent_arena.cc
         util/crc32c.cc
         util/delete_scheduler.cc
@@ -609,7 +628,6 @@ set(SOURCES
         utilities/blob_db/blob_log_reader.cc
         utilities/blob_db/blob_log_writer.cc
         utilities/blob_db/blob_log_format.cc
-        utilities/blob_db/ttl_extractor.cc
         utilities/cassandra/cassandra_compaction_filter.cc
         utilities/cassandra/format.cc
         utilities/cassandra/merge_operator.cc
@@ -657,6 +675,8 @@ set(SOURCES
         utilities/transactions/transaction_util.cc
         utilities/transactions/write_prepared_txn.cc
         utilities/transactions/write_prepared_txn_db.cc
+        utilities/transactions/write_unprepared_txn.cc
+        utilities/transactions/write_unprepared_txn_db.cc
         utilities/ttl/db_ttl_impl.cc
         utilities/write_batch_with_index/write_batch_with_index.cc
         utilities/write_batch_with_index/write_batch_with_index_internal.cc
@@ -820,7 +840,7 @@ if(NOT WIN32 OR ROCKSDB_INSTALL_ON_WINDOWS)
   )
 endif()
 
-option(WITH_TESTS "build with tests" ON)
+option(WITH_TESTS "build with tests" OFF)
 if(WITH_TESTS)
   set(TESTS
         cache/cache_test.cc
@@ -864,6 +884,7 @@ if(WITH_TESTS)
         db/db_write_test.cc
         db/dbformat_test.cc
         db/deletefile_test.cc
+        db/error_handler_test.cc
         db/obsolete_files_test.cc
         db/external_sst_file_basic_test.cc
         db/external_sst_file_test.cc
@@ -957,6 +978,7 @@ if(WITH_TESTS)
         utilities/transactions/optimistic_transaction_test.cc
         utilities/transactions/transaction_test.cc
         utilities/transactions/write_prepared_transaction_test.cc
+        utilities/transactions/write_unprepared_transaction_test.cc
         utilities/ttl/ttl_test.cc
         utilities/write_batch_with_index/write_batch_with_index_test.cc
   )
@@ -1041,10 +1063,11 @@ if(WITH_TESTS)
   endforeach(sourcefile ${C_TEST_EXES})
 endif()
 
-option(WITH_TOOLS "build with tools" ON)
+option(WITH_TOOLS "build with tools" OFF)
 if(WITH_TOOLS)
   add_subdirectory(tools)
 endif()
+
 
 if(MSVC)
   # Check for the presence of AVX and figure out the flags to use for it.

@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "IWallet.h"
 #include "TransfersContainer.h"
-#include "IWalletLegacy.h"
 #include "Common/StdInputStream.h"
 #include "Common/StdOutputStream.h"
 #include "CryptoNoteCore/CryptoNoteBasicImpl.h"
@@ -181,7 +181,7 @@ bool TransfersContainer::addTransaction(const TransactionBlockInfo& block, const
       addTransaction(block, tx);
     }
 
-    if (block.height != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+    if (block.height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
       m_currentHeight = block.height;
     }
 
@@ -230,7 +230,7 @@ bool TransfersContainer::addTransactionOutputs(const TransactionBlockInfo& block
   bool outputsAdded = false;
 
   auto txHash = tx.getTransactionHash();
-  bool transactionIsUnconfimed = (block.height == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+  bool transactionIsUnconfimed = (block.height == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
   for (const auto& transfer : transfers) {
     assert(transfer.outputInTransaction < tx.getOutputCount());
     assert(transfer.type == tx.getOutputType(transfer.outputInTransaction));
@@ -385,7 +385,7 @@ bool TransfersContainer::deleteUnconfirmedTransaction(const Hash& transactionHas
   auto it = m_transactions.find(transactionHash);
   if (it == m_transactions.end()) {
     return false;
-  } else if (it->blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+  } else if (it->blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
     return false;
   } else {
     deleteTransactionTransfers(it->transactionHash);
@@ -396,7 +396,7 @@ bool TransfersContainer::deleteUnconfirmedTransaction(const Hash& transactionHas
 
 bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& block, const Hash& transactionHash,
                                                   const std::vector<uint32_t>& globalIndices) {
-  if (block.height == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+  if (block.height == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
     auto message = "Failed to confirm transaction: block height is unconfirmed";
     m_logger(ERROR, BRIGHT_RED) << message << ", transaction hash " << transactionHash;
     throw std::invalid_argument(message);
@@ -409,7 +409,7 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
     return false;
   }
 
-  if (transactionIt->blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+  if (transactionIt->blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
     return false;
   }
 
@@ -422,7 +422,7 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
     auto availableRange = m_unconfirmedTransfers.get<ContainingTransactionIndex>().equal_range(transactionHash);
     for (auto transferIt = availableRange.first; transferIt != availableRange.second; ) {
       auto transfer = *transferIt;
-      assert(transfer.blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+      assert(transfer.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
       assert(transfer.globalOutputIndex == UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
       if (transfer.outputInTransaction >= globalIndices.size()) {
         auto message = "Failed to confirm transaction: not enough elements in globalIndices";
@@ -449,7 +449,7 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
     auto spentRange = spendingTransactionIndex.equal_range(transactionHash);
     for (auto transferIt = spentRange.first; transferIt != spentRange.second; ++transferIt) {
       auto transfer = *transferIt;
-      assert(transfer.spendingBlock.height == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+      assert(transfer.spendingBlock.height == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
 
       transfer.spendingBlock = block;
       spendingTransactionIndex.replace(transferIt, transfer);
@@ -459,16 +459,16 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
       ", tx " << transactionHash;
 
     auto txInfo = *transactionIt;
-    txInfo.blockHeight = WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT;
+    txInfo.blockHeight = WALLET_UNCONFIRMED_TRANSACTION_HEIGHT;
     txInfo.timestamp = 0;
     m_transactions.replace(transactionIt, txInfo);
 
     auto availableRange = m_availableTransfers.get<ContainingTransactionIndex>().equal_range(transactionHash);
     for (auto transferIt = availableRange.first; transferIt != availableRange.second; ) {
       TransactionOutputInformationEx unconfirmedTransfer = *transferIt;
-      assert(unconfirmedTransfer.blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+      assert(unconfirmedTransfer.blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
       assert(unconfirmedTransfer.globalOutputIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
-      unconfirmedTransfer.blockHeight = WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT;
+      unconfirmedTransfer.blockHeight = WALLET_UNCONFIRMED_TRANSACTION_HEIGHT;
       unconfirmedTransfer.transactionIndex = 0;
       unconfirmedTransfer.globalOutputIndex = UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX;
 
@@ -487,7 +487,7 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
     auto spentRange = spendingTransactionIndex.equal_range(transactionHash);
     for (auto transferIt = spentRange.first; transferIt != spentRange.second; ++transferIt) {
       auto spentTransfer = *transferIt;
-      spentTransfer.spendingBlock.height = WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT;
+      spentTransfer.spendingBlock.height = WALLET_UNCONFIRMED_TRANSACTION_HEIGHT;
       spentTransfer.spendingBlock.timestamp = 0;
       spentTransfer.spendingBlock.transactionIndex = 0;
 
@@ -507,7 +507,7 @@ void TransfersContainer::deleteTransactionTransfers(const Hash& transactionHash)
   auto& spendingTransactionIndex = m_spentTransfers.get<SpendingTransactionIndex>();
   auto spentTransfersRange = spendingTransactionIndex.equal_range(transactionHash);
   for (auto it = spentTransfersRange.first; it != spentTransfersRange.second;) {
-    assert(it->blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+    assert(it->blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
     assert(it->globalOutputIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
 
     auto result = m_availableTransfers.emplace(static_cast<const TransactionOutputInformationEx&>(*it));
@@ -548,7 +548,7 @@ void TransfersContainer::deleteTransactionTransfers(const Hash& transactionHash)
  */
 void TransfersContainer::copyToSpent(const TransactionBlockInfo& block, const ITransactionReader& tx, size_t inputIndex,
                                      const TransactionOutputInformationEx& output) {
-  assert(output.blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+  assert(output.blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
   assert(output.globalOutputIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
 
   SpentTransactionOutput spentOutput;
@@ -562,8 +562,8 @@ void TransfersContainer::copyToSpent(const TransactionBlockInfo& block, const IT
 }
 
 std::vector<Hash> TransfersContainer::detach(uint32_t height) {
-  // This method expects that WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT is a big positive number
-  assert(height < WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+  // This method expects that WALLET_UNCONFIRMED_TRANSACTION_HEIGHT is a big positive number
+  assert(height < WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
 
   std::lock_guard<std::mutex> lk(m_mutex);
 
@@ -575,7 +575,7 @@ std::vector<Hash> TransfersContainer::detach(uint32_t height) {
     --it;
 
     bool doDelete = false;
-    if (it->blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+    if (it->blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
       auto range = spendingTransactionIndex.equal_range(it->transactionHash);
       for (auto spentTransferIt = range.first; spentTransferIt != range.second; ++spentTransferIt) {
         if (spentTransferIt->blockHeight >= height) {
@@ -722,7 +722,7 @@ bool TransfersContainer::getTransactionInformation(const Hash& transactionHash, 
   if (amountOut != nullptr) {
     *amountOut = 0;
 
-    if (info.blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+    if (info.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
       auto unconfirmedOutputsRange = m_unconfirmedTransfers.get<ContainingTransactionIndex>().equal_range(transactionHash);
       for (auto it = unconfirmedOutputsRange.first; it != unconfirmedOutputsRange.second; ++it) {
         *amountOut += it->amount;
@@ -808,7 +808,7 @@ void TransfersContainer::getUnconfirmedTransactions(std::vector<Crypto::Hash>& t
   std::lock_guard<std::mutex> lk(m_mutex);
   transactions.clear();
   for (auto& element : m_transactions) {
-    if (element.blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+    if (element.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
       transactions.push_back(*reinterpret_cast<const Crypto::Hash*>(&element.transactionHash));
     }
   }
@@ -891,11 +891,11 @@ void TransfersContainer::load(std::istream& in) {
 void TransfersContainer::repair() {
   size_t deletedInputCount = 0;
   for (auto it = m_spentTransfers.begin(); it != m_spentTransfers.end();) {
-    assert(it->blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+    assert(it->blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
     assert(it->globalOutputIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
 
     if (m_transactions.count(it->spendingTransactionHash) == 0) {
-      bool isInputConfirmed = it->spendingBlock.height != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT;
+      bool isInputConfirmed = it->spendingBlock.height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT;
       m_logger(WARNING, BRIGHT_YELLOW) << "Orphan input found, remove it and return output spent by them to available outputs:\n" <<
         "    input       " <<
         ": block " << std::setw(7) << (isInputConfirmed ? static_cast<int32_t>(it->spendingBlock.height) : -1) <<
@@ -924,7 +924,7 @@ void TransfersContainer::repair() {
 
   size_t deletedUnconfirmedOutputCount = 0;
   for (auto it = m_unconfirmedTransfers.begin(); it != m_unconfirmedTransfers.end();) {
-    assert(it->blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+    assert(it->blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
 
     if (m_transactions.count(it->transactionHash) == 0) {
       m_logger(WARNING, BRIGHT_YELLOW) << "Orphan unconfirmed output found, remove it" <<
@@ -948,7 +948,7 @@ void TransfersContainer::repair() {
 
   size_t deletedAvailableOutputCount = 0;
   for (auto it = m_availableTransfers.begin(); it != m_availableTransfers.end();) {
-    assert(it->blockHeight != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT);
+    assert(it->blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
 
     if (m_transactions.count(it->transactionHash) == 0) {
       m_logger(WARNING, BRIGHT_YELLOW) << "Orphan output found, remove it" <<
@@ -997,7 +997,7 @@ bool TransfersContainer::isSpendTimeUnlocked(uint64_t unlockTime) const {
 
 bool TransfersContainer::isIncluded(const TransactionOutputInformationEx& info, uint32_t flags) const {
   uint32_t state;
-  if (info.blockHeight == WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT || !isSpendTimeUnlocked(info.unlockTime)) {
+  if (info.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT || !isSpendTimeUnlocked(info.unlockTime)) {
     state = IncludeStateLocked;
   } else if (m_currentHeight < info.blockHeight + m_transactionSpendableAge) {
     state = IncludeStateSoftLocked;

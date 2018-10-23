@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
+#include "IWallet.h"
 #include "TransfersSubscription.h"
-#include "IWalletLegacy.h"
 #include "CryptoNoteCore/CryptoNoteBasicImpl.h"
 
 using namespace Crypto;
@@ -43,7 +43,7 @@ void TransfersSubscription::onBlockchainDetach(uint32_t height) {
 }
 
 void TransfersSubscription::onError(const std::error_code& ec, uint32_t height) {
-  if (height != WALLET_LEGACY_UNCONFIRMED_TRANSACTION_HEIGHT) {
+  if (height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT) {
   transfers.detach(height);
   }
   m_observerManager.notify(&ITransfersObserver::onError, this, height, ec);

@@ -14,10 +14,13 @@
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
 #include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/Currency.h"
-#include "CryptoNoteCore/VerificationContext.h"
 #include "P2p/LevinProtocol.h"
 
 #include <Common/FormatTools.h>
+
+#include <config/Ascii.h>
+#include <config/CryptoNoteConfig.h>
+#include <config/WalletConfig.h>
 
 using namespace Logging;
 using namespace Common;
@@ -613,31 +616,14 @@ bool CryptoNoteProtocolHandler::on_connection_synchronized() {
   if (m_synchronized.compare_exchange_strong(val_expected, true)) {
     logger(Logging::INFO)
       << ENDL ;
-      logger(INFO, BRIGHT_MAGENTA) << "===[ TurtleCoin Tip! ]=============================" << ENDL ;
-      logger(INFO, WHITE) << " Always exit TurtleCoind and zedwallet with the \"exit\" command to preserve your chain and wallet data." << ENDL ;
+      logger(INFO, BRIGHT_MAGENTA) << "===[ " + std::string(CryptoNote::CRYPTONOTE_NAME) + " Tip! ]=============================" << ENDL ;
+      logger(INFO, WHITE) << " Always exit " + WalletConfig::daemonName + " and " + WalletConfig::walletName + " with the \"exit\" command to preserve your chain and wallet data." << ENDL ;
       logger(INFO, WHITE) << " Use the \"help\" command to see a list of available commands." << ENDL ;
-      logger(INFO, WHITE) << " Use the \"export_keys\" command in zedwallet to display your keys for restoring a corrupted wallet." << ENDL ;
-      logger(INFO, WHITE) << " If you need more assistance, visit the #HELP channel in the TurtleCoin Discord Chat - http://chat.turtlecoin.lol" << ENDL ;
+      logger(INFO, WHITE) << " Use the \"backup\" command in " + WalletConfig::walletName + " to display your keys/seed for restoring a corrupted wallet." << ENDL ;
+      logger(INFO, WHITE) << " If you need more assistance, you can contact us for support at " + WalletConfig::contactLink << ENDL;
       logger(INFO, BRIGHT_MAGENTA) << "===================================================" << ENDL << ENDL ;
 
-      logger(INFO, BRIGHT_GREEN) <<
-
-      #ifdef _WIN32
-      "\n _______         _   _       _____      _        \n"
-              "|__   __|       | | | |     / ____|    (_)      \n"
-              "   | |_   _ _ __| |_| | ___| |     ___  _ _ __  \n"
-              "   | | | | | '__| __| |/ _ \\ |    / _ \\| | '_ \\ \n"
-              "   | | |_| | |  | |_| |  __/ |___| (_) | | | | |\n"
-      "   |_|\\__ _|_|   \\__|_|\\___|\\_____\\___/|_|_| |_|\n" << ENDL;
-      #else
-      "\n                                                                            \n"
-        "████████╗██╗  ██╗██████╗ ████████╗██╗    ██████╗ █████╗ █████╗ ██╗███╗   ██╗\n"
-        "╚══██╔══╝██║  ██║██╔══██╗╚══██╔══╝██║    ██╔═══╝██╔═══╝██╔══██╗██║████╗  ██║\n"
-        "   ██║   ██║  ██║██████╔╝   ██║   ██║    ████╗  ██║    ██║  ██║██║██╔██╗ ██║\n"
-        "   ██║   ██║  ██║██╔══██╗   ██║   ██║    ██╔═╝  ██║    ██║  ██║██║██║╚██╗██║\n"
-        "   ██║   ╚█████╔╝██║  ██║   ██║   ██████╗██████╗╚█████╗╚█████╔╝██║██║ ╚████║\n"
-        "   ╚═╝    ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝╚═════╝ ╚════╝ ╚════╝ ╚═╝╚═╝  ╚═══╝\n" << ENDL;
-      #endif
+      logger(INFO, BRIGHT_GREEN) << asciiArt << ENDL;
 
     m_observerManager.notify(&ICryptoNoteProtocolObserver::blockchainSynchronized, m_core.getTopBlockIndex());
   }

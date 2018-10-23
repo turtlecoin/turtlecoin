@@ -30,7 +30,7 @@ namespace Mnemonics
 
     /* Note - if the returned string is not empty, it is an error message, and
        the returned secret key is not initialized. */
-    std::tuple<std::string, Crypto::SecretKey> MnemonicToPrivateKey(const std::vector<std::string> words)
+    std::tuple<std::string, Crypto::SecretKey> MnemonicToPrivateKey(std::vector<std::string> words)
     {
         Crypto::SecretKey key;
 
@@ -41,17 +41,20 @@ namespace Mnemonics
         {
             std::stringstream str;
 
-            const std::string words = len == 1 ? "word" : "words";
+            /* Write out "word" or "words" to make the grammar of the next sentence
+               correct, based on if we have 1 or more words */
+            const std::string wordPlural = len == 1 ? "word" : "words";
 
             str << "Mnemonic seed is wrong length - It should be 25 words "
-                << "long, but it is " << len << " " << words << " long!";
+                << "long, but it is " << len << " " << wordPlural << " long!";
 
             return std::make_tuple(str.str(), key);
         }
 
         /* All words must be present in the word list */
-        for (const auto &word : words)
+        for (auto &word : words)
         {
+            std::transform(word.begin(), word.end(), word.begin(), ::tolower);
             if (std::find(WordList::English.begin(),
                           WordList::English.end(), word) == WordList::English.end())
             {

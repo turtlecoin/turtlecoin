@@ -6,11 +6,15 @@
 
 #include <algorithm>
 
+#include <memory>
+
 #include <string>
 
 #include <vector>
 
 #include <iterator>
+
+#include <zedwallet/Types.h>
 
 void confirmPassword(const std::string &walletPass, const std::string &msg="");
 
@@ -28,6 +32,9 @@ bool confirm(const std::string &msg, const bool defaultReturn);
 bool startsWith(const std::string &str, const std::string &substring);
 
 bool fileExists(const std::string &filename);
+
+bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
+              bool &alreadyShuttingDown);
 
 std::string formatAmountBasic(const uint64_t amount);
 std::string formatAmount(const uint64_t amount);

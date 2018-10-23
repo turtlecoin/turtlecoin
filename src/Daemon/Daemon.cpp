@@ -18,14 +18,12 @@
 #include "Common/PathTools.h"
 #include "Common/Util.h"
 #include "crypto/hash.h"
-#include "CryptoNoteCheckpoints.h"
 #include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/Core.h"
 #include "CryptoNoteCore/Currency.h"
 #include "CryptoNoteCore/DatabaseBlockchainCache.h"
 #include "CryptoNoteCore/DatabaseBlockchainCacheFactory.h"
 #include "CryptoNoteCore/MainChainStorage.h"
-#include "CryptoNoteCore/MinerConfig.h"
 #include "CryptoNoteCore/RocksDBWrapper.h"
 #include "CryptoNoteProtocol/CryptoNoteProtocolHandler.h"
 #include "P2p/NetNode.h"
@@ -35,6 +33,9 @@
 #include "Serialization/BinaryInputStreamSerializer.h"
 #include "Serialization/BinaryOutputStreamSerializer.h"
 #include "version.h"
+
+#include <config/Ascii.h>
+#include <config/CryptoNoteCheckpoints.h>
 
 #include <Logging/LoggerManager.h>
 
@@ -91,13 +92,13 @@ currencyBuilder.isBlockexplorer(blockexplorer_mode);
     } else {
   CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction();
   std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
-  std::cout << "Replace the current GENESIS_COINBASE_TX_HEX line in src/CryptoNoteConfig.h with this one:" << std::endl;
+  std::cout << "Replace the current GENESIS_COINBASE_TX_HEX line in src/config/CryptoNoteConfig.h with this one:" << std::endl;
   std::cout << "const char GENESIS_COINBASE_TX_HEX[] = \"" << tx_hex << "\";" << std::endl;
     }
   } else {
       CryptoNote::Transaction tx = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction(targets);
       std::string tx_hex = Common::toHex(CryptoNote::toBinaryArray(tx));
-      std::cout << "Replace the current GENESIS_COINBASE_TX_HEX line in src/CryptoNoteConfig.h with this one:" << std::endl;
+      std::cout << "Replace the current GENESIS_COINBASE_TX_HEX line in src/config/CryptoNoteConfig.h with this one:" << std::endl;
       std::cout << "const char GENESIS_COINBASE_TX_HEX[] = \"" << tx_hex << "\";" << std::endl;
   }
   return;
@@ -229,24 +230,8 @@ int main(int argc, char* argv[])
     // configure logging
     logManager.configure(buildLoggerConfiguration(cfgLogLevel, cfgLogFile));
 
-    logger(INFO, BRIGHT_GREEN) <<
-
-      #ifdef _WIN32
-      "\n _______         _   _       _____      _        \n"
-              "|__   __|       | | | |     / ____|    (_)      \n"
-              "   | |_   _ _ __| |_| | ___| |     ___  _ _ __  \n"
-              "   | | | | | '__| __| |/ _ \\ |    / _ \\| | '_ \\ \n"
-              "   | | |_| | |  | |_| |  __/ |___| (_) | | | | |\n"
-      "   |_|\\__ _|_|   \\__|_|\\___|\\_____\\___/|_|_| |_|\n" << ENDL;
-      #else
-      "\n                                                                            \n"
-        "████████╗██╗  ██╗██████╗ ████████╗██╗    ██████╗ █████╗ █████╗ ██╗███╗   ██╗\n"
-        "╚══██╔══╝██║  ██║██╔══██╗╚══██╔══╝██║    ██╔═══╝██╔═══╝██╔══██╗██║████╗  ██║\n"
-        "   ██║   ██║  ██║██████╔╝   ██║   ██║    ████╗  ██║    ██║  ██║██║██╔██╗ ██║\n"
-        "   ██║   ██║  ██║██╔══██╗   ██║   ██║    ██╔═╝  ██║    ██║  ██║██║██║╚██╗██║\n"
-        "   ██║   ╚█████╔╝██║  ██║   ██║   ██████╗██████╗╚█████╗╚█████╔╝██║██║ ╚████║\n"
-        "   ╚═╝    ╚════╝ ╚═╝  ╚═╝   ╚═╝   ╚═════╝╚═════╝ ╚════╝ ╚════╝ ╚═╝╚═╝  ╚═══╝\n" << ENDL;
-      #endif
+    /* Yay, ascii art ^__^ */
+    logger(INFO, BRIGHT_GREEN) << asciiArt << ENDL;
 
     logger(INFO, BRIGHT_GREEN) << "Welcome to " << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION_LONG;
 

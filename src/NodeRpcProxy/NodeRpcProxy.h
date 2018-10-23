@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -53,6 +53,8 @@ public:
   virtual uint32_t getLocalBlockCount() const override;
   virtual uint32_t getKnownBlockCount() const override;
   virtual uint64_t getLastLocalBlockTimestamp() const override;
+  virtual uint64_t getNodeHeight() const override;
+
   virtual std::string getInfo() override;
   virtual void getFeeInfo() override;
 
@@ -75,7 +77,7 @@ public:
   virtual void isSynchronized(bool& syncStatus, const Callback& callback) override;
   virtual std::string feeAddress() override;
   virtual uint32_t feeAmount() override;
-  
+
   unsigned int rpcTimeout() const { return m_rpcTimeout; }
   void rpcTimeout(unsigned int val) { m_rpcTimeout = val; }
 
@@ -146,6 +148,7 @@ private:
   bool m_stop = false;
   std::atomic<size_t> m_peerCount;
   std::atomic<uint32_t> m_networkHeight;
+  std::atomic<uint64_t> m_nodeHeight;
 
   BlockHeaderInfo lastLocalBlockHeaderInfo;
   //protect it with mutex if decided to add worker threads

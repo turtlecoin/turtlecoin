@@ -2,7 +2,7 @@
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2014-2018, The Aeon Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -32,12 +32,16 @@ namespace Crypto {
     return h;
   }
 
-  inline void cn_slow_hash_v6(const void *data, size_t length, Hash &hash) {
+  inline void cn_slow_hash_v0(const void *data, size_t length, Hash &hash) {
     cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 0, 0);
   }
 
-  inline void cn_slow_hash_v7(const void *data, size_t length, Hash &hash) {
+  inline void cn_slow_hash_v1(const void *data, size_t length, Hash &hash) {
     cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 1, 0);
+  }
+
+  inline void cn_slow_hash_v2(const void *data, size_t length, Hash &hash) {
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 0, 2, 0);
   }
 
   inline void cn_lite_slow_hash_v0(const void *data, size_t length, Hash &hash) {
@@ -46,6 +50,10 @@ namespace Crypto {
 
   inline void cn_lite_slow_hash_v1(const void *data, size_t length, Hash &hash) {
     cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 1, 0);
+  }
+
+  inline void cn_lite_slow_hash_v2(const void *data, size_t length, Hash &hash) {
+    cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 2, 0);
   }
 
   inline void tree_hash(const Hash *hashes, size_t count, Hash &root_hash) {

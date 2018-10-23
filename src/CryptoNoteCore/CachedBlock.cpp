@@ -6,7 +6,7 @@
 
 #include "CachedBlock.h"
 #include <Common/Varint.h>
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "CryptoNoteTools.h"
 
 using namespace Crypto;
@@ -51,11 +51,11 @@ const Crypto::Hash& CachedBlock::getBlockLongHash() const {
     if (block.majorVersion == BLOCK_MAJOR_VERSION_1) {
       const auto& rawHashingBlock = getBlockHashingBinaryArray();
       blockLongHash = Hash();
-      cn_slow_hash_v6(rawHashingBlock.data(), rawHashingBlock.size(), blockLongHash.get());
+      cn_slow_hash_v0(rawHashingBlock.data(), rawHashingBlock.size(), blockLongHash.get());
     } else if ((block.majorVersion == BLOCK_MAJOR_VERSION_2) || (block.majorVersion == BLOCK_MAJOR_VERSION_3)) {
       const auto& rawHashingBlock = getParentBlockHashingBinaryArray(true);
       blockLongHash = Hash();
-      cn_slow_hash_v6(rawHashingBlock.data(), rawHashingBlock.size(), blockLongHash.get());
+      cn_slow_hash_v0(rawHashingBlock.data(), rawHashingBlock.size(), blockLongHash.get());
     } else if (block.majorVersion >= BLOCK_MAJOR_VERSION_4) {
       const auto& rawHashingBlock = getParentBlockHashingBinaryArray(true);
       blockLongHash = Hash();

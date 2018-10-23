@@ -8,7 +8,7 @@
 #include "P2pProtocolTypes.h"
 
 #include "crypto/crypto.h"
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "CryptoNoteCore/CoreStatistics.h"
 
 // new serialization

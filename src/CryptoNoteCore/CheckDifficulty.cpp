@@ -23,7 +23,7 @@
 
 #include "Common/int-util.h"
 #include "crypto/hash.h"
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "CheckDifficulty.h"
 
 namespace CryptoNote {

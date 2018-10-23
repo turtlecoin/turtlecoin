@@ -20,7 +20,7 @@
 
 #include <boost/filesystem.hpp>
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 
 #ifdef WIN32
 #ifndef NOMINMAX

@@ -30,7 +30,7 @@
 #include <zedwallet/Tools.h>
 #include <zedwallet/Transfer.h>
 #include <zedwallet/Types.h>
-#include <zedwallet/WalletConfig.h>
+#include <config/WalletConfig.h>
 
 void changePassword(std::shared_ptr<WalletInfo> walletInfo)
 {
@@ -106,12 +106,38 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
              bool viewWallet)
 {
     const uint64_t unconfirmedBalance = wallet.getPendingBalance();
-    const uint64_t confirmedBalance = wallet.getActualBalance();
-    const uint64_t totalBalance = unconfirmedBalance + confirmedBalance;
+    uint64_t confirmedBalance = wallet.getActualBalance();
 
     const uint32_t localHeight = node.getLastLocalBlockHeight();
     const uint32_t remoteHeight = node.getLastKnownBlockHeight();
     const uint32_t walletHeight = wallet.getBlockCount();
+
+    /* We can make a better approximation of the view wallet balance if we
+       ignore fusion transactions.
+       See https://github.com/turtlecoin/turtlecoin/issues/531 */
+    if (viewWallet)
+    {
+        /* Not sure how to verify if a transaction is unlocked or not via
+           the WalletTransaction type, so this is technically not correct,
+           we might be including locked balance. */
+        confirmedBalance = 0;
+
+        size_t numTransactions = wallet.getTransactionCount();
+        
+        for (size_t i = 0; i < numTransactions; i++)
+        {
+            const CryptoNote::WalletTransaction t = wallet.getTransaction(i);
+
+            /* Fusion transactions are zero fee, skip them. Coinbase
+               transactions are also zero fee, include them. */
+            if (t.fee != 0 || t.isBase)
+            {
+                confirmedBalance += t.totalAmount;
+            }
+        }
+    }
+
+    const uint64_t totalBalance = unconfirmedBalance + confirmedBalance;
 
     std::cout << "Available balance: "
               << SuccessMsg(formatAmount(confirmedBalance)) << std::endl
@@ -460,6 +486,14 @@ void listTransfers(bool incoming, bool outgoing,
     for (size_t i = 0; i < numTransactions; i++)
     {
         const CryptoNote::WalletTransaction t = wallet.getTransaction(i);
+
+        /* Is a fusion transaction (on a view only wallet). It appears to have
+           an incoming amount, because we can't detract the outputs (can't
+           decrypt them) */
+        if (t.fee == 0 && !t.isBase)
+        {
+            continue;
+        }
 
         if (t.totalAmount < 0 && outgoing)
         {

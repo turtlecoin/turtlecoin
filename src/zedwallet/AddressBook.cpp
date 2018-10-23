@@ -17,7 +17,7 @@
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/Tools.h>
 #include <zedwallet/Transfer.h>
-#include <zedwallet/WalletConfig.h>
+#include <config/WalletConfig.h>
 
 const std::string getAddressBookName(AddressBook addressBook)
 {

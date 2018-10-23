@@ -21,7 +21,7 @@
 
 #include <zedwallet/ColouredMsg.h>
 #include <zedwallet/PasswordContainer.h>
-#include <zedwallet/WalletConfig.h>
+#include <config/WalletConfig.h>
 
 void confirmPassword(const std::string &walletPass, const std::string &msg)
 {
@@ -304,4 +304,70 @@ bool fileExists(const std::string &filename)
 {
     /* Bool conversion needs an explicit cast */
     return static_cast<bool>(std::ifstream(filename));
+}
+
+bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
+              bool &alreadyShuttingDown)
+{
+    if (alreadyShuttingDown)
+    {
+        std::cout << "Patience little turtle, we're already shutting down!" 
+                  << std::endl;
+
+        return false;
+    }
+
+    std::cout << InformationMsg("Shutting down...") << std::endl;
+
+    alreadyShuttingDown = true;
+
+    bool finishedShutdown = false;
+
+    std::thread timelyShutdown([&finishedShutdown]
+    {
+        const auto startTime = std::chrono::system_clock::now();
+
+        /* Has shutdown finished? */
+        while (!finishedShutdown)
+        {
+            const auto currentTime = std::chrono::system_clock::now();
+
+            /* If not, wait for a max of 20 seconds then force exit. */
+            if ((currentTime - startTime) > std::chrono::seconds(20))
+            {
+                std::cout << WarningMsg("Wallet took too long to save! "
+                                        "Force closing.") << std::endl
+                          << "Bye." << std::endl;
+                exit(0);
+            }
+
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+
+    if (walletInfo != nullptr)
+    {
+        std::cout << InformationMsg("Saving wallet file...") << std::endl;
+
+        walletInfo->wallet.save();
+
+        std::cout << InformationMsg("Shutting down wallet interface...")
+                  << std::endl;
+
+        walletInfo->wallet.shutdown();
+    }
+
+    std::cout << InformationMsg("Shutting down node connection...")
+              << std::endl;
+
+    node.shutdown();
+
+    finishedShutdown = true;
+
+    /* Wait for shutdown watcher to finish */
+    timelyShutdown.join();
+
+    std::cout << "Bye." << std::endl;
+    
+    return true;
 }

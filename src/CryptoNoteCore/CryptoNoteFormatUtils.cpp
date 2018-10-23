@@ -30,7 +30,7 @@
 #include "TransactionExtra.h"
 #include "CryptoNoteTools.h"
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 
 using namespace Logging;
 using namespace Crypto;

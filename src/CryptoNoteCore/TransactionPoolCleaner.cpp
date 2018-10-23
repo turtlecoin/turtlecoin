@@ -1,21 +1,11 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #include "TransactionPoolCleaner.h"
+#include "Core.h"
+#include "Mixins.h"
 
 #include "Common/StringTools.h"
 
@@ -81,7 +71,7 @@ std::vector<Crypto::Hash> TransactionPoolCleanWrapper::getTransactionHashesByPay
   return transactionPool->getTransactionHashesByPaymentId(paymentId);
 }
 
-std::vector<Crypto::Hash> TransactionPoolCleanWrapper::clean() {
+std::vector<Crypto::Hash> TransactionPoolCleanWrapper::clean(const uint32_t height) {
   try {
     uint64_t currentTime = timeProvider->now();
     auto transactionHashes = transactionPool->getTransactionHashes();
@@ -91,6 +81,23 @@ std::vector<Crypto::Hash> TransactionPoolCleanWrapper::clean() {
       uint64_t transactionAge = currentTime - transactionPool->getTransactionReceiveTime(hash);
       if (transactionAge >= timeout) {
         logger(Logging::DEBUGGING) << "Deleting transaction " << Common::podToHex(hash) << " from pool";
+        recentlyDeletedTransactions.emplace(hash, currentTime);
+        transactionPool->removeTransaction(hash);
+        deletedTransactions.emplace_back(std::move(hash));
+      }
+
+      CachedTransaction transaction = transactionPool->getTransaction(hash);
+      std::vector<CachedTransaction> transactions;
+      transactions.emplace_back(transaction);
+
+      bool success;
+      std::string error;
+
+      std::tie(success, error) = Mixins::validate(transactions, height);
+      if (!success)
+      {
+        logger(Logging::DEBUGGING) << "Deleting invalid transaction " << Common::podToHex(hash) << " from pool." <<
+          error;
         recentlyDeletedTransactions.emplace(hash, currentTime);
         transactionPool->removeTransaction(hash);
         deletedTransactions.emplace_back(std::move(hash));
