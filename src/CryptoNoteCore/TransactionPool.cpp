@@ -85,7 +85,7 @@ bool TransactionPool::pushTransaction(CachedTransaction&& transaction, Transacti
   mergeStates(poolState, transactionState);
 
   logger(Logging::DEBUGGING) << "pushed transaction " << pendingTx.getTransactionHash() << " to pool";
-  return transactionHashIndex.emplace(std::move(pendingTx)).second;
+  return transactionHashIndex.insert(std::move(pendingTx)).second;
 }
 
 const CachedTransaction& TransactionPool::getTransaction(const Crypto::Hash& hash) const {

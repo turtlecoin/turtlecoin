@@ -26,6 +26,7 @@
 #include <boost/optional.hpp>
 #include <numeric>
 #include <unordered_set>
+#include <memory>
 
 using namespace Crypto;
 

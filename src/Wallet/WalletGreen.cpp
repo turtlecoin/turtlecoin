@@ -793,7 +793,7 @@ void WalletGreen::loadSpendKeys() {
     wallet.pendingBalance = 0;
     wallet.container = reinterpret_cast<CryptoNote::ITransfersContainer*>(i); //dirty hack. container field must be unique
 
-    m_walletsContainer.emplace_back(std::move(wallet));
+    m_walletsContainer.push_back(std::move(wallet));
   }
 }
 
@@ -3538,7 +3538,7 @@ void WalletGreen::filterOutTransactions(WalletTransactions& transactions, Wallet
         ++transferIdx;
       }
     } else {
-      transactions.emplace_back(transaction);
+      transactions.push_back(transaction);
 
       while (transferIdx < m_transfers.size() && m_transfers[transferIdx].first == i) {
         transfers.emplace_back(i - cancelledTransactions, m_transfers[transferIdx].second);

@@ -217,7 +217,7 @@ void TransfersContainer::addTransaction(const TransactionBlockInfo& block, const
     txInfo.paymentId = NULL_HASH;
   }
 
-  auto result = m_transactions.emplace(std::move(txInfo));
+  auto result = m_transactions.insert(std::move(txInfo));
   (void)result; // Disable unused warning
   assert(result.second);
 }
@@ -252,7 +252,7 @@ bool TransfersContainer::addTransactionOutputs(const TransactionBlockInfo& block
     info.visible = true;
 
     if (transferIsUnconfirmed) {
-      auto result = m_unconfirmedTransfers.emplace(std::move(info));
+      auto result = m_unconfirmedTransfers.insert(std::move(info));
       (void)result; // Disable unused warning
       assert(result.second);
     } else {
@@ -282,7 +282,7 @@ bool TransfersContainer::addTransactionOutputs(const TransactionBlockInfo& block
         }
       }
 
-      auto result = m_availableTransfers.emplace(std::move(info));
+      auto result = m_availableTransfers.insert(std::move(info));
       (void)result; // Disable unused warning
       assert(result.second);
     }
@@ -434,7 +434,7 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
       transfer.transactionIndex = block.transactionIndex;
       transfer.globalOutputIndex = globalIndices[transfer.outputInTransaction];
 
-      auto result = m_availableTransfers.emplace(std::move(transfer));
+      auto result = m_availableTransfers.insert(std::move(transfer));
       (void)result; // Disable unused warning
       assert(result.second);
 
@@ -472,7 +472,7 @@ bool TransfersContainer::markTransactionConfirmed(const TransactionBlockInfo& bl
       unconfirmedTransfer.transactionIndex = 0;
       unconfirmedTransfer.globalOutputIndex = UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX;
 
-      auto result = m_unconfirmedTransfers.emplace(std::move(unconfirmedTransfer));
+      auto result = m_unconfirmedTransfers.insert(std::move(unconfirmedTransfer));
       (void)result; // Disable unused warning
       assert(result.second);
 
@@ -510,7 +510,7 @@ void TransfersContainer::deleteTransactionTransfers(const Hash& transactionHash)
     assert(it->blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
     assert(it->globalOutputIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
 
-    auto result = m_availableTransfers.emplace(static_cast<const TransactionOutputInformationEx&>(*it));
+    auto result = m_availableTransfers.insert(static_cast<const TransactionOutputInformationEx&>(*it));
     assert(result.second);
     it = spendingTransactionIndex.erase(it);
 
@@ -556,7 +556,7 @@ void TransfersContainer::copyToSpent(const TransactionBlockInfo& block, const IT
   spentOutput.spendingBlock = block;
   spentOutput.spendingTransactionHash = tx.getTransactionHash();
   spentOutput.inputInTransaction = static_cast<uint32_t>(inputIndex);
-  auto result = m_spentTransfers.emplace(std::move(spentOutput));
+  auto result = m_spentTransfers.insert(std::move(spentOutput));
   (void)result; // Disable unused warning
   assert(result.second);
 }
@@ -908,7 +908,7 @@ void TransfersContainer::repair() {
         ", transaction hash " << it->transactionHash <<
         ", output " << std::setw(2) << it->outputInTransaction;
 
-      auto result = m_availableTransfers.emplace(static_cast<const TransactionOutputInformationEx&>(*it));
+      auto result = m_availableTransfers.insert(static_cast<const TransactionOutputInformationEx&>(*it));
       assert(result.second);
       it = m_spentTransfers.erase(it);
 

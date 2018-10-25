@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8.6)
+# We need 3.8 for set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.8)
 
 project(TurtleCoin)
 
@@ -17,7 +18,6 @@ set(CMAKE_SKIP_INSTALL_RULES OFF FORCE)
 set(CMAKE_SKIP_PACKAGE_ALL_DEPENDENCY ON FORCE)
 set(CMAKE_SUPPRESS_REGENERATION ON)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(FIND_BOOST_VERSION 1.55)
 
 # Enable c++17
 set(CMAKE_CXX_STANDARD 17)
@@ -180,7 +180,7 @@ endif()
 ## Go get us some static BOOST libraries
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost ${FIND_BOOST_VERSION} REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options)
+find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options)
 message(STATUS "Boost Found: ${Boost_INCLUDE_DIRS}")
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 if(APPLE)

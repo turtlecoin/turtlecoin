@@ -272,7 +272,7 @@ void WalletSerializerV2::loadTransactions(CryptoNote::ISerializer& serializer) {
     tx.extra = dto.extra;
     tx.isBase = dto.isBase;
 
-    m_transactions.get<RandomAccessIndex>().emplace_back(std::move(tx));
+    m_transactions.get<RandomAccessIndex>().push_back(std::move(tx));
   }
 }
 
@@ -357,7 +357,7 @@ void WalletSerializerV2::loadUnlockTransactionsJobs(CryptoNote::ISerializer& ser
       job.transactionHash = dto.transactionHash;
       job.container = walletIt->container;
 
-      index.emplace(std::move(job));
+      index.insert(std::move(job));
     }
   }
 }
