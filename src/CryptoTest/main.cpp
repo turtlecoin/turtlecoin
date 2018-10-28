@@ -183,10 +183,42 @@ int main(int argc, char** argv) {
     startTimer = std::chrono::high_resolution_clock::now();
     for (auto i = 0; i < PERFORMANCE_ITERATIONS; i++)
     {
+      cn_slow_hash_v1(rawData.data(), rawData.size(), hash);
+    }
+    elapsedTime = std::chrono::high_resolution_clock::now() - startTimer;
+    std::cout << "cn_slow_hash_v1: " << (PERFORMANCE_ITERATIONS / std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count()) << " H/s\n";
+
+    startTimer = std::chrono::high_resolution_clock::now();
+    for (auto i = 0; i < PERFORMANCE_ITERATIONS; i++)
+    {
+      cn_slow_hash_v2(rawData.data(), rawData.size(), hash);
+    }
+    elapsedTime = std::chrono::high_resolution_clock::now() - startTimer;
+    std::cout << "cn_slow_hash_v2: " << (PERFORMANCE_ITERATIONS / std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count()) << " H/s\n";
+
+    startTimer = std::chrono::high_resolution_clock::now();
+    for (auto i = 0; i < PERFORMANCE_ITERATIONS; i++)
+    {
       cn_lite_slow_hash_v0(rawData.data(), rawData.size(), hash);
     }
     elapsedTime = std::chrono::high_resolution_clock::now() - startTimer;
     std::cout << "cn_lite_slow_hash_v0: " << (PERFORMANCE_ITERATIONS / std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count()) << " H/s\n";
+
+    startTimer = std::chrono::high_resolution_clock::now();
+    for (auto i = 0; i < PERFORMANCE_ITERATIONS; i++)
+    {
+      cn_lite_slow_hash_v1(rawData.data(), rawData.size(), hash);
+    }
+    elapsedTime = std::chrono::high_resolution_clock::now() - startTimer;
+    std::cout << "cn_lite_slow_hash_v1: " << (PERFORMANCE_ITERATIONS / std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count()) << " H/s\n";
+
+    startTimer = std::chrono::high_resolution_clock::now();
+    for (auto i = 0; i < PERFORMANCE_ITERATIONS; i++)
+    {
+      cn_lite_slow_hash_v2(rawData.data(), rawData.size(), hash);
+    }
+    elapsedTime = std::chrono::high_resolution_clock::now() - startTimer;
+    std::cout << "cn_lite_slow_hash_v2: " << (PERFORMANCE_ITERATIONS / std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count()) << " H/s\n";
   }
   catch (std::exception& e)
   {
