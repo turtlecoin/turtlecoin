@@ -39,7 +39,7 @@ bool ConfigurationManager::init(int argc, char** argv)
     }
     catch (std::exception& e)
     {
-      std::cout << std::endl << "There was an error parsing the specified configuration file. Please check the file and try again"
+      std::cout << std::endl << "There was an error parsing the specified configuration file. Please check the file and try again: "
         << std::endl << e.what() << std::endl;
       exit(1);
     }

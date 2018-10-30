@@ -285,6 +285,84 @@ namespace PaymentService {
     }
   };
 
+   inline void handleIniConfig(std::ifstream& data, WalletServiceConfiguration& config){
+    // find key=value pair, respect whitespace before/after "="
+    // g0: full match, g1: match key, g2: match value
+    static const std::regex cfgItem{R"x(\s*(\S[^ \t=]*)\s*=\s*((\s?\S+)+)\s*$)x"};
+    
+    // comments, first non space starts with # or ;
+    static const std::regex cfgComment{R"x(\s*[;#])x"};
+    std::smatch item;
+    std::string cfgKey, cfgValue;
+
+    for (std::string line; std::getline(data, line);)
+    {
+      if (line.empty() || std::regex_match(line, item, cfgComment))
+      {
+        continue;
+      }
+      else if (std::regex_match(line, item, cfgItem))
+      {
+        if (item.size() == 4) {
+          cfgKey = item[1].str();
+          cfgValue = item[2].str();
+          if(cfgKey.compare("daemon-address") == 0)
+          {
+            config.daemonAddress = cfgValue;
+          }
+          else if (cfgKey.compare("daemon-port")  == 0)
+          {
+            config.daemonPort = stoi(cfgValue);
+          }
+          else if (cfgKey.compare("log-file")  == 0)
+          {
+            config.logFile = cfgValue;
+          }
+          else if (cfgKey.compare("log-level")  == 0)
+          {
+            config.logLevel = stoi(cfgValue);
+          }
+          else if (cfgKey.compare("container-file")  == 0)
+          {
+            config.containerFile = cfgValue;
+          }
+          else if (cfgKey.compare("container-password")  == 0)
+          {
+            config.containerPassword = cfgValue;
+          }
+          else if (cfgKey.compare("bind-address")  == 0)
+          {
+            config.bindAddress = cfgValue;
+          }
+          else if (cfgKey.compare("bind-port")  == 0)
+          {
+            config.bindPort = stoi(cfgValue);
+          }
+          else if (cfgKey.compare("enable-cors")  == 0)
+          {
+            config.corsHeader = cfgValue;
+          }
+          else if (cfgKey.compare("rpc-legacy-security")  == 0)
+          {
+            config.legacySecurity = cfgValue.at(0) == '1' ? true : false;
+          }
+          else  if (cfgKey.compare("rpc-password") == 0)
+          {
+            config.rpcPassword = cfgValue;
+          }
+          else if (cfgKey.compare("server-root")  == 0)
+          {
+            config.serverRoot = cfgValue;
+          }
+          else
+          {
+            throw std::runtime_error("One or more options in your config file was invalid!");
+          }
+        }
+      }
+    }
+  };
+
   inline void handleSettings(const std::string configFile, WalletServiceConfiguration& config)
   {
     std::ifstream data(configFile);
@@ -294,67 +372,79 @@ namespace PaymentService {
       throw std::runtime_error("The --config-file you specified does not exist, please check the filename and try again.");
     }
 
-    json j;
-    data >> j;
+    try{
 
-    if (j.find("daemon-address") != j.end())
-    {
-      config.daemonAddress = j["daemon-address"].get<std::string>();
+      json j;
+      data >> j;
+
+      if (j.find("daemon-address") != j.end())
+      {
+        config.daemonAddress = j["daemon-address"].get<std::string>();
+      }
+
+      if (j.find("daemon-port") != j.end())
+      {
+        config.daemonPort = j["daemon-port"].get<int>();
+      }
+
+      if (j.find("log-file") != j.end())
+      {
+        config.logFile = j["log-file"].get<std::string>();
+      }
+
+      if (j.find("log-level") != j.end())
+      {
+        config.logLevel = j["log-level"].get<int>();
+      }
+
+      if (j.find("container-file") != j.end())
+      {
+        config.containerFile = j["container-file"].get<std::string>();
+      }
+
+      if (j.find("container-password") != j.end())
+      {
+        config.containerPassword = j["container-password"].get<std::string>();
+      }
+
+      if (j.find("bind-address") != j.end())
+      {
+        config.bindAddress = j["bind-address"].get<std::string>();
+      }
+
+      if (j.find("bind-port") != j.end())
+      {
+        config.bindPort = j["bind-port"].get<int>();
+      }
+
+      if (j.find("enable-cors") != j.end())
+      {
+        config.corsHeader = j["enable-cors"].get<std::string>();
+      }
+
+      if (j.find("rpc-legacy-security") != j.end())
+      {
+        config.legacySecurity = j["rpc-legacy-security"].get<bool>();
+      }
+
+      if (j.find("rpc-password") != j.end())
+      {
+        config.rpcPassword = j["rpc-password"].get<std::string>();
+      }
+
+      if (j.find("server-root") != j.end())
+      {
+        config.serverRoot = j["server-root"].get<std::string>();
+      }
     }
-
-    if (j.find("daemon-port") != j.end())
+    catch (std::exception& e) 
     {
-      config.daemonPort = j["daemon-port"].get<int>();
-    }
-
-    if (j.find("log-file") != j.end())
-    {
-      config.logFile = j["log-file"].get<std::string>();
-    }
-
-    if (j.find("log-level") != j.end())
-    {
-      config.logLevel = j["log-level"].get<int>();
-    }
-
-    if (j.find("container-file") != j.end())
-    {
-      config.containerFile = j["container-file"].get<std::string>();
-    }
-
-    if (j.find("container-password") != j.end())
-    {
-      config.containerPassword = j["container-password"].get<std::string>();
-    }
-
-    if (j.find("bind-address") != j.end())
-    {
-      config.bindAddress = j["bind-address"].get<std::string>();
-    }
-
-    if (j.find("bind-port") != j.end())
-    {
-      config.bindPort = j["bind-port"].get<int>();
-    }
-
-    if (j.find("enable-cors") != j.end())
-    {
-      config.corsHeader = j["enable-cors"].get<std::string>();
-    }
-
-    if (j.find("rpc-legacy-security") != j.end())
-    {
-      config.legacySecurity = j["rpc-legacy-security"].get<bool>();
-    }
-
-    if (j.find("rpc-password") != j.end())
-    {
-      config.rpcPassword = j["rpc-password"].get<std::string>();
-    }
-
-    if (j.find("server-root") != j.end())
-    {
-      config.serverRoot = j["server-root"].get<std::string>();
+        // when failed reading as json, try reading it as old flat ini
+        // clear eof + fail bits
+        data.clear();
+        // reread from start
+        data.seekg(0, std::ios::beg);
+        handleIniConfig(data, config);
     }
   }
 
