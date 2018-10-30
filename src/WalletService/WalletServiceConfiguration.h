@@ -294,7 +294,7 @@ namespace PaymentService {
     static const std::regex cfgComment{R"x(\s*[;#])x"};
     std::smatch item;
     std::string cfgKey;
-    std::string stdcfgValue;
+    std::string cfgValue;
 
     for (std::string line; std::getline(data, line);)
     {
