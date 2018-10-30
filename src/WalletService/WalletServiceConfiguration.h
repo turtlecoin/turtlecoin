@@ -285,7 +285,7 @@ namespace PaymentService {
     }
   };
 
-   inline void handleIniConfig(std::ifstream& data, WalletServiceConfiguration& config){
+  inline void handleIniConfig(std::ifstream& data, WalletServiceConfiguration& config){
     // find key=value pair, respect whitespace before/after "="
     // g0: full match, g1: match key, g2: match value
     static const std::regex cfgItem{R"x(\s*(\S[^ \t=]*)\s*=\s*((\s?\S+)+)\s*$)x"};
@@ -314,7 +314,11 @@ namespace PaymentService {
           }
           else if (cfgKey.compare("daemon-port")  == 0)
           {
-            config.daemonPort = std::stoi(cfgValue);
+            try{
+              config.daemonPort = std::stoi(cfgValue);
+            }catch(std::exception& e){
+              throw std::runtime_error(std::string("Invalid value for ") + cfgKey);
+            }
           }
           else if (cfgKey.compare("log-file")  == 0)
           {
@@ -322,7 +326,11 @@ namespace PaymentService {
           }
           else if (cfgKey.compare("log-level")  == 0)
           {
-            config.logLevel = std::stoi(cfgValue);
+            try{
+              config.logLevel = std::stoi(cfgValue);
+            }catch(std::exception& e){
+              throw std::runtime_error(std::string("Invalid value for ") + cfgKey);
+            }
           }
           else if (cfgKey.compare("container-file")  == 0)
           {
@@ -338,7 +346,11 @@ namespace PaymentService {
           }
           else if (cfgKey.compare("bind-port")  == 0)
           {
-            config.bindPort = std::stoi(cfgValue);
+            try{
+              config.bindPort = std::stoi(cfgValue);  
+            }catch(std::exception& e){
+              throw std::runtime_error(std::string("Invalid value for ") + cfgKey);
+            }
           }
           else if (cfgKey.compare("enable-cors")  == 0)
           {
@@ -358,7 +370,13 @@ namespace PaymentService {
           }
           else
           {
-            throw std::runtime_error("One or more options in your config file was invalid!");
+            for (auto c: cfgKey) {
+              if (static_cast<unsigned char>(c) > 127) {
+                  throw std::runtime_error(std::string("Bad/invalid config file"));
+              }
+            }
+
+            throw std::runtime_error(std::string("Unknown option: ") + cfgKey);  
           }
         }
       }
@@ -374,10 +392,17 @@ namespace PaymentService {
       throw std::runtime_error("The --config-file you specified does not exist, please check the filename and try again.");
     }
 
+    json j;
+    bool isValidJson = true;
+
     try
     {
-      json j;
       data >> j;
+    }catch(json::parse_error& e){
+      isValidJson = false;
+    }
+
+    if(isValidJson){
 
       if (j.find("daemon-address") != j.end())
       {
@@ -439,7 +464,7 @@ namespace PaymentService {
         config.serverRoot = j["server-root"].get<std::string>();
       }
     }
-    catch (std::exception& e) 
+    else
     {
         // when failed reading as json, try reading it as old flat ini
         // clear eof + fail bits
