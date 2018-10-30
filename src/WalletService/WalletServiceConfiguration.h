@@ -293,7 +293,8 @@ namespace PaymentService {
     // comments, first non space starts with # or ;
     static const std::regex cfgComment{R"x(\s*[;#])x"};
     std::smatch item;
-    std::string cfgKey, cfgValue;
+    std::string cfgKey;
+    std::string stdcfgValue;
 
     for (std::string line; std::getline(data, line);)
     {
@@ -306,6 +307,7 @@ namespace PaymentService {
         if (item.size() == 4) {
           cfgKey = item[1].str();
           cfgValue = item[2].str();
+          
           if(cfgKey.compare("daemon-address") == 0)
           {
             config.daemonAddress = cfgValue;
@@ -372,8 +374,8 @@ namespace PaymentService {
       throw std::runtime_error("The --config-file you specified does not exist, please check the filename and try again.");
     }
 
-    try{
-
+    try
+    {
       json j;
       data >> j;
 
