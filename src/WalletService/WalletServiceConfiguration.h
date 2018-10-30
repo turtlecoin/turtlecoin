@@ -314,7 +314,7 @@ namespace PaymentService {
           }
           else if (cfgKey.compare("daemon-port")  == 0)
           {
-            config.daemonPort = stoi(cfgValue);
+            config.daemonPort = std::stoi(cfgValue);
           }
           else if (cfgKey.compare("log-file")  == 0)
           {
@@ -322,7 +322,7 @@ namespace PaymentService {
           }
           else if (cfgKey.compare("log-level")  == 0)
           {
-            config.logLevel = stoi(cfgValue);
+            config.logLevel = std::stoi(cfgValue);
           }
           else if (cfgKey.compare("container-file")  == 0)
           {
@@ -338,7 +338,7 @@ namespace PaymentService {
           }
           else if (cfgKey.compare("bind-port")  == 0)
           {
-            config.bindPort = stoi(cfgValue);
+            config.bindPort = std::stoi(cfgValue);
           }
           else if (cfgKey.compare("enable-cors")  == 0)
           {
