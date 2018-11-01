@@ -148,9 +148,9 @@ namespace {
 
     options.add_options("Database")
       ("db-max-open-files", "Number of files that can be used by the database at one time", cxxopts::value<int>()->default_value(std::to_string(config.dbMaxOpenFiles)), "#")
-      ("db-read-buffer-size", "Size of the database read cache in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbReadCacheSize)), "#")
+      ("db-read-buffer-size", "Size of the database read cache in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbReadCacheSize / 1024 / 1024)), "#")
       ("db-threads", "Number of background threads used for compaction and flush operations", cxxopts::value<int>()->default_value(std::to_string(config.dbThreads)), "#")
-      ("db-write-buffer-size", "Size of the database write buffer in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbWriteBufferSize)), "#");
+      ("db-write-buffer-size", "Size of the database write buffer in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbWriteBufferSize / 1024 / 1024)), "#");
 
     try
     {
@@ -228,7 +228,7 @@ namespace {
 
       if (cli.count("db-read-buffer-size") > 0)
       {
-        config.dbReadCacheSize = cli["db-read-buffer-size"].as<int>();
+        config.dbReadCacheSize = cli["db-read-buffer-size"].as<int>() * 1024 * 1024;
       }
 
       if (cli.count("db-threads") > 0)
@@ -238,7 +238,7 @@ namespace {
 
       if (cli.count("db-write-buffer-size") > 0)
       {
-        config.dbWriteBufferSize = cli["db-write-buffer-size"].as<int>();
+        config.dbWriteBufferSize = cli["db-write-buffer-size"].as<int>() * 1024 * 1024;
       }
 
       if (cli.count("local-ip") > 0)
@@ -384,7 +384,8 @@ namespace {
 
     if (j.find("db-read-buffer-size") != j.end())
     {
-      config.dbReadCacheSize = j["db-read-buffer-size"].get<int>();
+      /* convert to bytes */
+      config.dbReadCacheSize = j["db-read-buffer-size"].get<int>() * 1024 * 1024;
     }
 
     if (j.find("db-threads") != j.end())
@@ -394,7 +395,8 @@ namespace {
 
     if (j.find("db-write-buffer-size") != j.end())
     {
-      config.dbWriteBufferSize = j["db-write-buffer-size"].get<int>();
+      /* convert to bytes */
+      config.dbWriteBufferSize = j["db-write-buffer-size"].get<int>() * 1024 * 1024;
     }
 
     if (j.find("allow-local-ip") != j.end())
