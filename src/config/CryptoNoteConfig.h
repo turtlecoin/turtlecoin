@@ -245,8 +245,11 @@ const uint64_t P2P_DEFAULT_INVOKE_TIMEOUT                    = 60 * 2 * 1000; //
 const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          // 5 seconds
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "";
 
-const uint64_t DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE         = 256;
-const uint64_t DATABASE_READ_BUFFER_MB_DEFAULT_SIZE          = 10;
+// 256 MB
+const uint64_t DATABASE_WRITE_BUFFER_DEFAULT_SIZE         = 256 * 1024 * 1024;
+// 10 MB
+const uint64_t DATABASE_READ_BUFFER_DEFAULT_SIZE          = 10 * 1024 * 1024;
+
 const uint32_t DATABASE_DEFAULT_MAX_OPEN_FILES               = 100;
 const uint16_t DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT     = 2;
 
