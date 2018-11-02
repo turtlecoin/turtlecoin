@@ -13,12 +13,16 @@
 
 using namespace CryptoNote;
 
+namespace {
+  const uint64_t MEGABYTE = 1024 * 1024;
+}
+
 DataBaseConfig::DataBaseConfig() :
   dataDir(Tools::getDefaultDataDirectory()),
   backgroundThreadsCount(DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT),
   maxOpenFiles(DATABASE_DEFAULT_MAX_OPEN_FILES),
-  writeBufferSize(DATABASE_WRITE_BUFFER_DEFAULT_SIZE),
-  readCacheSize(DATABASE_READ_BUFFER_DEFAULT_SIZE),
+  writeBufferSize(DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE * MEGABYTE),
+  readCacheSize(DATABASE_READ_BUFFER_MB_DEFAULT_SIZE * MEGABYTE),
   testnet(false) {
 }
 

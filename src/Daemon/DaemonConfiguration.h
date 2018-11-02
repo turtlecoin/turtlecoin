@@ -43,7 +43,7 @@ namespace DaemonConfig {
       printGenesisTx = false;
       dumpConfig = false; 
     }
-    
+
     std::string dataDirectory;
     std::string logFile;
     std::string feeAddress;
@@ -80,7 +80,7 @@ namespace DaemonConfig {
     bool osVersion;
     bool printGenesisTx;
     bool dumpConfig;
-  };  
+  };
 
   DaemonConfiguration initConfiguration(const char* path);
 
