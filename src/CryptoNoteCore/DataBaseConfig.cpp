@@ -31,8 +31,8 @@ bool DataBaseConfig::init(const std::string dataDirectory, const int backgroundT
   dataDir = dataDirectory;
   backgroundThreadsCount = backgroundThreads;
   maxOpenFiles = openFiles;
-  writeBufferSize = writeBuffer;
-  readCacheSize = readCache;
+  writeBufferSize = writeBuffer * MEGABYTE;
+  readCacheSize = readCache * MEGABYTE;
 
   if (dataDir == Tools::getDefaultDataDirectory())
   {
