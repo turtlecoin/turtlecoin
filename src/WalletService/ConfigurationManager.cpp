@@ -25,7 +25,7 @@ ConfigurationManager::ConfigurationManager() {
 
 bool ConfigurationManager::init(int argc, char** argv)
 {
-  serviceConfig = initConfiguration();
+  WalletServiceConfiguration serviceConfig;
 
   // Load in the initial CLI options
   handleSettings(argc, argv, serviceConfig);
@@ -33,6 +33,27 @@ bool ConfigurationManager::init(int argc, char** argv)
   // If the user passed in the --config-file option, we need to handle that first
   if (!serviceConfig.configFile.empty())
   {
+
+    // check if it's old config format & try converting into new format
+    try
+    {
+      if(updateConfigFormat(serviceConfig.configFile, serviceConfig))
+      {
+        std::cout << std::endl << "Updating configuration file format..." << std::endl;
+        asFile(serviceConfig, serviceConfig.configFile);
+      }
+    }
+    catch(std::runtime_error& e)
+    {
+      std::cout << std::endl << "There was an error parsing the specified configuration file. Please check the file and try again:"
+        << std::endl << e.what() << std::endl;
+      exit(1);
+    }
+    catch(std::exception& e)
+    {
+      // pass
+    }
+
     try
     {
       handleSettings(serviceConfig.configFile, serviceConfig);
@@ -55,7 +76,8 @@ bool ConfigurationManager::init(int argc, char** argv)
   }
   else if (!serviceConfig.outputFile.empty())
   {
-    try {
+    try 
+    {
       asFile(serviceConfig, serviceConfig.outputFile);
       std::cout << CryptoNote::getProjectCLIHeader() << "Configuration saved to: " << serviceConfig.outputFile << std::endl;
       exit(0);
@@ -136,6 +158,6 @@ bool ConfigurationManager::init(int argc, char** argv)
   }
 
   return true;
-}
+  }
 
 }
