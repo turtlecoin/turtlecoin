@@ -264,7 +264,7 @@ int main(int argc, char* argv[])
       config.seedNodes);
 
     DataBaseConfig dbConfig;
-    dbConfig.init(config.dataDirectory, config.dbThreads, config.dbMaxOpenFiles, config.dbWriteBufferSize, config.dbReadCacheSize);
+    dbConfig.init(config.dataDirectory, config.dbThreads, config.dbMaxOpenFiles, config.dbWriteBufferSizeMB, config.dbReadCacheSizeMB);
 
     if (dbConfig.isConfigFolderDefaulted())
     {

@@ -14,7 +14,7 @@ namespace CryptoNote {
 class DataBaseConfig {
 public:
   DataBaseConfig();
-  bool init(const std::string dataDirectory, const int backgroundThreads, const int maxOpenFiles, const int writeBufferSize, const int readCacheSize);
+  bool init(const std::string dataDirectory, const int backgroundThreads, const int maxOpenFiles, const int writeBufferSizeMB, const int readCacheSizeMB);
 
   bool isConfigFolderDefaulted() const;
   std::string getDataDir() const;

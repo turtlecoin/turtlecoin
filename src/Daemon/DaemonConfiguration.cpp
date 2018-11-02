@@ -73,9 +73,9 @@ namespace DaemonConfig{
 
     options.add_options("Database")
       ("db-max-open-files", "Number of files that can be used by the database at one time", cxxopts::value<int>()->default_value(std::to_string(config.dbMaxOpenFiles)), "#")
-      ("db-read-buffer-size", "Size of the database read cache in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbReadCacheSize)), "#")
+      ("db-read-buffer-size", "Size of the database read cache in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbReadCacheSizeMB)), "#")
       ("db-threads", "Number of background threads used for compaction and flush operations", cxxopts::value<int>()->default_value(std::to_string(config.dbThreads)), "#")
-      ("db-write-buffer-size", "Size of the database write buffer in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbWriteBufferSize)), "#");
+      ("db-write-buffer-size", "Size of the database write buffer in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbWriteBufferSizeMB)), "#");
 
     try
     {
@@ -153,7 +153,7 @@ namespace DaemonConfig{
 
       if (cli.count("db-read-buffer-size") > 0)
       {
-        config.dbReadCacheSize = cli["db-read-buffer-size"].as<int>();
+        config.dbReadCacheSizeMB = cli["db-read-buffer-size"].as<int>();
       }
 
       if (cli.count("db-threads") > 0)
@@ -163,7 +163,7 @@ namespace DaemonConfig{
 
       if (cli.count("db-write-buffer-size") > 0)
       {
-        config.dbWriteBufferSize = cli["db-write-buffer-size"].as<int>();
+        config.dbWriteBufferSizeMB = cli["db-write-buffer-size"].as<int>();
       }
 
       if (cli.count("local-ip") > 0)
@@ -351,7 +351,7 @@ namespace DaemonConfig{
         {
           try
           {
-            config.dbReadCacheSize = std::stoi(cfgValue);
+            config.dbReadCacheSizeMB = std::stoi(cfgValue);
             updated = true;
           }
           catch(std::exception& e)
@@ -375,7 +375,7 @@ namespace DaemonConfig{
         {
           try
           {
-            config.dbWriteBufferSize = std::stoi(cfgValue);
+            config.dbWriteBufferSizeMB = std::stoi(cfgValue);
             updated = true;
           }
           catch(std::exception& e)
@@ -568,7 +568,7 @@ namespace DaemonConfig{
 
     if (j.find("db-read-buffer-size") != j.end())
     {
-      config.dbReadCacheSize = j["db-read-buffer-size"].get<int>();
+      config.dbReadCacheSizeMB = j["db-read-buffer-size"].get<int>();
     }
 
     if (j.find("db-threads") != j.end())
@@ -578,7 +578,7 @@ namespace DaemonConfig{
 
     if (j.find("db-write-buffer-size") != j.end())
     {
-      config.dbWriteBufferSize = j["db-write-buffer-size"].get<int>();
+      config.dbWriteBufferSizeMB = j["db-write-buffer-size"].get<int>();
     }
 
     if (j.find("allow-local-ip") != j.end())
@@ -666,9 +666,9 @@ namespace DaemonConfig{
       {"log-level", config.logLevel},
       {"no-console", config.noConsole},
       {"db-max-open-files", config.dbMaxOpenFiles},
-      {"db-read-buffer-size", (config.dbReadCacheSize / 1024 / 1024)},
+      {"db-read-buffer-size", (config.dbReadCacheSizeMB)},
       {"db-threads", config.dbThreads},
-      {"db-write-buffer-size", (config.dbWriteBufferSize / 1024 / 1024)},
+      {"db-write-buffer-size", (config.dbWriteBufferSizeMB)},
       {"allow-local-ip", config.localIp},
       {"hide-my-port", config.hideMyPort},
       {"p2p-bind-ip", config.p2pInterface},

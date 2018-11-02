@@ -25,9 +25,9 @@ namespace DaemonConfig {
       logFile = logfile.str();
       logLevel = Logging::WARNING;
       dbMaxOpenFiles = CryptoNote::DATABASE_DEFAULT_MAX_OPEN_FILES;
-      dbReadCacheSize = CryptoNote::DATABASE_READ_BUFFER_MB_DEFAULT_SIZE;
+      dbReadCacheSizeMB = CryptoNote::DATABASE_READ_BUFFER_MB_DEFAULT_SIZE;
       dbThreads = CryptoNote::DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT;
-      dbWriteBufferSize = CryptoNote::DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE;
+      dbWriteBufferSizeMB = CryptoNote::DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE;
       p2pInterface = "0.0.0.0";
       p2pPort = CryptoNote::P2P_DEFAULT_PORT;
       p2pExternalPort = 0;
@@ -64,8 +64,8 @@ namespace DaemonConfig {
     int p2pExternalPort;
     int dbThreads;
     int dbMaxOpenFiles;
-    int dbWriteBufferSize;
-    int dbReadCacheSize;
+    int dbWriteBufferSizeMB;
+    int dbReadCacheSizeMB;
 
     bool noConsole;
     bool enableBlockExplorer;

@@ -26,13 +26,13 @@ DataBaseConfig::DataBaseConfig() :
   testnet(false) {
 }
 
-bool DataBaseConfig::init(const std::string dataDirectory, const int backgroundThreads, const int openFiles, const int writeBuffer, const int readCache)
+bool DataBaseConfig::init(const std::string dataDirectory, const int backgroundThreads, const int openFiles, const int writeBufferMB, const int readCacheMB)
 {
   dataDir = dataDirectory;
   backgroundThreadsCount = backgroundThreads;
   maxOpenFiles = openFiles;
-  writeBufferSize = writeBuffer * MEGABYTE;
-  readCacheSize = readCache * MEGABYTE;
+  writeBufferSize = writeBufferMB * MEGABYTE;
+  readCacheSize = readCacheMB * MEGABYTE;
 
   if (dataDir == Tools::getDefaultDataDirectory())
   {
