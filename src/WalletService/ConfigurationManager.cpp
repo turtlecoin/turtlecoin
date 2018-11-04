@@ -12,7 +12,6 @@
 #include <config/CliHeader.h>
 #include <config/CryptoNoteConfig.h>
 
-#include "Common/CommandLine.h"
 #include "Common/Util.h"
 #include "crypto/hash.h"
 #include "Logging/ILogger.h"

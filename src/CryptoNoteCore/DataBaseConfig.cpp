@@ -6,7 +6,6 @@
 #include "DataBaseConfig.h"
 
 #include <Common/Util.h>
-#include "Common/CommandLine.h"
 #include "Common/StringTools.h"
 #include "crypto/crypto.h"
 #include <config/CryptoNoteConfig.h>
