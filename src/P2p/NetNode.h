@@ -110,9 +110,6 @@ namespace CryptoNote
   class NodeServer :  public IP2pEndpoint
   {
   public:
-
-    static void init_options();
-
     NodeServer(System::Dispatcher& dispatcher, CryptoNote::CryptoNoteProtocolHandler& payload_handler, Logging::ILogger& log);
 
     bool run();

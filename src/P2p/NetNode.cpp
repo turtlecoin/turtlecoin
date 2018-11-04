@@ -244,13 +244,6 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
 
 #undef INVOKE_HANDLER
 
-  //-----------------------------------------------------------------------------------
-
-  void NodeServer::init_options()
-  {
-  }
-  //-----------------------------------------------------------------------------------
-
   bool NodeServer::init_config() {
     try {
       std::string state_file_path = m_config_folder + "/" + m_p2p_state_filename;
