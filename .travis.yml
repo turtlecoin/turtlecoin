@@ -4,6 +4,36 @@ language: cpp
 matrix:
   include:
 
+  # Windows
+  - os: windows
+    env:
+    - LABEL="windows-msvc"
+    - _DEPLOYABLE="true"
+    - MSBUILD_PATH="/C/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/MSBuild/15.0/Bin"
+    install:
+    - wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.7z
+    - 7z x boost_1_68_0.7z -o/C/local
+    - cd "/C/local/boost_1_68_0"
+    - ./bootstrap.bat
+    - ./b2.exe --with-chrono --with-date_time --with-filesystem --with-program_options --with-regex --with-serialization --with-system --with-thread runtime-link=static
+    - cd "/C/Users/travis/build/turtlecoin/turtlecoin"
+    script:
+    - export PATH=$MSBUILD_PATH:$PATH
+    - mkdir build && cd build
+    - cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT="/C/local/boost_1_68_0"
+    - MSBuild.exe TurtleCoin.sln
+    before_deploy:
+    - if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
+    - cd "src/Release"
+    - rmdir /s /q turtlecoin-${TRAVIS_TAG}
+    - mkdir turtlecoin-${TRAVIS_TAG}
+    - copy *.exe turtlecoin-${TRAVIS_TAG}
+    - copy ..\..\..\LICENSE turtlecoin-${TRAVIS_TAG}
+    - 7z a turtlecoin-${TRAVIS_TAG}-${LABEL}.zip turtlecoin-${TRAVIS_TAG}
+    - mkdir builds
+    - copy turtlecoin-${TRAVIS_TAG}-${LABEL}.zip builds
+    - cd ..
+
   # Ubuntu, g++-8
   - os: linux
     compiler: gcc
@@ -18,6 +48,17 @@ matrix:
     env:
     - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
     - LABEL="linux"
+    - _DEPLOYABLE="true"
+    - STRIP="strip"
+
+  ## OSX, g++-8
+  - os: osx
+    osx_image: xcode10
+    compiler: gcc
+    env:
+    # Need to uninstall oclint to get newer gcc installed https://github.com/travis-ci/travis-ci/issues/8826
+    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - LABEL="osx"
     - _DEPLOYABLE="true"
     - STRIP="strip"
 
@@ -69,17 +110,6 @@ matrix:
     env:
     - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
     - LABEL="linux-clang-5"
-    - STRIP="strip"
-
-  ## OSX, g++-8
-  - os: osx
-    osx_image: xcode10
-    compiler: gcc
-    env:
-    # Need to uninstall oclint to get newer gcc installed https://github.com/travis-ci/travis-ci/issues/8826
-    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-    - LABEL="osx"
-    - _DEPLOYABLE="true"
     - STRIP="strip"
 
   # OSX, g++-7
@@ -160,6 +190,7 @@ deploy:
       secure: XyM7qAnX9Slm4bX7WYPOnWGRuXfuwc7wnJHb7wN4WGy+GefXm3xSFoNIZdmTY1XnJ2HpIAXuuHL2aey8KKt+gEXbhp882z6m9jZWOdog3cjObdRCsOuETNE0rbXasDvntdhm1Jn7PM+mkN6O9GoqRVaEnyyIwCGEFA7Cc/d2KgtqpTu0NB6nIPZbTgJnudHDQYEWl0kwA1UjkYrEIRlAOFTaRHBUsUHPTFW8758mgerYitLm27BNJTbo74lYe65iExtguKFN/VRVXDl08/2i3gnAxzWJ2K0qUZu7PD8ePd+2UC1wwE2Dc1uiTOmhDgVeuQO6k0tuipjIA+dh5r7A8/YPyOX4zoZ4ac+g1mWSRO1VS/WQ2Uvq2XU848KACLJ+ky3kHWZKowTSl/v3+3rU4c6kqYJHShkH5XlFp503yRqlaqOow4ogz020eIEHEFCgwLhNxZSEUzKP4rEZPpboZyNJbW7lL92UxMZDZm1zKMvnrY5zi2HltYzIQyOjDvmXUxQD8blz1C66lqfBc6mApjDRZVLUcfTT4WIGAWc6opTYJAJpCg34zGAQgXoFaOG0cH3ApsREmBd1dg9d8cJscedy9qZjn3HsmibmdRiGctB5o08JrjfM5sZVk620iKFgovis7q7XfIKb3rQdSfsiRwsfZEwhE2lvY3bf9B0VMrU=
     file:
       - turtlecoin-${TRAVIS_TAG}-${LABEL}.tar.gz
+      - turtlecoin-${TRAVIS_TAG}-${LABEL}.zip
     skip_cleanup: true
     on:
       repo: turtlecoin/turtlecoin
