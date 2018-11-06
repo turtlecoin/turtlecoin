@@ -20,8 +20,7 @@ matrix:
     script:
     - export PATH=$MSBUILD_PATH:$PATH
     - mkdir build && cd build
-    - cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT="/C/local/boost_1_68_0"
-    - MSBuild.exe TurtleCoin.sln
+    - ../scripts/win-install.bat
     before_deploy:
     - if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
     - cd "src/Release"
