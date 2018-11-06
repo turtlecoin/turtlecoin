@@ -25,11 +25,11 @@ matrix:
     - if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
     - cd "src/Release"
     - mkdir turtlecoin-${TRAVIS_TAG}
-    - copy *.exe turtlecoin-${TRAVIS_TAG}
-    - copy ..\..\..\LICENSE turtlecoin-${TRAVIS_TAG}
+    - cp *.exe turtlecoin-${TRAVIS_TAG}
+    - cp ../../../LICENSE turtlecoin-${TRAVIS_TAG}
     - 7z a turtlecoin-${TRAVIS_TAG}-${LABEL}.zip turtlecoin-${TRAVIS_TAG}
     - mkdir builds
-    - copy turtlecoin-${TRAVIS_TAG}-${LABEL}.zip builds
+    - cp turtlecoin-${TRAVIS_TAG}-${LABEL}.zip builds
     - cd ..
 
   # Ubuntu, g++-8
