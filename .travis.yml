@@ -24,7 +24,6 @@ matrix:
     before_deploy:
     - if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
     - cd "src/Release"
-    - rmdir /s /q turtlecoin-${TRAVIS_TAG}
     - mkdir turtlecoin-${TRAVIS_TAG}
     - copy *.exe turtlecoin-${TRAVIS_TAG}
     - copy ..\..\..\LICENSE turtlecoin-${TRAVIS_TAG}
