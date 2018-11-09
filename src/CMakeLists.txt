@@ -125,6 +125,6 @@ set_property(TARGET miner PROPERTY OUTPUT_NAME "Grubminer")
 set_property(TARGET cryptotest PROPERTY OUTPUT_NAME "cryptotest")
 
 # Additional make targets
-add_custom_target(pool DEPENDS GrubMined service)
-add_custom_target(solominer DEPENDS GrubMined Grubwallet Grubminer)
-add_custom_target(cli DEPENDS GrubMined Grubwallet)
+add_custom_target(pool DEPENDS TurtleCoind service)
+add_custom_target(solominer DEPENDS TurtleCoind zedwallet miner)
+add_custom_target(cli DEPENDS TurtleCoind zedwallet)
