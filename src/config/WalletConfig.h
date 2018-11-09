@@ -33,7 +33,7 @@ namespace WalletConfig
     const std::string walletdName = "Grub-service";
 
     /* The full name of your crypto */
-    const std::string coinName = std::string(CryptoNote::GrubMine);
+    const std::string coinName = std::string(CryptoNote::CRYPTONOTE_NAME);
 
     /* Where can your users contact you for support? E.g. discord */
     const std::string contactLink = "https://t.me/GRUBprivate";
