@@ -1,12 +1,12 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
-#define PROJECT_NAME "TurtleCoin"
-#define PROJECT_SITE "http://www.turtlecoin.lol"
-#define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin Developers"
+#define PROJECT_NAME "GrubPrivate"
+#define PROJECT_SITE "grubtoken.govps.com"
+#define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin & Grub Developers"
 #define APP_VER_MAJOR 0
-#define APP_VER_MINOR 10
-#define APP_VER_REV 0
+#define APP_VER_MINOR 5
+#define APP_VER_REV 2
 #define APP_VER_BUILD 1279
 
 #define BUILD_COMMIT_ID "@VERSION@"
