@@ -15,3 +15,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
+#pragma once
+
+#include <cstddef>
+#include <initializer_list>
+
+namespace CryptoNote {
+struct CheckpointData {
+  uint32_t index;
+  const char* blockId;
+};
+const std::initializer_list<CheckpointData> CHECKPOINTS = {};
