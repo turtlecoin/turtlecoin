@@ -188,7 +188,7 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
   bool low_cpu_priority = false;
 
   while (true) {
-// Wait until there is an item that is ready to run
+    // Wait until there is an item that is ready to run
     std::unique_lock<std::mutex> lock(mu_);
     // Stop waiting if the thread needs to do work or needs to terminate.
     while (!exit_all_threads_ && !IsLastExcessiveThread(thread_id) &&
@@ -198,7 +198,7 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
 
     if (exit_all_threads_) {  // mechanism to let BG threads exit safely
 
-      if(!wait_for_jobs_to_complete_ ||
+      if (!wait_for_jobs_to_complete_ ||
           queue_.empty()) {
         break;
        }
@@ -469,16 +469,12 @@ void ThreadPoolImpl::SubmitJob(std::function<void()>&& job) {
 
 void ThreadPoolImpl::Schedule(void(*function)(void* arg1), void* arg,
   void* tag, void(*unschedFunction)(void* arg)) {
-
-  std::function<void()> fn = [arg, function] { function(arg); };
-
-  std::function<void()> unfn;
-  if (unschedFunction != nullptr) {
-    auto uf = [arg, unschedFunction] { unschedFunction(arg); };
-    unfn = std::move(uf);
+  if (unschedFunction == nullptr) {
+    impl_->Submit(std::bind(function, arg), std::function<void()>(), tag);
+  } else {
+    impl_->Submit(std::bind(function, arg), std::bind(unschedFunction, arg),
+                  tag);
   }
-
-  impl_->Submit(std::move(fn), std::move(unfn), tag);
 }
 
 int ThreadPoolImpl::UnSchedule(void* arg) {

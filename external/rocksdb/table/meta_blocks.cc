@@ -76,7 +76,11 @@ void PropertyBlockBuilder::AddTableProperty(const TableProperties& props) {
     Add(TablePropertiesNames::kTopLevelIndexSize, props.top_level_index_size);
   }
   Add(TablePropertiesNames::kIndexKeyIsUserKey, props.index_key_is_user_key);
+  Add(TablePropertiesNames::kIndexValueIsDeltaEncoded,
+      props.index_value_is_delta_encoded);
   Add(TablePropertiesNames::kNumEntries, props.num_entries);
+  Add(TablePropertiesNames::kDeletedKeys, props.num_deletions);
+  Add(TablePropertiesNames::kMergeOperands, props.num_merge_operands);
   Add(TablePropertiesNames::kNumRangeDeletions, props.num_range_deletions);
   Add(TablePropertiesNames::kNumDataBlocks, props.num_data_blocks);
   Add(TablePropertiesNames::kFilterSize, props.filter_size);
@@ -218,6 +222,8 @@ Status ReadProperties(const Slice& handle_value, RandomAccessFileReader* file,
        &new_table_properties->top_level_index_size},
       {TablePropertiesNames::kIndexKeyIsUserKey,
        &new_table_properties->index_key_is_user_key},
+      {TablePropertiesNames::kIndexValueIsDeltaEncoded,
+       &new_table_properties->index_value_is_delta_encoded},
       {TablePropertiesNames::kFilterSize, &new_table_properties->filter_size},
       {TablePropertiesNames::kRawKeySize, &new_table_properties->raw_key_size},
       {TablePropertiesNames::kRawValueSize,
@@ -225,6 +231,10 @@ Status ReadProperties(const Slice& handle_value, RandomAccessFileReader* file,
       {TablePropertiesNames::kNumDataBlocks,
        &new_table_properties->num_data_blocks},
       {TablePropertiesNames::kNumEntries, &new_table_properties->num_entries},
+      {TablePropertiesNames::kDeletedKeys,
+       &new_table_properties->num_deletions},
+      {TablePropertiesNames::kMergeOperands,
+       &new_table_properties->num_merge_operands},
       {TablePropertiesNames::kNumRangeDeletions,
        &new_table_properties->num_range_deletions},
       {TablePropertiesNames::kFormatVersion,
@@ -259,6 +269,12 @@ Status ReadProperties(const Slice& handle_value, RandomAccessFileReader* file,
         {key, handle.offset() + iter.ValueOffset()});
 
     if (pos != predefined_uint64_properties.end()) {
+      if (key == TablePropertiesNames::kDeletedKeys ||
+          key == TablePropertiesNames::kMergeOperands) {
+        // Insert in user-collected properties for API backwards compatibility
+        new_table_properties->user_collected_properties.insert(
+            {key, raw_val.ToString()});
+      }
       // handle predefined rocksdb properties
       uint64_t val;
       if (!GetVarint64(&raw_val, &val)) {

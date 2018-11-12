@@ -565,12 +565,14 @@ class IngestExternalSstFilesCommand : public LDBCommand {
   bool allow_global_seqno_;
   bool allow_blocking_flush_;
   bool ingest_behind_;
+  bool write_global_seqno_;
 
   static const std::string ARG_MOVE_FILES;
   static const std::string ARG_SNAPSHOT_CONSISTENCY;
   static const std::string ARG_ALLOW_GLOBAL_SEQNO;
   static const std::string ARG_ALLOW_BLOCKING_FLUSH;
   static const std::string ARG_INGEST_BEHIND;
+  static const std::string ARG_WRITE_GLOBAL_SEQNO;
 };
 
 }  // namespace rocksdb

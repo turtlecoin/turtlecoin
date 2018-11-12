@@ -13,8 +13,8 @@
 #include <inttypes.h>
 #include <algorithm>
 #include <numeric>
-#include <string>
 #include <random>
+#include <string>
 #include <thread>
 
 #include "rocksdb/db.h"
@@ -48,6 +48,14 @@ RandomTransactionInserter::~RandomTransactionInserter() {
 bool RandomTransactionInserter::TransactionDBInsert(
     TransactionDB* db, const TransactionOptions& txn_options) {
   txn_ = db->BeginTransaction(write_options_, txn_options, txn_);
+
+  std::hash<std::thread::id> hasher;
+  char name[64];
+  snprintf(name, 64, "txn%" ROCKSDB_PRIszt "-%d",
+           hasher(std::this_thread::get_id()), txn_id_++);
+  assert(strlen(name) < 64 - 1);
+  txn_->SetName(name);
+
   bool take_snapshot = rand_->OneIn(2);
   if (take_snapshot) {
     txn_->SetSnapshot();
@@ -128,7 +136,6 @@ bool RandomTransactionInserter::DoInsert(DB* db, Transaction* txn,
 
   std::vector<uint16_t> set_vec(num_sets_);
   std::iota(set_vec.begin(), set_vec.end(), static_cast<uint16_t>(0));
-
   std::shuffle(set_vec.begin(), set_vec.end(), std::random_device{});
 
   // For each set, pick a key at random and increment it
@@ -175,14 +182,8 @@ bool RandomTransactionInserter::DoInsert(DB* db, Transaction* txn,
 
   if (s.ok()) {
     if (txn != nullptr) {
-      std::hash<std::thread::id> hasher;
-      char name[64];
-      snprintf(name, 64, "txn%" ROCKSDB_PRIszt "-%d", hasher(std::this_thread::get_id()),
-               txn_id_++);
-      assert(strlen(name) < 64 - 1);
       if (!is_optimistic && !rand_->OneIn(10)) {
         // also try commit without prpare
-        txn->SetName(name);
         s = txn->Prepare();
         assert(s.ok());
       }
@@ -257,9 +258,8 @@ Status RandomTransactionInserter::Verify(DB* db, uint16_t num_sets,
 
   std::vector<uint16_t> set_vec(num_sets);
   std::iota(set_vec.begin(), set_vec.end(), static_cast<uint16_t>(0));
-  if (rand) {
-    std::shuffle(set_vec.begin(), set_vec.end(), std::random_device{});
-  }
+  std::shuffle(set_vec.begin(), set_vec.end(), std::random_device{});
+
   // For each set of keys with the same prefix, sum all the values
   for (uint16_t set_i : set_vec) {
     // Five digits (since the largest uint16_t is 65535) plus the NUL

@@ -43,9 +43,10 @@ TransactionLogIteratorImpl::TransactionLogIteratorImpl(
 }
 
 Status TransactionLogIteratorImpl::OpenLogFile(
-    const LogFile* logFile, unique_ptr<SequentialFileReader>* file_reader) {
+    const LogFile* logFile,
+    std::unique_ptr<SequentialFileReader>* file_reader) {
   Env* env = options_->env;
-  unique_ptr<SequentialFile> file;
+  std::unique_ptr<SequentialFile> file;
   std::string fname;
   Status s;
   EnvOptions optimized_env_options = env->OptimizeForLogRead(soptions_);
@@ -104,7 +105,7 @@ void TransactionLogIteratorImpl::SeekToStartSequence(
   if (files_->size() <= startFileIndex) {
     return;
   }
-  Status s = OpenLogReader(files_->at(startFileIndex).get());
+  Status s = OpenLogReader(files_->at(static_cast<size_t>(startFileIndex)).get());
   if (!s.ok()) {
     currentStatus_ = s;
     reporter_.Info(currentStatus_.ToString().c_str());
@@ -306,15 +307,16 @@ void TransactionLogIteratorImpl::UpdateCurrentWriteBatch(const Slice& record) {
 }
 
 Status TransactionLogIteratorImpl::OpenLogReader(const LogFile* logFile) {
-  unique_ptr<SequentialFileReader> file;
+  std::unique_ptr<SequentialFileReader> file;
   Status s = OpenLogFile(logFile, &file);
   if (!s.ok()) {
     return s;
   }
   assert(file);
-  currentLogReader_.reset(new log::Reader(
-      options_->info_log, std::move(file), &reporter_,
-      read_options_.verify_checksums_, 0, logFile->LogNumber()));
+  currentLogReader_.reset(
+      new log::Reader(options_->info_log, std::move(file), &reporter_,
+                      read_options_.verify_checksums_, logFile->LogNumber(),
+                      false /* retry_after_eof */));
   return Status::OK();
 }
 }  //  namespace rocksdb

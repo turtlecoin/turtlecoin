@@ -27,23 +27,26 @@ IndexBuilder* IndexBuilder::CreateIndexBuilder(
     BlockBasedTableOptions::IndexType index_type,
     const InternalKeyComparator* comparator,
     const InternalKeySliceTransform* int_key_slice_transform,
+    const bool use_value_delta_encoding,
     const BlockBasedTableOptions& table_opt) {
   IndexBuilder* result = nullptr;
   switch (index_type) {
     case BlockBasedTableOptions::kBinarySearch: {
-      result = new ShortenedIndexBuilder(comparator,
-                                         table_opt.index_block_restart_interval,
-                                         table_opt.format_version);
+      result = new ShortenedIndexBuilder(
+          comparator, table_opt.index_block_restart_interval,
+          table_opt.format_version, use_value_delta_encoding);
     }
   break;
     case BlockBasedTableOptions::kHashSearch: {
       result = new HashIndexBuilder(comparator, int_key_slice_transform,
                                     table_opt.index_block_restart_interval,
-                                    table_opt.format_version);
+                                    table_opt.format_version,
+                                    use_value_delta_encoding);
     }
   break;
     case BlockBasedTableOptions::kTwoLevelIndexSearch: {
-      result = PartitionedIndexBuilder::CreateIndexBuilder(comparator, table_opt);
+      result = PartitionedIndexBuilder::CreateIndexBuilder(
+          comparator, use_value_delta_encoding, table_opt);
     }
     break;
     default: {
@@ -56,18 +59,23 @@ IndexBuilder* IndexBuilder::CreateIndexBuilder(
 
 PartitionedIndexBuilder* PartitionedIndexBuilder::CreateIndexBuilder(
     const InternalKeyComparator* comparator,
+    const bool use_value_delta_encoding,
     const BlockBasedTableOptions& table_opt) {
-  return new PartitionedIndexBuilder(comparator, table_opt);
+  return new PartitionedIndexBuilder(comparator, table_opt,
+                                     use_value_delta_encoding);
 }
 
 PartitionedIndexBuilder::PartitionedIndexBuilder(
     const InternalKeyComparator* comparator,
-    const BlockBasedTableOptions& table_opt)
+    const BlockBasedTableOptions& table_opt,
+    const bool use_value_delta_encoding)
     : IndexBuilder(comparator),
       index_block_builder_(table_opt.index_block_restart_interval,
-                           table_opt.format_version),
+                           true /*use_delta_encoding*/,
+                           use_value_delta_encoding),
       index_block_builder_without_seq_(table_opt.index_block_restart_interval,
-                                       table_opt.format_version),
+                                       true /*use_delta_encoding*/,
+                                       use_value_delta_encoding),
       sub_index_builder_(nullptr),
       table_opt_(table_opt),
       // We start by false. After each partition we revise the value based on
@@ -76,7 +84,8 @@ PartitionedIndexBuilder::PartitionedIndexBuilder(
       // sub_index_builder. Otherwise, it could be set to true even one of the
       // sub_index_builders could not safely exclude seq from the keys, then it
       // wil be enforced on all sub_index_builders on ::Finish.
-      seperator_is_key_plus_seq_(false) {}
+      seperator_is_key_plus_seq_(false),
+      use_value_delta_encoding_(use_value_delta_encoding) {}
 
 PartitionedIndexBuilder::~PartitionedIndexBuilder() {
   delete sub_index_builder_;
@@ -86,7 +95,7 @@ void PartitionedIndexBuilder::MakeNewSubIndexBuilder() {
   assert(sub_index_builder_ == nullptr);
   sub_index_builder_ = new ShortenedIndexBuilder(
       comparator_, table_opt_.index_block_restart_interval,
-      table_opt_.format_version);
+      table_opt_.format_version, use_value_delta_encoding_);
   flush_policy_.reset(FlushBlockBySizePolicyFactory::NewFlushBlockPolicy(
       table_opt_.metadata_block_size, table_opt_.block_size_deviation,
       // Note: this is sub-optimal since sub_index_builder_ could later reset
@@ -162,10 +171,18 @@ Status PartitionedIndexBuilder::Finish(
     Entry& last_entry = entries_.front();
     std::string handle_encoding;
     last_partition_block_handle.EncodeTo(&handle_encoding);
-    index_block_builder_.Add(last_entry.key, handle_encoding);
+    std::string handle_delta_encoding;
+    PutVarsignedint64(
+        &handle_delta_encoding,
+        last_partition_block_handle.size() - last_encoded_handle_.size());
+    last_encoded_handle_ = last_partition_block_handle;
+    const Slice handle_delta_encoding_slice(handle_delta_encoding);
+    index_block_builder_.Add(last_entry.key, handle_encoding,
+                             &handle_delta_encoding_slice);
     if (!seperator_is_key_plus_seq_) {
       index_block_builder_without_seq_.Add(ExtractUserKey(last_entry.key),
-                                           handle_encoding);
+                                           handle_encoding,
+                                           &handle_delta_encoding_slice);
     }
     entries_.pop_front();
   }
@@ -193,7 +210,5 @@ Status PartitionedIndexBuilder::Finish(
   }
 }
 
-size_t PartitionedIndexBuilder::NumPartitions() const {
-  return partition_cnt_;
-}
+size_t PartitionedIndexBuilder::NumPartitions() const { return partition_cnt_; }
 }  // namespace rocksdb

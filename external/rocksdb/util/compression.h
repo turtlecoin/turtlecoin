@@ -14,8 +14,10 @@
 #include <string>
 
 #include "rocksdb/options.h"
+#include "rocksdb/table.h"
 #include "util/coding.h"
 #include "util/compression_context_cache.h"
+#include "util/memory_allocator.h"
 
 #ifdef SNAPPY
 #include <snappy.h>
@@ -36,9 +38,9 @@
 
 #if defined(ZSTD)
 #include <zstd.h>
-#if ZSTD_VERSION_NUMBER >= 800  // v0.8.0+
+#if ZSTD_VERSION_NUMBER >= 10103  // v1.1.3+
 #include <zdict.h>
-#endif  // ZSTD_VERSION_NUMBER >= 800
+#endif  // ZSTD_VERSION_NUMBER >= 10103
 namespace rocksdb {
 // Need this for the context allocation override
 // On windows we need to do this explicitly
@@ -495,11 +497,10 @@ inline bool Zlib_Compress(const CompressionContext& ctx,
 // header in varint32 format
 // @param compression_dict Data for presetting the compression library's
 //    dictionary.
-inline char* Zlib_Uncompress(const UncompressionContext& ctx,
-                             const char* input_data, size_t input_length,
-                             int* decompress_size,
-                             uint32_t compress_format_version,
-                             int windowBits = -14) {
+inline CacheAllocationPtr Zlib_Uncompress(
+    const UncompressionContext& ctx, const char* input_data,
+    size_t input_length, int* decompress_size, uint32_t compress_format_version,
+    MemoryAllocator* allocator = nullptr, int windowBits = -14) {
 #ifdef ZLIB
   uint32_t output_len = 0;
   if (compress_format_version == 2) {
@@ -541,9 +542,9 @@ inline char* Zlib_Uncompress(const UncompressionContext& ctx,
   _stream.next_in = (Bytef*)input_data;
   _stream.avail_in = static_cast<unsigned int>(input_length);
 
-  char* output = new char[output_len];
+  auto output = AllocateBlock(output_len, allocator);
 
-  _stream.next_out = (Bytef*)output;
+  _stream.next_out = (Bytef*)output.get();
   _stream.avail_out = static_cast<unsigned int>(output_len);
 
   bool done = false;
@@ -561,19 +562,17 @@ inline char* Zlib_Uncompress(const UncompressionContext& ctx,
         size_t old_sz = output_len;
         uint32_t output_len_delta = output_len / 5;
         output_len += output_len_delta < 10 ? 10 : output_len_delta;
-        char* tmp = new char[output_len];
-        memcpy(tmp, output, old_sz);
-        delete[] output;
-        output = tmp;
+        auto tmp = AllocateBlock(output_len, allocator);
+        memcpy(tmp.get(), output.get(), old_sz);
+        output = std::move(tmp);
 
         // Set more output.
-        _stream.next_out = (Bytef*)(output + old_sz);
+        _stream.next_out = (Bytef*)(output.get() + old_sz);
         _stream.avail_out = static_cast<unsigned int>(output_len - old_sz);
         break;
       }
       case Z_BUF_ERROR:
       default:
-        delete[] output;
         inflateEnd(&_stream);
         return nullptr;
     }
@@ -590,6 +589,7 @@ inline char* Zlib_Uncompress(const UncompressionContext& ctx,
   (void)input_length;
   (void)decompress_size;
   (void)compress_format_version;
+  (void)allocator;
   (void)windowBits;
   return nullptr;
 #endif
@@ -660,9 +660,9 @@ inline bool BZip2_Compress(const CompressionContext& /*ctx*/,
 // block header
 // compress_format_version == 2 -- decompressed size is included in the block
 // header in varint32 format
-inline char* BZip2_Uncompress(const char* input_data, size_t input_length,
-                              int* decompress_size,
-                              uint32_t compress_format_version) {
+inline CacheAllocationPtr BZip2_Uncompress(
+    const char* input_data, size_t input_length, int* decompress_size,
+    uint32_t compress_format_version, MemoryAllocator* allocator = nullptr) {
 #ifdef BZIP2
   uint32_t output_len = 0;
   if (compress_format_version == 2) {
@@ -690,9 +690,9 @@ inline char* BZip2_Uncompress(const char* input_data, size_t input_length,
   _stream.next_in = (char*)input_data;
   _stream.avail_in = static_cast<unsigned int>(input_length);
 
-  char* output = new char[output_len];
+  auto output = AllocateBlock(output_len, allocator);
 
-  _stream.next_out = (char*)output;
+  _stream.next_out = (char*)output.get();
   _stream.avail_out = static_cast<unsigned int>(output_len);
 
   bool done = false;
@@ -709,18 +709,16 @@ inline char* BZip2_Uncompress(const char* input_data, size_t input_length,
         assert(compress_format_version != 2);
         uint32_t old_sz = output_len;
         output_len = output_len * 1.2;
-        char* tmp = new char[output_len];
-        memcpy(tmp, output, old_sz);
-        delete[] output;
-        output = tmp;
+        auto tmp = AllocateBlock(output_len, allocator);
+        memcpy(tmp.get(), output.get(), old_sz);
+        output = std::move(tmp);
 
         // Set more output.
-        _stream.next_out = (char*)(output + old_sz);
+        _stream.next_out = (char*)(output.get() + old_sz);
         _stream.avail_out = static_cast<unsigned int>(output_len - old_sz);
         break;
       }
       default:
-        delete[] output;
         BZ2_bzDecompressEnd(&_stream);
         return nullptr;
     }
@@ -736,6 +734,7 @@ inline char* BZip2_Uncompress(const char* input_data, size_t input_length,
   (void)input_length;
   (void)decompress_size;
   (void)compress_format_version;
+  (void)allocator;
   return nullptr;
 #endif
 }
@@ -791,6 +790,7 @@ inline bool LZ4_Compress(const CompressionContext& ctx,
 #else   // up to r123
   outlen = LZ4_compress_limitedOutput(input, &(*output)[output_header_len],
                                       static_cast<int>(length), compress_bound);
+  (void)ctx;
 #endif  // LZ4_VERSION_NUMBER >= 10400
 
   if (outlen == 0) {
@@ -814,10 +814,12 @@ inline bool LZ4_Compress(const CompressionContext& ctx,
 // header in varint32 format
 // @param compression_dict Data for presetting the compression library's
 //    dictionary.
-inline char* LZ4_Uncompress(const UncompressionContext& ctx,
-                            const char* input_data, size_t input_length,
-                            int* decompress_size,
-                            uint32_t compress_format_version) {
+inline CacheAllocationPtr LZ4_Uncompress(const UncompressionContext& ctx,
+                                         const char* input_data,
+                                         size_t input_length,
+                                         int* decompress_size,
+                                         uint32_t compress_format_version,
+                                         MemoryAllocator* allocator = nullptr) {
 #ifdef LZ4
   uint32_t output_len = 0;
   if (compress_format_version == 2) {
@@ -837,7 +839,7 @@ inline char* LZ4_Uncompress(const UncompressionContext& ctx,
     input_data += 8;
   }
 
-  char* output = new char[output_len];
+  auto output = AllocateBlock(output_len, allocator);
 #if LZ4_VERSION_NUMBER >= 10400  // r124+
   LZ4_streamDecode_t* stream = LZ4_createStreamDecode();
   if (ctx.dict().size()) {
@@ -845,17 +847,17 @@ inline char* LZ4_Uncompress(const UncompressionContext& ctx,
                         static_cast<int>(ctx.dict().size()));
   }
   *decompress_size = LZ4_decompress_safe_continue(
-      stream, input_data, output, static_cast<int>(input_length),
+      stream, input_data, output.get(), static_cast<int>(input_length),
       static_cast<int>(output_len));
   LZ4_freeStreamDecode(stream);
 #else   // up to r123
-  *decompress_size =
-      LZ4_decompress_safe(input_data, output, static_cast<int>(input_length),
-                          static_cast<int>(output_len));
+  *decompress_size = LZ4_decompress_safe(input_data, output.get(),
+                                         static_cast<int>(input_length),
+                                         static_cast<int>(output_len));
+  (void)ctx;
 #endif  // LZ4_VERSION_NUMBER >= 10400
 
   if (*decompress_size < 0) {
-    delete[] output;
     return nullptr;
   }
   assert(*decompress_size == static_cast<int>(output_len));
@@ -866,6 +868,7 @@ inline char* LZ4_Uncompress(const UncompressionContext& ctx,
   (void)input_length;
   (void)decompress_size;
   (void)compress_format_version;
+  (void)allocator;
   return nullptr;
 #endif
 }
@@ -1028,9 +1031,10 @@ inline bool ZSTD_Compress(const CompressionContext& ctx, const char* input,
 
 // @param compression_dict Data for presetting the compression library's
 //    dictionary.
-inline char* ZSTD_Uncompress(const UncompressionContext& ctx,
-                             const char* input_data, size_t input_length,
-                             int* decompress_size) {
+inline CacheAllocationPtr ZSTD_Uncompress(
+    const UncompressionContext& ctx, const char* input_data,
+    size_t input_length, int* decompress_size,
+    MemoryAllocator* allocator = nullptr) {
 #ifdef ZSTD
   uint32_t output_len = 0;
   if (!compression::GetDecompressedSizeInfo(&input_data, &input_length,
@@ -1038,17 +1042,17 @@ inline char* ZSTD_Uncompress(const UncompressionContext& ctx,
     return nullptr;
   }
 
-  char* output = new char[output_len];
+  auto output = AllocateBlock(output_len, allocator);
   size_t actual_output_length;
 #if ZSTD_VERSION_NUMBER >= 500  // v0.5.0+
   ZSTD_DCtx* context = ctx.GetZSTDContext();
   assert(context != nullptr);
   actual_output_length = ZSTD_decompress_usingDict(
-      context, output, output_len, input_data, input_length, ctx.dict().data(),
-      ctx.dict().size());
+      context, output.get(), output_len, input_data, input_length,
+      ctx.dict().data(), ctx.dict().size());
 #else   // up to v0.4.x
   actual_output_length =
-      ZSTD_decompress(output, output_len, input_data, input_length);
+      ZSTD_decompress(output.get(), output_len, input_data, input_length);
 #endif  // ZSTD_VERSION_NUMBER >= 500
   assert(actual_output_length == output_len);
   *decompress_size = static_cast<int>(actual_output_length);
@@ -1058,6 +1062,7 @@ inline char* ZSTD_Uncompress(const UncompressionContext& ctx,
   (void)input_data;
   (void)input_length;
   (void)decompress_size;
+  (void)allocator;
   return nullptr;
 #endif
 }
@@ -1065,9 +1070,10 @@ inline char* ZSTD_Uncompress(const UncompressionContext& ctx,
 inline std::string ZSTD_TrainDictionary(const std::string& samples,
                                         const std::vector<size_t>& sample_lens,
                                         size_t max_dict_bytes) {
-  // Dictionary trainer is available since v0.6.1, but ZSTD was marked stable
-  // only since v0.8.0. For now we enable the feature in stable versions only.
-#if ZSTD_VERSION_NUMBER >= 800  // v0.8.0+
+  // Dictionary trainer is available since v0.6.1 for static linking, but not
+  // available for dynamic linking until v1.1.3. For now we enable the feature
+  // in v1.1.3+ only.
+#if ZSTD_VERSION_NUMBER >= 10103  // v1.1.3+
   std::string dict_data(max_dict_bytes, '\0');
   size_t dict_len = ZDICT_trainFromBuffer(
       &dict_data[0], max_dict_bytes, &samples[0], &sample_lens[0],
@@ -1078,13 +1084,13 @@ inline std::string ZSTD_TrainDictionary(const std::string& samples,
   assert(dict_len <= max_dict_bytes);
   dict_data.resize(dict_len);
   return dict_data;
-#else   // up to v0.7.x
+#else   // up to v1.1.2
   assert(false);
   (void)samples;
   (void)sample_lens;
   (void)max_dict_bytes;
   return "";
-#endif  // ZSTD_VERSION_NUMBER >= 800
+#endif  // ZSTD_VERSION_NUMBER >= 10103
 }
 
 inline std::string ZSTD_TrainDictionary(const std::string& samples,
@@ -1092,18 +1098,18 @@ inline std::string ZSTD_TrainDictionary(const std::string& samples,
                                         size_t max_dict_bytes) {
   // Dictionary trainer is available since v0.6.1, but ZSTD was marked stable
   // only since v0.8.0. For now we enable the feature in stable versions only.
-#if ZSTD_VERSION_NUMBER >= 800  // v0.8.0+
+#if ZSTD_VERSION_NUMBER >= 10103  // v1.1.3+
   // skips potential partial sample at the end of "samples"
   size_t num_samples = samples.size() >> sample_len_shift;
   std::vector<size_t> sample_lens(num_samples, size_t(1) << sample_len_shift);
   return ZSTD_TrainDictionary(samples, sample_lens, max_dict_bytes);
-#else   // up to v0.7.x
+#else   // up to v1.1.2
   assert(false);
   (void)samples;
   (void)sample_len_shift;
   (void)max_dict_bytes;
   return "";
-#endif  // ZSTD_VERSION_NUMBER >= 800
+#endif  // ZSTD_VERSION_NUMBER >= 10103
 }
 
 }  // namespace rocksdb

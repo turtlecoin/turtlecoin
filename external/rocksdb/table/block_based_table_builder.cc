@@ -39,11 +39,12 @@
 #include "table/full_filter_block.h"
 #include "table/table_builder.h"
 
-#include "util/string_util.h"
 #include "util/coding.h"
 #include "util/compression.h"
 #include "util/crc32c.h"
+#include "util/memory_allocator.h"
 #include "util/stop_watch.h"
+#include "util/string_util.h"
 #include "util/xxhash.h"
 
 #include "table/index_builder.h"
@@ -63,6 +64,7 @@ namespace {
 FilterBlockBuilder* CreateFilterBlockBuilder(
     const ImmutableCFOptions& /*opt*/, const MutableCFOptions& mopt,
     const BlockBasedTableOptions& table_opt,
+    const bool use_delta_encoding_for_index_values,
     PartitionedIndexBuilder* const p_index_builder) {
   if (table_opt.filter_policy == nullptr) return nullptr;
 
@@ -85,7 +87,7 @@ FilterBlockBuilder* CreateFilterBlockBuilder(
       return new PartitionedFilterBlockBuilder(
           mopt.prefix_extractor.get(), table_opt.whole_key_filtering,
           filter_bits_builder, table_opt.index_block_restart_interval,
-          p_index_builder, partition_size);
+          use_delta_encoding_for_index_values, p_index_builder, partition_size);
     } else {
       return new FullFilterBlockBuilder(mopt.prefix_extractor.get(),
                                         table_opt.whole_key_filtering,
@@ -266,6 +268,7 @@ struct BlockBasedTableBuilder::Rep {
   TableProperties props;
 
   bool closed = false;  // Either Finish() or Abandon() has been called.
+  const bool use_delta_encoding_for_index_values;
   std::unique_ptr<FilterBlockBuilder> filter_builder;
   char compressed_cache_key_prefix[BlockBasedTable::kMaxCacheKeyPrefixSize];
   size_t compressed_cache_key_prefix_size;
@@ -301,11 +304,19 @@ struct BlockBasedTableBuilder::Rep {
                       ? std::min(table_options.block_size, kDefaultPageSize)
                       : 0),
         data_block(table_options.block_restart_interval,
-                   table_options.use_delta_encoding),
+                   table_options.use_delta_encoding,
+                   false /* use_value_delta_encoding */,
+                   icomparator.user_comparator()
+                           ->CanKeysWithDifferentByteContentsBeEqual()
+                       ? BlockBasedTableOptions::kDataBlockBinarySearch
+                       : table_options.data_block_index_type,
+                   table_options.data_block_hash_table_util_ratio),
         range_del_block(1 /* block_restart_interval */),
         internal_prefix_transform(_moptions.prefix_extractor.get()),
         compression_dict(_compression_dict),
         compression_ctx(_compression_type, _compression_opts),
+        use_delta_encoding_for_index_values(table_opt.format_version >= 4 &&
+                                            !table_opt.block_align),
         compressed_cache_key_prefix_size(0),
         flush_block_policy(
             table_options.flush_block_policy_factory->NewFlushBlockPolicy(
@@ -317,18 +328,21 @@ struct BlockBasedTableBuilder::Rep {
     if (table_options.index_type ==
         BlockBasedTableOptions::kTwoLevelIndexSearch) {
       p_index_builder_ = PartitionedIndexBuilder::CreateIndexBuilder(
-          &internal_comparator, table_options);
+          &internal_comparator, use_delta_encoding_for_index_values,
+          table_options);
       index_builder.reset(p_index_builder_);
     } else {
       index_builder.reset(IndexBuilder::CreateIndexBuilder(
           table_options.index_type, &internal_comparator,
-          &this->internal_prefix_transform, table_options));
+          &this->internal_prefix_transform, use_delta_encoding_for_index_values,
+          table_options));
     }
     if (skip_filters) {
       filter_builder = nullptr;
     } else {
       filter_builder.reset(CreateFilterBlockBuilder(
-          _ioptions, _moptions, table_options, p_index_builder_));
+          _ioptions, _moptions, table_options,
+          use_delta_encoding_for_index_values, p_index_builder_));
     }
 
     for (auto& collector_factories : *int_tbl_prop_collector_factories) {
@@ -436,6 +450,11 @@ void BlockBasedTableBuilder::Add(const Slice& key, const Slice& value) {
     r->props.num_entries++;
     r->props.raw_key_size += key.size();
     r->props.raw_value_size += value.size();
+    if (value_type == kTypeDeletion || value_type == kTypeSingleDeletion) {
+      r->props.num_deletions++;
+    } else if (value_type == kTypeMerge) {
+      r->props.num_merge_operands++;
+    }
 
     r->index_builder->OnKeyAdded(key);
     NotifyCollectTableCollectorsOnAdd(key, value, r->offset,
@@ -596,6 +615,18 @@ void BlockBasedTableBuilder::WriteRawBlock(const Slice& block_contents,
         EncodeFixed32(trailer_without_type, XXH32_digest(xxh));
         break;
       }
+      case kxxHash64: {
+        XXH64_state_t* const state = XXH64_createState();
+        XXH64_reset(state, 0);
+        XXH64_update(state, block_contents.data(),
+                static_cast<uint32_t>(block_contents.size()));
+        XXH64_update(state, trailer, 1);  // Extend  to cover block type
+        EncodeFixed32(trailer_without_type,
+          static_cast<uint32_t>(XXH64_digest(state) & // lower 32 bits
+                                   uint64_t{0xffffffff}));
+        XXH64_freeState(state);
+        break;
+      }
     }
 
     assert(r->status.ok());
@@ -641,7 +672,8 @@ Status BlockBasedTableBuilder::InsertBlockInCache(const Slice& block_contents,
 
     size_t size = block_contents.size();
 
-    std::unique_ptr<char[]> ubuf(new char[size + 1]);
+    auto ubuf =
+        AllocateBlock(size + 1, block_cache_compressed->memory_allocator());
     memcpy(ubuf.get(), block_contents.data(), size);
     ubuf[size] = type;
 
@@ -675,7 +707,8 @@ void BlockBasedTableBuilder::WriteFilterBlock(
   if (ok() && !empty_filter_block) {
     Status s = Status::Incomplete();
     while (ok() && s.IsIncomplete()) {
-      Slice filter_content = rep_->filter_builder->Finish(filter_block_handle, &s);
+      Slice filter_content =
+          rep_->filter_builder->Finish(filter_block_handle, &s);
       assert(s.ok() || s.IsIncomplete());
       rep_->props.filter_size += filter_content.size();
       WriteRawBlock(filter_content, kNoCompression, &filter_block_handle);
@@ -752,22 +785,25 @@ void BlockBasedTableBuilder::WritePropertiesBlock(
     PropertyBlockBuilder property_block_builder;
     rep_->props.column_family_id = rep_->column_family_id;
     rep_->props.column_family_name = rep_->column_family_name;
-    rep_->props.filter_policy_name = rep_->table_options.filter_policy != nullptr
-                                      ? rep_->table_options.filter_policy->Name()
-                                      : "";
+    rep_->props.filter_policy_name =
+        rep_->table_options.filter_policy != nullptr
+            ? rep_->table_options.filter_policy->Name()
+            : "";
     rep_->props.index_size =
         rep_->index_builder->IndexSize() + kBlockTrailerSize;
     rep_->props.comparator_name = rep_->ioptions.user_comparator != nullptr
-                                   ? rep_->ioptions.user_comparator->Name()
-                                   : "nullptr";
-    rep_->props.merge_operator_name = rep_->ioptions.merge_operator != nullptr
-                                       ? rep_->ioptions.merge_operator->Name()
-                                       : "nullptr";
+                                      ? rep_->ioptions.user_comparator->Name()
+                                      : "nullptr";
+    rep_->props.merge_operator_name =
+        rep_->ioptions.merge_operator != nullptr
+            ? rep_->ioptions.merge_operator->Name()
+            : "nullptr";
     rep_->props.compression_name =
         CompressionTypeToString(rep_->compression_ctx.type());
-    rep_->props.prefix_extractor_name = rep_->moptions.prefix_extractor != nullptr
-                                         ? rep_->moptions.prefix_extractor->Name()
-                                         : "nullptr";
+    rep_->props.prefix_extractor_name =
+        rep_->moptions.prefix_extractor != nullptr
+            ? rep_->moptions.prefix_extractor->Name()
+            : "nullptr";
 
     std::string property_collectors_names = "[";
     for (size_t i = 0;
@@ -789,6 +825,8 @@ void BlockBasedTableBuilder::WritePropertiesBlock(
     }
     rep_->props.index_key_is_user_key =
         !rep_->index_builder->seperator_is_key_plus_seq();
+    rep_->props.index_value_is_delta_encoded =
+        rep_->use_delta_encoding_for_index_values;
     rep_->props.creation_time = rep_->creation_time;
     rep_->props.oldest_key_time = rep_->oldest_key_time;
 

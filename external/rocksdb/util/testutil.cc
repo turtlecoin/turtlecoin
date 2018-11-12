@@ -20,7 +20,7 @@ namespace rocksdb {
 namespace test {
 
 const uint32_t kDefaultFormatVersion = BlockBasedTableOptions().format_version;
-const uint32_t kLatestFormatVersion = 3u;
+const uint32_t kLatestFormatVersion = 4u;
 
 Slice RandomString(Random* rnd, int len, std::string* dst) {
   dst->resize(len);
@@ -124,20 +124,21 @@ const Comparator* Uint64Comparator() {
   return &uint64comp;
 }
 
-WritableFileWriter* GetWritableFileWriter(WritableFile* wf) {
-  unique_ptr<WritableFile> file(wf);
-  return new WritableFileWriter(std::move(file), EnvOptions());
+WritableFileWriter* GetWritableFileWriter(WritableFile* wf,
+                                          const std::string& fname) {
+  std::unique_ptr<WritableFile> file(wf);
+  return new WritableFileWriter(std::move(file), fname, EnvOptions());
 }
 
 RandomAccessFileReader* GetRandomAccessFileReader(RandomAccessFile* raf) {
-  unique_ptr<RandomAccessFile> file(raf);
+  std::unique_ptr<RandomAccessFile> file(raf);
   return new RandomAccessFileReader(std::move(file),
                                     "[test RandomAccessFileReader]");
 }
 
 SequentialFileReader* GetSequentialFileReader(SequentialFile* se,
                                               const std::string& fname) {
-  unique_ptr<SequentialFile> file(se);
+  std::unique_ptr<SequentialFile> file(se);
   return new SequentialFileReader(std::move(file), fname);
 }
 

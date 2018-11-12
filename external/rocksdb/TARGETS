@@ -1,3 +1,5 @@
+load("@fbcode_macros//build_defs:auto_headers.bzl", "AutoHeaders")
+
 REPO_PATH = package_name() + "/"
 
 BUCK_BINS = "buck-out/gen/" + REPO_PATH
@@ -65,6 +67,16 @@ is_opt_mode = build_mode.startswith("opt")
 if is_opt_mode:
     rocksdb_compiler_flags.append("-DNDEBUG")
 
+default_allocator = read_config("fbcode", "default_allocator")
+
+sanitizer = read_config("fbcode", "sanitizer")
+
+# Let RocksDB aware of jemalloc existence.
+# Do not enable it if sanitizer presents.
+if default_allocator.startswith("jemalloc") and sanitizer == "":
+    rocksdb_compiler_flags.append("-DROCKSDB_JEMALLOC")
+    rocksdb_external_deps.append(("jemalloc", None, "headers"))
+
 cpp_library(
     name = "rocksdb_lib",
     srcs = [
@@ -111,6 +123,7 @@ cpp_library(
         "db/merge_helper.cc",
         "db/merge_operator.cc",
         "db/range_del_aggregator.cc",
+        "db/range_tombstone_fragmenter.cc",
         "db/repair.cc",
         "db/snapshot_impl.cc",
         "db/table_cache.cc",
@@ -171,6 +184,8 @@ cpp_library(
         "table/cuckoo_table_builder.cc",
         "table/cuckoo_table_factory.cc",
         "table/cuckoo_table_reader.cc",
+        "table/data_block_footer.cc",
+        "table/data_block_hash_index.cc",
         "table/flush_block_policy.cc",
         "table/format.cc",
         "table/full_filter_block.cc",
@@ -211,6 +226,7 @@ cpp_library(
         "util/filename.cc",
         "util/filter_policy.cc",
         "util/hash.cc",
+        "util/jemalloc_nodump_allocator.cc",
         "util/log_buffer.cc",
         "util/murmurhash.cc",
         "util/random.cc",
@@ -218,18 +234,19 @@ cpp_library(
         "util/slice.cc",
         "util/sst_file_manager_impl.cc",
         "util/status.cc",
-        "util/status_message.cc",
         "util/string_util.cc",
         "util/sync_point.cc",
         "util/sync_point_impl.cc",
         "util/thread_local.cc",
         "util/threadpool_imp.cc",
+        "util/trace_replay.cc",
         "util/transaction_test_util.cc",
         "util/xxhash.cc",
         "utilities/backupable/backupable_db.cc",
         "utilities/blob_db/blob_compaction_filter.cc",
         "utilities/blob_db/blob_db.cc",
         "utilities/blob_db/blob_db_impl.cc",
+        "utilities/blob_db/blob_db_impl_filesnapshot.cc",
         "utilities/blob_db/blob_dump_tool.cc",
         "utilities/blob_db/blob_file.cc",
         "utilities/blob_db/blob_log_format.cc",
@@ -269,6 +286,7 @@ cpp_library(
         "utilities/simulator_cache/sim_cache.cc",
         "utilities/spatialdb/spatial_db.cc",
         "utilities/table_properties_collectors/compact_on_deletion_collector.cc",
+        "utilities/trace/file_trace_reader_writer.cc",
         "utilities/transactions/optimistic_transaction.cc",
         "utilities/transactions/optimistic_transaction_db_impl.cc",
         "utilities/transactions/pessimistic_transaction.cc",
@@ -286,7 +304,7 @@ cpp_library(
         "utilities/write_batch_with_index/write_batch_with_index.cc",
         "utilities/write_batch_with_index/write_batch_with_index_internal.cc",
     ],
-    headers = AutoHeaders.RECURSIVE_GLOB,
+    auto_headers = AutoHeaders.RECURSIVE_GLOB,
     arch_preprocessor_flags = rocksdb_arch_preprocessor_flags,
     compiler_flags = rocksdb_compiler_flags,
     preprocessor_flags = rocksdb_preprocessor_flags,
@@ -299,6 +317,7 @@ cpp_library(
     srcs = [
         "db/db_test_util.cc",
         "table/mock_table.cc",
+        "tools/trace_analyzer_tool.cc",
         "util/fault_injection_test_env.cc",
         "util/testharness.cc",
         "util/testutil.cc",
@@ -307,7 +326,7 @@ cpp_library(
         "utilities/col_buf_encoder.cc",
         "utilities/column_aware_encoding_util.cc",
     ],
-    headers = AutoHeaders.RECURSIVE_GLOB,
+    auto_headers = AutoHeaders.RECURSIVE_GLOB,
     arch_preprocessor_flags = rocksdb_arch_preprocessor_flags,
     compiler_flags = rocksdb_compiler_flags,
     preprocessor_flags = rocksdb_preprocessor_flags,
@@ -319,9 +338,10 @@ cpp_library(
     name = "rocksdb_tools_lib",
     srcs = [
         "tools/db_bench_tool.cc",
+        "tools/trace_analyzer_tool.cc",
         "util/testutil.cc",
     ],
-    headers = AutoHeaders.RECURSIVE_GLOB,
+    auto_headers = AutoHeaders.RECURSIVE_GLOB,
     arch_preprocessor_flags = rocksdb_arch_preprocessor_flags,
     compiler_flags = rocksdb_compiler_flags,
     preprocessor_flags = rocksdb_preprocessor_flags,
@@ -332,7 +352,7 @@ cpp_library(
 cpp_library(
     name = "env_basic_test_lib",
     srcs = ["env/env_basic_test.cc"],
-    headers = AutoHeaders.RECURSIVE_GLOB,
+    auto_headers = AutoHeaders.RECURSIVE_GLOB,
     arch_preprocessor_flags = rocksdb_arch_preprocessor_flags,
     compiler_flags = rocksdb_compiler_flags,
     preprocessor_flags = rocksdb_preprocessor_flags,
@@ -495,6 +515,11 @@ ROCKS_TESTS = [
     [
         "cuckoo_table_reader_test",
         "table/cuckoo_table_reader_test.cc",
+        "serial",
+    ],
+    [
+        "data_block_hash_index_test",
+        "table/data_block_hash_index_test.cc",
         "serial",
     ],
     [
@@ -908,6 +933,11 @@ ROCKS_TESTS = [
         "serial",
     ],
     [
+        "range_tombstone_fragmenter_test",
+        "db/range_tombstone_fragmenter_test.cc",
+        "serial",
+    ],
+    [
         "rate_limiter_test",
         "util/rate_limiter_test.cc",
         "serial",
@@ -920,6 +950,11 @@ ROCKS_TESTS = [
     [
         "repair_test",
         "db/repair_test.cc",
+        "serial",
+    ],
+    [
+        "repeatable_thread_test",
+        "util/repeatable_thread_test.cc",
         "serial",
     ],
     [
@@ -980,6 +1015,11 @@ ROCKS_TESTS = [
     [
         "timer_queue_test",
         "util/timer_queue_test.cc",
+        "serial",
+    ],
+    [
+        "trace_analyzer_test",
+        "tools/trace_analyzer_test.cc",
         "serial",
     ],
     [
@@ -1064,20 +1104,19 @@ if not is_opt_mode:
         ttype = "gtest" if test_cfg[2] == "parallel" else "simple"
         test_bin = test_name + "_bin"
 
-        cpp_binary (
-          name = test_bin,
-          srcs = [test_cc],
-          deps = [":rocksdb_test_lib"],
-          preprocessor_flags = rocksdb_preprocessor_flags,
-          arch_preprocessor_flags = rocksdb_arch_preprocessor_flags,
-          compiler_flags = rocksdb_compiler_flags,
-          external_deps = rocksdb_external_deps,
+        cpp_binary(
+            name = test_bin,
+            srcs = [test_cc],
+            arch_preprocessor_flags = rocksdb_arch_preprocessor_flags,
+            compiler_flags = rocksdb_compiler_flags,
+            preprocessor_flags = rocksdb_preprocessor_flags,
+            deps = [":rocksdb_test_lib"],
+            external_deps = rocksdb_external_deps,
         )
 
         custom_unittest(
-          name = test_name,
-          type = ttype,
-          deps = [":" + test_bin],
-          command = [TEST_RUNNER, BUCK_BINS + test_bin]
+            name = test_name,
+            command = [TEST_RUNNER, BUCK_BINS + test_bin],
+            type = ttype,
+            deps = [":" + test_bin],
         )
-

@@ -1154,7 +1154,7 @@ TEST_P(DBTestUniversalCompaction, UniversalCompactionCompressRatio2) {
     dbfull()->TEST_WaitForFlushMemTable();
     dbfull()->TEST_WaitForCompact();
   }
-  ASSERT_LT(TotalSize(), 120000U * 12 * 0.8 + 120000 * 2);
+  ASSERT_LT(TotalSize(), 120000U * 12 * 0.82 + 120000 * 2);
 }
 
 #ifndef ROCKSDB_VALGRIND_RUN
@@ -1824,7 +1824,7 @@ TEST_P(DBTestUniversalCompaction, FinalSortedRunCompactFilesConflict) {
 
   port::Thread compact_files_thread([&]() {
     ASSERT_OK(dbfull()->CompactFiles(CompactionOptions(), default_cfh,
-        {first_sst_filename}, num_levels_ - 1));
+                                     {first_sst_filename}, num_levels_ - 1));
   });
 
   TEST_SYNC_POINT(

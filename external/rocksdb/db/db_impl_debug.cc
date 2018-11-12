@@ -100,9 +100,11 @@ Status DBImpl::TEST_SwitchMemtable(ColumnFamilyData* cfd) {
   return SwitchMemtable(cfd, &write_context);
 }
 
-Status DBImpl::TEST_FlushMemTable(bool wait, ColumnFamilyHandle* cfh) {
+Status DBImpl::TEST_FlushMemTable(bool wait, bool allow_write_stall,
+    ColumnFamilyHandle* cfh) {
   FlushOptions fo;
   fo.wait = wait;
+  fo.allow_write_stall = allow_write_stall;
   ColumnFamilyData* cfd;
   if (cfh == nullptr) {
     cfd = default_cf_handle_->cfd();
@@ -121,7 +123,7 @@ Status DBImpl::TEST_WaitForFlushMemTable(ColumnFamilyHandle* column_family) {
     auto cfh = reinterpret_cast<ColumnFamilyHandleImpl*>(column_family);
     cfd = cfh->cfd();
   }
-  return WaitForFlushMemTable(cfd);
+  return WaitForFlushMemTable(cfd, nullptr, false);
 }
 
 Status DBImpl::TEST_WaitForCompact(bool wait_unscheduled) {
@@ -135,7 +137,7 @@ Status DBImpl::TEST_WaitForCompact(bool wait_unscheduled) {
   while ((bg_bottom_compaction_scheduled_ || bg_compaction_scheduled_ ||
           bg_flush_scheduled_ ||
           (wait_unscheduled && unscheduled_compactions_)) &&
-         !error_handler_.IsDBStopped()) {
+         (error_handler_.GetBGError() == Status::OK())) {
     bg_cv_.Wait();
   }
   return error_handler_.GetBGError();
@@ -235,5 +237,16 @@ SequenceNumber DBImpl::TEST_GetLastVisibleSequence() const {
   }
 }
 
+size_t DBImpl::TEST_GetWalPreallocateBlockSize(
+    uint64_t write_buffer_size) const {
+  InstrumentedMutexLock l(&mutex_);
+  return GetWalPreallocateBlockSize(write_buffer_size);
+}
+
+void DBImpl::TEST_WaitForTimedTaskRun(std::function<void()> callback) const {
+  if (thread_dump_stats_ != nullptr) {
+    thread_dump_stats_->TEST_WaitForRun(callback);
+  }
+}
 }  // namespace rocksdb
 #endif  // NDEBUG

@@ -16,6 +16,7 @@
 //   https://github.com/facebook/rocksdb/wiki/A-Tutorial-of-RocksDB-SST-formats#wiki-examples
 
 #pragma once
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -46,6 +47,7 @@ enum ChecksumType : char {
   kNoChecksum = 0x0,
   kCRC32c = 0x1,
   kxxHash = 0x2,
+  kxxHash64 = 0x3,
 };
 
 // For advanced user only
@@ -99,6 +101,18 @@ struct BlockBasedTableOptions {
   };
 
   IndexType index_type = kBinarySearch;
+
+  // The index type that will be used for the data block.
+  enum DataBlockIndexType : char {
+    kDataBlockBinarySearch = 0,   // traditional block type
+    kDataBlockBinaryAndHash = 1,  // additional hash index
+  };
+
+  DataBlockIndexType data_block_index_type = kDataBlockBinarySearch;
+
+  // #entries/#buckets. It is valid only when data_block_hash_index_type is
+  // kDataBlockBinaryAndHash.
+  double data_block_hash_table_util_ratio = 0.75;
 
   // This option is now deprecated. No matter what value it is set to,
   // it will behave as if hash_index_allow_collision=true.
@@ -224,6 +238,12 @@ struct BlockBasedTableOptions {
   // 3 -- Can be read by RocksDB's versions since 5.15. Changes the way we
   // encode the keys in index blocks. If you don't plan to run RocksDB before
   // version 5.15, you should probably use this.
+  // This option only affects newly written tables. When reading existing
+  // tables, the information about version is read from the footer.
+  // 4 -- Can be read by RocksDB's versions since 5.16. Changes the way we
+  // encode the values in index blocks. If you don't plan to run RocksDB before
+  // version 5.16 and you are using index_block_restart_interval > 1, you should
+  // probably use this as it would reduce the index size.
   // This option only affects newly written tables. When reading existing
   // tables, the information about version is read from the footer.
   uint32_t format_version = 2;
@@ -442,8 +462,8 @@ class TableFactory {
   // table_reader is the output table reader.
   virtual Status NewTableReader(
       const TableReaderOptions& table_reader_options,
-      unique_ptr<RandomAccessFileReader>&& file, uint64_t file_size,
-      unique_ptr<TableReader>* table_reader,
+      std::unique_ptr<RandomAccessFileReader>&& file, uint64_t file_size,
+      std::unique_ptr<TableReader>* table_reader,
       bool prefetch_index_and_filter_in_cache = true) const = 0;
 
   // Return a table builder to write to a file for this table type.
