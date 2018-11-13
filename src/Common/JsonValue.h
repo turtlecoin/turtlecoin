@@ -32,6 +32,7 @@ public:
   typedef std::vector<JsonValue> Array;
   typedef bool Bool;
   typedef int64_t Integer;
+  typedef uint64_t Unsigned_Int;
   typedef std::nullptr_t Nil;
   typedef std::map<Key, JsonValue> Object;
   typedef double Real;
@@ -41,6 +42,7 @@ public:
     ARRAY,
     BOOL,
     INTEGER,
+	UNSIGNED_INT,
     NIL,
     OBJECT,
     REAL,
@@ -55,6 +57,7 @@ public:
   JsonValue(Array&& value);
   explicit JsonValue(Bool value);
   JsonValue(Integer value);
+  JsonValue(Unsigned_Int value);
   JsonValue(Nil value);
   JsonValue(const Object& value);
   JsonValue(Object&& value);
@@ -106,6 +109,7 @@ public:
   const Array& getArray() const;
   Bool getBool() const;
   Integer getInteger() const;
+  Unsigned_Int getUnsigned() const;
   Object& getObject();
   const Object& getObject() const;
   Real getReal() const;
@@ -143,6 +147,7 @@ private:
     uint8_t valueArray[sizeof(Array)];
     Bool valueBool;
     Integer valueInteger;
+	Unsigned_Int value_uint;
     uint8_t valueObject[sizeof(Object)];
     Real valueReal;
     uint8_t valueString[sizeof(std::string)];
@@ -157,6 +162,7 @@ private:
   void readNumber(std::istream& in, char c);
   void readObject(std::istream& in);
   void readString(std::istream& in);
+  void readUnsigned(std::istream& in);
 };
 
 }
