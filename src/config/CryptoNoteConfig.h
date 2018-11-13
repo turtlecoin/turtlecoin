@@ -259,7 +259,7 @@ const static   boost::uuids::uuid CRYPTONOTE_NETWORK         =
 
 const char* const SEED_NODES[] = {
   "192.99.206.62:11897",//Robin
-  "192.99.206.48:11897", //sparrow
+  "144.217.45.40:11897", //sparrow
   "74.140.171.96:11897", //Grub
   "108.6.7.68:11897" //NOVA
 };
