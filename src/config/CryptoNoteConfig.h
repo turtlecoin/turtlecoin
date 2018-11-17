@@ -46,7 +46,7 @@ const unsigned EMISSION_SPEED_FACTOR                         = 24;
 static_assert(EMISSION_SPEED_FACTOR <= 8 * sizeof(uint64_t), "Bad EMISSION_SPEED_FACTOR");
 
 /* Premine amount */
-const uint64_t GENESIS_BLOCK_REWARD                          = UINT64_C(0);
+const uint64_t GENESIS_BLOCK_REWARD                          = UINT64_C(60000000);
 
 /* How to generate a premine:
 
@@ -153,7 +153,7 @@ const uint32_t UPGRADE_HEIGHT_V3                             = 2;
 const uint32_t UPGRADE_HEIGHT_V4                             = 3; // Upgrade height for CN-Lite Variant 1 switch.
 const uint32_t UPGRADE_HEIGHT_CURRENT                        = UPGRADE_HEIGHT_V4;
 
-const unsigned UPGRADE_VOTING_THRESHOLD                      = 80;               // percent
+const unsigned UPGRADE_VOTING_THRESHOLD                      = 90;               // percent
 const uint32_t UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
 const uint32_t UPGRADE_WINDOW                                = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
 static_assert(0 < UPGRADE_VOTING_THRESHOLD && UPGRADE_VOTING_THRESHOLD <= 100, "Bad UPGRADE_VOTING_THRESHOLD");
@@ -162,8 +162,8 @@ static_assert(UPGRADE_VOTING_WINDOW > 1, "Bad UPGRADE_VOTING_WINDOW");
 /* Block heights we are going to have hard forks at */
 const uint64_t FORK_HEIGHTS[] =
 {
-    25000,  // 0
-    75000,  // 1
+    250000,  // 0
+    350000,  // 1
     440000,  // 2
     620000,  // 3
     700000,  // 4
@@ -254,7 +254,7 @@ const char     LATEST_VERSION_URL[]                          = "http://grubtoken
 const std::string LICENSE_URL                                = "https://github.com/turtlecoin/turtlecoin/blob/master/LICENSE";
 const static   boost::uuids::uuid CRYPTONOTE_NETWORK         =
 {
-    {  0xb9, 0x6c, 0x1a, 0x2c, 0xcf, 0x12, 0x53, 0x11, 0x69, 0xf4, 0x31, 0xa9, 0xb5, 0xc3, 0x72, 0xe0  }
+    {  0xb9, 0x6c, 0x2a, 0x2c, 0xcf, 0x11, 0x53, 0x17, 0x69, 0xf4, 0x31, 0xa9, 0xb5, 0xc3, 0x52, 0xe0  }
 };
 
 const char* const SEED_NODES[] = {
