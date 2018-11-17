@@ -4,10 +4,10 @@
 #define PROJECT_NAME "GrubPrivate"
 #define PROJECT_SITE "grubtoken.govps.com"
 #define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin & Grub Developers"
-#define APP_VER_MAJOR 0
-#define APP_VER_MINOR 5
-#define APP_VER_REV 2
-#define APP_VER_BUILD 1279
+#define APP_VER_MAJOR 1
+#define APP_VER_MINOR 1
+#define APP_VER_REV 1
+#define APP_VER_BUILD 1280
 
 #define BUILD_COMMIT_ID "@VERSION@"
 #define PROJECT_VERSION STR(APP_VER_MAJOR) "." STR(APP_VER_MINOR) "." STR(APP_VER_REV)
