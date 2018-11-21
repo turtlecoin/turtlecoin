@@ -42,7 +42,7 @@ const uint64_t LWMA_2_DIFFICULTY_BLOCK_INDEX_V3              = 3;
 
 const uint64_t LWMA_3_DIFFICULTY_BLOCK_INDEX                 = 4;
 
-const unsigned EMISSION_SPEED_FACTOR                         = 25;
+const unsigned EMISSION_SPEED_FACTOR                         = 23;
 static_assert(EMISSION_SPEED_FACTOR <= 8 * sizeof(uint64_t), "Bad EMISSION_SPEED_FACTOR");
 
 /* Premine amount */
@@ -254,7 +254,7 @@ const char     LATEST_VERSION_URL[]                          = "http://grubtoken
 const std::string LICENSE_URL                                = "https://github.com/turtlecoin/turtlecoin/blob/master/LICENSE";
 const static   boost::uuids::uuid CRYPTONOTE_NETWORK         =
 {
-    {  0xb9, 0x6c, 0x2a, 0x2c, 0xcf, 0x11, 0x53, 0x17, 0x69, 0xf4, 0x31, 0xa9, 0xb5, 0xc3, 0x52, 0xe0  }
+    {  0xb9, 0x5c, 0x2a, 0x2c, 0xcf, 0x11, 0x53, 0x22, 0x69, 0xf4, 0x31, 0xa8, 0xb5, 0xc3, 0x57, 0xe0  }
 };
 
 const char* const SEED_NODES[] = {
