@@ -118,10 +118,10 @@ add_dependencies(P2P version)
 add_dependencies(cryptotest version)
 
 # Finally build the binaries
-set_property(TARGET TurtleCoind PROPERTY OUTPUT_NAME "GrubMined")
-set_property(TARGET zedwallet PROPERTY OUTPUT_NAME "Grubwallet")
-set_property(TARGET service PROPERTY OUTPUT_NAME "Grub-service")
-set_property(TARGET miner PROPERTY OUTPUT_NAME "Grubminer")
+set_property(TARGET TurtleCoind PROPERTY OUTPUT_NAME "Magnusd")
+set_property(TARGET zedwallet PROPERTY OUTPUT_NAME "Magiwallet")
+set_property(TARGET service PROPERTY OUTPUT_NAME "Magi-service")
+set_property(TARGET miner PROPERTY OUTPUT_NAME "Magiminer")
 set_property(TARGET cryptotest PROPERTY OUTPUT_NAME "cryptotest")
 
 # Additional make targets
