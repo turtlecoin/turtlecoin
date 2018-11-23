@@ -2,7 +2,7 @@
 #define STR(x) STR_HELPER(x)
 
 #define PROJECT_NAME "MagnusZero"
-#define PROJECT_SITE "grubtoken.govps.com"
+#define PROJECT_SITE "magnusnetwork.io"
 #define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin & Magnus Developers"
 #define APP_VER_MAJOR 1
 #define APP_VER_MINOR 1
