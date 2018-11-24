@@ -4,10 +4,10 @@
 #define PROJECT_NAME "MagnusZero"
 #define PROJECT_SITE "magnusnetwork.io"
 #define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin & Magnus Developers"
-#define APP_VER_MAJOR 1
+#define APP_VER_MAJOR 0
 #define APP_VER_MINOR 1
 #define APP_VER_REV 1
-#define APP_VER_BUILD 1280
+#define APP_VER_BUILD 1282
 
 #define BUILD_COMMIT_ID "@VERSION@"
 #define PROJECT_VERSION STR(APP_VER_MAJOR) "." STR(APP_VER_MINOR) "." STR(APP_VER_REV)
