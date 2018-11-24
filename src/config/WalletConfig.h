@@ -10,7 +10,7 @@
 namespace WalletConfig
 {
     /* The prefix your coins address starts with */
-    const std::string addressPrefix = "MagiX";
+    const std::string addressPrefix = "0xb9";
 
     /* Your coins 'Ticker', e.g. Monero = XMR, Bitcoin = BTC */
     const std::string ticker = "MAGI";
@@ -26,7 +26,7 @@ namespace WalletConfig
     const std::string daemonName = "Magnusd";
 
     /* The name to call this wallet */
-    const std::string walletName = "Magiwallet";
+    const std::string walletName = "MagiXwallet";
 
     /* The name of service/walletd, the programmatic rpc interface to a
        wallet */
