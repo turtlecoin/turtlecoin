@@ -351,4 +351,4 @@ int main(int argc, char* argv[])
 
   logger(INFO) << "Node stopped.";
   return 0;
-}
+}}
