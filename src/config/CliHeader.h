@@ -1,4 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018, Nibble Developers
 //
 // Please see the included LICENSE file for more information.
 
