@@ -26,7 +26,7 @@ namespace WalletConfig
     const std::string daemonName = "Magnusd";
 
     /* The name to call this wallet */
-    const std::string walletName = "MagiXwallet";
+    const std::string walletName = "Magiwallet";
 
     /* The name of service/walletd, the programmatic rpc interface to a
        wallet */
