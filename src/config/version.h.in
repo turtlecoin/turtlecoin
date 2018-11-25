@@ -1,13 +1,13 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
-#define PROJECT_NAME "TurtleCoin"
-#define PROJECT_SITE "http://www.turtlecoin.lol"
-#define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin Developers"
-#define APP_VER_MAJOR 0
-#define APP_VER_MINOR 12
+#define PROJECT_NAME "NibbleClassic"
+#define PROJECT_SITE "http://www.nibble-nibble.com"
+#define PROJECT_COPYRIGHT "// Copyright (c) 2018, Nibble Developers"
+#define APP_VER_MAJOR 2
+#define APP_VER_MINOR 
 #define APP_VER_REV 0
-#define APP_VER_BUILD 1280
+#define APP_VER_BUILD 1
 
 #define BUILD_COMMIT_ID "@VERSION@"
 #define PROJECT_VERSION STR(APP_VER_MAJOR) "." STR(APP_VER_MINOR) "." STR(APP_VER_REV)

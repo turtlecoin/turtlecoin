@@ -10,10 +10,10 @@
 namespace WalletConfig
 {
     /* The prefix your coins address starts with */
-    const std::string addressPrefix = "TRTL";
+    const std::string addressPrefix = "N";
 
     /* Your coins 'Ticker', e.g. Monero = XMR, Bitcoin = BTC */
-    const std::string ticker = "TRTL";
+    const std::string ticker = "NBX";
 
     /* The filename to output the CSV to in save_csv */
     const std::string csvFilename = "transactions.csv";
@@ -23,20 +23,20 @@ namespace WalletConfig
     const std::string addressBookFilename = ".addressBook.json";
 
     /* The name of your deamon */
-    const std::string daemonName = "TurtleCoind";
+    const std::string daemonName = "nibbled";
 
     /* The name to call this wallet */
-    const std::string walletName = "zedwallet";
+    const std::string walletName = "NBXwallet";
 
     /* The name of service/walletd, the programmatic rpc interface to a
        wallet */
-    const std::string walletdName = "turtle-service";
+    const std::string walletdName = "nibble-service";
 
     /* The full name of your crypto */
     const std::string coinName = std::string(CryptoNote::CRYPTONOTE_NAME);
 
     /* Where can your users contact you for support? E.g. discord */
-    const std::string contactLink = "http://chat.turtlecoin.lol";
+    const std::string contactLink = "http://nibble-nibble.com";
 
 
     /* The number of decimals your coin has */
@@ -45,7 +45,7 @@ namespace WalletConfig
 
 
     /* The length of a standard address for your coin */
-    const long unsigned int standardAddressLength = 99;
+    const long unsigned int standardAddressLength = 96;
 
     /* The length of an integrated address for your coin - It's the same as
        a normal address, but there is a paymentID included in there - since
