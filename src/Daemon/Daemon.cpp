@@ -39,7 +39,7 @@
 #include <unistd.h>
 #endif
 
-;using Common::JsonValue;
+using Common::JsonValue;
 using namespace CryptoNote;
 using namespace Logging;
 using namespace DaemonConfig;
@@ -368,4 +368,4 @@ int main(int argc, char* argv[])
 
   logger(INFO) << "Node stopped.";
   return 0;
-}}
+}
