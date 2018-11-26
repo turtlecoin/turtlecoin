@@ -1,14 +1,14 @@
 ![image](https://user-images.githubusercontent.com/34389545/35821974-62e0e25c-0a70-11e8-87dd-2cfffeb6ed47.png)
 
 #### Master Build Status
-[![Build Status](https://travis-ci.org/turtlecoin/turtlecoin.svg?branch=master)](https://travis-ci.org/turtlecoin/turtlecoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/turtlecoin/turtlecoin?branch=master&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/turtlecoin)
+[![Build Status](https://travis-ci.org/jakartacoin/jakartacoin.svg?branch=master)](https://travis-ci.org/jakartacoin/jakartacoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/jakartacoin/jakartacoin?branch=master&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/jakartacoin)
 
 #### Development Build Status
-[![Build Status](https://travis-ci.org/turtlecoin/turtlecoin.svg?branch=development)](https://travis-ci.org/turtlecoin/turtlecoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/turtlecoin/turtlecoin?branch=development&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/turtlecoin)
+[![Build Status](https://travis-ci.org/jakartacoin/jakartacoin.svg?branch=development)](https://travis-ci.org/jakartacoin/jakartacoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/jakartacoin/jakartacoin?branch=development&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/jakartacoin)
 
 ### Installing
 
-We offer binary images of the latest releases here: https://latest.turtlecoin.lol
+We offer binary images of the latest releases here: https://latest.jakartacoin.lol
 
 If you would like to compile yourself, read on.
 
@@ -35,8 +35,8 @@ If you are using Clang, you will need Clang 6.0 or higher. You will also need li
 - `sudo pip install cmake`
 - `export CC=gcc-8`
 - `export CXX=g++-8`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/jakartacoin/jakartacoin`
+- `cd jakartacoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -45,7 +45,7 @@ If you are using Clang, you will need Clang 6.0 or higher. You will also need li
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./jakartacoind --version`
 
 ##### Ubuntu, using Clang
 
@@ -69,8 +69,8 @@ You need to modify the below command for your version of ubuntu - see https://ap
 - `sudo pip install cmake`
 - `export CC=clang-6.0`
 - `export CXX=clang++-6.0`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/jakartacoin/jakartacoin`
+- `cd jakartacoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -79,7 +79,7 @@ You need to modify the below command for your version of ubuntu - see https://ap
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./jakartacoind --version`
 
 ##### Generic Linux
 
@@ -88,8 +88,8 @@ Ensure you have the dependencies listed above.
 If you want to use clang, ensure you set the environment variables `CC` and `CXX`.
 See the ubuntu instructions for an example.
 
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/jakartacoin/jakartacoin`
+- `cd jakartacoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -98,7 +98,7 @@ See the ubuntu instructions for an example.
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./jakartacoind --version`
 
 #### OSX/Apple, using GCC
 
@@ -112,8 +112,8 @@ The binaries will be in the `src` folder when you are complete.
 - `brew install --force cmake boost llvm gcc@8`
 - `export CC=gcc-8`
 - `export CXX=g++-8`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/jakartacoin/jakartacoin`
+- `cd jakartacoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -122,7 +122,7 @@ The binaries will be in the `src` folder when you are complete.
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./jakartacoind --version`
 
 #### OSX/Apple, using Clang
 
@@ -136,8 +136,8 @@ The binaries will be in the `src` folder when you are complete.
 - `brew install --force cmake boost llvm`
 - `export CC=/usr/local/opt/llvm/bin/clang`
 - `export CXX=/usr/local/opt/llvm/bin/clang++`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/jakartacoin/jakartacoin`
+- `cd jakartacoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -146,7 +146,7 @@ The binaries will be in the `src` folder when you are complete.
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./jakartacoind --version`
 
 
 #### Windows
@@ -160,7 +160,7 @@ The binaries will be in the `src` folder when you are complete.
 ##### Building
 
 - From the start menu, open 'x64 Native Tools Command Prompt for vs2017'.
-- `cd <your_turtlecoin_directory>`
+- `cd <your_jakartacoin_directory>`
 - `mkdir build`
 - `cd build`
 - `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
@@ -168,13 +168,13 @@ The binaries will be in the `src` folder when you are complete.
 
 If you have errors on this step about not being able to find the following static libraries, you may need to update your cmake. Open 'Visual Studio Installer' and click 'Update'.
 
-- `MSBuild TurtleCoin.sln /p:Configuration=Release /m`
+- `MSBuild jakartacoin.sln /p:Configuration=Release /m`
 
 The binaries will be in the `src/Release` folder when you are complete.
 
 - `cd src`
 - `cd Release`
-- `TurtleCoind.exe --version`
+- `jakartacoind.exe --version`
 
 #### Raspberry Pi 3 B+
 The following images are known to work. Your operation system image **MUST** be 64 bit.
@@ -189,8 +189,8 @@ Once you have a 64 bit image installed, setup proceeds the same as any Linux dis
 
 ##### Building
 
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/jakartacoin/jakartacoin`
+- `cd jakartacoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -199,19 +199,19 @@ Once you have a 64 bit image installed, setup proceeds the same as any Linux dis
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./jakartacoind --version`
 
 #### Thanks
-Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, TurtleCoin Community
+Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, jakartacoin Community
 
 ### Copypasta for license when editing files
 
-Hi TurtleCoin contributor, thanks for forking and sending back Pull Requests. Extensive docs about contributing are in the works or elsewhere. For now this is the bit we need to get into all the files we touch. Please add it to the top of the files, see [src/CryptoNoteConfig.h](https://github.com/turtlecoin/turtlecoin/commit/28cfef2575f2d767f6e512f2a4017adbf44e610e) for an example.
+Hi jakartacoin contributor, thanks for forking and sending back Pull Requests. Extensive docs about contributing are in the works or elsewhere. For now this is the bit we need to get into all the files we touch. Please add it to the top of the files, see [src/CryptoNoteConfig.h](https://github.com/jakartacoin/jakartacoin/commit/28cfef2575f2d767f6e512f2a4017adbf44e610e) for an example.
 
 ```
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018, The jakartacoin Developers
 // 
 // Please see the included LICENSE file for more information.
 ```
