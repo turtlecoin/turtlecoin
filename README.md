@@ -1,4 +1,4 @@
-![image](https://user-images.githubusercontent.com/34389545/35821974-62e0e25c-0a70-11e8-87dd-2cfffeb6ed47.png)
+![image](https://github.com/lingkar-cakra/Jakartacoin/blob/development/jakartacoin.png)
 
 #### Master Build Status
 [![Build Status](https://travis-ci.org/jakartacoin/jakartacoin.svg?branch=master)](https://travis-ci.org/jakartacoin/jakartacoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/jakartacoin/jakartacoin?branch=master&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/jakartacoin)
