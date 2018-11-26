@@ -16,13 +16,13 @@
 namespace CryptoNote {
 namespace parameters {
 
-const uint64_t DIFFICULTY_TARGET                             = 85; // seconds
+const uint64_t DIFFICULTY_TARGET                             = 60; // seconds
 
 const uint32_t CRYPTONOTE_MAX_BLOCK_NUMBER                   = 500000000;
 const size_t   CRYPTONOTE_MAX_BLOCK_BLOB_SIZE                = 500000000;
 const size_t   CRYPTONOTE_MAX_TX_SIZE                        = 1000000000;
 const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX       = 0xb9;
-const uint32_t CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 15;
+const uint32_t CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW          = 20;
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT            = 60 * 60 * 2;
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3         = 3 * DIFFICULTY_TARGET;
 const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4         = 6 * DIFFICULTY_TARGET;
@@ -42,7 +42,7 @@ const uint64_t LWMA_2_DIFFICULTY_BLOCK_INDEX_V3              = 3;
 
 const uint64_t LWMA_3_DIFFICULTY_BLOCK_INDEX                 = 4;
 
-const unsigned EMISSION_SPEED_FACTOR                         = 25;
+const unsigned EMISSION_SPEED_FACTOR                         = 26;
 static_assert(EMISSION_SPEED_FACTOR <= 8 * sizeof(uint64_t), "Bad EMISSION_SPEED_FACTOR");
 
 /* Premine amount */
@@ -77,15 +77,15 @@ static_assert(sizeof(GENESIS_COINBASE_TX_HEX)/sizeof(*GENESIS_COINBASE_TX_HEX) !
 const uint64_t GENESIS_BLOCK_TIMESTAMP                       = 1512800692;
 
 const size_t   CRYPTONOTE_REWARD_BLOCKS_WINDOW               = 100;
-const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE     = 10000; //size of block (bytes) after which reward for block calculated using block size
+const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE     = 100000; //size of block (bytes) after which reward for block calculated using block size
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2  = 20000;
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1  = 10000;
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_CURRENT = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE;
 const size_t   CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE        = 600;
 
-const size_t   CRYPTONOTE_DISPLAY_DECIMAL_POINT              = 10;
+const size_t   CRYPTONOTE_DISPLAY_DECIMAL_POINT              = 3;
 
-const uint64_t MINIMUM_FEE                                   = UINT64_C(100);
+const uint64_t MINIMUM_FEE                                   = UINT64_C(1);
 
 /* This section defines our minimum and maximum mixin counts required for transactions */
 const uint64_t MINIMUM_MIXIN_V1                              = 0;
@@ -216,7 +216,7 @@ const uint8_t  BLOCK_MINOR_VERSION_1                         =  1;
 
 const size_t   BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT        =  10000;  //by default, blocks ids count in synchronizing
 const size_t   BLOCKS_SYNCHRONIZING_DEFAULT_COUNT            =  100;    //by default, blocks count in blocks downloading
-const size_t   COMMAND_RPC_GET_BLOCKS_FAST_MAX_COUNT         =  1000;
+const size_t   COMMAND_RPC_GET_BLOCKS_FAST_COUNT         =  1000;
 
 const int      P2P_DEFAULT_PORT                              =  11897;
 const int      RPC_DEFAULT_PORT                              =  11898;
