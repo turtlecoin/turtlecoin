@@ -68,7 +68,7 @@ Magnusd --print-genesis-tx --genesis-block-reward-address TRTLv2Fyavy8CXG8BPEbNe
 * You should see your premine appear in the previously generated wallet.
 
 */
-const char     GENESIS_COINBASE_TX_HEX[]                     = "011401ff00018491fcd6f702029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd088071210178867c188693139d5e5685e44b96d0263a897a96352f731f4845ec26d765c179";
+const char     GENESIS_COINBASE_TX_HEX[]                     = "011401ff00018491fcd6f702029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd088071210115691cfb92874a07ae0e9b4b87bebabee4683f8c47bf64df6b167795bc9e22d2";
 static_assert(sizeof(GENESIS_COINBASE_TX_HEX)/sizeof(*GENESIS_COINBASE_TX_HEX) != 1, "GENESIS_COINBASE_TX_HEX must not be empty.");
 
 /* This is the unix timestamp of the first "mined" block (technically block 2, not the genesis block)
@@ -162,7 +162,7 @@ static_assert(UPGRADE_VOTING_WINDOW > 1, "Bad UPGRADE_VOTING_WINDOW");
 /* Block heights we are going to have hard forks at */
 const uint64_t FORK_HEIGHTS[] =
 {
-    10,  // 0
+    100,  // 0
     350000,  // 1
     440000,  // 2
     620000,  // 3
@@ -254,13 +254,13 @@ const char     LATEST_VERSION_URL[]                          = "http://magnusnet
 const std::string LICENSE_URL                                = "https://github.com/turtlecoin/turtlecoin/blob/master/LICENSE";
 const static   boost::uuids::uuid CRYPTONOTE_NETWORK         =
 {
-    {  0xb9, 0x5c, 0x2a, 0x5c, 0xcf, 0x71, 0x31, 0x92, 0x12, 0xf6, 0x11, 0xa1, 0xb5, 0xc1, 0x22, 0xe1  }
+    {  0xb9, 0x5c, 0x2a, 0x5c, 0xcf, 0x71, 0x91, 0x92, 0x72, 0xf6, 0x11, 0xa1, 0xb5, 0xc1, 0x22, 0xe2  }
 };
 
 const char* const SEED_NODES[] = {
-  "192.99.206.62:11897",//Robin
+  "192.99.206.62:11897", //Robin
   "144.217.45.40:11897", //sparrow
   "74.140.171.96:11897", //Grub
-  "209.188.25.74:11897" //WHB
+  "209.188.25.74:11897", //WHB
 };
 } // CryptoNote
