@@ -10,7 +10,7 @@
 namespace WalletConfig
 {
     /* The prefix your coins address starts with */
-    const std::string addressPrefix = "X";
+    const std::string addressPrefix = "0xb9";
 
     /* Your coins 'Ticker', e.g. Monero = XMR, Bitcoin = BTC */
     const std::string ticker = "MAGI";
@@ -65,7 +65,7 @@ namespace WalletConfig
     const uint64_t minimumSend = 1;
 
     /* Is a mixin of zero disabled on your network? */
-    const bool mixinZeroDisabled = false;
+    const bool mixinZeroDisabled = true;
 
     /* If a mixin of zero is disabled, at what height was it disabled? E.g.
        fork height, or 0, if never allowed. This is ignored if a mixin of
