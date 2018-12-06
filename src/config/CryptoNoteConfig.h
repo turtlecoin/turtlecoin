@@ -159,6 +159,10 @@ const uint32_t UPGRADE_WINDOW                                = EXPECTED_NUMBER_O
 static_assert(0 < UPGRADE_VOTING_THRESHOLD && UPGRADE_VOTING_THRESHOLD <= 100, "Bad UPGRADE_VOTING_THRESHOLD");
 static_assert(UPGRADE_VOTING_WINDOW > 1, "Bad UPGRADE_VOTING_WINDOW");
 
+/* If you get an error 'Expression did not evaluate to a constant', upgrade
+   your compiler - 
+   https://developercommunity.visualstudio.com/content/problem/62652/cant-declare-constexpr-initializer-list.html */
+
 /* Block heights we are going to have hard forks at */
 constexpr std::initializer_list<uint64_t> FORK_HEIGHTS
 {
