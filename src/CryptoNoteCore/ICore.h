@@ -94,6 +94,7 @@ public:
   virtual bool addTransactionToPool(const BinaryArray& transactionBinaryArray) = 0;
 
   virtual std::vector<Crypto::Hash> getPoolTransactionHashes() const = 0;
+  virtual std::tuple<bool, CryptoNote::BinaryArray> getPoolTransaction(const Crypto::Hash& transactionHash) const = 0;
   virtual bool getPoolChanges(const Crypto::Hash& lastBlockHash, const std::vector<Crypto::Hash>& knownHashes,
                               std::vector<BinaryArray>& addedTransactions,
                               std::vector<Crypto::Hash>& deletedTransactions) const = 0;

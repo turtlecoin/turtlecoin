@@ -36,13 +36,13 @@ namespace CryptoNote
 
   //just to keep backward compatibility with BlockCompleteEntry serialization
   struct RawBlockLegacy {
-    BinaryArray block;
+    BinaryArray blockTemplate;
     std::vector<BinaryArray> transactions;
   };
 
   struct NOTIFY_NEW_BLOCK_request
   {
-    RawBlockLegacy b;
+    RawBlockLegacy block;
     uint32_t current_blockchain_height;
     uint32_t hop;
   };
@@ -148,5 +148,30 @@ namespace CryptoNote
   struct NOTIFY_REQUEST_TX_POOL {
     const static int ID = BC_COMMANDS_POOL_BASE + 8;
     typedef NOTIFY_REQUEST_TX_POOL_request request;
+  };
+
+  /************************************************************************/
+  /*                                                                      */
+  /************************************************************************/
+  struct NOTIFY_NEW_LITE_BLOCK_request {
+    BinaryArray blockTemplate;
+    uint32_t current_blockchain_height;
+    uint32_t hop;
+  };
+
+  struct NOTIFY_NEW_LITE_BLOCK {
+    const static int ID = BC_COMMANDS_POOL_BASE + 9;
+    typedef NOTIFY_NEW_LITE_BLOCK_request request;
+  };
+
+  struct NOTIFY_MISSING_TXS_request {
+    Crypto::Hash blockHash;
+    uint32_t current_blockchain_height;
+    std::vector<Crypto::Hash> missing_txs;
+  };
+
+  struct NOTIFY_MISSING_TXS {
+    const static int ID = BC_COMMANDS_POOL_BASE + 10;
+    typedef NOTIFY_MISSING_TXS_request request;
   };
 }

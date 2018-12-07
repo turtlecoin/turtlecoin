@@ -79,6 +79,8 @@ namespace CryptoNote
     int handle_request_chain(int command, NOTIFY_REQUEST_CHAIN::request& arg, CryptoNoteConnectionContext& context);
     int handle_response_chain_entry(int command, NOTIFY_RESPONSE_CHAIN_ENTRY::request& arg, CryptoNoteConnectionContext& context);
     int handleRequestTxPool(int command, NOTIFY_REQUEST_TX_POOL::request& arg, CryptoNoteConnectionContext& context);
+    int handle_notify_new_lite_block(int command, NOTIFY_NEW_LITE_BLOCK::request& arg, CryptoNoteConnectionContext& context);
+    int handle_notify_missing_txs(int command, NOTIFY_MISSING_TXS::request& arg, CryptoNoteConnectionContext& context);
 
     //----------------- i_cryptonote_protocol ----------------------------------
     virtual void relayBlock(NOTIFY_NEW_BLOCK::request& arg) override;

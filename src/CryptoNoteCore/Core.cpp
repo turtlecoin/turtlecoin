@@ -1437,6 +1437,15 @@ std::vector<Crypto::Hash> Core::getPoolTransactionHashes() const {
   return transactionPool->getTransactionHashes();
 }
 
+std::tuple<bool, CryptoNote::BinaryArray> Core::getPoolTransaction(const Crypto::Hash& transactionHash) const {
+  if (transactionPool->checkIfTransactionPresent(transactionHash)) {
+    return {true, transactionPool->getTransaction(transactionHash).getTransactionBinaryArray()};
+  }
+  else {
+    return {false, BinaryArray()};
+  }
+}
+
 bool Core::getPoolChanges(const Crypto::Hash& lastBlockHash, const std::vector<Crypto::Hash>& knownHashes,
                           std::vector<BinaryArray>& addedTransactions,
                           std::vector<Crypto::Hash>& deletedTransactions) const {
