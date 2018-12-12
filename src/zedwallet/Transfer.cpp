@@ -1033,7 +1033,7 @@ AddressType parseAddress(std::string address)
         WalletConfig::addressPrefix)
     {
         std::cout << WarningMsg("Invalid address! It should start with ")
-                  << WarningMsg(WalletConfig::addressPrefix)
+                  << WalletConfig::addressPrefix
                   << WarningMsg("!")
                   << std::endl << std::endl;
 
@@ -1085,7 +1085,7 @@ bool parseStandardAddress(std::string address, bool printErrors)
         if (printErrors)
         {
             std::cout << WarningMsg("Invalid address! It should start with ")
-                      << WarningMsg(WalletConfig::addressPrefix)
+                      << WalletConfig::addressPrefix
                       << WarningMsg("!")
                       << std::endl << std::endl;
         }
