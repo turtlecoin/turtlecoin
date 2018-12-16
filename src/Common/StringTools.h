@@ -1,19 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -21,12 +9,15 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <string>
 
 namespace Common {
 
 std::string asString(const void* data, uint64_t size); // Does not throw
 std::string asString(const std::vector<uint8_t>& data); // Does not throw
 std::vector<uint8_t> asBinaryArray(const std::string& data);
+std::string toHexString(std::string s);
+std::vector<uint8_t> binaryArrayFromString(std::string s);
 
 uint8_t fromHex(char character); // Returns value of hex 'character', throws on error
 bool fromHex(char character, uint8_t& value); // Assigns value of hex 'character' to 'value', returns false on error, does not throw
@@ -112,5 +103,4 @@ std::string ipAddressToString(uint32_t ip);
 bool parseIpAddressAndPort(uint32_t& ip, uint32_t& port, const std::string& addr);
 
 std::string timeIntervalToString(uint64_t intervalInSeconds);
-
 }

@@ -138,7 +138,7 @@ private:
   std::vector<IBlockchainCache*> chainsLeaves;
   std::unique_ptr<ITransactionPoolCleanWrapper> transactionPool;
   std::unordered_set<IBlockchainCache*> mainChainSet;
-
+  const std::string projectNamePlainText = "TurtleCoin";
   std::string dataFolder;
 
   IntrusiveLinkedList<MessageQueue<BlockchainMessage>> queueList;
@@ -223,6 +223,7 @@ private:
   static Crypto::PublicKey getPubKeyFromExtra(const std::vector<uint8_t> &extra);
 
   static std::string getPaymentIDFromExtra(const std::vector<uint8_t> &extra);
+  const std::string projectNameHash = "36bd29c40c83228af3a18588b9ba630b8c150cd42a255cd3b10ce0776470ddec";
 };
 
 }
