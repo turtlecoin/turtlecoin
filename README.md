@@ -1,5 +1,7 @@
 ![image](https://avatars1.githubusercontent.com/u/44332091?s=460&v=4)
 
+GalaxyBitz Solves the pesky upgrade problem! Or rather we chose not to have our coin upgrade with new Forks. So you can be sure your funds will be safe and spendable.
+
 #### Master Build Status
 [![Build Status](https://travis-ci.org/turtlecoin/turtlecoin.svg?branch=master)](https://travis-ci.org/turtlecoin/turtlecoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/turtlecoin/turtlecoin?branch=master&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/turtlecoin)
 
@@ -8,7 +10,7 @@
 
 ### Installing
 
-We offer binary images of the latest releases here: https://latest.turtlecoin.lol
+We offer binary images of the latest releases here: https://github.com/xstream1/galaxybitz
 
 If you would like to compile yourself, read on.
 
