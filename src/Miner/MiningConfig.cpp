@@ -91,11 +91,11 @@ void MiningConfig::parse(int argc, char** argv)
         ("version", "Output software version information", cxxopts::value<bool>(version)->default_value("false")->implicit_value("true"));
 
     options.add_options("Daemon")
-        ("daemon-address", "The daemon [host:port] combination to use for node operations. This option overrides --daemon-host and --daemon-rpc-port", 
+        ("daemon-address", "The daemon [host:port] combination to use for node operations. This option overrides --daemon-host and --daemon-rpc-port",
           cxxopts::value<std::string>(daemonAddress), "<host:port>")
         ("daemon-host", "The daemon host to use for node operations", cxxopts::value<std::string>(daemonHost)->default_value("127.0.0.1"), "<host>")
         ("daemon-rpc-port", "The daemon RPC port to use for node operations", cxxopts::value<int>(daemonPort)->default_value(std::to_string(CryptoNote::RPC_DEFAULT_PORT)), "#")
-        ("scan-time", "Blockchain polling interval (seconds). How often miner will check the Blockchain for updates", cxxopts::value<size_t>(scanPeriod)->default_value("1"), "#");
+        ("scan-time", "Blockchain polling interval (seconds). How often miner will check the Blockchain for updates.", cxxopts::value<size_t>(scanPeriod)->default_value("5"), "#");
 
     options.add_options("Mining")
         ("address", "The valid CryptoNote miner's address", cxxopts::value<std::string>(miningAddress), "<address>")
