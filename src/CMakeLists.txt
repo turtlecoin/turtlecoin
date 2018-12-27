@@ -118,7 +118,7 @@ add_dependencies(P2P version)
 add_dependencies(cryptotest version)
 
 # Finally build the binaries
-set_property(TARGET TurtleCoind PROPERTY OUTPUT_NAME "GalaxyBitzd")
+set_property(TARGET GalaxyBitzd PROPERTY OUTPUT_NAME "GalaxyBitzd")
 set_property(TARGET zedwallet PROPERTY OUTPUT_NAME "zedwallet")
 set_property(TARGET service PROPERTY OUTPUT_NAME "galaxy-service")
 set_property(TARGET miner PROPERTY OUTPUT_NAME "miner")
