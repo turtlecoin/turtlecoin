@@ -3,7 +3,7 @@
 
 #define PROJECT_NAME "GalaxyBitz"
 #define PROJECT_SITE "https://gbz.site.live"
-#define PROJECT_COPYRIGHT "Copyright 2018, The TurtleCoin Developers"
+#define PROJECT_COPYRIGHT "Copyright 2018, The GalaxyBitz Developers"
 #define APP_VER_MAJOR 0
 #define APP_VER_MINOR 0
 #define APP_VER_REV 0
