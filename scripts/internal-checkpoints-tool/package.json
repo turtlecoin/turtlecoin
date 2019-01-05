@@ -1,0 +1,14 @@
+{
+  "name": "internal-checkpoints-tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "checkpoints.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "line-by-line": "^0.1.6"
+  }
+}
