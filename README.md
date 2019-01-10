@@ -1,16 +1,4 @@
-![image](https://user-images.githubusercontent.com/34389545/35821974-62e0e25c-0a70-11e8-87dd-2cfffeb6ed47.png)
-
-#### Master Build Status
-[![Build Status](https://travis-ci.org/turtlecoin/turtlecoin.svg?branch=master)](https://travis-ci.org/turtlecoin/turtlecoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/turtlecoin/turtlecoin?branch=master&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/turtlecoin)
-
-#### Development Build Status
-[![Build Status](https://travis-ci.org/turtlecoin/turtlecoin.svg?branch=development)](https://travis-ci.org/turtlecoin/turtlecoin) [![Build status](https://ci.appveyor.com/api/projects/status/github/turtlecoin/turtlecoin?branch=development&svg=true)](https://ci.appveyor.com/project/RocksteadyTC/turtlecoin)
-
-### Installing
-
-We offer binary images of the latest releases here: https://latest.turtlecoin.lol
-
-If you would like to compile yourself, read on.
+![image](https://github.com/bytechcoin/bytechcoin/blob/development/.github/ISSUE_TEMPLATE/bytech.png)
 
 ### How To Compile
 
@@ -22,11 +10,11 @@ You will need the following packages: boost, cmake (3.8 or higher), make, and gi
 
 You will also need either GCC/G++, or Clang.
 
-If you are using GCC, you will need GCC-6.0 or higher.
+If you are using GCC, you will need GCC-7.0 or higher.
 
-If you are using Clang, you will need Clang 5.0 or higher. You will also need libstdc++\-6.0 or higher.
+If you are using Clang, you will need Clang 6.0 or higher. You will also need libstdc++\-6.0 or higher.
 
-##### GCC setup, on Ubuntu
+##### Ubuntu, using GCC
 
 - `sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y`
 - `sudo apt-get update`
@@ -35,8 +23,8 @@ If you are using Clang, you will need Clang 5.0 or higher. You will also need li
 - `sudo pip install cmake`
 - `export CC=gcc-8`
 - `export CXX=g++-8`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/bytechcoin/bytechcoin`
+- `cd bytechcoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -45,9 +33,9 @@ If you are using Clang, you will need Clang 5.0 or higher. You will also need li
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./BytechCoind --version`
 
-##### Clang setup, on Ubuntu
+##### Ubuntu, using Clang
 
 - `sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y`
 - `wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -`
@@ -69,8 +57,8 @@ You need to modify the below command for your version of ubuntu - see https://ap
 - `sudo pip install cmake`
 - `export CC=clang-6.0`
 - `export CXX=clang++-6.0`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/bytechcoin/bytechcoin`
+- `cd bytechcoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -79,7 +67,7 @@ You need to modify the below command for your version of ubuntu - see https://ap
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./BytechCoind --version`
 
 ##### Generic Linux
 
@@ -88,8 +76,8 @@ Ensure you have the dependencies listed above.
 If you want to use clang, ensure you set the environment variables `CC` and `CXX`.
 See the ubuntu instructions for an example.
 
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/bytechcoin/bytechcoin`
+- `cd bytechcoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -98,36 +86,56 @@ See the ubuntu instructions for an example.
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./BytechCoind --version`
 
-#### Apple
+#### OSX/Apple, using GCC
 
 ##### Prerequisites
 
-- Install [cmake](https://cmake.org/). See [here](https://stackoverflow.com/questions/23849962/cmake-installer-for-mac-fails-to-create-usr-bin-symlinks) if you are unable to call `cmake` from the terminal after installing.
-- Install the [boost](http://www.boost.org/) libraries. Either compile boost manually or run `brew install boost`.
 - Install XCode and Developer Tools.
-
 
 ##### Building
 
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
-- `mkdir build && cd $_`
-- `cmake ..` or `cmake -DBOOST_ROOT=<path_to_boost_install> ..` when building
-  from a specific boost install. If you used brew to install boost, your path is most likely `/usr/local/include/boost.`
+- `which brew || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+- `brew install --force cmake boost llvm gcc@8`
+- `export CC=gcc-8`
+- `export CXX=g++-8`
+- `git clone -b master --single-branch https://github.com/bytechcoin/bytechcoin`
+- `cd bytechcoin`
+- `mkdir build`
+- `cd build`
+- `cmake ..`
 - `make`
 
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./BytechCoind --version`
 
-If your version of gcc is too old, you may need to run:
+#### OSX/Apple, using Clang
 
-- `brew install gcc@8`
-- `export CC=gcc-8`
-- `export CXX=g++-8`
+##### Prerequisites
+
+- Install XCode and Developer Tools.
+
+##### Building
+
+- `which brew || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+- `brew install --force cmake boost llvm`
+- `export CC=/usr/local/opt/llvm/bin/clang`
+- `export CXX=/usr/local/opt/llvm/bin/clang++`
+- `git clone -b master --single-branch https://github.com/bytechcoin/bytechcoin`
+- `cd bytechcoin`
+- `mkdir build`
+- `cd build`
+- `cmake ..`
+- `make`
+
+The binaries will be in the `src` folder when you are complete.
+
+- `cd src`
+- `./BytechCoind --version`
+
 
 #### Windows
 
@@ -135,23 +143,26 @@ If your version of gcc is too old, you may need to run:
 
 - Install [Visual Studio 2017 Community Edition](https://www.visualstudio.com/thank-you-downloading-visual-studio/?sku=Community&rel=15&page=inlineinstall)
 - When installing Visual Studio, it is **required** that you install **Desktop development with C++**
-- Install the latest version of [Boost](https://sourceforge.net/projects/boost/files/boost-binaries/1.68.0/boost_1_68_0-msvc-14.1-64.exe/download) - Currently Boost 1.68.
+- Install the latest version of [Boost](https://bintray.com/boostorg/release/download_file?file_path=1.68.0%2Fbinaries%2Fboost_1_68_0-msvc-14.1-64.exe) - Currently Boost 1.68.
 
 ##### Building
 
 - From the start menu, open 'x64 Native Tools Command Prompt for vs2017'.
-- `cd <your_turtlecoin_directory>`
+- `cd <your_bytechcoin_directory>`
 - `mkdir build`
 - `cd build`
 - `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
-- `cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT=C:/local/boost_1_68_0` (Or your boost installed dir.)
-- `MSBuild TurtleCoin.sln /p:Configuration=Release /m`
+- `cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT=C:/local/boost_1_68_0`
+
+If you have errors on this step about not being able to find the following static libraries, you may need to update your cmake. Open 'Visual Studio Installer' and click 'Update'.
+
+- `MSBuild BytechCoin.sln /p:Configuration=Release /m`
 
 The binaries will be in the `src/Release` folder when you are complete.
 
 - `cd src`
 - `cd Release`
-- `TurtleCoind.exe --version`
+- `BytechCoind.exe --version`
 
 #### Raspberry Pi 3 B+
 The following images are known to work. Your operation system image **MUST** be 64 bit.
@@ -166,8 +177,8 @@ Once you have a 64 bit image installed, setup proceeds the same as any Linux dis
 
 ##### Building
 
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
+- `git clone -b master --single-branch https://github.com/bytechcoin/bytechcoin`
+- `cd bytechcoin`
 - `mkdir build`
 - `cd build`
 - `cmake ..`
@@ -176,19 +187,21 @@ Once you have a 64 bit image installed, setup proceeds the same as any Linux dis
 The binaries will be in the `src` folder when you are complete.
 
 - `cd src`
-- `./TurtleCoind --version`
+- `./BytechCoind --version`
 
 #### Thanks
-Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, TurtleCoin Community
+Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, TurtleCoin Community, BytechCoin Community
 
 ### Copypasta for license when editing files
 
-Hi TurtleCoin contributor, thanks for forking and sending back Pull Requests. Extensive docs about contributing are in the works or elsewhere. For now this is the bit we need to get into all the files we touch. Please add it to the top of the files, see [src/CryptoNoteConfig.h](https://github.com/turtlecoin/turtlecoin/commit/28cfef2575f2d767f6e512f2a4017adbf44e610e) for an example.
+Hi BytechCoin contributor, thanks for forking and sending back Pull Requests. Extensive docs about contributing are in the works or elsewhere. For now this is the bit we need to get into all the files we touch. Please add it to the top of the files, see [src/CryptoNoteConfig.h].
 
 ```
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2019, The BytechCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 ```
+
