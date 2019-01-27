@@ -73,9 +73,11 @@ class WalletSynchronizer
 
         void stop();
 
-        json toJson() const;
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const;
 
-        void fromJson(const json &j);
+        /* Initializes the class from a json string */
+        void fromJSON(const JSONObject &j);
 
         void initializeAfterLoad(
             const std::shared_ptr<Nigel> daemon,

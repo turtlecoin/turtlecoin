@@ -27,6 +27,10 @@
 
 #include "json.hpp"
 
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+
 namespace Crypto
 {
     struct Hash
@@ -44,6 +48,21 @@ namespace Crypto
         }
         
         uint8_t data[32];
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.String(Common::podToHex(data));
+        }
+
+        /* Initializes the class from a json string */
+        void fromString(const std::string &s)
+        {
+            if (!Common::podFromHex(s, data))
+            {
+                throw std::invalid_argument("Error parsing JSON Hash, wrong length or not hex");
+            }
+        }
     };
 
     struct PublicKey
@@ -68,6 +87,21 @@ namespace Crypto
         bool operator!=(const PublicKey &other) const
         {
             return !(*this == other);
+        }
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.String(Common::podToHex(data));
+        }
+
+        /* Initializes the class from a json string */
+        void fromString(const std::string &s)
+        {
+            if (!Common::podFromHex(s, data))
+            {
+                throw std::invalid_argument("Error parsing JSON PublicKey, wrong length or not hex");
+            }
         }
         
         uint8_t data[32];
@@ -96,7 +130,22 @@ namespace Crypto
         {
             return !(*this == other);
         }
-        
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.String(Common::podToHex(data));
+        }
+
+        /* Initializes the class from a json string */
+        void fromString(const std::string &s)
+        {
+            if (!Common::podFromHex(s, data))
+            {
+                throw std::invalid_argument("Error parsing JSON SecretKey, wrong length or not hex");
+            }
+        }
+
         uint8_t data[32];
     };
 
@@ -124,6 +173,22 @@ namespace Crypto
             return !(*this == other);
         }
 
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.String(Common::podToHex(data));
+        }
+
+        /* Initializes the class from a json string */
+        void fromString(const std::string &s)
+        {
+            if (!Common::podFromHex(s, data))
+            {
+                throw std::invalid_argument("Error parsing JSON KeyDerivation, wrong length or not hex");
+            }
+
+        }
+
         uint8_t data[32];
     };
 
@@ -149,6 +214,21 @@ namespace Crypto
         bool operator!=(const KeyImage &other) const
         {
             return !(*this == other);
+        }
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.String(Common::podToHex(data));
+        }
+
+        /* Initializes the class from a json string */
+        void fromString(const std::string &s)
+        {
+            if (!Common::podFromHex(s, data))
+            {
+                throw std::invalid_argument("Error parsing JSON keyimage, wrong length or not hex");
+            }
         }
 
         uint8_t data[32];

@@ -87,3 +87,48 @@ std::vector<Crypto::Hash> SynchronizationStatus::getBlockHashCheckpoints() const
 
     return results;
 }
+
+void SynchronizationStatus::fromJSON(const JSONObject &j)
+{
+    for (const auto &x : getArrayFromJSON(j, "blockHashCheckpoints"))
+    {
+        Crypto::Hash h;
+        h.fromString(getStringFromJSONString(x));
+        m_blockHashCheckpoints.push_back(h);
+    }
+
+    for (const auto &x : getArrayFromJSON(j, "lastKnownBlockHashes"))
+    {
+        Crypto::Hash h;
+        h.fromString(getStringFromJSONString(x));
+        m_lastKnownBlockHashes.push_back(h);
+    }
+
+    m_lastKnownBlockHeight = getUint64FromJSON(j, "lastKnownBlockHeight");
+}
+
+void SynchronizationStatus::toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+{
+    writer.StartObject();
+
+    writer.Key("blockHashCheckpoints");
+    writer.StartArray();
+    for (const auto hash : m_blockHashCheckpoints)
+    {
+        hash.toJSON(writer);
+    }
+    writer.EndArray();
+
+    writer.Key("lastKnownBlockHashes");
+    writer.StartArray();
+    for (const auto hash : m_lastKnownBlockHashes)
+    {
+        hash.toJSON(writer);
+    }
+    writer.EndArray();
+
+    writer.Key("lastKnownBlockHeight");
+    writer.Uint(m_lastKnownBlockHeight);
+
+    writer.EndObject();
+}

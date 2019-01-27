@@ -720,3 +720,33 @@ void WalletSynchronizer::swapNode(const std::shared_ptr<Nigel> daemon)
 {
     m_daemon = daemon;
 }
+
+void WalletSynchronizer::fromJSON(const JSONObject &j)
+{
+    m_transactionSynchronizerStatus.fromJSON(getObjectFromJSON(j, "transactionSynchronizerStatus"));
+
+    m_startTimestamp = getUint64FromJSON(j, "startTimestamp");
+
+    m_startHeight = getUint64FromJSON(j, "startHeight");
+
+    m_privateViewKey.fromString(getStringFromJSON(j, "privateViewKey"));
+}
+
+void WalletSynchronizer::toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+{
+    writer.StartObject();
+
+    writer.Key("transactionSynchronizerStatus");
+    m_transactionSynchronizerStatus.toJSON(writer);
+
+    writer.Key("startTimestamp");
+    writer.Uint(m_startTimestamp);
+
+    writer.Key("startHeight");
+    writer.Uint(m_startHeight);
+
+    writer.Key("privateViewKey");
+    m_privateViewKey.toJSON(writer);
+
+    writer.EndObject();
+}

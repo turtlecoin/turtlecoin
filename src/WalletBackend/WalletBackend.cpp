@@ -30,18 +30,20 @@
 
 #include <iomanip>
 
-#include "json.hpp"
+#include "JsonHelper.h"
 
 #include <Mnemonics/Mnemonics.h>
+
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
 
 #include <Utilities/Addresses.h>
 #include <Utilities/Utilities.h>
 
 #include <WalletBackend/Constants.h>
-#include <WalletBackend/JsonSerialization.h>
 #include <WalletBackend/Transfer.h>
 
-using json = nlohmann::json;
+using namespace rapidjson;
 
 //////////////////////////
 /* NON MEMBER FUNCTIONS */
@@ -468,31 +470,34 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
 
     try
     {
-        /* Parse the json */
-        const json walletJson = json::parse(decryptedData);
-
-        /* Make our wallet object */
-        const auto wallet = std::make_shared<WalletBackend>();
-
-        /* Initialize it from the json (We could do this in less steps, but it
-           requires a move/copy constructor) */
-        error = wallet->fromJson(
-            walletJson, filename, password, daemonHost, daemonPort
-        );
-
         const bool dumpJson = false;
 
         /* For debugging purposes */
         if (dumpJson)
         {
             std::ofstream o("walletData.json");
-
-            o << std::setw(4) << walletJson << std::endl;
+            o << decryptedData << std::endl;
         }
+
+        rapidjson::Document walletJson;
+
+        if (walletJson.Parse(decryptedData.c_str()).HasParseError())
+        {
+            return {WALLET_FILE_CORRUPTED, nullptr};
+        }
+
+        /* Make our wallet object */
+        const auto wallet = std::make_shared<WalletBackend>();
+
+        /* Initialize it from the json (We could do this in less steps, but it
+           requires a move/copy constructor) */
+        error = wallet->fromJSON(
+            walletJson, filename, password, daemonHost, daemonPort
+        );
 
         return {error, wallet};
     }
-    catch (const json::exception &)
+    catch (const std::invalid_argument &e)
     {
         return {WALLET_FILE_CORRUPTED, nullptr};
     }
@@ -567,11 +572,8 @@ Error WalletBackend::unsafeSave() const
         Constants::IS_CORRECT_PASSWORD_IDENTIFIER.end()
     );
 
-    /* Serialize wallet to json */
-    json walletJson = *this;
-
-    /* Add magic identifier, and get json as a string */
-    std::string walletData = identiferAsString + walletJson.dump();
+    /* Add magic identifier, and get wallet as a JSON string */
+    std::string walletData = identiferAsString + this->toJSON();
 
     using namespace CryptoPP;
 
@@ -1038,4 +1040,65 @@ std::tuple<Error, Crypto::SecretKey> WalletBackend::getTxPrivateKey(
 std::vector<std::tuple<std::string, uint64_t, uint64_t>> WalletBackend::getBalances() const
 {
     return m_subWallets->getBalances(m_daemon->networkBlockCount());
+}
+
+std::string WalletBackend::toJSON() const
+{
+    StringBuffer sb;
+    Writer<StringBuffer> writer(sb);
+
+    writer.StartObject();
+
+    writer.Key("walletFileFormatVersion");
+    writer.Uint(Constants::WALLET_FILE_FORMAT_VERSION);
+
+    writer.Key("subWallets");
+    m_subWallets->toJSON(writer);
+
+    writer.Key("walletSynchronizer");
+    m_walletSynchronizer->toJSON(writer);
+
+    writer.EndObject();
+
+    return sb.GetString();
+}
+
+Error WalletBackend::fromJSON(const rapidjson::Document &j)
+{
+    uint64_t version = getUint64FromJSON(j, "walletFileFormatVersion");
+
+    if (version != Constants::WALLET_FILE_FORMAT_VERSION)
+    {
+        return UNSUPPORTED_WALLET_FILE_FORMAT_VERSION;
+    }
+
+    m_subWallets = std::make_shared<SubWallets>();
+    m_subWallets->fromJSON(getObjectFromJSON(j, "subWallets"));
+
+    m_walletSynchronizer = std::make_shared<WalletSynchronizer>();
+    m_walletSynchronizer->fromJSON(getObjectFromJSON(j, "walletSynchronizer"));
+
+    return SUCCESS;
+}
+
+Error WalletBackend::fromJSON(
+    const rapidjson::Document &j,
+    const std::string filename,
+    const std::string password,
+    const std::string daemonHost,
+    const uint16_t daemonPort)
+{
+    if (Error error = fromJSON(j); error != SUCCESS)
+    {
+        return error;
+    }
+
+    m_filename = filename;
+    m_password = password;
+
+    m_daemon = std::make_shared<Nigel>(daemonHost, daemonPort);
+
+    init();
+
+    return SUCCESS;
 }

@@ -10,6 +10,8 @@
 
 #include "json.hpp"
 
+#include "JsonHelper.h"
+
 #include <vector>
 
 using nlohmann::json;
@@ -28,9 +30,11 @@ class SynchronizationStatus
 
         std::vector<Crypto::Hash> getBlockHashCheckpoints() const;
 
-        json toJson() const;
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const;
 
-        void fromJson(const json &j);
+        /* Initializes the class from a json string */
+        void fromJSON(const JSONObject &j);
 
         uint64_t getHeight() const;
 
