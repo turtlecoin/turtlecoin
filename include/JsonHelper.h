@@ -4,11 +4,6 @@
 
 #pragma once
 
-#ifdef GetObject
-#undef GetObject
-#define GET_OBJECT_WAS_DEFINED
-#endif
-
 #include "rapidjson/document.h"
 
 /* Yikes! */
@@ -132,7 +127,7 @@ JSONObject getObjectFromJSON(const T &j, const std::string &key)
         );
     }
 
-    return val.GetObject();
+    return val.Get_Object();
 }
 
 template<typename T>
@@ -150,7 +145,3 @@ bool getBoolFromJSON(const T &j, const std::string &key)
 
     return val.GetBool();
 }
-
-#ifdef GET_OBJECT_WAS_DEFINED
-#define GetObject GetObjectA
-#endif
