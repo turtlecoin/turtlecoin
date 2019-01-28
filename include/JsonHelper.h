@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include "rapidjson/document.h"
+#ifdef GetObject
+#undef GetObject
+#define GET_OBJECT_WAS_DEFINED
+#endif
 
-/* TODO: Remove */
-#include <iostream>
+#include "rapidjson/document.h"
 
 /* Yikes! */
 typedef rapidjson::GenericObject<true, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator>>> JSONObject;
@@ -39,8 +41,6 @@ uint64_t getUint64FromJSON(const T &j, const std::string &key)
 
     if (!val.IsUint64())
     {
-        std::cout << key << std::endl;
-
         throw std::invalid_argument(
             "JSON parameter is wrong type. Expected uint64_t, got " +
             kTypeNames[val.GetType()]
@@ -64,22 +64,6 @@ uint64_t getInt64FromJSON(const T &j, const std::string &key)
     }
 
     return val.GetInt64();
-}
-
-template<typename T>
-JSONObject getObjectFromJSON(const T &j, const std::string &key)
-{
-    auto &val = getJsonValue(j, key);
-
-    if (!val.IsObject())
-    {
-        throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected Object, got " +
-            kTypeNames[val.GetType()]
-        );
-    }
-
-    return val.GetObject();
 }
 
 /**
@@ -136,6 +120,22 @@ auto getArrayFromJSON(const T &j, const std::string &key)
 }
 
 template<typename T>
+JSONObject getObjectFromJSON(const T &j, const std::string &key)
+{
+    auto &val = getJsonValue(j, key);
+
+    if (!val.IsObject())
+    {
+        throw std::invalid_argument(
+            "JSON parameter is wrong type. Expected Object, got " +
+            kTypeNames[val.GetType()]
+        );
+    }
+
+    return val.GetObject();
+}
+
+template<typename T>
 bool getBoolFromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);
@@ -150,3 +150,7 @@ bool getBoolFromJSON(const T &j, const std::string &key)
 
     return val.GetBool();
 }
+
+#ifdef GET_OBJECT_WAS_DEFINED
+#define GetObject GetObjectA
+#endif

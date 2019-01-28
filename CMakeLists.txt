@@ -106,7 +106,7 @@ set(STATIC ON CACHE BOOL FORCE "Link libraries statically? Forced to ON")
 set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")
 
 # So we can use std::string with rapidjson
-add_compile_definitions(RAPIDJSON_HAS_STDSTRING)
+add_definitions(-DRAPIDJSON_HAS_STDSTRING)
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/version")
 if (NOT COMMIT_ID_IN_VERSION)
