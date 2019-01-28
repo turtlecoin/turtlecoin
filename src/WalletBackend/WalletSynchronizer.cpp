@@ -724,6 +724,7 @@ void WalletSynchronizer::swapNode(const std::shared_ptr<Nigel> daemon)
 void WalletSynchronizer::fromJSON(const JSONObject &j)
 {
     m_transactionSynchronizerStatus.fromJSON(getObjectFromJSON(j, "transactionSynchronizerStatus"));
+    m_blockDownloaderStatus = m_transactionSynchronizerStatus;
 
     m_startTimestamp = getUint64FromJSON(j, "startTimestamp");
 
