@@ -151,7 +151,7 @@ std::string get_fork_time(
         }
     }
 
-    const float days = (next_fork - height) / CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;
+    const float days = ((float)(next_fork - height) / CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY);
 
     std::stringstream stream;
 
