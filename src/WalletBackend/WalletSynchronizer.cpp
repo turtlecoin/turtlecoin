@@ -96,6 +96,11 @@ void WalletSynchronizer::mainLoop()
 
         for (const auto block : blocks)
         {
+            if (m_shouldStop)
+            {
+                return;
+            }
+
             processBlock(block);
         }
 
