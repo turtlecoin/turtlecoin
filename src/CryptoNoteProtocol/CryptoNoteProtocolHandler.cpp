@@ -743,15 +743,17 @@ int CryptoNoteProtocolHandler::handle_notify_new_lite_block(int command, NOTIFY_
   /*
    * here we are finding out which txs are
    * present in the pool and which are not
+   * further we check for transactions in
+   * the blockchain to accept alternative
+   * blocks.
    */
   for (const auto transactionHash: newBlockTemplate.transactionHashes) {
-    const auto [found, transactionBlob] = m_core.getPoolTransaction(transactionHash);
-    if (found) {
-      have_txs.push_back(transactionBlob);
-    }
-    else {
-      need_txs.push_back(transactionHash);
-    }
+      const auto transactionBlob = m_core.getTransaction(transactionHash);
+      if (transactionBlob.has_value()) {
+          have_txs.push_back(*transactionBlob);
+      } else {
+          need_txs.push_back(transactionHash);
+      }
   }
 
   /*
