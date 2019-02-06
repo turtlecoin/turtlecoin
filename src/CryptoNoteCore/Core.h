@@ -75,7 +75,7 @@ public:
     std::unordered_set<Crypto::Hash> &transactionsUnknown) const override;
 
   virtual bool hasTransaction(const Crypto::Hash& transactionHash) const override;
-  virtual boost::optional<BinaryArray> getTransaction(const Crypto::Hash& transactionHash) const override;
+  virtual std::optional<BinaryArray> getTransaction(const Crypto::Hash& transactionHash) const override;
   virtual void getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions, std::vector<Crypto::Hash>& missedHashes) const override;
 
   virtual uint64_t getBlockDifficulty(uint32_t blockIndex) const override;

@@ -863,7 +863,7 @@ std::string Core::getPaymentIDFromExtra(const std::vector<uint8_t> &extra)
     return std::string();
 }
 
-boost::optional<BinaryArray> Core::getTransaction(const Crypto::Hash& hash) const {
+std::optional<BinaryArray> Core::getTransaction(const Crypto::Hash& hash) const {
     throwIfNotInitialized();
     auto segment = findSegmentContainingTransaction(hash);
     if(segment != nullptr) {
@@ -871,7 +871,7 @@ boost::optional<BinaryArray> Core::getTransaction(const Crypto::Hash& hash) cons
     } else if(transactionPool->checkIfTransactionPresent(hash)) {
         return transactionPool->getTransaction(hash).getTransactionBinaryArray();
     } else {
-        return boost::none;
+        return std::nullopt;
     }
 }
 

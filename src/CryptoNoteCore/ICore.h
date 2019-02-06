@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <optional>
 #include <CryptoNote.h>
 
 #include "AddBlockErrors.h"
@@ -74,7 +75,7 @@ public:
    * \param hash The hash of the transaction
    * \return The binary blob of the queried transaction, or none if the transaction does not exist.
    */
-  virtual boost::optional<BinaryArray> getTransaction(const Crypto::Hash& hash) const = 0;
+  virtual std::optional<BinaryArray> getTransaction(const Crypto::Hash& hash) const = 0;
   virtual void getTransactions(const std::vector<Crypto::Hash>& transactionHashes,
                                std::vector<BinaryArray>& transactions,
                                std::vector<Crypto::Hash>& missedHashes) const = 0;
