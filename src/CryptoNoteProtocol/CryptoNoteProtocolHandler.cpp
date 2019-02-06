@@ -642,7 +642,7 @@ int CryptoNoteProtocolHandler::doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request ar
     else {
         if(context.m_pending_lite_block.has_value()) {
             context.m_pending_lite_block = std::nullopt;
-            logger(Logging::DEBUGGING) << context << " Peer has a pending lite block but didnt provide all necassary transactions, dropping connection.";
+            logger(Logging::DEBUGGING) << context << " Peer has a pending lite block but didn't provide all necessary transactions, dropping the connection.";
             context.m_state= CryptoNoteConnectionContext::state_shutdown;
         }
         else {
