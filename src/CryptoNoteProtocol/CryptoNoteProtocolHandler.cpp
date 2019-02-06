@@ -797,7 +797,11 @@ int CryptoNoteProtocolHandler::handle_notify_new_lite_block(int command, NOTIFY_
     req.blockHash = CachedBlock(newBlockTemplate).getBlockHash();
     req.missing_txs = std::move(need_txs);
 
-    relay_post_notify<NOTIFY_MISSING_TXS>(*m_p2p, req);
+    if (!post_notify<NOTIFY_MISSING_TXS>(*m_p2p, req, context)) {
+        logger(Logging::ERROR)
+            << context << "Lite block is missing transactions but the publisher is not reachable, dropping connection.";
+        context.m_state = CryptoNoteConnectionContext::state_shutdown;
+    }
   }
 
   return 1;
