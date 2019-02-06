@@ -796,6 +796,7 @@ int CryptoNoteProtocolHandler::handle_notify_new_lite_block(int command, NOTIFY_
     req.current_blockchain_height = arg.current_blockchain_height;
     req.blockHash = CachedBlock(newBlockTemplate).getBlockHash();
     req.missing_txs = std::move(need_txs);
+    context.m_pending_lite_block = PendingLiteBlock{arg, {req.missing_txs.begin(), req.missing_txs.end()}};
 
     if (!post_notify<NOTIFY_MISSING_TXS>(*m_p2p, req, context)) {
         logger(Logging::ERROR)
