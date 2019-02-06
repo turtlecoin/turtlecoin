@@ -863,6 +863,18 @@ std::string Core::getPaymentIDFromExtra(const std::vector<uint8_t> &extra)
     return std::string();
 }
 
+boost::optional<BinaryArray> Core::getTransaction(const Crypto::Hash& hash) const {
+    throwIfNotInitialized();
+    auto segment = findSegmentContainingTransaction(hash);
+    if(segment != nullptr) {
+        return segment->getRawTransactions({hash})[0];
+    } else if(transactionPool->checkIfTransactionPresent(hash)) {
+        return transactionPool->getTransaction(hash).getTransactionBinaryArray();
+    } else {
+        return boost::none;
+    }
+}
+
 void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, std::vector<BinaryArray>& transactions,
                            std::vector<Crypto::Hash>& missedHashes) const {
   assert(!chainsLeaves.empty());
