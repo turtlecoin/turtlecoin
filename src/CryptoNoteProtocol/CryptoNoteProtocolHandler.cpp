@@ -427,7 +427,12 @@ int CryptoNoteProtocolHandler::handle_notify_new_transactions(int command, NOTIF
     relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(*m_p2p, arg, &context.m_connection_id);
   }
 
-  return true;
+  if(context.m_pending_lite_block.has_value()) {
+      logger(Logging::TRACE) << context << " Pending lite block detected, trying to reevaluate transaction details";
+      return doPushLiteBlock(context.m_pending_lite_block->request, context);
+  } else {
+      return true;
+  }
 }
 
 int CryptoNoteProtocolHandler::handle_request_get_objects(int command, NOTIFY_REQUEST_GET_OBJECTS::request& arg, CryptoNoteConnectionContext& context) {
