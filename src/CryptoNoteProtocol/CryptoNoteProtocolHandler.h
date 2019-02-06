@@ -84,6 +84,9 @@ namespace CryptoNote
     int processObjects(CryptoNoteConnectionContext& context, std::vector<RawBlock>&& rawBlocks, const std::vector<CachedBlock>& cachedBlocks);
     Logging::LoggerRef logger;
 
+private:
+    int doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request block, CryptoNoteConnectionContext& context);
+
   private:
 
     System::Dispatcher& m_dispatcher;
