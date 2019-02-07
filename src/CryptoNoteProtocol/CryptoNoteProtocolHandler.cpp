@@ -413,26 +413,25 @@ int CryptoNoteProtocolHandler::handle_notify_new_transactions(int command, NOTIF
   if (context.m_state != CryptoNoteConnectionContext::state_normal)
     return 1;
 
-  for (auto tx_blob_it = arg.txs.begin(); tx_blob_it != arg.txs.end();) {
-    if (!m_core.addTransactionToPool(*tx_blob_it)) {
-      logger(Logging::DEBUGGING) << context << "Tx verification failed";
-      tx_blob_it = arg.txs.erase(tx_blob_it);
-    } else {
-      ++tx_blob_it;
-    }
-  }
-
-  if (arg.txs.size()) {
-    //TODO: add announce usage here
-    relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(*m_p2p, arg, &context.m_connection_id);
-  }
-
   if(context.m_pending_lite_block.has_value()) {
-      logger(Logging::TRACE) << context << " Pending lite block detected, trying to reevaluate transaction details";
-      return doPushLiteBlock(context.m_pending_lite_block->request, context);
+      logger(Logging::TRACE) << context << " Pending lite block detected, handling request as missing lite block transactions response";
+      return doPushLiteBlock(context.m_pending_lite_block->request, context, std::move(arg.txs));
   } else {
-      return true;
+      for (auto tx_blob_it = arg.txs.begin(); tx_blob_it != arg.txs.end();) {
+          if (!m_core.addTransactionToPool(*tx_blob_it)) {
+              logger(Logging::DEBUGGING) << context << "Tx verification failed";
+              tx_blob_it = arg.txs.erase(tx_blob_it);
+          } else {
+              ++tx_blob_it;
+          }
+      }
+      if (arg.txs.size()) {
+        //TODO: add announce usage here
+        relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(*m_p2p, arg, &context.m_connection_id);
+      }
   }
+
+  return true;
 }
 
 int CryptoNoteProtocolHandler::handle_request_get_objects(int command, NOTIFY_REQUEST_GET_OBJECTS::request& arg, CryptoNoteConnectionContext& context) {
@@ -572,7 +571,7 @@ int CryptoNoteProtocolHandler::processObjects(CryptoNoteConnectionContext& conte
   return 0;
 }
 
-int CryptoNoteProtocolHandler::doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request arg, CryptoNoteConnectionContext &context)
+int CryptoNoteProtocolHandler::doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request arg, CryptoNoteConnectionContext &context, std::vector<BinaryArray> missingTxs)
 {
     BlockTemplate newBlockTemplate;
     if(!fromBinaryArray(newBlockTemplate, arg.blockTemplate)) { // deserialize blockTemplate
@@ -581,9 +580,27 @@ int CryptoNoteProtocolHandler::doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request ar
         return 1;
     }
 
+    std::unordered_map<Crypto::Hash, BinaryArray> provided_txs;
+    provided_txs.reserve(missingTxs.size());
+    for(std::size_t i = 0; i < missingTxs.size(); ++i) {
+        CachedTransaction i_provided_transaction{std::move(missingTxs[i])};
+        provided_txs[getBinaryArrayHash(missingTxs[i])] = std::move(missingTxs[i]);
+    }
 
     std::vector<BinaryArray> have_txs;
     std::vector<Crypto::Hash> need_txs;
+
+    if(context.m_pending_lite_block.has_value()) {
+        for(const auto& requestedTxHash : context.m_pending_lite_block->missed_transactions) {
+            if(provided_txs.find(requestedTxHash) == provided_txs.end()) {
+                logger(Logging::DEBUGGING) << context << "Peer didn't provide a missing transaction, previously "
+                                                         "acquired for a lite block, dropping conneciton.";
+                context.m_pending_lite_block = std::nullopt;
+                context.m_state = CryptoNoteConnectionContext::state_shutdown;
+                return 1;
+            }
+        }
+    }
 
     /*
    * here we are finding out which txs are
@@ -593,11 +610,17 @@ int CryptoNoteProtocolHandler::doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request ar
    * blocks.
    */
     for (const auto transactionHash: newBlockTemplate.transactionHashes) {
-        const auto transactionBlob = m_core.getTransaction(transactionHash);
-        if (transactionBlob.has_value()) {
-            have_txs.push_back(*transactionBlob);
-        } else {
-            need_txs.push_back(transactionHash);
+        auto providedSerach = provided_txs.find(transactionHash);
+        if(providedSerach != provided_txs.end()) {
+            have_txs.push_back(providedSerach->second);
+        }
+        else {
+            const auto transactionBlob = m_core.getTransaction(transactionHash);
+            if (transactionBlob.has_value()) {
+                have_txs.push_back(*transactionBlob);
+            } else {
+                need_txs.push_back(transactionHash);
+            }
         }
     }
 
@@ -825,7 +848,7 @@ int CryptoNoteProtocolHandler::handle_notify_new_lite_block(int command, NOTIFY_
     return 1;
   }
 
-  return doPushLiteBlock(std::move(arg), context);
+  return doPushLiteBlock(std::move(arg), context, {});
 }
 
 int CryptoNoteProtocolHandler::handle_notify_missing_txs(int command, NOTIFY_MISSING_TXS::request& arg,

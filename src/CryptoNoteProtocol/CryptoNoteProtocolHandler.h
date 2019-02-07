@@ -85,7 +85,7 @@ namespace CryptoNote
     Logging::LoggerRef logger;
 
 private:
-    int doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request block, CryptoNoteConnectionContext& context);
+    int doPushLiteBlock(NOTIFY_NEW_LITE_BLOCK::request block, CryptoNoteConnectionContext& context, std::vector<BinaryArray> missingTxs);
 
   private:
 
