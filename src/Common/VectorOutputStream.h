@@ -17,20 +17,22 @@
 
 #pragma once
 
+#include "IOutputStream.h"
 #include <cstdint>
 #include <vector>
-#include "IOutputStream.h"
 
-namespace Common {
+namespace Common
+{
 
-class VectorOutputStream : public IOutputStream {
-public:
-  VectorOutputStream(std::vector<uint8_t>& out);
-  VectorOutputStream& operator=(const VectorOutputStream&) = delete;
-  uint64_t writeSome(const void* data, uint64_t size) override;
+class VectorOutputStream : public IOutputStream
+{
+  public:
+    VectorOutputStream(std::vector<uint8_t> &out);
+    VectorOutputStream &operator=(const VectorOutputStream &) = delete;
+    uint64_t writeSome(const void *data, uint64_t size) override;
 
-private:
-  std::vector<uint8_t>& out;
+  private:
+    std::vector<uint8_t> &out;
 };
 
-}
+} // namespace Common

@@ -20,18 +20,21 @@
 #include <CryptoNoteCore/DatabaseCacheData.h>
 #include <Serialization/SerializationOverloads.h>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-void ExtendedTransactionInfo::serialize(CryptoNote::ISerializer& s) {
-  s(static_cast<CachedTransactionInfo&>(*this), "cached_transaction");
-  s(amountToKeyIndexes, "key_indexes");
+void ExtendedTransactionInfo::serialize(CryptoNote::ISerializer &s)
+{
+    s(static_cast<CachedTransactionInfo &>(*this), "cached_transaction");
+    s(amountToKeyIndexes, "key_indexes");
 }
 
-void KeyOutputInfo::serialize(ISerializer& s) {
-  s(publicKey, "public_key");
-  s(transactionHash, "transaction_hash");
-  s(unlockTime, "unlock_time");
-  s(outputIndex, "output_index");
+void KeyOutputInfo::serialize(ISerializer &s)
+{
+    s(publicKey, "public_key");
+    s(transactionHash, "transaction_hash");
+    s(unlockTime, "unlock_time");
+    s(outputIndex, "output_index");
 }
 
-}
+} // namespace CryptoNote

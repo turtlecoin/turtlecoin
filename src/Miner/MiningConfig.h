@@ -10,13 +10,14 @@
 #include <cstdint>
 #include <string>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
 struct MiningConfig
 {
     MiningConfig();
 
-    void parse(int argc, char** argv);
+    void parse(int argc, char **argv);
 
     std::string miningAddress;
     std::string daemonAddress;
@@ -31,4 +32,4 @@ struct MiningConfig
     bool version;
 };
 
-} //namespace CryptoNote
+} // namespace CryptoNote

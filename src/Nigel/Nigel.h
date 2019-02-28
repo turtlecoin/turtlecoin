@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -20,123 +20,110 @@
 
 class Nigel
 {
-    public:
+  public:
+    /////////////////////////
+    /* Public Constructors */
+    /////////////////////////
 
-        /////////////////////////
-        /* Public Constructors */
-        /////////////////////////
+    Nigel(const std::string daemonHost, const uint16_t daemonPort);
 
-        Nigel(
-            const std::string daemonHost,
-            const uint16_t daemonPort);
+    Nigel(const std::string daemonHost, const uint16_t daemonPort, const std::chrono::seconds timeout);
 
-        Nigel(
-            const std::string daemonHost,
-            const uint16_t daemonPort,
-            const std::chrono::seconds timeout);
+    ~Nigel();
 
-        ~Nigel();
+    /////////////////////////////
+    /* Public member functions */
+    /////////////////////////////
 
-        /////////////////////////////
-        /* Public member functions */
-        /////////////////////////////
+    void init();
 
-        void init();
+    void swapNode(const std::string daemonHost, const uint16_t daemonPort);
 
-        void swapNode(const std::string daemonHost, const uint16_t daemonPort);
+    /* Returns whether we've received info from the daemon at some point */
+    bool isOnline() const;
 
-        /* Returns whether we've received info from the daemon at some point */
-        bool isOnline() const;
+    uint64_t localDaemonBlockCount() const;
 
-        uint64_t localDaemonBlockCount() const;
+    uint64_t networkBlockCount() const;
 
-        uint64_t networkBlockCount() const;
+    uint64_t peerCount() const;
 
-        uint64_t peerCount() const;
+    uint64_t hashrate() const;
 
-        uint64_t hashrate() const;
+    std::tuple<uint64_t, std::string> nodeFee() const;
 
-        std::tuple<uint64_t, std::string> nodeFee() const;
+    std::tuple<std::string, uint16_t> nodeAddress() const;
 
-        std::tuple<std::string, uint16_t> nodeAddress() const;
+    std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>>
+    getWalletSyncData(const std::vector<Crypto::Hash> blockHashCheckpoints, uint64_t startHeight,
+                      uint64_t startTimestamp) const;
 
-        std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> getWalletSyncData(
-            const std::vector<Crypto::Hash> blockHashCheckpoints,
-            uint64_t startHeight,
-            uint64_t startTimestamp) const;
+    /* Returns a bool on success or not */
+    bool getTransactionsStatus(const std::unordered_set<Crypto::Hash> transactionHashes,
+                               std::unordered_set<Crypto::Hash> &transactionsInPool,
+                               std::unordered_set<Crypto::Hash> &transactionsInBlock,
+                               std::unordered_set<Crypto::Hash> &transactionsUnknown) const;
 
-        /* Returns a bool on success or not */
-        bool getTransactionsStatus(
-            const std::unordered_set<Crypto::Hash> transactionHashes,
-            std::unordered_set<Crypto::Hash> &transactionsInPool,
-            std::unordered_set<Crypto::Hash> &transactionsInBlock,
-            std::unordered_set<Crypto::Hash> &transactionsUnknown) const;
+    std::tuple<bool, std::vector<CryptoNote::RandomOuts>> getRandomOutsByAmounts(const std::vector<uint64_t> amounts,
+                                                                                 const uint64_t requestedOuts) const;
 
-        std::tuple<bool, std::vector<CryptoNote::RandomOuts>> getRandomOutsByAmounts(
-            const std::vector<uint64_t> amounts,
-            const uint64_t requestedOuts) const;
+    /* {success, connectionError} */
+    std::tuple<bool, bool> sendTransaction(const CryptoNote::Transaction tx) const;
 
-        /* {success, connectionError} */
-        std::tuple<bool, bool> sendTransaction(
-            const CryptoNote::Transaction tx) const;
+    std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
+    getGlobalIndexesForRange(const uint64_t startHeight, const uint64_t endHeight) const;
 
-        std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
-            getGlobalIndexesForRange(
-                const uint64_t startHeight,
-                const uint64_t endHeight) const;
+  private:
+    //////////////////////////////
+    /* Private member functions */
+    //////////////////////////////
 
-    private:
+    void stop();
 
-        //////////////////////////////
-        /* Private member functions */
-        //////////////////////////////
+    void backgroundRefresh();
 
-        void stop();
+    bool getDaemonInfo();
 
-        void backgroundRefresh();
+    bool getFeeInfo();
 
-        bool getDaemonInfo();
+    //////////////////////////////
+    /* Private member variables */
+    //////////////////////////////
 
-        bool getFeeInfo();
+    /* Stores our http client (Don't really care about it launching threads
+       and making our functions non const) */
+    std::shared_ptr<httplib::Client> m_httpClient = nullptr;
 
-        //////////////////////////////
-        /* Private member variables */
-        //////////////////////////////
+    /* Runs a background refresh on height, hashrate, etc */
+    std::thread m_backgroundThread;
 
-        /* Stores our http client (Don't really care about it launching threads
-           and making our functions non const) */
-        std::shared_ptr<httplib::Client> m_httpClient = nullptr;
+    /* If we should stop the background thread */
+    std::atomic<bool> m_shouldStop = false;
 
-        /* Runs a background refresh on height, hashrate, etc */
-        std::thread m_backgroundThread;
+    /* The amount of blocks the daemon we're connected to has */
+    std::atomic<uint64_t> m_localDaemonBlockCount = 0;
 
-        /* If we should stop the background thread */
-        std::atomic<bool> m_shouldStop = false;
+    /* The amount of blocks the network has */
+    std::atomic<uint64_t> m_networkBlockCount = 0;
 
-        /* The amount of blocks the daemon we're connected to has */
-        std::atomic<uint64_t> m_localDaemonBlockCount = 0;
-        
-        /* The amount of blocks the network has */
-        std::atomic<uint64_t> m_networkBlockCount = 0;
+    /* The amount of peers we're connected to */
+    std::atomic<uint64_t> m_peerCount = 0;
 
-        /* The amount of peers we're connected to */
-        std::atomic<uint64_t> m_peerCount = 0;
+    /* The hashrate (based on the last local block the daemon has synced) */
+    std::atomic<uint64_t> m_lastKnownHashrate = 0;
 
-        /* The hashrate (based on the last local block the daemon has synced) */
-        std::atomic<uint64_t> m_lastKnownHashrate = 0;
+    /* The address to send the node fee to (May be "") */
+    std::string m_nodeFeeAddress;
 
-        /* The address to send the node fee to (May be "") */
-        std::string m_nodeFeeAddress;
+    /* The fee the node charges */
+    uint64_t m_nodeFeeAmount = 0;
 
-        /* The fee the node charges */
-        uint64_t m_nodeFeeAmount = 0;
+    /* The timeout on requests */
+    std::chrono::seconds m_timeout;
 
-        /* The timeout on requests */
-        std::chrono::seconds m_timeout;
+    /* The daemon hostname */
+    std::string m_daemonHost;
 
-        /* The daemon hostname */
-        std::string m_daemonHost;
-
-        /* The daemon port */
-        uint16_t m_daemonPort;
+    /* The daemon port */
+    uint16_t m_daemonPort;
 };

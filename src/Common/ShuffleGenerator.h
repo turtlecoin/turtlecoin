@@ -10,56 +10,57 @@
 
 #include <unordered_map>
 
-class SequenceEnded: public std::runtime_error {
-public:
-  SequenceEnded() : std::runtime_error("shuffle sequence ended") {
-  }
+class SequenceEnded : public std::runtime_error
+{
+  public:
+    SequenceEnded() : std::runtime_error("shuffle sequence ended") {}
 
-  ~SequenceEnded(){}
+    ~SequenceEnded() {}
 };
 
-template <typename T>
-class ShuffleGenerator {
-public:
+template <typename T> class ShuffleGenerator
+{
+  public:
+    ShuffleGenerator(T n) : N(n), count(n) {}
 
-  ShuffleGenerator(T n) :
-    N(n), count(n) {}
+    T operator()()
+    {
 
-  T operator()() {
+        if (count == 0)
+        {
+            throw SequenceEnded();
+        }
 
-    if (count == 0) {
-      throw SequenceEnded();
+        T value = Random::randomValue<T>(0, --count);
+
+        auto rvalIt = selected.find(count);
+        auto rval = rvalIt != selected.end() ? rvalIt->second : count;
+
+        auto lvalIt = selected.find(value);
+
+        if (lvalIt != selected.end())
+        {
+            value = lvalIt->second;
+            lvalIt->second = rval;
+        }
+        else
+        {
+            selected[value] = rval;
+        }
+
+        return value;
     }
 
-    T value = Random::randomValue<T>(0, --count);
+    bool empty() const { return count == 0; }
 
-    auto rvalIt = selected.find(count);
-    auto rval = rvalIt != selected.end() ? rvalIt->second : count;
-
-    auto lvalIt = selected.find(value);
-
-    if (lvalIt != selected.end()) {
-      value = lvalIt->second;
-      lvalIt->second = rval;
-    } else {
-      selected[value] = rval;
+    void reset()
+    {
+        count = N;
+        selected.clear();
     }
 
-    return value;
-  }
-
-  bool empty() const {
-    return count == 0;
-  }
-
-  void reset() {
-    count = N;
-    selected.clear();
-  }
-
-private:
-
-  std::unordered_map<T, T> selected;
-  T count;
-  const T N;
+  private:
+    std::unordered_map<T, T> selected;
+    T count;
+    const T N;
 };

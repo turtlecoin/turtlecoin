@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include <iostream>
@@ -14,10 +14,8 @@
 #include <zedwallet++/Sync.h>
 #include <zedwallet++/TransactionMonitor.h>
 
-void shutdown(
-    const std::atomic<bool> &ctrl_c,
-    const std::atomic<bool> &stop,
-    const std::shared_ptr<WalletBackend> walletBackend)
+void shutdown(const std::atomic<bool> &ctrl_c, const std::atomic<bool> &stop,
+              const std::shared_ptr<WalletBackend> walletBackend)
 {
     while (!ctrl_c && !stop)
     {
@@ -39,8 +37,8 @@ void shutdown(
         /* Delete the walletbackend - this will call the deconstructor,
            which will set the appropriate m_shouldStop flag. Since this
            function gets triggered from a signal handler, we can't just call
-           save() - The data may be in an invalid state. 
-           
+           save() - The data may be in an invalid state.
+           
            Obviously, calling delete on a shared pointer is undefined
            behaviour if we continue using it in another thread - fortunately,
            we're exiting right now. */
@@ -50,11 +48,8 @@ void shutdown(
     exit(0);
 }
 
-void cleanup(
-    std::thread &txMonitorThread,
-    std::thread &ctrlCWatcher,
-    std::atomic<bool> &stop,
-    std::shared_ptr<TransactionMonitor> txMonitor)
+void cleanup(std::thread &txMonitorThread, std::thread &ctrlCWatcher, std::atomic<bool> &stop,
+             std::shared_ptr<TransactionMonitor> txMonitor)
 {
     /* Stop the transaction monitor */
     txMonitor->stop();
@@ -102,10 +97,8 @@ int main(int argc, char **argv)
         }
 
         /* Launch the thread which watches for the shutdown signal */
-        ctrlCWatcher = std::thread([&ctrl_c, &stop, &walletBackend = walletBackend]
-        {
-            shutdown(ctrl_c, stop, walletBackend);
-        });
+        ctrlCWatcher =
+            std::thread([&ctrl_c, &stop, &walletBackend = walletBackend] { shutdown(ctrl_c, stop, walletBackend); });
 
         /* Trigger the shutdown signal if ctrl+c is used
            We do the actual handling in a separate thread to handle stuff not
@@ -129,15 +122,14 @@ int main(int argc, char **argv)
 
         /* Cleanup the threads */
         cleanup(txMonitorThread, ctrlCWatcher, stop, txMonitor);
-        
+
         std::cout << InformationMsg("\nSaving and shutting down...\n");
 
         /* Wallet backend destructor gets called here, which saves */
     }
     catch (const std::exception &e)
     {
-        std::cout << WarningMsg("Unexpected error: " + std::string(e.what()))
-                  << std::endl
+        std::cout << WarningMsg("Unexpected error: " + std::string(e.what())) << std::endl
                   << "Please report this error, and what you were doing to "
                   << "cause it." << std::endl;
 
@@ -148,6 +140,6 @@ int main(int argc, char **argv)
         /* Cleanup the threads */
         cleanup(txMonitorThread, ctrlCWatcher, stop, txMonitor);
     }
-        
+
     std::cout << "Thanks for stopping by..." << std::endl;
 }

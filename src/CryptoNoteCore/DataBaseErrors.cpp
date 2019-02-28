@@ -17,10 +17,12 @@
 
 #include "DataBaseErrors.h"
 
-namespace CryptoNote {
-namespace error {
+namespace CryptoNote
+{
+namespace error
+{
 
 DataBaseErrorCategory DataBaseErrorCategory::INSTANCE;
 
-} //namespace error
-} //namespace CryptoNote
+} // namespace error
+} // namespace CryptoNote

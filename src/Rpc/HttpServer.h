@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once 
+#pragma once
 
 #include <unordered_set>
 
@@ -24,38 +24,37 @@
 
 #include <System/ContextGroup.h>
 #include <System/Dispatcher.h>
-#include <System/TcpListener.h>
-#include <System/TcpConnection.h>
 #include <System/Event.h>
+#include <System/TcpConnection.h>
+#include <System/TcpListener.h>
 
 #include <Logging/LoggerRef.h>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-class HttpServer {
+class HttpServer
+{
 
-public:
+  public:
+    HttpServer(System::Dispatcher &dispatcher, std::shared_ptr<Logging::ILogger> log);
 
-  HttpServer(System::Dispatcher& dispatcher, std::shared_ptr<Logging::ILogger> log);
+    void start(const std::string &address, uint16_t port);
+    void stop();
 
-  void start(const std::string& address, uint16_t port);
-  void stop();
+    virtual void processRequest(const HttpRequest &request, HttpResponse &response) = 0;
 
-  virtual void processRequest(const HttpRequest& request, HttpResponse& response) = 0;
+  protected:
+    System::Dispatcher &m_dispatcher;
 
-protected:
+  private:
+    void acceptLoop();
+    void connectionHandler(System::TcpConnection &&conn);
 
-  System::Dispatcher& m_dispatcher;
-
-private:
-
-  void acceptLoop();
-  void connectionHandler(System::TcpConnection&& conn);
-
-  System::ContextGroup workingContextGroup;
-  Logging::LoggerRef logger;
-  System::TcpListener m_listener;
-  std::unordered_set<System::TcpConnection*> m_connections;
+    System::ContextGroup workingContextGroup;
+    Logging::LoggerRef logger;
+    System::TcpListener m_listener;
+    std::unordered_set<System::TcpConnection *> m_connections;
 };
 
-}
+} // namespace CryptoNote

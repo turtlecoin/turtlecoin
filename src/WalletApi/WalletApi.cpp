@@ -10,8 +10,8 @@
 
 #include <iostream>
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 #include <WalletApi/ApiDispatcher.h>
 #include <WalletApi/ParseArguments.h>
@@ -34,10 +34,7 @@ int main(int argc, char **argv)
         Tools::SignalHandler::install([&ctrl_c] { ctrl_c = true; });
 
         /* Init the API */
-        api = std::make_shared<ApiDispatcher>(
-            config.port, config.rpcBindIp, config.rpcPassword,
-            config.corsHeader
-        );
+        api = std::make_shared<ApiDispatcher>(config.port, config.rpcBindIp, config.rpcPassword, config.corsHeader);
 
         /* Launch the API */
         apiThread = std::thread(&ApiDispatcher::start, api.get());
@@ -51,8 +48,7 @@ int main(int argc, char **argv)
 
         std::string address = "http://" + config.rpcBindIp + ":" + std::to_string(config.port);
 
-        std::cout << "The api has been launched on " << address
-                  << ".\nType exit to save and shutdown." << std::endl;
+        std::cout << "The api has been launched on " << address << ".\nType exit to save and shutdown." << std::endl;
 
         while (!ctrl_c)
         {

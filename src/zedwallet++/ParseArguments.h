@@ -16,7 +16,7 @@ struct Config
 
     /* The daemon host */
     std::string host;
-    
+
     /* The daemon port */
     uint16_t port = CryptoNote::RPC_DEFAULT_PORT;
 

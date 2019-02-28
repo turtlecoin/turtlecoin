@@ -31,63 +31,62 @@
 #include <sys/select.h>
 #endif
 
-namespace Common {
+namespace Common
+{
 
-  class AsyncConsoleReader {
+class AsyncConsoleReader
+{
 
   public:
-
     AsyncConsoleReader();
     ~AsyncConsoleReader();
 
     void start();
-    bool getline(std::string& line);
+    bool getline(std::string &line);
     void stop();
     bool stopped() const;
     void pause();
     void unpause();
 
   private:
-
     void consoleThread();
     bool waitInput();
 
     std::atomic<bool> m_stop;
     std::thread m_thread;
     BlockingQueue<std::string> m_queue;
-  };
+};
 
+class ConsoleHandler
+{
+  public:
+    ~ConsoleHandler();
 
-  class ConsoleHandler {
-    public:
+    typedef std::function<bool(const std::vector<std::string> &)> ConsoleCommandHandler;
 
-      ~ConsoleHandler();
+    std::string getUsage() const;
+    void setHandler(const std::string &command, const ConsoleCommandHandler &handler, const std::string &usage = "");
+    void requestStop();
+    bool runCommand(const std::vector<std::string> &cmdAndArgs);
 
-      typedef std::function<bool(const std::vector<std::string> &)> ConsoleCommandHandler;
+    void start(bool startThread = true, const std::string &prompt = "",
+               Console::Color promptColor = Console::Color::Default);
+    void stop();
+    void wait();
+    void pause();
+    void unpause();
 
-      std::string getUsage() const;
-      void setHandler(const std::string& command, const ConsoleCommandHandler& handler, const std::string& usage = "");
-      void requestStop();
-      bool runCommand(const std::vector<std::string>& cmdAndArgs);
+  private:
+    typedef std::map<std::string, std::pair<ConsoleCommandHandler, std::string>> CommandHandlersMap;
 
-      void start(bool startThread = true, const std::string& prompt = "", Console::Color promptColor = Console::Color::Default);
-      void stop();
-      void wait(); 
-      void pause();
-      void unpause();
+    virtual void handleCommand(const std::string &cmd);
 
-    private:
+    void handlerThread();
 
-      typedef std::map<std::string, std::pair<ConsoleCommandHandler, std::string>> CommandHandlersMap;
-
-      virtual void handleCommand(const std::string& cmd);
-
-      void handlerThread();
-
-      std::thread m_thread;
-      std::string m_prompt;
-      Console::Color m_promptColor = Console::Color::Default;
-      CommandHandlersMap m_handlers;
-      AsyncConsoleReader m_consoleReader;
-  };
-}
+    std::thread m_thread;
+    std::string m_prompt;
+    Console::Color m_promptColor = Console::Color::Default;
+    CommandHandlersMap m_handlers;
+    AsyncConsoleReader m_consoleReader;
+};
+} // namespace Common

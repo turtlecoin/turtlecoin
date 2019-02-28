@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 /////////////////////////////////
@@ -18,37 +18,24 @@
 ///////////////////////////////////
 
 /* Makes a view only subwallet */
-SubWallet::SubWallet(
-    const Crypto::PublicKey publicSpendKey,
-    const std::string address,
-    const uint64_t scanHeight,
-    const uint64_t scanTimestamp,
-    const bool isPrimaryAddress) :
+SubWallet::SubWallet(const Crypto::PublicKey publicSpendKey, const std::string address, const uint64_t scanHeight,
+                     const uint64_t scanTimestamp, const bool isPrimaryAddress)
+    :
 
-    m_publicSpendKey(publicSpendKey),
-    m_address(address),
-    m_syncStartHeight(scanHeight),
-    m_syncStartTimestamp(scanTimestamp),
-    m_privateSpendKey(Constants::BLANK_SECRET_KEY),
-    m_isPrimaryAddress(isPrimaryAddress)
+      m_publicSpendKey(publicSpendKey), m_address(address), m_syncStartHeight(scanHeight),
+      m_syncStartTimestamp(scanTimestamp), m_privateSpendKey(Constants::BLANK_SECRET_KEY),
+      m_isPrimaryAddress(isPrimaryAddress)
 {
 }
 
 /* Makes a standard subwallet */
-SubWallet::SubWallet(
-    const Crypto::PublicKey publicSpendKey,
-    const Crypto::SecretKey privateSpendKey,
-    const std::string address,
-    const uint64_t scanHeight,
-    const uint64_t scanTimestamp,
-    const bool isPrimaryAddress) :
+SubWallet::SubWallet(const Crypto::PublicKey publicSpendKey, const Crypto::SecretKey privateSpendKey,
+                     const std::string address, const uint64_t scanHeight, const uint64_t scanTimestamp,
+                     const bool isPrimaryAddress)
+    :
 
-    m_publicSpendKey(publicSpendKey),
-    m_address(address),
-    m_syncStartHeight(scanHeight),
-    m_syncStartTimestamp(scanTimestamp),
-    m_privateSpendKey(privateSpendKey),
-    m_isPrimaryAddress(isPrimaryAddress)
+      m_publicSpendKey(publicSpendKey), m_address(address), m_syncStartHeight(scanHeight),
+      m_syncStartTimestamp(scanTimestamp), m_privateSpendKey(privateSpendKey), m_isPrimaryAddress(isPrimaryAddress)
 {
 }
 
@@ -56,10 +43,8 @@ SubWallet::SubWallet(
 /* CLASS FUNCTIONS */
 /////////////////////
 
-Crypto::KeyImage SubWallet::getTxInputKeyImage(
-    const Crypto::KeyDerivation derivation,
-    const size_t outputIndex,
-    const bool isViewWallet) const
+Crypto::KeyImage SubWallet::getTxInputKeyImage(const Crypto::KeyDerivation derivation, const size_t outputIndex,
+                                               const bool isViewWallet) const
 {
     /* Can't create a key image with a view wallet - but we still store the
        input so we can calculate the balance */
@@ -72,20 +57,14 @@ Crypto::KeyImage SubWallet::getTxInputKeyImage(
 
         /* Get the tmp public key from the derivation, the index,
            and our public spend key */
-        Crypto::derive_public_key(
-            derivation, outputIndex, m_publicSpendKey, tmp.publicKey
-        );
+        Crypto::derive_public_key(derivation, outputIndex, m_publicSpendKey, tmp.publicKey);
 
         /* Get the tmp private key from the derivation, the index,
            and our private spend key */
-        Crypto::derive_secret_key(
-            derivation, outputIndex, m_privateSpendKey, tmp.secretKey
-        );
+        Crypto::derive_secret_key(derivation, outputIndex, m_privateSpendKey, tmp.secretKey);
 
         /* Get the key image from the tmp public and private key */
-        Crypto::generate_key_image(
-            tmp.publicKey, tmp.secretKey, keyImage
-        );
+        Crypto::generate_key_image(tmp.publicKey, tmp.secretKey, keyImage);
 
         return keyImage;
     }
@@ -93,9 +72,7 @@ Crypto::KeyImage SubWallet::getTxInputKeyImage(
     return Crypto::KeyImage();
 }
 
-void SubWallet::storeTransactionInput(
-    const WalletTypes::TransactionInput input,
-    const bool isViewWallet)
+void SubWallet::storeTransactionInput(const WalletTypes::TransactionInput input, const bool isViewWallet)
 {
     /* Can't create a key image with a view wallet - but we still store the
        input so we can calculate the balance */
@@ -105,10 +82,7 @@ void SubWallet::storeTransactionInput(
            sent ourselves, that are now returning as change. Remove from
            vector if found. */
         const auto it = std::remove_if(m_unconfirmedIncomingAmounts.begin(), m_unconfirmedIncomingAmounts.end(),
-        [&input](const auto storedInput)
-        {
-            return storedInput.key == input.key;
-        });
+                                       [&input](const auto storedInput) { return storedInput.key == input.key; });
 
         if (it != m_unconfirmedIncomingAmounts.end())
         {
@@ -119,8 +93,7 @@ void SubWallet::storeTransactionInput(
     m_unspentInputs.push_back(input);
 }
 
-std::tuple<uint64_t, uint64_t> SubWallet::getBalance(
-    const uint64_t currentHeight) const
+std::tuple<uint64_t, uint64_t> SubWallet::getBalance(const uint64_t currentHeight) const
 {
     uint64_t unlockedBalance = 0;
 
@@ -159,23 +132,14 @@ void SubWallet::reset(const uint64_t scanHeight)
     m_spentInputs.clear();
 }
 
-bool SubWallet::isPrimaryAddress() const
-{
-    return m_isPrimaryAddress;
-}
+bool SubWallet::isPrimaryAddress() const { return m_isPrimaryAddress; }
 
-std::string SubWallet::address() const
-{
-    return m_address;
-}
+std::string SubWallet::address() const { return m_address; }
 
 bool SubWallet::hasKeyImage(const Crypto::KeyImage keyImage) const
 {
     auto it = std::find_if(m_unspentInputs.begin(), m_unspentInputs.end(),
-    [&keyImage](const auto &input)
-    {
-        return input.keyImage == keyImage;
-    });
+                           [&keyImage](const auto &input) { return input.keyImage == keyImage; });
 
     /* Found the key image */
     if (it != m_unspentInputs.end())
@@ -185,10 +149,7 @@ bool SubWallet::hasKeyImage(const Crypto::KeyImage keyImage) const
 
     /* Didn't find it in unlocked inputs, check the locked inputs */
     it = std::find_if(m_lockedInputs.begin(), m_lockedInputs.end(),
-    [&keyImage](const auto &input)
-    {
-        return input.keyImage == keyImage;
-    });
+                      [&keyImage](const auto &input) { return input.keyImage == keyImage; });
 
     return it != m_lockedInputs.end();
 
@@ -198,26 +159,15 @@ bool SubWallet::hasKeyImage(const Crypto::KeyImage keyImage) const
     /* Also don't need to check unconfirmed inputs - we can't spend those yet */
 }
 
-Crypto::PublicKey SubWallet::publicSpendKey() const
-{
-    return m_publicSpendKey;
-}
+Crypto::PublicKey SubWallet::publicSpendKey() const { return m_publicSpendKey; }
 
-Crypto::SecretKey SubWallet::privateSpendKey() const
-{
-    return m_privateSpendKey;
-}
+Crypto::SecretKey SubWallet::privateSpendKey() const { return m_privateSpendKey; }
 
-void SubWallet::markInputAsSpent(
-    const Crypto::KeyImage keyImage,
-    const uint64_t spendHeight)
+void SubWallet::markInputAsSpent(const Crypto::KeyImage keyImage, const uint64_t spendHeight)
 {
     /* Find the input */
     auto it = std::find_if(m_unspentInputs.begin(), m_unspentInputs.end(),
-    [&keyImage](const auto x)
-    {
-        return x.keyImage == keyImage;
-    });
+                           [&keyImage](const auto x) { return x.keyImage == keyImage; });
 
     if (it != m_unspentInputs.end())
     {
@@ -235,10 +185,7 @@ void SubWallet::markInputAsSpent(
 
     /* Didn't find it, lets try in the locked inputs */
     it = std::find_if(m_lockedInputs.begin(), m_lockedInputs.end(),
-    [&keyImage](const auto x)
-    {
-        return x.keyImage == keyImage;
-    });
+                      [&keyImage](const auto x) { return x.keyImage == keyImage; });
 
     if (it != m_lockedInputs.end())
     {
@@ -253,7 +200,7 @@ void SubWallet::markInputAsSpent(
 
         return;
     }
-    
+
     /* Shouldn't happen */
     throw std::runtime_error("Could not find key image to remove!");
 }
@@ -262,10 +209,7 @@ void SubWallet::markInputAsLocked(const Crypto::KeyImage keyImage)
 {
     /* Find the input */
     auto it = std::find_if(m_unspentInputs.begin(), m_unspentInputs.end(),
-    [&keyImage](const auto x)
-    {
-        return x.keyImage == keyImage;
-    });
+                           [&keyImage](const auto x) { return x.keyImage == keyImage; });
 
     /* Shouldn't happen */
     if (it == m_unspentInputs.end())
@@ -288,10 +232,7 @@ void SubWallet::removeForkedInputs(const uint64_t forkHeight)
 
     /* Unspent inputs which we recieved in a block after the fork. Remove them. */
     auto it = std::remove_if(m_unspentInputs.begin(), m_unspentInputs.end(),
-    [forkHeight](const auto input)
-    {
-        return input.blockHeight >= forkHeight;
-    });
+                             [forkHeight](const auto input) { return input.blockHeight >= forkHeight; });
 
     if (it != m_unspentInputs.end())
     {
@@ -300,9 +241,7 @@ void SubWallet::removeForkedInputs(const uint64_t forkHeight)
 
     /* If the input was spent after the fork height, but received before the
        fork height, then we keep it, but move it into the unspent vector */
-    it = std::remove_if(m_spentInputs.begin(), m_spentInputs.end(),
-    [&forkHeight, this](auto &input)
-    {
+    it = std::remove_if(m_spentInputs.begin(), m_spentInputs.end(), [&forkHeight, this](auto &input) {
         if (input.spendHeight >= forkHeight)
         {
             /* Reset spend height */
@@ -325,13 +264,10 @@ void SubWallet::removeForkedInputs(const uint64_t forkHeight)
 
 /* Cancelled transactions are transactions we sent, but got cancelled and not
    included in a block for some reason */
-void SubWallet::removeCancelledTransactions(
-    const std::unordered_set<Crypto::Hash> cancelledTransactions)
+void SubWallet::removeCancelledTransactions(const std::unordered_set<Crypto::Hash> cancelledTransactions)
 {
     /* Find the inputs used in the cancelled transactions */
-    auto it = std::remove_if(m_lockedInputs.begin(), m_lockedInputs.end(),
-    [&cancelledTransactions, this](auto &input)
-    {
+    auto it = std::remove_if(m_lockedInputs.begin(), m_lockedInputs.end(), [&cancelledTransactions, this](auto &input) {
         if (cancelledTransactions.find(input.parentTransactionHash) != cancelledTransactions.end())
         {
             input.spendHeight = 0;
@@ -355,10 +291,10 @@ void SubWallet::removeCancelledTransactions(
     /* Find inputs that we 'received' in outgoing transfers (scanning our
        own sent transfer) and remove them */
     auto it2 = std::remove_if(m_unconfirmedIncomingAmounts.begin(), m_unconfirmedIncomingAmounts.end(),
-    [&cancelledTransactions](auto &input)
-    {
-        return cancelledTransactions.find(input.parentTransactionHash) != cancelledTransactions.end();
-    });
+                              [&cancelledTransactions](auto &input) {
+                                  return cancelledTransactions.find(input.parentTransactionHash) !=
+                                         cancelledTransactions.end();
+                              });
 
     if (it2 != m_unconfirmedIncomingAmounts.end())
     {
@@ -366,8 +302,7 @@ void SubWallet::removeCancelledTransactions(
     }
 }
 
-std::vector<WalletTypes::TxInputAndOwner> SubWallet::getSpendableInputs(
-    const uint64_t height) const
+std::vector<WalletTypes::TxInputAndOwner> SubWallet::getSpendableInputs(const uint64_t height) const
 {
     std::vector<WalletTypes::TxInputAndOwner> inputs;
 
@@ -382,25 +317,16 @@ std::vector<WalletTypes::TxInputAndOwner> SubWallet::getSpendableInputs(
     return inputs;
 }
 
-uint64_t SubWallet::syncStartHeight() const
-{
-    return m_syncStartHeight;
-}
+uint64_t SubWallet::syncStartHeight() const { return m_syncStartHeight; }
 
-uint64_t SubWallet::syncStartTimestamp() const
-{
-    return m_syncStartTimestamp;
-}
+uint64_t SubWallet::syncStartTimestamp() const { return m_syncStartTimestamp; }
 
-void SubWallet::storeUnconfirmedIncomingInput(
-    const WalletTypes::UnconfirmedInput input)
+void SubWallet::storeUnconfirmedIncomingInput(const WalletTypes::UnconfirmedInput input)
 {
     m_unconfirmedIncomingAmounts.push_back(input);
 }
 
-void SubWallet::convertSyncTimestampToHeight(
-    const uint64_t timestamp,
-    const uint64_t height)
+void SubWallet::convertSyncTimestampToHeight(const uint64_t timestamp, const uint64_t height)
 {
     if (m_syncStartTimestamp != 0)
     {

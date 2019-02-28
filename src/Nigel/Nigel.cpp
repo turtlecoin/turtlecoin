@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////
@@ -20,28 +20,18 @@ using json = nlohmann::json;
 /* Constructors / Destructors */
 ////////////////////////////////
 
-Nigel::Nigel(
-    const std::string daemonHost, 
-    const uint16_t daemonPort) : 
-    Nigel(daemonHost, daemonPort, std::chrono::seconds(10))
+Nigel::Nigel(const std::string daemonHost, const uint16_t daemonPort)
+    : Nigel(daemonHost, daemonPort, std::chrono::seconds(10))
 {
 }
 
-Nigel::Nigel(
-    const std::string daemonHost, 
-    const uint16_t daemonPort,
-    const std::chrono::seconds timeout) :
-    m_timeout(timeout),
-    m_daemonHost(daemonHost),
-    m_daemonPort(daemonPort),
-    m_httpClient(std::make_shared<httplib::Client>(daemonHost.c_str(), daemonPort, timeout.count()))
+Nigel::Nigel(const std::string daemonHost, const uint16_t daemonPort, const std::chrono::seconds timeout)
+    : m_timeout(timeout), m_daemonHost(daemonHost), m_daemonPort(daemonPort),
+      m_httpClient(std::make_shared<httplib::Client>(daemonHost.c_str(), daemonPort, timeout.count()))
 {
 }
 
-Nigel::~Nigel()
-{
-    stop();
-}
+Nigel::~Nigel() { stop(); }
 
 //////////////////////
 /* Member functions */
@@ -59,27 +49,20 @@ void Nigel::swapNode(const std::string daemonHost, const uint16_t daemonPort)
     m_daemonHost = daemonHost;
     m_daemonPort = daemonPort;
 
-    m_httpClient = std::make_shared<httplib::Client>(
-        daemonHost.c_str(), daemonPort, m_timeout.count()
-    );
+    m_httpClient = std::make_shared<httplib::Client>(daemonHost.c_str(), daemonPort, m_timeout.count());
 
     init();
 }
 
-std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSyncData(
-    const std::vector<Crypto::Hash> blockHashCheckpoints,
-    uint64_t startHeight,
-    uint64_t startTimestamp) const
+std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>>
+Nigel::getWalletSyncData(const std::vector<Crypto::Hash> blockHashCheckpoints, uint64_t startHeight,
+                         uint64_t startTimestamp) const
 {
-    json j = {
-        {"blockHashCheckpoints", blockHashCheckpoints},
-        {"startHeight", startHeight},
-        {"startTimestamp", startTimestamp}
-    };
+    json j = {{"blockHashCheckpoints", blockHashCheckpoints},
+              {"startHeight", startHeight},
+              {"startTimestamp", startTimestamp}};
 
-    const auto res = m_httpClient->Post(
-        "/getwalletsyncdata", j.dump(), "application/json"
-    );
+    const auto res = m_httpClient->Post("/getwalletsyncdata", j.dump(), "application/json");
 
     if (res && res->status == 200)
     {
@@ -157,11 +140,10 @@ bool Nigel::getDaemonInfo()
                 m_networkBlockCount--;
             }
 
-            m_peerCount = j.at("incoming_connections_count").get<uint64_t>()
-                        + j.at("outgoing_connections_count").get<uint64_t>();
+            m_peerCount =
+                j.at("incoming_connections_count").get<uint64_t>() + j.at("outgoing_connections_count").get<uint64_t>();
 
-            m_lastKnownHashrate = j.at("difficulty").get<uint64_t>() 
-                                / CryptoNote::parameters::DIFFICULTY_TARGET;
+            m_lastKnownHashrate = j.at("difficulty").get<uint64_t>() / CryptoNote::parameters::DIFFICULTY_TARGET;
 
             return true;
         }
@@ -219,55 +201,29 @@ void Nigel::backgroundRefresh()
 
 bool Nigel::isOnline() const
 {
-    return m_localDaemonBlockCount != 0 ||
-           m_networkBlockCount != 0 ||
-           m_peerCount != 0 ||
-           m_lastKnownHashrate != 0;
+    return m_localDaemonBlockCount != 0 || m_networkBlockCount != 0 || m_peerCount != 0 || m_lastKnownHashrate != 0;
 }
 
-uint64_t Nigel::localDaemonBlockCount() const
-{
-    return m_localDaemonBlockCount;
-}
+uint64_t Nigel::localDaemonBlockCount() const { return m_localDaemonBlockCount; }
 
-uint64_t Nigel::networkBlockCount() const
-{
-    return m_networkBlockCount;
-}
+uint64_t Nigel::networkBlockCount() const { return m_networkBlockCount; }
 
-uint64_t Nigel::peerCount() const
-{
-    return m_peerCount;
-}
+uint64_t Nigel::peerCount() const { return m_peerCount; }
 
-uint64_t Nigel::hashrate() const
-{
-    return m_lastKnownHashrate;
-}
+uint64_t Nigel::hashrate() const { return m_lastKnownHashrate; }
 
-std::tuple<uint64_t, std::string> Nigel::nodeFee() const
-{
-    return {m_nodeFeeAmount, m_nodeFeeAddress};
-}
+std::tuple<uint64_t, std::string> Nigel::nodeFee() const { return {m_nodeFeeAmount, m_nodeFeeAddress}; }
 
-std::tuple<std::string, uint16_t> Nigel::nodeAddress() const
-{
-    return {m_daemonHost, m_daemonPort};
-}
+std::tuple<std::string, uint16_t> Nigel::nodeAddress() const { return {m_daemonHost, m_daemonPort}; }
 
-bool Nigel::getTransactionsStatus(
-    const std::unordered_set<Crypto::Hash> transactionHashes,
-    std::unordered_set<Crypto::Hash> &transactionsInPool,
-    std::unordered_set<Crypto::Hash> &transactionsInBlock,
-    std::unordered_set<Crypto::Hash> &transactionsUnknown) const
+bool Nigel::getTransactionsStatus(const std::unordered_set<Crypto::Hash> transactionHashes,
+                                  std::unordered_set<Crypto::Hash> &transactionsInPool,
+                                  std::unordered_set<Crypto::Hash> &transactionsInBlock,
+                                  std::unordered_set<Crypto::Hash> &transactionsUnknown) const
 {
-    json j = {
-        {"transactionHashes", transactionHashes}
-    };
+    json j = {{"transactionHashes", transactionHashes}};
 
-    const auto res = m_httpClient->Post(
-        "/get_transactions_status", j.dump(), "application/json"
-    );
+    const auto res = m_httpClient->Post("/get_transactions_status", j.dump(), "application/json");
 
     if (res && res->status == 200)
     {
@@ -293,18 +249,12 @@ bool Nigel::getTransactionsStatus(
     return false;
 }
 
-std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmounts(
-    const std::vector<uint64_t> amounts,
-    const uint64_t requestedOuts) const
+std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmounts(const std::vector<uint64_t> amounts,
+                                                                                    const uint64_t requestedOuts) const
 {
-    json j = {
-        {"amounts", amounts},
-        {"outs_count", requestedOuts}
-    };
+    json j = {{"amounts", amounts}, {"outs_count", requestedOuts}};
 
-    const auto res = m_httpClient->Post(
-        "/getrandom_outs", j.dump(), "application/json"
-    );
+    const auto res = m_httpClient->Post("/getrandom_outs", j.dump(), "application/json");
 
     if (res && res->status == 200)
     {
@@ -329,16 +279,11 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
     return {false, {}};
 }
 
-std::tuple<bool, bool> Nigel::sendTransaction(
-    const CryptoNote::Transaction tx) const
+std::tuple<bool, bool> Nigel::sendTransaction(const CryptoNote::Transaction tx) const
 {
-    json j = {
-        {"tx_as_hex", Common::toHex(CryptoNote::toBinaryArray(tx))}
-    };
+    json j = {{"tx_as_hex", Common::toHex(CryptoNote::toBinaryArray(tx))}};
 
-    const auto res = m_httpClient->Post(
-        "/sendrawtransaction", j.dump(), "application/json"
-    );
+    const auto res = m_httpClient->Post("/sendrawtransaction", j.dump(), "application/json");
 
     bool success = false;
     bool connectionError = true;
@@ -362,19 +307,12 @@ std::tuple<bool, bool> Nigel::sendTransaction(
 }
 
 std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
-    Nigel::getGlobalIndexesForRange(
-        const uint64_t startHeight,
-        const uint64_t endHeight) const
+Nigel::getGlobalIndexesForRange(const uint64_t startHeight, const uint64_t endHeight) const
 {
-    json j = {
-        {"startHeight", startHeight},
-        {"endHeight", endHeight}
-    };
+    json j = {{"startHeight", startHeight}, {"endHeight", endHeight}};
 
-    const auto res = m_httpClient->Post(
-        "/get_global_indexes_for_range", j.dump(), "application/json"
-    );
-    
+    const auto res = m_httpClient->Post("/get_global_indexes_for_range", j.dump(), "application/json");
+
     if (res && res->status == 200)
     {
         try

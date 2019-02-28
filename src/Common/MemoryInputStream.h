@@ -19,19 +19,21 @@
 
 #include "IInputStream.h"
 
-namespace Common {
+namespace Common
+{
 
-  class MemoryInputStream : public IInputStream {
+class MemoryInputStream : public IInputStream
+{
   public:
-    MemoryInputStream(const void* buffer, uint64_t bufferSize);
+    MemoryInputStream(const void *buffer, uint64_t bufferSize);
     bool endOfStream() const;
-    
+
     // IInputStream
-    virtual uint64_t readSome(void* data, uint64_t size) override;
+    virtual uint64_t readSome(void *data, uint64_t size) override;
 
   private:
-    const char* buffer;
+    const char *buffer;
     uint64_t bufferSize;
     uint64_t position;
-  };
-}
+};
+} // namespace Common

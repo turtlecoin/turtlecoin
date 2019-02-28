@@ -17,10 +17,12 @@
 
 #include "BlockValidationErrors.h"
 
-namespace CryptoNote {
-namespace error {
+namespace CryptoNote
+{
+namespace error
+{
 
 BlockValidationErrorCategory BlockValidationErrorCategory::INSTANCE;
 
 }
-}
+} // namespace CryptoNote

@@ -18,19 +18,21 @@
 #include "StringInputStream.h"
 #include <string.h>
 
-namespace Common {
+namespace Common
+{
 
-StringInputStream::StringInputStream(const std::string& in) : in(in), offset(0) {
+StringInputStream::StringInputStream(const std::string &in) : in(in), offset(0) {}
+
+uint64_t StringInputStream::readSome(void *data, uint64_t size)
+{
+    if (size > in.size() - offset)
+    {
+        size = in.size() - offset;
+    }
+
+    memcpy(data, in.data() + offset, size);
+    offset += size;
+    return size;
 }
 
-uint64_t StringInputStream::readSome(void* data, uint64_t size) {
-  if (size > in.size() - offset) {
-    size = in.size() - offset;
-  }
-
-  memcpy(data, in.data() + offset, size);
-  offset += size;
-  return size;
-}
-
-}
+} // namespace Common

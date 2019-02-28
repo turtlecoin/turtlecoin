@@ -14,13 +14,12 @@
 
 namespace CryptoNote
 {
-  class Mixins
-  {
-    public:
-
-      /* Returns {minMixin, maxMixin, defaultMixin} */
-      static std::tuple<uint64_t, uint64_t, uint64_t> getMixinAllowableRange(const uint64_t height)
-      {
+class Mixins
+{
+  public:
+    /* Returns {minMixin, maxMixin, defaultMixin} */
+    static std::tuple<uint64_t, uint64_t, uint64_t> getMixinAllowableRange(const uint64_t height)
+    {
         uint64_t minMixin = 0;
         uint64_t maxMixin = std::numeric_limits<uint64_t>::max();
         uint64_t defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V0;
@@ -35,55 +34,55 @@ namespace CryptoNote
 
         if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
         {
-          minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
-          maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
-          defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V3;
+            minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
+            maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
+            defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V3;
         }
         else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
         {
-          minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
-          maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
-          defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V2;
+            minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
+            maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
+            defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V2;
         }
         else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
         {
-          minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V1;
-          maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;
-          defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V1;
+            minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V1;
+            maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;
+            defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V1;
         }
 
         return {minMixin, maxMixin, defaultMixin};
-      }
+    }
 
-      /* This method is used by WalletService to determine if the mixin amount is correct
-         for the current block height */
-      static std::tuple<bool, std::string, std::error_code> validate(const uint64_t mixin, const uint64_t height)
-      {
+    /* This method is used by WalletService to determine if the mixin amount is correct
+       for the current block height */
+    static std::tuple<bool, std::string, std::error_code> validate(const uint64_t mixin, const uint64_t height)
+    {
         auto [minMixin, maxMixin, defaultMixin] = getMixinAllowableRange(height);
 
         std::stringstream str;
 
         if (mixin < minMixin)
         {
-          str << "Mixin of " << mixin << " under minimum mixin threshold of " << minMixin;
-          return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD)};
+            str << "Mixin of " << mixin << " under minimum mixin threshold of " << minMixin;
+            return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD)};
         }
         else if (mixin > maxMixin)
         {
-          str << "Mixin of " << mixin << " above maximum mixin threshold of " << maxMixin;
-          return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD)};
+            str << "Mixin of " << mixin << " above maximum mixin threshold of " << maxMixin;
+            return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD)};
         }
 
         return {true, std::string(), std::error_code()};
-      }
+    }
 
-      /* This method is commonly used by the node to determine if the transactions in the vector have
-         the correct mixin (anonymity) as defined by the current rules */
-      static std::tuple<bool, std::string> validate(std::vector<CachedTransaction> transactions, uint64_t height)
-      {
+    /* This method is commonly used by the node to determine if the transactions in the vector have
+       the correct mixin (anonymity) as defined by the current rules */
+    static std::tuple<bool, std::string> validate(std::vector<CachedTransaction> transactions, uint64_t height)
+    {
         auto [minMixin, maxMixin, defaultMixin] = getMixinAllowableRange(height);
 
-        for (const auto& transaction : transactions)
+        for (const auto &transaction : transactions)
         {
             auto [success, error] = validate(transaction, minMixin, maxMixin);
 
@@ -94,27 +93,31 @@ namespace CryptoNote
         }
 
         return {true, std::string()};
-      }
+    }
 
-      /* This method is commonly used by the node to determine if the transaction has
-         the correct mixin (anonymity) as defined by the current rules */
-      static std::tuple<bool, std::string> validate(const CachedTransaction& transaction, uint64_t minMixin, uint64_t maxMixin)
-      {
+    /* This method is commonly used by the node to determine if the transaction has
+       the correct mixin (anonymity) as defined by the current rules */
+    static std::tuple<bool, std::string> validate(const CachedTransaction &transaction, uint64_t minMixin,
+                                                  uint64_t maxMixin)
+    {
         uint64_t ringSize = 1;
 
         const auto tx = createTransaction(transaction.getTransaction());
 
-        for (size_t i = 0; i < tx->getInputCount(); ++i) {
-          if (tx->getInputType(i) != TransactionTypes::InputType::Key) {
-            continue;
-          }
+        for (size_t i = 0; i < tx->getInputCount(); ++i)
+        {
+            if (tx->getInputType(i) != TransactionTypes::InputType::Key)
+            {
+                continue;
+            }
 
-          KeyInput input;
-          tx->getInput(i, input);
-          const uint64_t currentRingSize = input.outputIndexes.size();
-          if (currentRingSize > ringSize) {
-              ringSize = currentRingSize;
-          }
+            KeyInput input;
+            tx->getInput(i, input);
+            const uint64_t currentRingSize = input.outputIndexes.size();
+            if (currentRingSize > ringSize)
+            {
+                ringSize = currentRingSize;
+            }
         }
 
         /* Ring size = mixin + 1 - your transaction plus the others you mix with */
@@ -122,21 +125,24 @@ namespace CryptoNote
 
         std::stringstream str;
 
-        if (mixin > maxMixin) {
-          str << "Transaction " << transaction.getTransactionHash()
-            << " is not valid. Reason: transaction mixin is too large (" << mixin
-            << "). Maximum mixin allowed is " << maxMixin;
+        if (mixin > maxMixin)
+        {
+            str << "Transaction " << transaction.getTransactionHash()
+                << " is not valid. Reason: transaction mixin is too large (" << mixin << "). Maximum mixin allowed is "
+                << maxMixin;
 
-          return {false, str.str()};
-        } else if (mixin < minMixin) {
-          str << "Transaction " << transaction.getTransactionHash()
-            << " is not valid. Reason: transaction mixin is too small (" << mixin
-            << "). Minimum mixin allowed is " << minMixin;
+            return {false, str.str()};
+        }
+        else if (mixin < minMixin)
+        {
+            str << "Transaction " << transaction.getTransactionHash()
+                << " is not valid. Reason: transaction mixin is too small (" << mixin << "). Minimum mixin allowed is "
+                << minMixin;
 
-          return {false, str.str()};
+            return {false, str.str()};
         }
 
         return {true, std::string()};
-      }
-  };
-}
+    }
+};
+} // namespace CryptoNote

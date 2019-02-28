@@ -7,46 +7,46 @@
 
 #include "ConfigurationManager.h"
 
-#include <config/CliHeader.h>
 #include "Logging/ConsoleLogger.h"
 #include "Logging/LoggerGroup.h"
 #include "Logging/StreamLogger.h"
+#include <config/CliHeader.h>
 
 #include "WalletService/NodeFactory.h"
 #include "WalletService/WalletService.h"
 
-class PaymentGateService {
-public:
-  PaymentGateService();
+class PaymentGateService
+{
+  public:
+    PaymentGateService();
 
-  bool init(int argc, char** argv);
+    bool init(int argc, char **argv);
 
-  const PaymentService::ConfigurationManager& getConfig() const { return config; }
-  PaymentService::WalletConfiguration getWalletConfig() const;
-  const CryptoNote::Currency getCurrency();
+    const PaymentService::ConfigurationManager &getConfig() const { return config; }
+    PaymentService::WalletConfiguration getWalletConfig() const;
+    const CryptoNote::Currency getCurrency();
 
-  void run();
-  void stop();
+    void run();
+    void stop();
 
-  std::shared_ptr<Logging::ILogger> getLogger() { return logger; }
+    std::shared_ptr<Logging::ILogger> getLogger() { return logger; }
 
-private:
+  private:
+    void runInProcess(Logging::LoggerRef &log);
+    void runRpcProxy(Logging::LoggerRef &log);
 
-  void runInProcess(Logging::LoggerRef& log);
-  void runRpcProxy(Logging::LoggerRef& log);
+    void runWalletService(const CryptoNote::Currency &currency, CryptoNote::INode &node);
 
-  void runWalletService(const CryptoNote::Currency& currency, CryptoNote::INode& node);
+    System::Dispatcher *dispatcher;
+    System::Event *stopEvent;
+    PaymentService::ConfigurationManager config;
+    PaymentService::WalletService *service;
 
-  System::Dispatcher* dispatcher;
-  System::Event* stopEvent;
-  PaymentService::ConfigurationManager config;
-  PaymentService::WalletService* service;
+    std::shared_ptr<Logging::LoggerGroup> logger = std::make_shared<Logging::LoggerGroup>();
 
-  std::shared_ptr<Logging::LoggerGroup> logger = std::make_shared<Logging::LoggerGroup>();
+    std::shared_ptr<CryptoNote::CurrencyBuilder> currencyBuilder;
 
-  std::shared_ptr<CryptoNote::CurrencyBuilder> currencyBuilder;
-
-  std::ofstream fileStream;
-  Logging::StreamLogger fileLogger;
-  Logging::ConsoleLogger consoleLogger;
+    std::ofstream fileStream;
+    Logging::StreamLogger fileLogger;
+    Logging::ConsoleLogger consoleLogger;
 };

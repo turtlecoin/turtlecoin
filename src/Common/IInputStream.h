@@ -17,15 +17,17 @@
 
 #pragma once
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
-namespace Common {
+namespace Common
+{
 
-class IInputStream {
-public:
-  virtual ~IInputStream() { }
-  virtual uint64_t readSome(void* data, uint64_t size) = 0;
+class IInputStream
+{
+  public:
+    virtual ~IInputStream() {}
+    virtual uint64_t readSome(void *data, uint64_t size) = 0;
 };
 
-}
+} // namespace Common

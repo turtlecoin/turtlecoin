@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -17,23 +17,18 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend);
 
 std::string getAction(const Config &config);
 
-void mainLoop(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex);
+void mainLoop(const std::shared_ptr<WalletBackend> walletBackend, const std::shared_ptr<std::mutex> mutex);
 
-template<typename T>
-std::string parseCommand(
-    const std::vector<T> &printableCommands,
-    const std::vector<T> &availableCommands,
-    const std::string prompt)
+template <typename T>
+std::string parseCommand(const std::vector<T> &printableCommands, const std::vector<T> &availableCommands,
+                         const std::string prompt)
 {
     while (true)
     {
         std::string selection = getInput(availableCommands, prompt);
 
         /* Convert to lower case */
-        std::transform(selection.begin(), selection.end(), selection.begin(),
-                       ::tolower);
+        std::transform(selection.begin(), selection.end(), selection.begin(), ::tolower);
 
         /* \n == no-op */
         if (selection == "")
@@ -42,7 +37,7 @@ std::string parseCommand(
         }
 
         int selectionNum;
-        
+
         bool isNumericInput;
 
         try
@@ -71,12 +66,8 @@ std::string parseCommand(
             /* Must be in the bounds of the vector */
             if (selectionNum < 0 || selectionNum >= numCommands)
             {
-                std::cout << WarningMsg("Bad input, expected a command name, ")
-                          << WarningMsg("or number from ")
-                          << InformationMsg("1")
-                          << WarningMsg(" to ")
-                          << InformationMsg(numCommands)
-                          << std::endl;
+                std::cout << WarningMsg("Bad input, expected a command name, ") << WarningMsg("or number from ")
+                          << InformationMsg("1") << WarningMsg(" to ") << InformationMsg(numCommands) << std::endl;
 
                 /* Print the available commands again if the input is bad */
                 printCommands(printableCommands);
@@ -90,16 +81,12 @@ std::string parseCommand(
         {
             /* Find the command by command name */
             auto it = std::find_if(availableCommands.begin(), availableCommands.end(),
-            [&selection](const auto command)
-            {
-                return command.commandName == selection;
-            });
+                                   [&selection](const auto command) { return command.commandName == selection; });
 
             /* Command doesn't exist in availableCommands */
             if (it == availableCommands.end())
             {
-                std::cout << "Unknown command: " << WarningMsg(selection)
-                          << std::endl;
+                std::cout << "Unknown command: " << WarningMsg(selection) << std::endl;
 
                 /* Print the available commands again if the input is bad */
                 printCommands(printableCommands);
@@ -112,8 +99,7 @@ std::string parseCommand(
     }
 }
 
-template<typename T>
-void printCommands(const std::vector<T> &commands, size_t offset = 0)
+template <typename T> void printCommands(const std::vector<T> &commands, size_t offset = 0)
 {
     size_t i = 1 + offset;
 
@@ -121,9 +107,7 @@ void printCommands(const std::vector<T> &commands, size_t offset = 0)
 
     for (const auto &command : commands)
     {
-        std::cout << InformationMsg(" ")
-                  << InformationMsg(i)
-                  << "\t"
+        std::cout << InformationMsg(" ") << InformationMsg(i) << "\t"
                   << SuccessMsg(command.commandName, 25) /* Pad to 25 chars */
                   << command.description << std::endl;
 

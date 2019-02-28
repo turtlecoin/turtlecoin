@@ -17,18 +17,20 @@
 
 #pragma once
 
-namespace System {
+namespace System
+{
 
 class Event;
 
-class EventLock {
-public:
-  explicit EventLock(Event& event);
-  ~EventLock();
-  EventLock& operator=(const EventLock&) = delete;
+class EventLock
+{
+  public:
+    explicit EventLock(Event &event);
+    ~EventLock();
+    EventLock &operator=(const EventLock &) = delete;
 
-private:
-  Event& event;
+  private:
+    Event &event;
 };
 
-}
+} // namespace System

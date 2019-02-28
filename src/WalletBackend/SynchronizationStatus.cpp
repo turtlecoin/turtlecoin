@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////////////////////////
@@ -12,14 +12,9 @@
 /* CLASS FUNCTIONS */
 /////////////////////
 
-uint64_t SynchronizationStatus::getHeight() const
-{
-    return m_lastKnownBlockHeight;
-}
+uint64_t SynchronizationStatus::getHeight() const { return m_lastKnownBlockHeight; }
 
-void SynchronizationStatus::storeBlockHash(
-    const Crypto::Hash hash,
-    const uint64_t height)
+void SynchronizationStatus::storeBlockHash(const Crypto::Hash hash, const uint64_t height)
 {
     /* If it's not a fork and not the very first block */
     if (height > m_lastKnownBlockHeight && m_lastKnownBlockHeight != 0)
@@ -29,9 +24,8 @@ void SynchronizationStatus::storeBlockHash(
         {
             std::stringstream stream;
 
-            stream << "Blocks were missed in syncing process! Expected: "
-                   << m_lastKnownBlockHeight + 1 << ", Received: "
-                   << height << ".\nPossibly malicious daemon. Terminating.";
+            stream << "Blocks were missed in syncing process! Expected: " << m_lastKnownBlockHeight + 1
+                   << ", Received: " << height << ".\nPossibly malicious daemon. Terminating.";
 
             throw std::runtime_error(stream.str());
         }
@@ -64,7 +58,7 @@ void SynchronizationStatus::storeBlockHash(
    are most likely going to be quite shallow forks, usually 1 or 2 blocks max),
    and then we store one hash every 5000 blocks, in case we have a very
    deep fork.
-   
+   
    Note that the first items in this vector are the latest block. On the
    daemon side, it loops through the vector, looking for the hash in its
    database, then returns the height it found. So, if you put your earliest
@@ -77,13 +71,11 @@ std::vector<Crypto::Hash> SynchronizationStatus::getBlockHashCheckpoints() const
     /* Copy the contents of m_lastKnownBlockHashes to result, these are the
        last 100 known block hashes we have synced. For example, if the top
        block we know about is 110, this contains [110, 109, 108.. 10]. */
-    std::copy(m_lastKnownBlockHashes.begin(), m_lastKnownBlockHashes.end(),
-              back_inserter(results));
+    std::copy(m_lastKnownBlockHashes.begin(), m_lastKnownBlockHashes.end(), back_inserter(results));
 
     /* Append the contents of m_blockHashCheckpoints to result, these are the
        checkpoints we make every 5k blocks in case of deep forks */
-    std::copy(m_blockHashCheckpoints.begin(), m_blockHashCheckpoints.end(),
-              back_inserter(results));
+    std::copy(m_blockHashCheckpoints.begin(), m_blockHashCheckpoints.end(), back_inserter(results));
 
     return results;
 }

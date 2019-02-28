@@ -17,10 +17,12 @@
 
 #include "TransactionValidationErrors.h"
 
-namespace CryptoNote {
-namespace error {
+namespace CryptoNote
+{
+namespace error
+{
 
 TransactionValidationErrorCategory TransactionValidationErrorCategory::INSTANCE;
 
 }
-}
+} // namespace CryptoNote

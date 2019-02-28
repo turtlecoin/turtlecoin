@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -12,16 +12,12 @@
 
 struct WalletInfo
 {
-    WalletInfo(std::string walletFileName, 
-               std::string walletPass, 
-               std::string walletAddress,
-               bool viewWallet,
-               CryptoNote::WalletGreen &wallet) : 
-               walletFileName(walletFileName), 
-               walletPass(walletPass), 
-               walletAddress(walletAddress),
-               viewWallet(viewWallet),
-               wallet(wallet) {}
+    WalletInfo(std::string walletFileName, std::string walletPass, std::string walletAddress, bool viewWallet,
+               CryptoNote::WalletGreen &wallet)
+        : walletFileName(walletFileName), walletPass(walletPass), walletAddress(walletAddress), viewWallet(viewWallet),
+          wallet(wallet)
+    {
+    }
 
     /* How many transactions do we know about */
     size_t knownTransactionCount = 0;
@@ -55,7 +51,7 @@ struct Config
 
     /* The daemon host */
     std::string host = "127.0.0.1";
-    
+
     /* The daemon port */
     int port = CryptoNote::RPC_DEFAULT_PORT;
 
@@ -73,11 +69,10 @@ struct AddressBookEntry
     /* Used for quick comparison with strings */
     AddressBookEntry(std::string friendlyName) : friendlyName(friendlyName) {}
 
-    AddressBookEntry(std::string friendlyName, std::string address,
-                     std::string paymentID, bool integratedAddress) :
-                     friendlyName(friendlyName), address(address),
-                     paymentID(paymentID), integratedAddress(integratedAddress)
-                     {}
+    AddressBookEntry(std::string friendlyName, std::string address, std::string paymentID, bool integratedAddress)
+        : friendlyName(friendlyName), address(address), paymentID(paymentID), integratedAddress(integratedAddress)
+    {
+    }
 
     /* Friendly name for this address book entry */
     std::string friendlyName;
@@ -102,10 +97,7 @@ struct AddressBookEntry
     }
 
     /* Only compare via name as we don't really care about the contents */
-    bool operator==(const AddressBookEntry &rhs) const
-    {
-        return rhs.friendlyName == friendlyName;
-    }
+    bool operator==(const AddressBookEntry &rhs) const { return rhs.friendlyName == friendlyName; }
 };
 
 /* An address book is a vector of address book entries */
@@ -171,16 +163,10 @@ template <class X> struct Maybe
     X x;
     bool isJust;
 
-    Maybe(const X &x) : x (x), isJust(true) {}
+    Maybe(const X &x) : x(x), isJust(true) {}
     Maybe() : isJust(false) {}
 };
 
-template <class X> Maybe<X> Just(const X&x)
-{
-    return Maybe<X>(x);
-}
+template <class X> Maybe<X> Just(const X &x) { return Maybe<X>(x); }
 
-template <class X> Maybe<X> Nothing()
-{
-    return Maybe<X>();
-}
+template <class X> Maybe<X> Nothing() { return Maybe<X>(); }

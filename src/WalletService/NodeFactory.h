@@ -23,19 +23,23 @@
 
 #include "Logging/LoggerRef.h"
 
-namespace PaymentService {
+namespace PaymentService
+{
 
-class NodeFactory {
-public:
-  static CryptoNote::INode* createNode(const std::string& daemonAddress, uint16_t daemonPort, uint16_t initTimeout, std::shared_ptr<Logging::ILogger> logger);
-  static CryptoNote::INode* createNodeStub();
-private:
-  NodeFactory();
-  ~NodeFactory();
+class NodeFactory
+{
+  public:
+    static CryptoNote::INode *createNode(const std::string &daemonAddress, uint16_t daemonPort, uint16_t initTimeout,
+                                         std::shared_ptr<Logging::ILogger> logger);
+    static CryptoNote::INode *createNodeStub();
 
-  CryptoNote::INode* getNode(const std::string& daemonAddress, uint16_t daemonPort);
+  private:
+    NodeFactory();
+    ~NodeFactory();
 
-  static NodeFactory factory;
+    CryptoNote::INode *getNode(const std::string &daemonAddress, uint16_t daemonPort);
+
+    static NodeFactory factory;
 };
 
-} //namespace PaymentService
+} // namespace PaymentService

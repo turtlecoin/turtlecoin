@@ -4,7 +4,6 @@
 //
 // Please see the included LICENSE file for more information.
 
-
 //////////////////////////////////
 #include <Utilities/FormatTools.h>
 //////////////////////////////////
@@ -50,9 +49,7 @@ std::string get_mining_speed(const uint64_t hashrate)
     return stream.str();
 }
 
-std::string get_sync_percentage(
-    uint64_t height,
-    const uint64_t target_height)
+std::string get_sync_percentage(uint64_t height, const uint64_t target_height)
 {
     /* Don't divide by zero */
     if (height == 0 || target_height == 0)
@@ -80,12 +77,17 @@ std::string get_sync_percentage(
     return stream.str();
 }
 
-enum ForkStatus { UpToDate, ForkLater, ForkSoonReady, ForkSoonNotReady, OutOfDate };
+enum ForkStatus
+{
+    UpToDate,
+    ForkLater,
+    ForkSoonReady,
+    ForkSoonNotReady,
+    OutOfDate
+};
 
-ForkStatus get_fork_status(
-    const uint64_t height,
-    const std::vector<uint64_t> upgrade_heights,
-    const uint64_t supported_height)
+ForkStatus get_fork_status(const uint64_t height, const std::vector<uint64_t> upgrade_heights,
+                           const uint64_t supported_height)
 {
     /* Allow fork heights to be empty */
     if (upgrade_heights.empty())
@@ -135,9 +137,7 @@ ForkStatus get_fork_status(
     return ForkLater;
 }
 
-std::string get_fork_time(
-    const uint64_t height,
-    const std::vector<uint64_t> upgrade_heights)
+std::string get_fork_time(const uint64_t height, const std::vector<uint64_t> upgrade_heights)
 {
     uint64_t next_fork = 0;
 
@@ -151,7 +151,8 @@ std::string get_fork_time(
         }
     }
 
-    const float days = (static_cast<float>(next_fork - height) / CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY);
+    const float days =
+        (static_cast<float>(next_fork - height) / CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY);
 
     std::stringstream stream;
 
@@ -173,46 +174,43 @@ std::string get_fork_time(
     return stream.str();
 }
 
-std::string get_update_status(
-    const ForkStatus forkStatus,
-    const uint64_t height,
-    const std::vector<uint64_t> upgrade_heights)
+std::string get_update_status(const ForkStatus forkStatus, const uint64_t height,
+                              const std::vector<uint64_t> upgrade_heights)
 {
-    switch(forkStatus)
+    switch (forkStatus)
     {
-        case UpToDate:
-        case ForkLater:
-        {
-            return " up to date";
-        }
-        case ForkSoonReady:
-        {
-            return get_fork_time(height, upgrade_heights) + " up to date";
-        }
-        case ForkSoonNotReady:
-        {
-            return get_fork_time(height, upgrade_heights) + " update needed";
-        }
-        case OutOfDate:
-        {
-            return " out of date, likely forked";
-        }
-        default:
-        {
-            throw std::runtime_error("Unexpected case unhandled");
-        }
+    case UpToDate:
+    case ForkLater:
+    {
+        return " up to date";
+    }
+    case ForkSoonReady:
+    {
+        return get_fork_time(height, upgrade_heights) + " up to date";
+    }
+    case ForkSoonNotReady:
+    {
+        return get_fork_time(height, upgrade_heights) + " update needed";
+    }
+    case OutOfDate:
+    {
+        return " out of date, likely forked";
+    }
+    default:
+    {
+        throw std::runtime_error("Unexpected case unhandled");
+    }
     }
 }
 
-std::string get_upgrade_info(
-    const uint64_t supported_height,
-    const std::vector<uint64_t> upgrade_heights)
+std::string get_upgrade_info(const uint64_t supported_height, const std::vector<uint64_t> upgrade_heights)
 {
     for (auto upgrade : upgrade_heights)
     {
         if (upgrade > supported_height)
         {
-            return "The network forked at height " + std::to_string(upgrade) + ", please update your software: " + CryptoNote::LATEST_VERSION_URL;
+            return "The network forked at height " + std::to_string(upgrade) +
+                   ", please update your software: " + CryptoNote::LATEST_VERSION_URL;
         }
     }
 
@@ -220,38 +218,34 @@ std::string get_upgrade_info(
     return std::string();
 }
 
-std::string get_status_string(CryptoNote::COMMAND_RPC_GET_INFO::response iresp) {
-  std::stringstream ss;
-  std::time_t uptime = std::time(nullptr) - iresp.start_time;
-  auto forkStatus = get_fork_status(iresp.network_height, iresp.upgrade_heights, iresp.supported_height);
+std::string get_status_string(CryptoNote::COMMAND_RPC_GET_INFO::response iresp)
+{
+    std::stringstream ss;
+    std::time_t uptime = std::time(nullptr) - iresp.start_time;
+    auto forkStatus = get_fork_status(iresp.network_height, iresp.upgrade_heights, iresp.supported_height);
 
-  ss << "Height: " << iresp.height << "/" << iresp.network_height
-     << " (" << get_sync_percentage(iresp.height, iresp.network_height) << "%) "
-     << "on " << (iresp.testnet ? "testnet, " : "mainnet, ")
-     << (iresp.synced ? "synced, " : "syncing, ")
-     << "net hash " << get_mining_speed(iresp.hashrate) << ", "
-     << "v" << +iresp.major_version << ","
-     << get_update_status(forkStatus, iresp.network_height, iresp.upgrade_heights)
-     << ", " << iresp.outgoing_connections_count << "(out)+" << iresp.incoming_connections_count << "(in) connections, "
-     << "uptime " << (unsigned int)floor(uptime / 60.0 / 60.0 / 24.0)
-     << "d " << (unsigned int)floor(fmod((uptime / 60.0 / 60.0), 24.0))
-     << "h " << (unsigned int)floor(fmod((uptime / 60.0), 60.0))
-     << "m " << (unsigned int)fmod(uptime, 60.0) << "s";
+    ss << "Height: " << iresp.height << "/" << iresp.network_height << " ("
+       << get_sync_percentage(iresp.height, iresp.network_height) << "%) "
+       << "on " << (iresp.testnet ? "testnet, " : "mainnet, ") << (iresp.synced ? "synced, " : "syncing, ")
+       << "net hash " << get_mining_speed(iresp.hashrate) << ", "
+       << "v" << +iresp.major_version << ","
+       << get_update_status(forkStatus, iresp.network_height, iresp.upgrade_heights) << ", "
+       << iresp.outgoing_connections_count << "(out)+" << iresp.incoming_connections_count << "(in) connections, "
+       << "uptime " << (unsigned int)floor(uptime / 60.0 / 60.0 / 24.0) << "d "
+       << (unsigned int)floor(fmod((uptime / 60.0 / 60.0), 24.0)) << "h "
+       << (unsigned int)floor(fmod((uptime / 60.0), 60.0)) << "m " << (unsigned int)fmod(uptime, 60.0) << "s";
 
-  if (forkStatus == OutOfDate)
-  {
-      ss << std::endl << get_upgrade_info(iresp.supported_height, iresp.upgrade_heights);
-  }
+    if (forkStatus == OutOfDate)
+    {
+        ss << std::endl << get_upgrade_info(iresp.supported_height, iresp.upgrade_heights);
+    }
 
-  return ss.str();
+    return ss.str();
 }
 
 /* Get the amount we need to divide to convert from atomic to pretty print,
    e.g. 100 for 2 decimal places */
-uint64_t getDivisor()
-{
-    return static_cast<uint64_t>(pow(10, WalletConfig::numDecimalPlaces));
-}
+uint64_t getDivisor() { return static_cast<uint64_t>(pow(10, WalletConfig::numDecimalPlaces)); }
 
 std::string formatDollars(const uint64_t amount)
 {
@@ -270,7 +264,7 @@ std::string formatDollars(const uint64_t amount)
        using the locale method, without writing a pretty long boiler plate
        function. So, instead, we define our own locale, which just returns
        the values we want.
-       
+       
        It's less internationally friendly than we would potentially like
        but that would require a ton of scrutinization which if not done could
        land us with quite a few issues and rightfully angry users.
@@ -282,16 +276,10 @@ std::string formatDollars(const uint64_t amount)
        workaround */
     class comma_numpunct : public std::numpunct<char>
     {
-        protected:
-            virtual char do_thousands_sep() const
-            {
-                return ',';
-            }
+      protected:
+        virtual char do_thousands_sep() const { return ','; }
 
-            virtual std::string do_grouping() const
-            {
-                return "\03";
-            }
+        virtual std::string do_grouping() const { return "\03"; }
     };
 
     std::locale comma_locale(std::locale(), new comma_numpunct());
@@ -306,8 +294,7 @@ std::string formatDollars(const uint64_t amount)
 std::string formatCents(const uint64_t amount)
 {
     std::stringstream stream;
-    stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces)
-           << amount;
+    stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces) << amount;
     return stream.str();
 }
 
@@ -317,8 +304,7 @@ std::string formatAmount(const uint64_t amount)
     const uint64_t dollars = amount / divisor;
     const uint64_t cents = amount % divisor;
 
-    return formatDollars(dollars) + "." + formatCents(cents) + " "
-         + WalletConfig::ticker;
+    return formatDollars(dollars) + "." + formatCents(cents) + " " + WalletConfig::ticker;
 }
 
 std::string formatAmountBasic(const uint64_t amount)
@@ -335,7 +321,7 @@ std::string prettyPrintBytes(uint64_t input)
     /* Store as a double so we can have 12.34 kb for example */
     double numBytes = static_cast<double>(input);
 
-    std::vector<std::string> suffixes = { "B", "KB", "MB", "GB", "TB"};
+    std::vector<std::string> suffixes = {"B", "KB", "MB", "GB", "TB"};
 
     uint64_t selectedSuffix = 0;
 
@@ -348,8 +334,7 @@ std::string prettyPrintBytes(uint64_t input)
 
     std::stringstream msg;
 
-    msg << std::fixed << std::setprecision(2) << numBytes << " "
-        << suffixes[selectedSuffix];
+    msg << std::fixed << std::setprecision(2) << numBytes << " " << suffixes[selectedSuffix];
 
     return msg.str();
 }

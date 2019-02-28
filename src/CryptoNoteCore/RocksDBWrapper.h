@@ -23,44 +23,47 @@
 
 #include "rocksdb/db.h"
 
-#include "IDataBase.h"
 #include "DataBaseConfig.h"
+#include "IDataBase.h"
 
 #include <Logging/LoggerRef.h>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-class RocksDBWrapper : public IDataBase {
-public:
-  RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger);
-  virtual ~RocksDBWrapper();
+class RocksDBWrapper : public IDataBase
+{
+  public:
+    RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger);
+    virtual ~RocksDBWrapper();
 
-  RocksDBWrapper(const RocksDBWrapper&) = delete;
-  RocksDBWrapper(RocksDBWrapper&&) = delete;
+    RocksDBWrapper(const RocksDBWrapper &) = delete;
+    RocksDBWrapper(RocksDBWrapper &&) = delete;
 
-  RocksDBWrapper& operator=(const RocksDBWrapper&) = delete;
-  RocksDBWrapper& operator=(RocksDBWrapper&&) = delete;
+    RocksDBWrapper &operator=(const RocksDBWrapper &) = delete;
+    RocksDBWrapper &operator=(RocksDBWrapper &&) = delete;
 
-  void init(const DataBaseConfig& config);
-  void shutdown();
-  void destroy(const DataBaseConfig& config); //Be careful with this method!
+    void init(const DataBaseConfig &config);
+    void shutdown();
+    void destroy(const DataBaseConfig &config); // Be careful with this method!
 
-  std::error_code write(IWriteBatch& batch) override;
-  std::error_code read(IReadBatch& batch) override;
+    std::error_code write(IWriteBatch &batch) override;
+    std::error_code read(IReadBatch &batch) override;
 
-private:
-  std::error_code write(IWriteBatch& batch, bool sync);
+  private:
+    std::error_code write(IWriteBatch &batch, bool sync);
 
-  rocksdb::Options getDBOptions(const DataBaseConfig& config);
-  std::string getDataDir(const DataBaseConfig& config);
+    rocksdb::Options getDBOptions(const DataBaseConfig &config);
+    std::string getDataDir(const DataBaseConfig &config);
 
-  enum State {
-    NOT_INITIALIZED,
-    INITIALIZED
-  };
+    enum State
+    {
+        NOT_INITIALIZED,
+        INITIALIZED
+    };
 
-  Logging::LoggerRef logger;
-  std::unique_ptr<rocksdb::DB> db;
-  std::atomic<State> state;
+    Logging::LoggerRef logger;
+    std::unique_ptr<rocksdb::DB> db;
+    std::atomic<State> state;
 };
-}
+} // namespace CryptoNote

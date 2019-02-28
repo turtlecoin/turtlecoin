@@ -19,15 +19,16 @@
 
 #include <string>
 
-namespace Common {
+namespace Common
+{
 
-std::string NativePathToGeneric(const std::string& nativePath);
+std::string NativePathToGeneric(const std::string &nativePath);
 
-std::string GetPathDirectory(const std::string& path);
+std::string GetPathDirectory(const std::string &path);
 
-std::string CombinePath(const std::string& path1, const std::string& path2);
-std::string RemoveExtension(const std::string& path);
-std::string ReplaceExtenstion(const std::string& path, const std::string& extension);
-bool HasParentPath(const std::string& path);
+std::string CombinePath(const std::string &path1, const std::string &path2);
+std::string RemoveExtension(const std::string &path);
+std::string ReplaceExtenstion(const std::string &path, const std::string &extension);
+bool HasParentPath(const std::string &path);
 
-}
+} // namespace Common

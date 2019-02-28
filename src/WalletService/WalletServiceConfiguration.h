@@ -4,35 +4,36 @@
 
 #pragma once
 
+#include <Logging/ILogger.h>
+#include <config/CryptoNoteConfig.h>
 #include <json.hpp>
 #include <string>
-#include <config/CryptoNoteConfig.h>
-#include <Logging/ILogger.h>
 
 using nlohmann::json;
 
-namespace PaymentService {
-  struct WalletServiceConfiguration
-  {
+namespace PaymentService
+{
+struct WalletServiceConfiguration
+{
     WalletServiceConfiguration()
     {
-      daemonAddress  = "127.0.0.1";
-      bindAddress = "127.0.0.1";
-      logFile = "service.log";
-      daemonPort = CryptoNote::RPC_DEFAULT_PORT;
-      bindPort = CryptoNote::SERVICE_DEFAULT_PORT;
-      logLevel = Logging::INFO;
-      legacySecurity = false;
-      help = false;
-      version = false;
-      dumpConfig = false;
-      generateNewContainer = false;
-      daemonize = false;
-      registerService = false;
-      unregisterService = false;
-      printAddresses = false;
-      syncFromZero = false;
-      initTimeout = 10;
+        daemonAddress = "127.0.0.1";
+        bindAddress = "127.0.0.1";
+        logFile = "service.log";
+        daemonPort = CryptoNote::RPC_DEFAULT_PORT;
+        bindPort = CryptoNote::SERVICE_DEFAULT_PORT;
+        logLevel = Logging::INFO;
+        legacySecurity = false;
+        help = false;
+        version = false;
+        dumpConfig = false;
+        generateNewContainer = false;
+        daemonize = false;
+        registerService = false;
+        unregisterService = false;
+        printAddresses = false;
+        syncFromZero = false;
+        initTimeout = 10;
     }
 
     std::string daemonAddress;
@@ -70,12 +71,12 @@ namespace PaymentService {
     bool syncFromZero;
 
     uint64_t scanHeight;
-  };
-  
-  bool updateConfigFormat(const std::string configFile, WalletServiceConfiguration& config);
-  void handleSettings(int argc, char* argv[], WalletServiceConfiguration& config);
-  void handleSettings(const std::string configFile, WalletServiceConfiguration& config);
-  json asJSON(const WalletServiceConfiguration& config);
-  std::string asString(const WalletServiceConfiguration& config);
-  void asFile(const WalletServiceConfiguration& config, const std::string& filename);
-}
+};
+
+bool updateConfigFormat(const std::string configFile, WalletServiceConfiguration &config);
+void handleSettings(int argc, char *argv[], WalletServiceConfiguration &config);
+void handleSettings(const std::string configFile, WalletServiceConfiguration &config);
+json asJSON(const WalletServiceConfiguration &config);
+std::string asString(const WalletServiceConfiguration &config);
+void asFile(const WalletServiceConfiguration &config, const std::string &filename);
+} // namespace PaymentService

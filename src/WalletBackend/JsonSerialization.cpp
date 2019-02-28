@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////////////////////
@@ -21,36 +21,36 @@ using nlohmann::json;
 
 namespace WalletTypes
 {
-    //////////////////////////////
-    /* WalletTypes::Transaction */
-    //////////////////////////////
+//////////////////////////////
+/* WalletTypes::Transaction */
+//////////////////////////////
 
-    void to_json(json &j, const Transaction &t)
-    {
-        j = json {
-            {"transfers", transfersToVector(t.transfers)},
-            {"hash", t.hash},
-            {"fee", t.fee},
-            {"blockHeight", t.blockHeight},
-            {"timestamp", t.timestamp},
-            {"paymentID", t.paymentID},
-            {"unlockTime", t.unlockTime},
-            {"isCoinbaseTransaction", t.isCoinbaseTransaction},
-        };
-    }
-
-    void from_json(const json &j, Transaction &t)
-    {
-        t.transfers = vectorToTransfers(j.at("transfers").get<std::vector<Transfer>>());
-        t.hash = j.at("hash").get<Crypto::Hash>();
-        t.fee = j.at("fee").get<uint64_t>();
-        t.blockHeight = j.at("blockHeight").get<uint64_t>();
-        t.timestamp = j.at("timestamp").get<uint64_t>();
-        t.paymentID = j.at("paymentID").get<std::string>();
-        t.unlockTime = j.at("unlockTime").get<uint64_t>();
-        t.isCoinbaseTransaction = j.at("isCoinbaseTransaction").get<bool>();
-    }
+void to_json(json &j, const Transaction &t)
+{
+    j = json{
+        {"transfers", transfersToVector(t.transfers)},
+        {"hash", t.hash},
+        {"fee", t.fee},
+        {"blockHeight", t.blockHeight},
+        {"timestamp", t.timestamp},
+        {"paymentID", t.paymentID},
+        {"unlockTime", t.unlockTime},
+        {"isCoinbaseTransaction", t.isCoinbaseTransaction},
+    };
 }
+
+void from_json(const json &j, Transaction &t)
+{
+    t.transfers = vectorToTransfers(j.at("transfers").get<std::vector<Transfer>>());
+    t.hash = j.at("hash").get<Crypto::Hash>();
+    t.fee = j.at("fee").get<uint64_t>();
+    t.blockHeight = j.at("blockHeight").get<uint64_t>();
+    t.timestamp = j.at("timestamp").get<uint64_t>();
+    t.paymentID = j.at("paymentID").get<std::string>();
+    t.unlockTime = j.at("unlockTime").get<uint64_t>();
+    t.isCoinbaseTransaction = j.at("isCoinbaseTransaction").get<bool>();
+}
+} // namespace WalletTypes
 
 //////////////
 /* Transfer */
@@ -70,13 +70,7 @@ void from_json(const json &j, Transfer &t)
     t.amount = j.at("amount").get<int64_t>();
 }
 
-void to_json(json &j, const TxPrivateKey &t)
-{
-    j = {
-        {"transactionHash", t.txHash},
-        {"txPrivateKey", t.txPrivateKey}
-    };
-}
+void to_json(json &j, const TxPrivateKey &t) { j = {{"transactionHash", t.txHash}, {"txPrivateKey", t.txPrivateKey}}; }
 
 void from_json(const json &j, TxPrivateKey &t)
 {
@@ -85,7 +79,7 @@ void from_json(const json &j, TxPrivateKey &t)
 }
 
 /* std::map / std::unordered_map don't work great in json - they get serialized
-   like this for example: 
+   like this for example:
 
 "transfers": [
     [
@@ -103,12 +97,11 @@ So, lets instead convert to a vector of structs when converting to json, to
 make it easier for people using the wallet file in different languages to
 use */
 
-std::vector<Transfer> transfersToVector(
-    const std::unordered_map<Crypto::PublicKey, int64_t> transfers)
+std::vector<Transfer> transfersToVector(const std::unordered_map<Crypto::PublicKey, int64_t> transfers)
 {
     std::vector<Transfer> vector;
 
-    for (const auto & [publicKey, amount] : transfers)
+    for (const auto &[publicKey, amount] : transfers)
     {
         Transfer t;
         t.publicKey = publicKey;
@@ -120,8 +113,7 @@ std::vector<Transfer> transfersToVector(
     return vector;
 }
 
-std::unordered_map<Crypto::PublicKey, int64_t> vectorToTransfers(
-    const std::vector<Transfer> vector)
+std::unordered_map<Crypto::PublicKey, int64_t> vectorToTransfers(const std::vector<Transfer> vector)
 {
     std::unordered_map<Crypto::PublicKey, int64_t> transfers;
 
@@ -133,8 +125,7 @@ std::unordered_map<Crypto::PublicKey, int64_t> vectorToTransfers(
     return transfers;
 }
 
-std::vector<TxPrivateKey> txPrivateKeysToVector(
-    const std::unordered_map<Crypto::Hash, Crypto::SecretKey> txPrivateKeys)
+std::vector<TxPrivateKey> txPrivateKeysToVector(const std::unordered_map<Crypto::Hash, Crypto::SecretKey> txPrivateKeys)
 {
     std::vector<TxPrivateKey> vector;
 
@@ -146,8 +137,7 @@ std::vector<TxPrivateKey> txPrivateKeysToVector(
     return vector;
 }
 
-std::unordered_map<Crypto::Hash, Crypto::SecretKey> vectorToTxPrivateKeys(
-    const std::vector<TxPrivateKey> vector)
+std::unordered_map<Crypto::Hash, Crypto::SecretKey> vectorToTxPrivateKeys(const std::vector<TxPrivateKey> vector)
 {
     std::unordered_map<Crypto::Hash, Crypto::SecretKey> txPrivateKeys;
 

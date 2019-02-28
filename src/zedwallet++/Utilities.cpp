@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 //////////////////////////////////
@@ -20,9 +20,7 @@
 namespace ZedUtilities
 {
 
-void confirmPassword(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::string msg)
+void confirmPassword(const std::shared_ptr<WalletBackend> walletBackend, const std::string msg)
 {
     const std::string currentPassword = walletBackend->getWalletPassword();
 
@@ -38,10 +36,7 @@ void confirmPassword(
     }
 }
 
-bool confirm(const std::string &msg)
-{
-    return confirm(msg, true);
-}
+bool confirm(const std::string &msg) { return confirm(msg, true); }
 
 /* defaultToYes = what value we return on hitting enter, i.e. the "expected"
    workflow */
@@ -60,19 +55,18 @@ bool confirm(const std::string &msg, const bool defaultToYes)
 
         const char c = ::tolower(answer[0]);
 
-        switch(c)
+        switch (c)
         {
-            /* Lets people spam enter / choose default value */
-            case '\0':
-                return defaultToYes;
-            case 'y':
-                return true;
-            case 'n':
-                return false;
+        /* Lets people spam enter / choose default value */
+        case '\0':
+            return defaultToYes;
+        case 'y':
+            return true;
+        case 'n':
+            return false;
         }
 
-        std::cout << WarningMsg("Bad input: ") << InformationMsg(answer)
-                  << WarningMsg(" - please enter either Y or N.")
+        std::cout << WarningMsg("Bad input: ") << InformationMsg(answer) << WarningMsg(" - please enter either Y or N.")
                   << std::endl;
     }
 }
@@ -100,8 +94,7 @@ uint64_t getScanHeight()
                   << "err on the side of caution so transactions do not "
                   << "get missed."
                   << "\n\n"
-                  << InformationMsg("Hit enter for the sub-optimal default ")
-                  << InformationMsg("of zero: ");
+                  << InformationMsg("Hit enter for the sub-optimal default ") << InformationMsg("of zero: ");
 
         std::string stringHeight;
 
@@ -125,8 +118,8 @@ uint64_t getScanHeight()
         }
         catch (const std::invalid_argument &)
         {
-            std::cout << WarningMsg("Failed to parse height - input is not ")
-                      << WarningMsg("a number!") << std::endl << std::endl;
+            std::cout << WarningMsg("Failed to parse height - input is not ") << WarningMsg("a number!") << std::endl
+                      << std::endl;
         }
     }
 }
@@ -159,12 +152,9 @@ void rightTrim(std::string &str)
 }
 
 /* Checks if str begins with substring */
-bool startsWith(const std::string &str, const std::string &substring)
-{
-    return str.rfind(substring, 0) == 0;
-}
+bool startsWith(const std::string &str, const std::string &substring) { return str.rfind(substring, 0) == 0; }
 
-std::vector<std::string> split(const std::string& str, char delim = ' ')
+std::vector<std::string> split(const std::string &str, char delim = ' ')
 {
     std::vector<std::string> cont;
     std::stringstream ss(str);
@@ -206,4 +196,4 @@ bool parseDaemonAddressFromString(std::string &host, uint16_t &port, const std::
     return true;
 }
 
-} // namespace
+} // namespace ZedUtilities

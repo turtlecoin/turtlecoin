@@ -19,52 +19,51 @@
 
 namespace System
 {
-    class Dispatcher;
+class Dispatcher;
 }
 
-namespace Miner {
+namespace Miner
+{
 
 class MinerManager
 {
-    public:
-        MinerManager(
-            System::Dispatcher& dispatcher,
-            const CryptoNote::MiningConfig& config,
-            const std::shared_ptr<httplib::Client> httpClient);
+  public:
+    MinerManager(System::Dispatcher &dispatcher, const CryptoNote::MiningConfig &config,
+                 const std::shared_ptr<httplib::Client> httpClient);
 
-        void start();
+    void start();
 
-    private:
-        System::ContextGroup m_contextGroup;
-        CryptoNote::MiningConfig m_config;
-        CryptoNote::Miner m_miner;
-        BlockchainMonitor m_blockchainMonitor;
+  private:
+    System::ContextGroup m_contextGroup;
+    CryptoNote::MiningConfig m_config;
+    CryptoNote::Miner m_miner;
+    BlockchainMonitor m_blockchainMonitor;
 
-        System::Event m_eventOccurred;
-        std::queue<MinerEvent> m_events;
-        bool isRunning;
+    System::Event m_eventOccurred;
+    std::queue<MinerEvent> m_events;
+    bool isRunning;
 
-        CryptoNote::BlockTemplate m_minedBlock;
+    CryptoNote::BlockTemplate m_minedBlock;
 
-        uint64_t m_lastBlockTimestamp;
+    uint64_t m_lastBlockTimestamp;
 
-        std::shared_ptr<httplib::Client> m_httpClient = nullptr;
+    std::shared_ptr<httplib::Client> m_httpClient = nullptr;
 
-        void eventLoop();
-        MinerEvent waitEvent();
-        void pushEvent(MinerEvent&& event);
-        void printHashRate();
+    void eventLoop();
+    MinerEvent waitEvent();
+    void pushEvent(MinerEvent &&event);
+    void printHashRate();
 
-        void startMining(const CryptoNote::BlockMiningParameters& params);
-        void stopMining();
+    void startMining(const CryptoNote::BlockMiningParameters &params);
+    void stopMining();
 
-        void startBlockchainMonitoring();
-        void stopBlockchainMonitoring();
+    void startBlockchainMonitoring();
+    void stopBlockchainMonitoring();
 
-        bool submitBlock(const CryptoNote::BlockTemplate& minedBlock);
-        CryptoNote::BlockMiningParameters requestMiningParameters();
+    bool submitBlock(const CryptoNote::BlockTemplate &minedBlock);
+    CryptoNote::BlockMiningParameters requestMiningParameters();
 
-        void adjustBlockTemplate(CryptoNote::BlockTemplate& blockTemplate) const;
+    void adjustBlockTemplate(CryptoNote::BlockTemplate &blockTemplate) const;
 };
 
-} //namespace Miner
+} // namespace Miner

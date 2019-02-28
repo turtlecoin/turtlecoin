@@ -17,23 +17,25 @@
 
 #pragma once
 
-#include <CryptoNoteProtocol/ICryptoNoteProtocolQuery.h>
 #include <CryptoNote.h>
+#include <CryptoNoteProtocol/ICryptoNoteProtocolQuery.h>
 
 #include <vector>
 
 namespace CryptoNote
 {
-  struct NOTIFY_NEW_BLOCK_request;
+struct NOTIFY_NEW_BLOCK_request;
 
-  /************************************************************************/
-  /*                                                                      */
-  /************************************************************************/
-  struct ICryptoNoteProtocol {
-    virtual void relayBlock(NOTIFY_NEW_BLOCK_request& arg) = 0;
-    virtual void relayTransactions(const std::vector<BinaryArray>& transactions) = 0;
-  };
-  
-  struct ICryptoNoteProtocolHandler : ICryptoNoteProtocol, public ICryptoNoteProtocolQuery {
-  };
-}
+/************************************************************************/
+/*                                                                      */
+/************************************************************************/
+struct ICryptoNoteProtocol
+{
+    virtual void relayBlock(NOTIFY_NEW_BLOCK_request &arg) = 0;
+    virtual void relayTransactions(const std::vector<BinaryArray> &transactions) = 0;
+};
+
+struct ICryptoNoteProtocolHandler : ICryptoNoteProtocol, public ICryptoNoteProtocolQuery
+{
+};
+} // namespace CryptoNote

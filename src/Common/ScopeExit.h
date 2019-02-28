@@ -15,28 +15,30 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once 
+#pragma once
 
 #include <functional>
 
-namespace Tools {
+namespace Tools
+{
 
-class ScopeExit {
-public:
-  ScopeExit(std::function<void()>&& handler);
-  ~ScopeExit();
+class ScopeExit
+{
+  public:
+    ScopeExit(std::function<void()> &&handler);
+    ~ScopeExit();
 
-  ScopeExit(const ScopeExit&) = delete;
-  ScopeExit(ScopeExit&&) = delete;
-  ScopeExit& operator=(const ScopeExit&) = delete;
-  ScopeExit& operator=(ScopeExit&&) = delete;
+    ScopeExit(const ScopeExit &) = delete;
+    ScopeExit(ScopeExit &&) = delete;
+    ScopeExit &operator=(const ScopeExit &) = delete;
+    ScopeExit &operator=(ScopeExit &&) = delete;
 
-  void cancel();
-  void resume();
+    void cancel();
+    void resume();
 
-private:
-  std::function<void()> m_handler;
-  bool m_cancelled;
+  private:
+    std::function<void()> m_handler;
+    bool m_cancelled;
 };
 
-}
+} // namespace Tools

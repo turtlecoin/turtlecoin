@@ -9,18 +9,18 @@
 #include <System/EventLock.h>
 #include <System/InterruptedException.h>
 #include <System/Timer.h>
-#include <thread>
 #include <chrono>
+#include <thread>
 
 #include "Common/StringTools.h"
-#include <config/CryptoNoteConfig.h>
 #include "CryptoNoteCore/CachedBlock.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
+#include "CryptoNoteCore/CryptoNoteTools.h"
 #include "CryptoNoteCore/TransactionExtra.h"
-#include "Rpc/HttpClient.h"
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
+#include "Rpc/HttpClient.h"
 #include "Rpc/JsonRpc.h"
+#include <config/CryptoNoteConfig.h>
 
 #include <Utilities/FormatTools.h>
 
@@ -30,9 +30,11 @@ using namespace CryptoNote;
 
 using json = nlohmann::json;
 
-namespace Miner {
+namespace Miner
+{
 
-namespace {
+namespace
+{
 
 MinerEvent BlockMinedEvent()
 {
@@ -48,7 +50,7 @@ MinerEvent BlockchainUpdatedEvent()
     return event;
 }
 
-void adjustMergeMiningTag(BlockTemplate& blockTemplate)
+void adjustMergeMiningTag(BlockTemplate &blockTemplate)
 {
     CachedBlock cachedBlock(blockTemplate);
 
@@ -68,18 +70,13 @@ void adjustMergeMiningTag(BlockTemplate& blockTemplate)
 
 } // namespace
 
-MinerManager::MinerManager(
-    System::Dispatcher& dispatcher,
-    const CryptoNote::MiningConfig& config,
-    const std::shared_ptr<httplib::Client> httpClient) :
+MinerManager::MinerManager(System::Dispatcher &dispatcher, const CryptoNote::MiningConfig &config,
+                           const std::shared_ptr<httplib::Client> httpClient)
+    :
 
-    m_contextGroup(dispatcher),
-    m_config(config),
-    m_miner(dispatcher),
-    m_blockchainMonitor(dispatcher, m_config.scanPeriod, httpClient),
-    m_eventOccurred(dispatcher),
-    m_lastBlockTimestamp(0),
-    m_httpClient(httpClient)
+      m_contextGroup(dispatcher), m_config(config), m_miner(dispatcher),
+      m_blockchainMonitor(dispatcher, m_config.scanPeriod, httpClient), m_eventOccurred(dispatcher),
+      m_lastBlockTimestamp(0), m_httpClient(httpClient)
 {
 }
 
@@ -112,9 +109,7 @@ void MinerManager::printHashRate()
 
         last_hash_count = current_hash_count;
 
-        std::cout << SuccessMsg("\nMining at ")
-                  << SuccessMsg(Utilities::get_mining_speed(hashes))
-                  << "\n\n";
+        std::cout << SuccessMsg("\nMining at ") << SuccessMsg(Utilities::get_mining_speed(hashes)) << "\n\n";
     }
 }
 
@@ -122,53 +117,52 @@ void MinerManager::eventLoop()
 {
     size_t blocksMined = 0;
 
-    while(true)
+    while (true)
     {
         MinerEvent event = waitEvent();
 
         switch (event.type)
         {
-            case MinerEventType::BLOCK_MINED:
-            {
-                stopBlockchainMonitoring();
+        case MinerEventType::BLOCK_MINED:
+        {
+            stopBlockchainMonitoring();
 
-                if (submitBlock(m_minedBlock))
+            if (submitBlock(m_minedBlock))
+            {
+                m_lastBlockTimestamp = m_minedBlock.timestamp;
+
+                if (m_config.blocksLimit != 0 && ++blocksMined == m_config.blocksLimit)
                 {
-                    m_lastBlockTimestamp = m_minedBlock.timestamp;
-
-                    if (m_config.blocksLimit != 0 && ++blocksMined == m_config.blocksLimit)
-                    {
-                        std::cout << InformationMsg("Mined requested amount of blocks (")
-                                  << InformationMsg(m_config.blocksLimit)
-                                  << InformationMsg("). Quitting.\n");
-                        return;
-                    }
+                    std::cout << InformationMsg("Mined requested amount of blocks (")
+                              << InformationMsg(m_config.blocksLimit) << InformationMsg("). Quitting.\n");
+                    return;
                 }
-
-                BlockMiningParameters params = requestMiningParameters();
-                adjustBlockTemplate(params.blockTemplate);
-
-                startBlockchainMonitoring();
-                startMining(params);
-                break;
             }
-            case MinerEventType::BLOCKCHAIN_UPDATED:
-            {
-                stopMining();
-                stopBlockchainMonitoring();
-                BlockMiningParameters params = requestMiningParameters();
-                adjustBlockTemplate(params.blockTemplate);
-                startBlockchainMonitoring();
-                startMining(params);
-                break;
-            }
+
+            BlockMiningParameters params = requestMiningParameters();
+            adjustBlockTemplate(params.blockTemplate);
+
+            startBlockchainMonitoring();
+            startMining(params);
+            break;
+        }
+        case MinerEventType::BLOCKCHAIN_UPDATED:
+        {
+            stopMining();
+            stopBlockchainMonitoring();
+            BlockMiningParameters params = requestMiningParameters();
+            adjustBlockTemplate(params.blockTemplate);
+            startBlockchainMonitoring();
+            startMining(params);
+            break;
+        }
         }
     }
 }
 
 MinerEvent MinerManager::waitEvent()
 {
-    while(m_events.empty())
+    while (m_events.empty())
     {
         m_eventOccurred.wait();
         m_eventOccurred.clear();
@@ -180,16 +174,15 @@ MinerEvent MinerManager::waitEvent()
     return event;
 }
 
-void MinerManager::pushEvent(MinerEvent&& event)
+void MinerManager::pushEvent(MinerEvent &&event)
 {
     m_events.push(std::move(event));
     m_eventOccurred.set();
 }
 
-void MinerManager::startMining(const CryptoNote::BlockMiningParameters& params)
+void MinerManager::startMining(const CryptoNote::BlockMiningParameters &params)
 {
-    m_contextGroup.spawn([this, params] ()
-    {
+    m_contextGroup.spawn([this, params]() {
         try
         {
             m_minedBlock = m_miner.mine(params, m_config.threadCount);
@@ -201,15 +194,11 @@ void MinerManager::startMining(const CryptoNote::BlockMiningParameters& params)
     });
 }
 
-void MinerManager::stopMining()
-{
-    m_miner.stop();
-}
+void MinerManager::stopMining() { m_miner.stop(); }
 
 void MinerManager::startBlockchainMonitoring()
 {
-    m_contextGroup.spawn([this] ()
-    {
+    m_contextGroup.spawn([this]() {
         try
         {
             m_blockchainMonitor.waitBlockchainUpdate();
@@ -221,27 +210,19 @@ void MinerManager::startBlockchainMonitoring()
     });
 }
 
-void MinerManager::stopBlockchainMonitoring()
-{
-    m_blockchainMonitor.stop();
-}
+void MinerManager::stopBlockchainMonitoring() { m_blockchainMonitor.stop(); }
 
-bool MinerManager::submitBlock(const BlockTemplate& minedBlock)
+bool MinerManager::submitBlock(const BlockTemplate &minedBlock)
 {
     CachedBlock cachedBlock(minedBlock);
 
-    json j = {
-        {"jsonrpc", "2.0"},
-        {"method", "submitblock"},
-        {"params", {Common::toHex(toBinaryArray(minedBlock))}}
-    };
+    json j = {{"jsonrpc", "2.0"}, {"method", "submitblock"}, {"params", {Common::toHex(toBinaryArray(minedBlock))}}};
 
     auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
 
     if (!res || res->status == 200)
     {
-        std::cout << SuccessMsg("\nBlock found! Hash: ")
-                  << SuccessMsg(cachedBlock.getBlockHash()) << "\n\n";
+        std::cout << SuccessMsg("\nBlock found! Hash: ") << SuccessMsg(cachedBlock.getBlockHash()) << "\n\n";
 
         return true;
     }
@@ -256,14 +237,9 @@ BlockMiningParameters MinerManager::requestMiningParameters()
 {
     while (true)
     {
-        json j = {
-            {"jsonrpc", "2.0"},
-            {"method", "getblocktemplate"},
-            {"params", {
-                {"wallet_address", m_config.miningAddress},
-                {"reserve_size", 0}
-            }}
-        };
+        json j = {{"jsonrpc", "2.0"},
+                  {"method", "getblocktemplate"},
+                  {"params", {{"wallet_address", m_config.miningAddress}, {"reserve_size", 0}}}};
 
         auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
 
@@ -280,8 +256,7 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             std::stringstream stream;
 
             stream << "Failed to get block template - received unexpected http "
-                   << "code from server: "
-                   << res->status << std::endl;
+                   << "code from server: " << res->status << std::endl;
 
             std::cout << WarningMsg(stream.str()) << std::endl;
 
@@ -299,8 +274,7 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             {
                 std::stringstream stream;
 
-                stream << "Failed to get block template from daemon. Response: "
-                       << status << std::endl;
+                stream << "Failed to get block template from daemon. Response: " << status << std::endl;
 
                 std::cout << WarningMsg(stream.str());
 
@@ -311,11 +285,9 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             BlockMiningParameters params;
             params.difficulty = j.at("result").at("difficulty").get<uint64_t>();
 
-            std::vector<uint8_t> blob = Common::fromHex(
-                j.at("result").at("blocktemplate_blob").get<std::string>()
-            );
+            std::vector<uint8_t> blob = Common::fromHex(j.at("result").at("blocktemplate_blob").get<std::string>());
 
-            if(!fromBinaryArray(params.blockTemplate, blob))
+            if (!fromBinaryArray(params.blockTemplate, blob))
             {
                 std::cout << WarningMsg("Couldn't parse block template from daemon.") << std::endl;
 
@@ -340,7 +312,7 @@ BlockMiningParameters MinerManager::requestMiningParameters()
     }
 }
 
-void MinerManager::adjustBlockTemplate(CryptoNote::BlockTemplate& blockTemplate) const
+void MinerManager::adjustBlockTemplate(CryptoNote::BlockTemplate &blockTemplate) const
 {
     adjustMergeMiningTag(blockTemplate);
 
@@ -360,4 +332,4 @@ void MinerManager::adjustBlockTemplate(CryptoNote::BlockTemplate& blockTemplate)
     }
 }
 
-} //namespace Miner
+} // namespace Miner

@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////////
@@ -24,7 +24,7 @@ uint64_t getTransactionSum(const std::vector<std::pair<std::string, uint64_t>> d
 {
     uint64_t amountSum = 0;
 
-    for (const auto & [destination, amount] : destinations)
+    for (const auto &[destination, amount] : destinations)
     {
         amountSum += amount;
     }
@@ -46,9 +46,7 @@ uint64_t getUpperBound(const uint64_t val, const uint64_t nearestMultiple)
     return getLowerBound(val, nearestMultiple) + nearestMultiple;
 }
 
-bool isInputUnlocked(
-    const uint64_t unlockTime,
-    const uint64_t currentHeight)
+bool isInputUnlocked(const uint64_t unlockTime, const uint64_t currentHeight)
 {
     /* Might as well return fast with the case that is true for nearly all
        transactions (excluding coinbase) */
@@ -61,14 +59,14 @@ bool isInputUnlocked(
        timestamp, otherwise we treat it as a block height */
     if (unlockTime >= CryptoNote::parameters::CRYPTONOTE_MAX_BLOCK_NUMBER)
     {
-        const uint64_t currentTimeAdjusted = static_cast<uint64_t>(std::time(nullptr))
-            + CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS;
+        const uint64_t currentTimeAdjusted = static_cast<uint64_t>(std::time(nullptr)) +
+                                             CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS;
 
         return currentTimeAdjusted >= unlockTime;
     }
 
-    const uint64_t currentHeightAdjusted = currentHeight
-        + CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS;
+    const uint64_t currentHeightAdjusted =
+        currentHeight + CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS;
 
     return currentHeightAdjusted >= unlockTime;
 }
@@ -116,9 +114,7 @@ uint64_t getMaxTxSize(const uint64_t currentHeight)
 
 /* Sleep for approximately duration, unless condition is true. This lets us
    not bother the node too often, but makes shutdown times still quick. */
-void sleepUnlessStopping(
-    const std::chrono::milliseconds duration,
-    std::atomic<bool> &condition)
+void sleepUnlessStopping(const std::chrono::milliseconds duration, std::atomic<bool> &condition)
 {
     auto sleptFor = std::chrono::milliseconds::zero();
 
@@ -142,12 +138,10 @@ uint64_t scanHeightToTimestamp(const uint64_t scanHeight)
     }
 
     /* Get the amount of seconds since the blockchain launched */
-    uint64_t secondsSinceLaunch = scanHeight * 
-                                  CryptoNote::parameters::DIFFICULTY_TARGET;
+    uint64_t secondsSinceLaunch = scanHeight * CryptoNote::parameters::DIFFICULTY_TARGET;
 
     /* Get the genesis block timestamp and add the time since launch */
-    uint64_t timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP
-                       + secondsSinceLaunch;
+    uint64_t timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP + secondsSinceLaunch;
 
     /* Don't make timestamp too large or daemon throws an error */
     if (timestamp >= getCurrentTimestampAdjusted())
@@ -185,12 +179,9 @@ uint64_t getCurrentTimestampAdjusted()
     std::time_t time = std::time(nullptr);
 
     /* Take the amount of time a block can potentially be in the past/future */
-    std::initializer_list<uint64_t> limits =
-    {
-        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT,
-        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3,
-        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4
-    };
+    std::initializer_list<uint64_t> limits = {CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT,
+                                              CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3,
+                                              CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4};
 
     /* Get the largest adjustment possible */
     uint64_t adjust = std::max(limits);

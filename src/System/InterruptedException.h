@@ -19,13 +19,13 @@
 
 #include <exception>
 
-namespace System {
+namespace System
+{
 
-class InterruptedException : public std::exception {
+class InterruptedException : public std::exception
+{
   public:
-    virtual const char* what() const throw() override {
-      return "interrupted";
-    }
+    virtual const char *what() const throw() override { return "interrupted"; }
 };
 
-}
+} // namespace System

@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 //////////////////////////////////////////
@@ -8,18 +8,16 @@
 
 #include <iostream>
 
-#include <zedwallet++/AddressBook.h>
 #include <Utilities/ColouredMsg.h>
+#include <zedwallet++/AddressBook.h>
 #include <zedwallet++/CommandImplementations.h>
+#include <zedwallet++/Fusion.h>
 #include <zedwallet++/Open.h>
 #include <zedwallet++/Transfer.h>
-#include <zedwallet++/Fusion.h>
 #include <zedwallet++/Utilities.h>
 
-bool handleCommand(
-    const std::string command,
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex)
+bool handleCommand(const std::string command, const std::shared_ptr<WalletBackend> walletBackend,
+                   const std::shared_ptr<std::mutex> mutex)
 {
     /* Aquire the lock so transactions don't get printed whilst we're handling
        a command */
@@ -156,9 +154,7 @@ bool handleCommand(
     return true;
 }
 
-std::shared_ptr<WalletBackend> handleLaunchCommand(
-    const std::string launchCommand,
-    const Config &config)
+std::shared_ptr<WalletBackend> handleLaunchCommand(const std::string launchCommand, const Config &config)
 {
     if (launchCommand == "create")
     {
