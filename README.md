@@ -8,7 +8,7 @@
 
 ### Installing
 
-We offer binary images of the latest releases here: https://latest.turtlecoin.lol
+We offer binary images of the latest releases here: http://latest.turtlecoin.lol
 
 If you would like to compile yourself, read on.
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -13,6 +13,7 @@
 #include "Common/StringTools.h"
 
 #include "crypto/crypto.h"
+#include <crypto/random.h>
 #include "CryptoNoteCore/CachedBlock.h"
 #include "CryptoNoteCore/CheckDifficulty.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
@@ -74,7 +75,7 @@ void Miner::runWorkers(BlockMiningParameters blockMiningParameters, size_t threa
 
     try
     {
-        blockMiningParameters.blockTemplate.nonce = Crypto::rand<uint32_t>();
+        blockMiningParameters.blockTemplate.nonce = Random::randomValue<uint32_t>();
 
         for (size_t i = 0; i < threadCount; ++i)
         {

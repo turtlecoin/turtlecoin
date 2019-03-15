@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -854,7 +854,7 @@ std::vector<uint32_t> BlockchainCache::getRandomOutsByAmount(Amount amount, size
     /* We only need count outputs, so trim to that amount */
     dist = std::min(static_cast<uint32_t>(count), dist);
 
-    ShuffleGenerator<uint32_t, Crypto::random_engine<uint32_t>> generator(dist);
+    ShuffleGenerator<uint32_t> generator(dist);
 
     /* While we still have outputs to get */
     while (dist--)

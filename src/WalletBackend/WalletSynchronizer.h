@@ -111,9 +111,9 @@ class WalletSynchronizer
         std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> processBlockOutputs(
             const WalletTypes::WalletBlockInfo &block) const;
 
-        void processBlocks(const std::vector<WalletTypes::WalletBlockInfo> &blocks);
+        void processBlock(const WalletTypes::WalletBlockInfo &block);
 
-        BlockScanTmpInfo processBlock(
+        BlockScanTmpInfo processBlockTransactions(
             const WalletTypes::WalletBlockInfo &block,
             const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs) const;
 

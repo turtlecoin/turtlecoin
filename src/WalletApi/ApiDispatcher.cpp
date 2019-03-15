@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -9,6 +9,8 @@
 #include <config/CryptoNoteConfig.h>
 
 #include <CryptoNoteCore/Mixins.h>
+
+#include <crypto/random.h>
 
 #include <cryptopp/modes.h>
 #include <cryptopp/sha.h>
@@ -43,7 +45,7 @@ ApiDispatcher::ApiDispatcher(
     m_rpcPassword(rpcPassword)
 {
     /* Generate the salt used for pbkdf2 api authentication */
-    Crypto::generate_random_bytes(16, m_salt);
+    Random::randomBytes(16, m_salt);
 
     /* Make sure to do this after initializing the salt above! */
     m_hashedPassword = hashPassword(rpcPassword);

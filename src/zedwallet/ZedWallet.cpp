@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
     /* Our connection to turtlecoind */
     std::unique_ptr<CryptoNote::INode> node(
-        new CryptoNote::NodeRpcProxy(config.host, config.port, logManager)
+        new CryptoNote::NodeRpcProxy(config.host, config.port, 10, logManager)
     );
 
     std::promise<std::error_code> errorPromise;

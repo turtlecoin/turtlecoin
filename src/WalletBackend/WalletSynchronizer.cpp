@@ -94,20 +94,28 @@ void WalletSynchronizer::mainLoop()
     {
         const auto blocks = downloadBlocks();
 
-        if (blocks.empty())
+        for (const auto block : blocks)
+        {
+            if (m_shouldStop)
+            {
+                return;
+            }
+
+            processBlock(block);
+        }
+
+        if (blocks.empty() && !m_shouldStop)
         {
             /* If we're synced, check any transactions that may be in the pool */
-            if (getCurrentScanHeight() >= m_daemon->localDaemonBlockCount())
+            if (getCurrentScanHeight() >= m_daemon->localDaemonBlockCount() &&
+                !m_subWallets->isViewWallet())
             {
                 checkLockedTransactions();
             }
 
             std::this_thread::sleep_for(std::chrono::seconds(5));
+
             continue;
-        }
-        else
-        {
-            processBlocks(blocks);
         }
     }
 }
@@ -222,83 +230,80 @@ std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> Wallet
     return inputs;
 }
 
-void WalletSynchronizer::processBlocks(const std::vector<WalletTypes::WalletBlockInfo> &blocks)
+void WalletSynchronizer::processBlock(const WalletTypes::WalletBlockInfo &block)
 {
-    for (const auto b : blocks)
+    /* Chain forked, invalidate previous transactions */
+    if (m_syncStatus.getHeight() >= block.blockHeight)
     {
-        /* Chain forked, invalidate previous transactions */
-        if (m_syncStatus.getHeight() >= b.blockHeight)
+        removeForkedTransactions(block.blockHeight);
+    }
+
+    auto ourInputs = processBlockOutputs(block);
+
+    std::unordered_map<Crypto::Hash, std::vector<uint64_t>> globalIndexes;
+
+    for (auto &[publicKey, input] : ourInputs)
+    {
+        if (!m_subWallets->isViewWallet() && !input.globalOutputIndex)
         {
-            removeForkedTransactions(b.blockHeight);
-        }
-
-        auto ourInputs = processBlockOutputs(b);
-
-        std::unordered_map<Crypto::Hash, std::vector<uint64_t>> globalIndexes;
-
-        for (auto &[publicKey, input] : ourInputs)
-        {
-            if (!m_subWallets->isViewWallet() && !input.globalOutputIndex)
+            if (globalIndexes.empty())
             {
-                if (globalIndexes.empty())
-                {
-                    globalIndexes = getGlobalIndexes(b.blockHeight);
-                }
-
-                const auto it = globalIndexes.find(input.parentTransactionHash);
-
-                /* Daemon returns indexes for hashes in a range. If we don't
-                   find our hash, either the chain has forked, or the daemon
-                   is faulty. Print a warning message, then return so we
-                   can fetch new blocks, in the likely case the daemon has
-                   forked.
-                   
-                   Also need to check there are enough indexes for the one we want */
-                if (it == globalIndexes.end() || it->second.size() <= input.transactionIndex)
-                {
-                    std::cout << "Warning: Failed to get correct global indexes from daemon."
-                              << "\nIf you see this error message repeatedly, the daemon "
-                              << "may be faulty. More likely, the chain just forked.\n";
-                    return;
-                }
-
-                input.globalOutputIndex = it->second[input.transactionIndex];
+                globalIndexes = getGlobalIndexes(block.blockHeight);
             }
+
+            const auto it = globalIndexes.find(input.parentTransactionHash);
+
+            /* Daemon returns indexes for hashes in a range. If we don't
+               find our hash, either the chain has forked, or the daemon
+               is faulty. Print a warning message, then return so we
+               can fetch new blocks, in the likely case the daemon has
+               forked.
+               
+               Also need to check there are enough indexes for the one we want */
+            if (it == globalIndexes.end() || it->second.size() <= input.transactionIndex)
+            {
+                std::cout << "Warning: Failed to get correct global indexes from daemon."
+                          << "\nIf you see this error message repeatedly, the daemon "
+                          << "may be faulty. More likely, the chain just forked.\n";
+                return;
+            }
+
+            input.globalOutputIndex = it->second[input.transactionIndex];
         }
+    }
 
-        BlockScanTmpInfo blockScanInfo = processBlock(b, ourInputs);
+    BlockScanTmpInfo blockScanInfo = processBlockTransactions(block, ourInputs);
 
-        for (const auto tx : blockScanInfo.transactionsToAdd)
-        {
-            m_subWallets->addTransaction(tx);
-            m_eventHandler->onTransaction.fire(tx);
-        }
+    for (const auto tx : blockScanInfo.transactionsToAdd)
+    {
+        m_subWallets->addTransaction(tx);
+        m_eventHandler->onTransaction.fire(tx);
+    }
 
-        for (const auto [publicKey, input] : blockScanInfo.inputsToAdd)
-        {
-            m_subWallets->storeTransactionInput(publicKey, input);
-        }
+    for (const auto [publicKey, input] : blockScanInfo.inputsToAdd)
+    {
+        m_subWallets->storeTransactionInput(publicKey, input);
+    }
 
-        /* The input has been spent, discard the key image so we
-           don't double spend it */
-        for (const auto [publicKey, keyImage] : blockScanInfo.keyImagesToMarkSpent)
-        {
-            m_subWallets->markInputAsSpent(keyImage, publicKey, b.blockHeight);
-        }
+    /* The input has been spent, discard the key image so we
+       don't double spend it */
+    for (const auto [publicKey, keyImage] : blockScanInfo.keyImagesToMarkSpent)
+    {
+        m_subWallets->markInputAsSpent(keyImage, publicKey, block.blockHeight);
+    }
 
-        /* Make sure to do this at the end, once the transactions are fully
-           processed! Otherwise, we could miss a transaction depending upon
-           when we save */
-        m_syncStatus.storeBlockHash(b.blockHash, b.blockHeight);
+    /* Make sure to do this at the end, once the transactions are fully
+       processed! Otherwise, we could miss a transaction depending upon
+       when we save */
+    m_syncStatus.storeBlockHash(block.blockHash, block.blockHeight);
 
-        if (b.blockHeight >= m_daemon->networkBlockCount())
-        {
-            m_eventHandler->onSynced.fire(b.blockHeight);
-        }
+    if (block.blockHeight >= m_daemon->networkBlockCount())
+    {
+        m_eventHandler->onSynced.fire(block.blockHeight);
     }
 }
 
-BlockScanTmpInfo WalletSynchronizer::processBlock(
+BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
     const WalletTypes::WalletBlockInfo &block,
     const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs) const
 {

@@ -815,11 +815,13 @@ struct COMMAND_RPC_GET_WALLET_SYNC_DATA {
 
     uint64_t startHeight;
     uint64_t startTimestamp;
+    uint64_t blockCount;
 
     void serialize(ISerializer &s) {
       s(blockIds, "blockHashCheckpoints");
       KV_MEMBER(startHeight);
       KV_MEMBER(startTimestamp);
+      KV_MEMBER(blockCount);
     }
   };
 

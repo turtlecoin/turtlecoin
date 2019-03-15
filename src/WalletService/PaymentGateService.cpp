@@ -128,13 +128,14 @@ void PaymentGateService::stop() {
 }
 
 void PaymentGateService::runRpcProxy(Logging::LoggerRef& log) {
-  log(Logging::INFO) << "Starting Payment Gate with remote node";
+  log(Logging::INFO) << "Starting Payment Gate with remote node, timeout: " << config.serviceConfig.initTimeout;
   CryptoNote::Currency currency = currencyBuilder->currency();
 
   std::unique_ptr<CryptoNote::INode> node(
     PaymentService::NodeFactory::createNode(
       config.serviceConfig.daemonAddress,
       config.serviceConfig.daemonPort,
+      config.serviceConfig.initTimeout,
       log.getLogger()));
 
   runWalletService(currency, *node);

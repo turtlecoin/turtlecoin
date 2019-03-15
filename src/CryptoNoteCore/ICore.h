@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <optional>
 #include <CryptoNote.h>
 
 #include "AddBlockErrors.h"
@@ -59,8 +60,12 @@ public:
                               uint64_t& startIndex, uint64_t& currentIndex, uint64_t& fullOffset,
                               std::vector<BlockDetails>& entries, uint32_t blockCount) const = 0;
 
-  virtual bool getWalletSyncData(const std::vector<Crypto::Hash> &knownBlockHashes, uint64_t startHeight,
-                                 uint64_t startTimestamp, std::vector<WalletTypes::WalletBlockInfo> &blocks) const = 0;
+  virtual bool getWalletSyncData(
+    const std::vector<Crypto::Hash> &knownBlockHashes,
+    const uint64_t startHeight,
+    const uint64_t startTimestamp,
+    const uint64_t blockCount,
+    std::vector<WalletTypes::WalletBlockInfo> &blocks) const = 0;
 
   virtual bool getTransactionsStatus(
     std::unordered_set<Crypto::Hash> transactionHashes,
@@ -69,6 +74,12 @@ public:
     std::unordered_set<Crypto::Hash> &transactionsUnknown) const = 0;
 
   virtual bool hasTransaction(const Crypto::Hash& transactionHash) const = 0;
+  /*!
+   * \brief getTransaction Queries a single transaction details blob from the chain or transaction pool
+   * \param hash The hash of the transaction
+   * \return The binary blob of the queried transaction, or none if the transaction does not exist.
+   */
+  virtual std::optional<BinaryArray> getTransaction(const Crypto::Hash& hash) const = 0;
   virtual void getTransactions(const std::vector<Crypto::Hash>& transactionHashes,
                                std::vector<BinaryArray>& transactions,
                                std::vector<Crypto::Hash>& missedHashes) const = 0;

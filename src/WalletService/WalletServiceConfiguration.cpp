@@ -34,7 +34,8 @@ namespace PaymentService {
       ("l,log-file", "Specify log <file> location", cxxopts::value<std::string>()->default_value(config.logFile), "<file>")
       ("log-level", "Specify log level", cxxopts::value<int>()->default_value(std::to_string(config.logLevel)), "#")
       ("server-root", "The service will use this <path> as the working directory", cxxopts::value<std::string>(), "<path>")
-      ("save-config", "Save the configuration to the specified <file>", cxxopts::value<std::string>(), "<file>");
+      ("save-config", "Save the configuration to the specified <file>", cxxopts::value<std::string>(), "<file>")
+      ("init-timeout", "Amount of time in seconds to wait for initial connection", cxxopts::value<int>()->default_value("10"), "<seconds>");
 
     options.add_options("Wallet")
       ("address", "Print the wallet addresses and then exit", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
@@ -102,6 +103,11 @@ namespace PaymentService {
       if (cli.count("daemon-port") > 0)
       {
         config.daemonPort = cli["daemon-port"].as<int>();
+      }
+      
+      if (cli.count("init-timeout") > 0)
+      {
+        config.initTimeout = cli["init-timeout"].as<int>();
       }
 
       if (cli.count("log-file") > 0)
@@ -276,6 +282,18 @@ namespace PaymentService {
             throw std::runtime_error(std::string(e.what()) + " - Invalid value for " + cfgKey );
           }  
         }
+        else if (cfgKey.compare("init-timeout")  == 0)
+        {
+          try
+          {
+            config.initTimeout = std::stoi(cfgValue);
+            updated = true;
+          }
+          catch(std::exception& e)
+          {
+            throw std::runtime_error(std::string(e.what()) + " - Invalid value for " + cfgKey );
+          }  
+        }
         else if (cfgKey.compare("log-file")  == 0)
         {
           config.logFile = cfgValue;
@@ -393,6 +411,11 @@ namespace PaymentService {
     {
       config.daemonPort = j["daemon-port"].get<int>();
     }
+    
+    if (j.find("init-timeout") != j.end())
+    {
+      config.initTimeout = j["init-timeout"].get<int>();
+    }
 
     if (j.find("log-file") != j.end())
     {
@@ -452,6 +475,7 @@ namespace PaymentService {
       {"daemon-port", config.daemonPort},
       {"log-file", config.logFile},
       {"log-level", config.logLevel},
+      {"init-timeout", config.initTimeout},
       {"container-file", config.containerFile},
       {"container-password", config.containerPassword},
       {"bind-address", config.bindAddress},

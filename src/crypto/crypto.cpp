@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2016-2018, The Karbowanec developers
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -12,29 +12,21 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <mutex>
 
 #include "Common/Varint.h"
 #include "crypto.h"
 #include "hash.h"
+#include "random.h"
 
 namespace Crypto {
 
-  using std::abort;
-  using std::int32_t;
-  using std::lock_guard;
-  using std::mutex;
-
   extern "C" {
 #include "crypto-ops.h"
-#include "random.h"
   }
-
-  mutex random_lock;
 
   static inline void random_scalar(EllipticCurveScalar &res) {
     unsigned char tmp[64];
-    generate_random_bytes(64, tmp);
+    Random::randomBytes(64, tmp);
     sc_reduce(tmp);
     memcpy(&res, tmp, 32);
   }
@@ -45,7 +37,6 @@ namespace Crypto {
   }
 
   void crypto_ops::generate_keys(PublicKey &pub, SecretKey &sec) {
-    lock_guard<mutex> lock(random_lock);
     ge_p3 point;
     random_scalar(reinterpret_cast<EllipticCurveScalar&>(sec));
     ge_scalarmult_base(&point, reinterpret_cast<unsigned char*>(&sec));
@@ -53,7 +44,6 @@ namespace Crypto {
   }
 
   void crypto_ops::generate_deterministic_keys(PublicKey &pub, SecretKey &sec, SecretKey& second) {
-    lock_guard<mutex> lock(random_lock);
     ge_p3 point;
 	sec = second;
     sc_reduce32(reinterpret_cast<unsigned char*>(&sec)); // reduce in case second round of keys (sendkeys)
@@ -62,7 +52,6 @@ namespace Crypto {
   }
 
   SecretKey crypto_ops::generate_m_keys(PublicKey &pub, SecretKey &sec, const SecretKey& recovery_key, bool recover) {
-    lock_guard<mutex> lock(random_lock);
     ge_p3 point;
     SecretKey rng;
     if (recover)
@@ -264,7 +253,6 @@ namespace Crypto {
   };
 
   void crypto_ops::generate_signature(const Hash &prefix_hash, const PublicKey &pub, const SecretKey &sec, Signature &sig) {
-    lock_guard<mutex> lock(random_lock);
     ge_p3 tmp3;
     EllipticCurveScalar k;
     s_comm buf;
@@ -372,8 +360,6 @@ namespace Crypto {
         uint64_t realOutput)
     {
         std::vector<Signature> signatures(publicKeys.size());
-
-        lock_guard<mutex> lock(random_lock);
 
         ge_p3 image_unp;
         ge_dsmp image_pre;

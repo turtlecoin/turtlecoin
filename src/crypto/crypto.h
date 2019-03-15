@@ -19,12 +19,6 @@
 
 namespace Crypto {
 
-  extern "C" {
-#include "random.h"
-  }
-
-  extern std::mutex random_lock;
-
 struct EllipticCurvePoint {
   uint8_t data[32];
 };
@@ -92,36 +86,6 @@ struct EllipticCurveScalar {
             const KeyImage &image,
             const std::vector<PublicKey> pubs,
             const std::vector<Signature> signatures);
-  };
-
-  /* Generate a value filled with random bytes.
-   */
-  template<typename T>
-  typename std::enable_if<std::is_pod<T>::value, T>::type rand() {
-    typename std::remove_cv<T>::type res;
-    std::lock_guard<std::mutex> lock(random_lock);
-    generate_random_bytes(sizeof(T), &res);
-    return res;
-  }
-
-  /* Random number engine based on Crypto::rand()
-   */
-  template <typename T>
-  class random_engine {
-  public:
-    typedef T result_type;
-
-    constexpr static T min() {
-      return (std::numeric_limits<T>::min)();
-    }
-
-    constexpr static T max() {
-      return (std::numeric_limits<T>::max)();
-    }
-
-    typename std::enable_if<std::is_unsigned<T>::value, T>::type operator()() {
-      return rand<T>();
-    }
   };
 
   /* Generate a new key pair

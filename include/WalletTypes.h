@@ -12,6 +12,7 @@
 #include "rapidjson/writer.h"
 
 #include <unordered_map>
+#include <optional>
 
 namespace WalletTypes
 {

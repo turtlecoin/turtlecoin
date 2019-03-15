@@ -55,12 +55,13 @@ std::error_code interpretResponseStatus(const std::string& status) {
 
 }
 
-NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort, std::shared_ptr<Logging::ILogger> logger) :
+NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort, unsigned int initTimeout, std::shared_ptr<Logging::ILogger> logger) :
   m_logger(logger, "NodeRpcProxy"),
   m_rpcTimeout(10000),
   m_pullInterval(5000),
   m_nodeHost(nodeHost),
   m_nodePort(nodePort),
+  m_initTimeout(initTimeout),
   m_connected(true),
   m_peerCount(0),
   m_networkHeight(0),
@@ -69,12 +70,13 @@ NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort,
   resetInternalState();
 }
 
-NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort) :
+NodeRpcProxy::NodeRpcProxy(const std::string& nodeHost, unsigned short nodePort, unsigned int initTimeout) :
   m_logger(std::make_shared<Logging::DummyLogger>(), "NodeRpcProxy"),
   m_rpcTimeout(10000),
   m_pullInterval(5000),
   m_nodeHost(nodeHost),
   m_nodePort(nodePort),
+  m_initTimeout(initTimeout),
   m_connected(true),
   m_peerCount(0),
   m_networkHeight(0),
@@ -158,7 +160,7 @@ void NodeRpcProxy::workerThread(const INode::Callback& initialized_callback) {
     });
 
     /* Init succeeded */
-    if (init.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
+    if (init.wait_for(std::chrono::seconds(m_initTimeout)) == std::future_status::ready) {
         initialized_callback(std::error_code());
     /* Timed out initting */
     } else {

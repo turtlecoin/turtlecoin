@@ -47,7 +47,8 @@ enum class TransactionValidationError {
   OUTPUTS_AMOUNT_OVERFLOW,
   WRONG_AMOUNT,
   WRONG_TRANSACTION_UNLOCK_TIME,
-  INVALID_MIXIN
+  INVALID_MIXIN,
+  EXTRA_TOO_LARGE,
 };
 
 // custom category:
@@ -91,6 +92,7 @@ public:
       case TransactionValidationError::WRONG_AMOUNT: return "Transaction wrong amount";
       case TransactionValidationError::WRONG_TRANSACTION_UNLOCK_TIME: return "Transaction has wrong unlock time";
       case TransactionValidationError::INVALID_MIXIN: return "Mixin too large or too small";
+      case TransactionValidationError::EXTRA_TOO_LARGE: return "Transaction extra too large";
       default: return "Unknown error";
     }
   }
