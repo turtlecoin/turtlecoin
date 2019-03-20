@@ -241,7 +241,7 @@ void ApiDispatcher::middleware(
 
     rapidjson::Document body;
     
-    body.Parse(req.body.c_str());
+    body.Parse(req.body);
     if(!body.HasParseError()) {
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -297,7 +297,7 @@ void ApiDispatcher::middleware(
         writer.Key("errorCode");
         writer.Int(error.getErrorCode());
         writer.Key("errorMessage");
-        writer.String(error.getErrorMessage().c_str());
+        writer.String(error.getErrorMessage());
         writer.EndObject();
 
         res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -320,7 +320,7 @@ void ApiDispatcher::middleware(
             writer.Key("errorCode");
             writer.Int(error.getErrorCode());
             writer.Key("errorMessage");
-            writer.String(error.getErrorMessage().c_str());
+            writer.String(error.getErrorMessage());
             writer.EndObject();
 
             res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -329,14 +329,6 @@ void ApiDispatcher::middleware(
         {
             res.status = statusCode;
         }
-    }
-    /* Most likely a key was missing. Do the error handling here to make the
-       rest of the code simpler */
-    catch (const json::exception &e)
-    {
-        std::cout << "Caught JSON exception, likely missing required "
-                     "json parameter: " << e.what() << std::endl;
-        res.status = 400;
     }
     catch (const std::exception &e)
     {
@@ -403,8 +395,11 @@ std::tuple<Error, uint16_t> ApiDispatcher::keyImportWallet(
 
     const auto [daemonHost, daemonPort, filename, password] = getDefaultWalletParams(body);
 
-    const auto privateViewKey = tryGetJsonValue<Crypto::SecretKey>(body, "privateViewKey");
-    const auto privateSpendKey = tryGetJsonValue<Crypto::SecretKey>(body, "privateSpendKey");
+    const Crypto::SecretKey privateViewKey;
+    const Crypto::SecretKey privateSpendKey;
+    // retrieve strings form the JSON body and assign them to the SecretKey objects
+    privateViewKey.fromString(tryGetJsonValue<std::string>(body, "privateViewKey"));
+    privateSpendKey.fromString(tryGetJsonValue<std::string>(body, "privateSpendKey"));
 
     uint64_t scanHeight = 0;
 
@@ -460,7 +455,8 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewWallet(
     const auto [daemonHost, daemonPort, filename, password] = getDefaultWalletParams(body);
 
     const std::string address = tryGetJsonValue<std::string>(body, "address");
-    const auto privateViewKey = tryGetJsonValue<Crypto::SecretKey>(body, "privateViewKey");
+    const Crypto::SecretKey privateViewKey;
+    privateViewKey.fromString(tryGetJsonValue<std::string>(body, "privateViewKey"));
 
     uint64_t scanHeight = 0;
 
@@ -509,7 +505,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createAddress(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
 	writer.Key("address");
-	writer.String(address.c_str());
+	writer.String(address);
     writer.Key("privateSpendKey");
     privateSpendKey.toJSON(writer);
 	writer.EndObject();
@@ -533,7 +529,8 @@ std::tuple<Error, uint16_t> ApiDispatcher::importAddress(
         scanHeight = tryGetJsonValue<uint64_t>(body, "scanHeight");
     }
 
-    const auto privateSpendKey = tryGetJsonValue<Crypto::SecretKey>(body, "privateSpendKey");
+    const Crypto::SecretKey privateSpendKey;
+    privateSpendKey.fromString(tryGetJsonValue<std::string>(body, "privateSpendKey"));
 
     const auto [error, address] = m_walletBackend->importSubWallet(
         privateSpendKey, scanHeight
@@ -548,7 +545,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importAddress(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
 	writer.Key("address");
-	writer.String(address.c_str());
+	writer.String(address);
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -570,7 +567,8 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewAddress(
         scanHeight = tryGetJsonValue<uint64_t>(body, "scanHeight");
     }
 
-    const auto publicSpendKey = tryGetJsonValue<Crypto::PublicKey>(body, "publicSpendKey");
+    const Crypto::PublicKey publicSpendKey;
+    publicSpendKey.fromString(tryGetJsonValue<std::string>(body, "publicSpendKey"));
 
     const auto [error, address] = m_walletBackend->importViewSubWallet(
         publicSpendKey, scanHeight
@@ -585,7 +583,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewAddress(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
 	writer.Key("address");
-	writer.String(address.c_str());
+	writer.String(address);
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -622,7 +620,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendBasicTransaction(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
 	writer.Key("address");
-	writer.String(address.c_str());
+	writer.String(address);
     writer.Key("transactionHash");
     hash.toJSON(writer);
 	writer.EndObject();
@@ -649,7 +647,6 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     }
 
     uint64_t mixin;
-
     if (body.HasMember("mixin"))
     {
         mixin = tryGetJsonValue<uint64_t>(body, "mixin");
@@ -670,10 +667,15 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     }
 
     std::vector<std::string> subWalletsToTakeFrom = {};
-
-    if (body.HasMember("sourceAddresses"))
-    {
-        subWalletsToTakeFrom = tryGetJsonValue<std::vector<std::string>>(body, "sourceAddresses");
+    // retrieving an array from a rapidjson::Document is not as easy as it was with nlohmann
+    rapidjson::Value::MemberIterator itr = body.FindMember("sourceAddresses");
+    if (itr != body.MemberEnd()) {
+        rapidjson::Value& value = itr->value;
+        for (rapidjson::Value::ConstValueIterator it = value.Begin(); it != value.End(); ++it) {
+            if (!(*it).IsString()) // this is in case the array contains invalid values
+                throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
+            subWalletsToTakeFrom.push_back((*it).GetString());
+        }  
     }
 
     std::string paymentID;
@@ -766,9 +768,14 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedFusionTransaction(
 
     std::vector<std::string> subWalletsToTakeFrom;
 
-    if (body.HasMember("sourceAddresses"))
-    {
-        subWalletsToTakeFrom = tryGetJsonValue<std::vector<std::string>>(body, "sourceAddresses");
+    rapidjson::Value::MemberIterator itr = body.FindMember("sourceAddresses");
+    if (itr != body.MemberEnd()) {
+        rapidjson::Value& value = itr->value;
+        for (rapidjson::Value::ConstValueIterator it = value.Begin(); it != value.End(); ++it) {
+            if (!(*it).IsString())
+                throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
+            subWalletsToTakeFrom.push_back((*it).GetString());
+        }  
     }
 
     auto [error, hash] = m_walletBackend->sendFusionTransactionAdvanced(
@@ -899,13 +906,13 @@ std::tuple<Error, uint16_t> ApiDispatcher::getNodeInfo(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
 	writer.Key("daemonHost");
-	writer.String(daemonHost.c_str());
+	writer.String(daemonHost);
     writer.Key("daemonPort");
 	writer.Uint(daemonPort);
     writer.Key("nodeFee");
 	writer.Uint64(nodeFee);
     writer.Key("nodeAddress");
-	writer.String(nodeAddress.c_str());
+	writer.String(nodeAddress);
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -990,7 +997,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getMnemonicSeed(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
     writer.Key("mnemonicSeed");
-    writer.String(mnemonicSeed.c_str());
+    writer.String(mnemonicSeed);
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -1043,7 +1050,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getAddresses(
     // iterate through the vector and add the addresses to the array element in the JSON object
     writer.StartArray();
     for(it = adresses.begin(); it != adresses.end(); it++) {
-        writer.String((*it).c_str());
+        writer.String((*it));
     }
     writer.EndArray(adresses.size());
 	writer.EndObject();
@@ -1062,7 +1069,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getPrimaryAddress(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
     writer.Key("address");
-    writer.String(m_walletBackend->getPrimaryAddress().c_str());
+    writer.String(m_walletBackend->getPrimaryAddress());
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -1095,7 +1102,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createIntegratedAddress(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
     writer.Key("integratedAddress");
-    writer.String(integratedAddress.c_str());
+    writer.String(integratedAddress);
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -1608,7 +1615,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getBalances(
     {
         writer.StartObject();
         writer.Key("address");
-        writer.String(address.c_str());
+        writer.String(address);
         writer.Key("unlocked");
         writer.Uint64(unlocked);
         writer.Key("locked");
@@ -1778,7 +1785,7 @@ void ApiDispatcher::publicKeysToAddresses(rapidjson::Document &j) const
 
             // Add the address to the json
             rapidjson::Value addressValue;     // calls Value(double)
-	        addressValue.SetString(address.c_str(), j.GetAllocator());
+	        addressValue.SetString(address, j.GetAllocator());
             tx.AddMember("string", addressValue, j.GetAllocator());
 
             // Remove the spend key
