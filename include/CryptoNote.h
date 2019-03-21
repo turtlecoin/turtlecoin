@@ -108,20 +108,4 @@ struct RawBlock {
   std::vector<BinaryArray> transactions;
 };
 
-inline void to_json(nlohmann::json &j, const CryptoNote::KeyInput &k)
-{
-    j = {
-        {"amount", k.amount},
-        {"key_offsets", k.outputIndexes},
-        {"k_image", k.keyImage}
-    };
-}
-
-inline void from_json(const nlohmann::json &j, CryptoNote::KeyInput &k)
-{
-    k.amount = j.at("amount").get<uint64_t>();
-    k.outputIndexes = j.at("key_offsets").get<std::vector<uint32_t>>();
-    k.keyImage = j.at("k_image").get<Crypto::KeyImage>();
-}
-
 }
