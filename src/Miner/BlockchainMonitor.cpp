@@ -59,7 +59,7 @@ void BlockchainMonitor::waitBlockchainUpdate()
             nextBlockHash = requestLastBlockHash();
         }
 
-        if (lastBlockHash.value() != nextBlockHash.value())
+        if (lastBlockHash.operator*() != nextBlockHash.operator*())
         {
             break;
         }
