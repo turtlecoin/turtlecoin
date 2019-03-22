@@ -315,7 +315,7 @@ BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
 
         if (tx)
         {
-            txData.transactionsToAdd.push_back(tx.operator*());
+            txData.transactionsToAdd.push_back(*tx);
         }
     }
 
@@ -327,7 +327,7 @@ BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
 
         if (tx)
         {
-            txData.transactionsToAdd.push_back(tx.operator*());
+            txData.transactionsToAdd.push_back(*tx);
 
             txData.keyImagesToMarkSpent.insert(
                 txData.keyImagesToMarkSpent.end(),
