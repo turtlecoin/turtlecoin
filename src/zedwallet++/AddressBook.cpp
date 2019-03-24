@@ -19,6 +19,11 @@
 #include <zedwallet++/Transfer.h>
 #include <zedwallet++/Utilities.h>
 
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+
 const std::string getAddressBookName(const std::vector<AddressBookEntry> addressBook)
 {
     while (true)
@@ -350,46 +355,49 @@ void listAddressBook()
 std::vector<AddressBookEntry> getAddressBook()
 {
     std::vector<AddressBookEntry> addressBook;
-
     std::ifstream input(WalletConfig::addressBookFilename);
 
-    /* If file exists, read current values */
-    if (input)
-    {
-        json j;
-        input >> j;
-
-        addressBook = j.get<std::vector<AddressBookEntry>>();
+    if (input) {
+        rapidjson::IStreamWrapper isw(input);
+        rapidjson::Document d;
+        d.ParseStream(isw);
+        // d should be an array
+        for (rapidjson::Value::ConstValueIterator it = d.Begin(); it != d.End(); ++it) {
+			AddressBookEntry addressBookEntry((*it)["friendlyName"].GetString(),
+                                              (*it)["address"].GetString()
+                                              (*it)["paymentID"].GetString());
+			addressBook.push_back(addressBookEntry);
+        }
     }
 
     return addressBook;
 }
 
-void to_json(json &j, const AddressBookEntry &a)
-{
-    j = {
-        {"friendlyName", a.friendlyName},
-        {"address", a.address},
-        {"paymentID", a.paymentID},
-    };
-}
-
-void from_json(const json &j, AddressBookEntry &a)
-{
-    a.friendlyName = j.at("friendlyName").get<std::string>();
-    a.address = j.at("address").get<std::string>();
-    a.paymentID = j.at("paymentID").get<std::string>();
-}
-
 bool saveAddressBook(const std::vector<AddressBookEntry> addressBook)
 {
-    json addressBookJson = addressBook;
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
 
     std::ofstream output(WalletConfig::addressBookFilename);
 
     if (output)
     {
-        output << std::setw(4) << addressBookJson << std::endl;
+        std::vector<AddressBookEntry>::iterator it;
+
+        writer.StartArray();
+        for(it = addressBook.begin(); it != addressBook.end(); it++) {
+            writer.StartObject();
+            writer.Key("friendlyName");
+            writer.String((*it).friendlyName);
+            writer.Key("address");
+            writer.String((*it).address);
+            writer.Key("paymentID");
+            writer.String((*it).paymentID);
+            writer.EndObject();
+        }
+        writer.EndArray();
+        
+        output << std::setw(4) << string_buffer.GetString() << std::endl;
     }
     else
     {
