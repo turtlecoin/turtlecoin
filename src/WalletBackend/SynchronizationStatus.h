@@ -8,13 +8,9 @@
 
 #include <deque>
 
-#include "json.hpp"
-
 #include "JsonHelper.h"
 
 #include <vector>
-
-using nlohmann::json;
 
 class SynchronizationStatus
 {
