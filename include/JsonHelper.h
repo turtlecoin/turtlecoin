@@ -61,6 +61,23 @@ uint64_t getInt64FromJSON(const T &j, const std::string &key)
     return val.GetInt64();
 }
 
+template<typename T>
+uint32_t getUintFromJSON(const T &j, const std::string &key)
+{
+    auto &val = getJsonValue(j, key);
+
+    if (!val.IsUint())
+    {
+        throw std::invalid_argument(
+            "JSON parameter is wrong type. Expected unsigned int, got " +
+            kTypeNames[val.GetType()]
+        );
+    }
+
+    return val.GetUint();
+}
+
+
 /**
  * Gets a string from the JSON, with a given keyname
  */

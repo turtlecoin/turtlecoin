@@ -24,6 +24,26 @@ namespace WalletTypes
 
         /* Daemon doesn't supply this, blockchain cache api does. */
         std::optional<uint64_t> globalOutputIndex;
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+
+            writer.Key("key");
+            key.toJSON(writer);
+
+            writer.Key("amount");
+            writer.Uint64(amount);
+
+            writer.EndObject();
+        }
+
+        /* Initializes the class from a json value */
+        void fromJSON(const JSONValue &j) {
+            key.fromString(getStringFromJSON(j, "key"));
+            amount = getUint64FromJSON(j, "amount");
+        }
     };
 
     /* A coinbase transaction (i.e., a miner reward, there is one of these in
@@ -48,6 +68,43 @@ namespace WalletTypes
            CRYPTONOTE_MAX_BLOCK_NUMBER (In cryptonoteconfig) it is treated
            as a unix timestamp, else it is treated as a block height. */
         uint64_t unlockTime;
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+
+            writer.Key("outputs");
+            writer.StartArray();
+            for (const auto &item : keyOutputs) {
+                item.toJSON(writer);
+            }
+            writer.EndArray();
+            
+            writer.Key("hash");
+            hash.toJSON();
+
+            writer.Key("txPublicKey");
+            transactionPublicKey.toJSON();
+
+            writer.Key("unlockTime");
+            writer.Uint64(unlockTime);
+
+            writer.EndObject();
+        }
+
+        /* Initializes the class from a json value */
+        void fromJSON(const JSONValue &j) {
+            keyOutputs.clear();
+            for (const auto &x : getArrayFromJSON(j, "outputs")) {
+                KeyOutput keyOutput;
+                keyOutput.fromJSON(x);
+                keyOutputs.push_back(keyOutput);
+            }
+            hash.fromString(getStringFromJSON(j, "hash"));
+            transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
+            unlockTime = getUint64FromJSON(j, "unlockTime");
+        }
     };
 
     /* A raw transaction, simply key images and amounts */
@@ -59,6 +116,70 @@ namespace WalletTypes
         /* The inputs used for a transaction, can be used to track outgoing
            transactions */
         std::vector<CryptoNote::KeyInput> keyInputs;
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+
+            writer.Key("outputs");
+            writer.StartArray();
+            for (const auto &item : keyOutputs) {
+                item.toJSON(writer);
+            }
+            writer.EndArray();
+            
+            writer.Key("hash");
+            hash.toJSON();
+
+            writer.Key("txPublicKey");
+            transactionPublicKey.toJSON();
+
+            writer.Key("unlockTime");
+            writer.Uint64(unlockTime);
+
+            writer.Key("paymentID");
+            writer.String(paymentID);
+
+            writer.Key("inputs");
+            writer.StartArray();
+            for (const auto &item : keyInputs) {
+                item.toJSON(writer);
+            }
+            writer.EndArray();
+
+            writer.EndObject();
+        }
+
+        /* Initializes the class from a json value */
+        void fromJSON(const JSONValue &j)
+        {
+            r.keyOutputs = j.at("outputs").get<std::vector<KeyOutput>>();
+            r.hash = j.at("hash").get<Crypto::Hash>();
+            r.transactionPublicKey = j.at("txPublicKey").get<Crypto::PublicKey>();
+            r.unlockTime = j.at("unlockTime").get<uint64_t>();
+            r.paymentID = j.at("paymentID").get<std::string>();
+            r.keyInputs = j.at("inputs").get<std::vector<CryptoNote::KeyInput>>();
+
+            keyOutputs.clear();
+            for (const auto &x : getArrayFromJSON(j, "outputs")) {
+                KeyOutput keyOutput;
+                keyOutput.fromJSON(x);
+                keyOutputs.push_back(keyOutput);
+            }
+
+            hash.fromString(getStringFromJSON(j, "hash"));
+            transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
+            unlockTime = getUint64FromJSON(j, "unlockTime");
+            paymentID = getStringFromJSON(j, "paymentID");
+
+            keyInputs.clear();
+            for (const auto &x : getArrayFromJSON(j, "outputs")) {
+                KeyInput keyInput;
+                KeyInput.fromJSON(x);
+                keyInputs.push_back(keyInput);
+            }
+        }
     };
 
     /* A 'block' with the very basics needed to sync the transactions */
@@ -78,6 +199,55 @@ namespace WalletTypes
 
         /* The timestamp of the block */
         uint64_t blockTimestamp;
+
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            writer.Key("coinbaseTX")
+            coinbaseTransaction.toJSON(writer);
+
+            writer.Key("transactions");
+            writer.StartArray();
+            for (const auto &tx : transactions) { 
+                tx.toJSON(writer);
+            }
+            writer.EndArray();
+
+            writer.Key("blockHeight");
+            writer.Uint64(blockHeight);
+
+            writer.Key("blockHash");
+            blockHash.toJSON(writer);
+
+            writer.Key("blockTimestamp");
+            writer.Uint64(blockTimestamp);
+
+            writer.EndObject();
+        }
+
+        /* Initializes the class from a json value */
+        void fromJSON(const JSONValue &j)
+        {
+            w.coinbaseTransaction = j.at("coinbaseTX").get<RawCoinbaseTransaction>();
+            w.transactions = j.at("transactions").get<std::vector<RawTransaction>>();
+            w.blockHeight = j.at("blockHeight").get<uint64_t>();
+            w.blockHash = j.at("blockHash").get<Crypto::Hash>();
+            w.blockTimestamp = j.at("blockTimestamp").get<uint64_t>();
+
+            coinbaseTransaction.fromJSON(getJsonValue(j, "transactions"));
+
+            transactions.clear();
+            for (const auto &item : getArrayFromJSON(j, "transfers")) {
+                RawTransaction tx;
+                tx.fromJSON(item);
+                transactions.push_back(transaction);
+            }
+
+            blockHeight = getUint64FromJSON(j, "blockHeight");
+            blockHash.fromJSON(getJsonValue(j, "blockHash"));
+            blockTimestamp = getUint64FromJSON(j, "blockTimestamp");
+        }
     };
 
     struct TransactionInput

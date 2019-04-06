@@ -21,6 +21,11 @@
 #include <boost/variant.hpp>
 #include "CryptoTypes.h"
 
+#include <JsonHelper.h>
+#include "rapidjson/document.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+
 namespace CryptoNote {
 
 struct BaseInput {
@@ -31,6 +36,36 @@ struct KeyInput {
   uint64_t amount;
   std::vector<uint32_t> outputIndexes;
   Crypto::KeyImage keyImage;
+
+  /* Converts the class to a json object */
+  void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+  {
+    writer.StartObject();
+
+    writer.Key("amount");
+    writer.Uint64(amount);
+
+    writer.Key("key_offsets");
+    writer.StartArray();
+    for (const auto item : outputIndexes) {
+      writer.Uint(item);
+    }
+    writer.EndArray();
+
+    writer.Key("k_image");
+    keyImage.toJSON(writer);
+    
+    writer.EndObject();
+  }
+
+  /* Initializes the class from a json value */
+  void fromJSON(const JSONValue &j) {
+    amount = getUintFromJSON(j, "amount");
+    for (const auto &item : getArrayFromJSON(j, "key_offsets")) {
+      outputIndexes.push_back(item.getUint());
+    }
+    keyImage.fromString(getStringFromJSON(j, "k_image"));
+  }
 };
 
 struct KeyOutput {
