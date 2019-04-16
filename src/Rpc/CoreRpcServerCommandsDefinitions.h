@@ -206,6 +206,26 @@ struct OutputEntry {
     KV_MEMBER(global_amount_index)
     KV_MEMBER(out_key);
   }
+
+  /* Converts the class to a json object */
+  void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+  {
+    writer.StartObject();
+
+    writer.Key("global_amount_index");
+    writer.Uint(global_amount_index);
+
+    writer.Key("out_key");
+    out_key.toJSON(writer);
+
+    writer.EndObject();
+  }
+
+  /* Initializes the class from a json value */
+  void fromJSON(const JSONValue &j) {
+    global_amount_index = getUintFromJSON(j, "global_amount_index");
+    out_key.fromJSON(j, "out_key");
+  }
 };
 #pragma pack(pop)
 
@@ -217,35 +237,36 @@ struct RandomOuts {
     KV_MEMBER(amount)
     KV_MEMBER(outs);
   }
+
+  /* Converts the class to a json object */
+  void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+  {
+    writer.StartObject();
+
+    writer.Key("amount");
+    writer.Uint64(amount);
+
+    writer.Key("outs");
+    writer.StartArray();
+    for (const auto& item : outs) {
+      item.toJSON(writer);
+    }
+    writer.EndArray();
+
+    writer.EndObject();
+  }
+
+  /* Initializes the class from a json value */
+  void fromJSON(const JSONValue &j) {
+    amount = getUint64FromJSON(j, "amount");
+    outs.clear();
+    for (const auto &x : getArrayFromJSON(j, "outputs")) {
+      OutputEntry outputEntry;
+      outputEntry.fromJSON(x);
+      outs.push_back(outputEntry);
+    }
+  }
 };
-
-inline void to_json(nlohmann::json &j, const RandomOuts &r)
-{
-    j = {
-        {"amount", r.amount},
-        {"outs", r.outs}
-    };
-}
-
-inline void from_json(const nlohmann::json &j, RandomOuts &r)
-{
-    r.amount = j.at("amount").get<uint64_t>();
-    r.outs = j.at("outs").get<std::vector<OutputEntry>>();
-}
-
-inline void to_json(nlohmann::json &j, const OutputEntry &o)
-{
-    j = {
-        {"global_amount_index", o.global_amount_index},
-        {"out_key", o.out_key}
-    };
-}
-
-inline void from_json(const nlohmann::json &j, OutputEntry &o)
-{
-    o.global_amount_index = j.at("global_amount_index").get<uint32_t>();
-    o.out_key = j.at("out_key").get<Crypto::PublicKey>();
-}
 
 struct COMMAND_RPC_GET_RANDOM_OUTPUTS_FOR_AMOUNTS
 {
