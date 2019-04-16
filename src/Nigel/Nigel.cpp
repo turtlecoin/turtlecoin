@@ -16,6 +16,11 @@
 
 using json = nlohmann::json;
 
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
+
 ////////////////////////////////
 /* Constructors / Destructors */
 ////////////////////////////////
@@ -71,33 +76,41 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
     uint64_t startHeight,
     uint64_t startTimestamp) const
 {
-    json j = {
-        {"blockHashCheckpoints", blockHashCheckpoints},
-        {"startHeight", startHeight},
-        {"startTimestamp", startTimestamp}
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+
+    writer.StartObject();
+    writer.Key("blockHashCheckpoints");
+    blockHashcheckpoints.toJSON(writer);
+    writer.Key("startHeight");
+    writer.Uint64(startHeight);
+    writer.Key("startTimestamp");
+    writer.Uint64(startTimestamp);
 
     const auto res = m_httpClient->Post(
-        "/getwalletsyncdata", j.dump(), "application/json"
+        "/getwalletsyncdata", string_buffer.GetString(), "application/json"
     );
 
-    if (res && res->status == 200)
-    {
-        try
-        {
-            json j = json::parse(res->body);
+    if (res && res->status == 200) {
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            if (j.at("status").get<std::string>() != "OK")
-            {
+        if(!j.HasParseError()) {
+            if (j["status"].GetString() != "OK")
                 return {false, {}};
+            
+            std::vector<WalletTypes::WalletBlockInfo> items;
+            rapidjson::Value& value = j["items"];
+
+            // cooler way to get an array and iterate through it
+            for (auto& item : getArrayFromJSON(j, "items")) {
+                WalletBlockInfo wbi;
+                wbi.fromJSON(item);
+                items.push_back(wbi);
             }
-
-            const auto items = j.at("items").get<std::vector<WalletTypes::WalletBlockInfo>>();
-
-            return {true, items};
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
@@ -135,38 +148,30 @@ bool Nigel::getDaemonInfo()
 
     if (res && res->status == 200)
     {
-        try
-        {
-            json j = json::parse(res->body);
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            m_localDaemonBlockCount = j.at("height").get<uint64_t>();
-
+        if(!j.HasParseError()) {
+            m_localDaemonBlockCount = j["height"].GetUint64();
             /* Height returned is one more than the current height - but we
                don't want to overflow is the height returned is zero */
             if (m_localDaemonBlockCount != 0)
-            {
                 m_localDaemonBlockCount--;
-            }
 
-            m_networkBlockCount = j.at("network_height").get<uint64_t>();
-
+            m_networkBlockCount = j["network_height"].GetUint64();
             /* Height returned is one more than the current height - but we
                don't want to overflow is the height returned is zero */
             if (m_networkBlockCount != 0)
-            {
                 m_networkBlockCount--;
-            }
 
-            m_peerCount = j.at("incoming_connections_count").get<uint64_t>()
-                        + j.at("outgoing_connections_count").get<uint64_t>();
-
-            m_lastKnownHashrate = j.at("difficulty").get<uint64_t>() 
+            m_peerCount = j["incoming_connections_count"].GetUint64()
+                        + j["outgoing_connections_count"].GetUint64();
+            m_lastKnownHashrate = j["difficulty"].GetUint64()
                                 / CryptoNote::parameters::DIFFICULTY_TARGET;
-
             return true;
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
@@ -179,28 +184,24 @@ bool Nigel::getFeeInfo()
 
     if (res && res->status == 200)
     {
-        try
-        {
-            json j = json::parse(res->body);
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            std::string tmpAddress = j.at("address").get<std::string>();
-
-            uint32_t tmpFee = j.at("amount").get<uint32_t>();
-
+        if(!j.HasParseError()) {
+            std::string tmpAddress = j["address"].GetString();
+            uint32_t tmpFee = j["amount"].GetUint();
             const bool integratedAddressesAllowed = false;
-
             Error error = validateAddresses({tmpAddress}, integratedAddressesAllowed);
 
-            if (!error)
-            {
+            if (!error) {
                 m_nodeFeeAddress = tmpAddress;
                 m_nodeFeeAmount = tmpFee;
             }
 
             return true;
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
@@ -261,32 +262,54 @@ bool Nigel::getTransactionsStatus(
     std::unordered_set<Crypto::Hash> &transactionsInBlock,
     std::unordered_set<Crypto::Hash> &transactionsUnknown) const
 {
-    json j = {
-        {"transactionHashes", transactionHashes}
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+
+    writer.StartObject();
+    writer.Key("transactionHashes");
+    writer.StartArray();
+    for (const auto& item : transactionHashes) {
+        item.toJSON(writer);
+    }
+    writer.EndArray();
+    writer.EndObject();
 
     const auto res = m_httpClient->Post(
-        "/get_transactions_status", j.dump(), "application/json"
+        "/get_transactions_status", string_buffer.GetString(), "application/json"
     );
 
     if (res && res->status == 200)
     {
-        try
-        {
-            json j = json::parse(res->body);
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            if (j.at("status").get<std::string>() != "OK")
-            {
+        if(!j.HasParseError()) {
+            if (j["status"].GetString() != "OK")
                 return false;
+
+            transactionsInPool.clear();
+            for (const auto& item : getArrayFromJSON(j, "transactionsInPool")) {
+                Crypto::Hash hash;
+                hash.fromJSON(item);
+                transactionsInPool.insert(hash);
+            }
+            transactionsInBlock.clear();
+            for (const auto& item : getArrayFromJSON(j, "transactionsInBlock")) {
+                Crypto::Hash hash;
+                hash.fromJSON(item);
+                transactionsInBlock.insert(hash);
+            }
+            transactionsUnknown.clear();
+            for (const auto& item : getArrayFromJSON(j, "transactionsUnknown")) {
+                Crypto::Hash hash;
+                hash.fromJSON(item);
+                transactionsUnknown.insert(hash);
             }
 
-            transactionsInPool = j.at("transactionsInPool").get<std::unordered_set<Crypto::Hash>>();
-            transactionsInBlock = j.at("transactionsInBlock").get<std::unordered_set<Crypto::Hash>>();
-            transactionsUnknown = j.at("transactionsUnknown").get<std::unordered_set<Crypto::Hash>>();
             return true;
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
@@ -297,32 +320,44 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
     const std::vector<uint64_t> amounts,
     const uint64_t requestedOuts) const
 {
-    json j = {
-        {"amounts", amounts},
-        {"outs_count", requestedOuts}
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+
+    writer.StartObject();
+    writer.Key("amounts");
+    writer.StartArray();
+    for (uint64_t item : amounts) {
+        writer.Uint64(item);
+    }
+    writer.EndArray();
+    writer.Key("outs_count");
+    writer.Uint64(requestedOuts);
+    writer.EndObject();
 
     const auto res = m_httpClient->Post(
-        "/getrandom_outs", j.dump(), "application/json"
+        "/getrandom_outs", string_buffer.GetString(), "application/json"
     );
 
     if (res && res->status == 200)
     {
-        try
-        {
-            json j = json::parse(res->body);
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            if (j.at("status").get<std::string>() != "OK")
-            {
+        if(!j.HasParseError()) {
+            if (j["status"].GetString() != "OK")
                 return {};
-            }
 
-            const auto outs = j.at("outs").get<std::vector<CryptoNote::RandomOuts>>();
+            std::vector<CryptoNote::RandomOuts> outs;
+            for (const auto &x : getArrayFromJSON(j, "outs")) {
+                RandomOuts ro;
+                ro.fromJSON(x);
+                outs.push_back(ro);
+            }
 
             return {true, outs};
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
@@ -332,12 +367,20 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
 std::tuple<bool, bool> Nigel::sendTransaction(
     const CryptoNote::Transaction tx) const
 {
-    json j = {
-        {"tx_as_hex", Common::toHex(CryptoNote::toBinaryArray(tx))}
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+
+    writer.StartObject();
+    writer.Key("tx_as_hex");
+    writer.StartArray();
+    for (const auto& item : Common::toHex(CryptoNote::toBinaryArray(tx)) {
+        writer.Uint(item);
+    }
+    writer.EndArray();
+    writer.EndObject();
 
     const auto res = m_httpClient->Post(
-        "/sendrawtransaction", j.dump(), "application/json"
+        "/sendrawtransaction", string_buffer.GetString(), "application/json"
     );
 
     bool success = false;
@@ -347,14 +390,15 @@ std::tuple<bool, bool> Nigel::sendTransaction(
     {
         connectionError = false;
 
-        try
-        {
-            json j = json::parse(res->body);
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            success = j.at("status").get<std::string>() == "OK";
+        if(!j.HasParseError()) {
+            if (j["status"].GetString() != "OK")
+                return {};
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
@@ -371,36 +415,48 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
         {"endHeight", endHeight}
     };
 
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+
+    writer.StartObject();
+    writer.Key("startHeight");
+    writer.Uint64(startHeight);
+    writer.Key("endHeight");
+    writer.Uint64(endHeight);
+    writer.EndObject();
+
     const auto res = m_httpClient->Post(
-        "/get_global_indexes_for_range", j.dump(), "application/json"
+        "/get_global_indexes_for_range", string_buffer.GetString(), "application/json"
     );
     
     if (res && res->status == 200)
     {
-        try
-        {
-            std::unordered_map<Crypto::Hash, std::vector<uint64_t>> result;
+        std::unordered_map<Crypto::Hash, std::vector<uint64_t>> result;
+        rapidjson::Document j;
+        j.Parse(res->body);
 
-            json j = json::parse(res->body);
-
-            if (j.at("status").get<std::string>() != "OK")
-            {
+        if(!j.HasParseError()) {
+            if (j["status"].GetString() != "OK")
                 return {false, {}};
-            }
 
-            /* The daemon doesn't serialize the way nlohmann::json does, so
-               we can't just .get<std::unordered_map ...> */
-            json indexes = j.at("indexes");
-
-            for (const auto index : indexes)
-            {
-                result[index.at("key").get<Crypto::Hash>()] = index.at("value").get<std::vector<uint64_t>>();
+            std::vector<CryptoNote::RandomOuts> outs;
+            for (const auto &index : getArrayFromJSON(j, "indexes")) {
+                // get hash
+                Crypto::Hash hash;
+                hash.fromJSON(getJsonValue(j, "key"));
+                // get vector
+                std::vector<uint64_t> vec;
+                for (uint64_t x : getArrayFromJSON(j, "value")) {
+                    vec.push_back(getUint64FromJSON(x));
+                }
+                // set result
+                result[hash] = vec;
             }
 
             return {true, result};
         }
-        catch (const json::exception &)
-        {
+        else {
+
         }
     }
 
