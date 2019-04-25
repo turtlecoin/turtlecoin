@@ -204,6 +204,12 @@ enum ErrorCode
        NOTE: Not used in WalletBackend, only here to maintain API compatibility
        with turtlecoin-wallet-backend-js */
     NON_INTEGER_GIVEN = 50,
+
+    /* Not on ed25519 curve */
+    INVALID_PUBLIC_KEY = 51,
+
+    /* Not on ed25519 curve */
+    INVALID_PRIVATE_KEY = 52,
 };
 
 class Error

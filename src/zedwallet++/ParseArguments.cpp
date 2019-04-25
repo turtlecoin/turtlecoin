@@ -28,6 +28,8 @@ Config parseArguments(int argc, char **argv)
 
     std::string remoteDaemon;
 
+    int logLevel;
+
     options.add_options("Core")
         ("h,help", "Display this help message", cxxopts::value<bool>(help)->implicit_value("true"))
         ("v,version", "Output software version information", cxxopts::value<bool>(version)->default_value("false")->implicit_value("true"));
@@ -38,7 +40,8 @@ Config parseArguments(int argc, char **argv)
 
     options.add_options("Wallet")
         ("w,wallet-file", "Open the wallet <file>", cxxopts::value<std::string>(config.walletFile), "<file>")
-        ("p,password", "Use the password <pass> to open the wallet", cxxopts::value<std::string>(config.walletPass), "<pass>");
+        ("p,password", "Use the password <pass> to open the wallet", cxxopts::value<std::string>(config.walletPass), "<pass>")
+        ("log-level", "Specify log level", cxxopts::value<int>(logLevel)->default_value(std::to_string(config.logLevel)), "#");
 
     try
     {
@@ -65,6 +68,16 @@ Config parseArguments(int argc, char **argv)
     {
         std::cout << CryptoNote::getProjectCLIHeader() << std::endl;
         exit(0);
+    }
+
+    if (logLevel < Logger::DISABLED || logLevel > Logger::DEBUG)
+    {
+        std::cout << "Log level must be between " << Logger::DISABLED << " and " << Logger::DEBUG << "!" << std::endl;
+        exit(1);
+    }
+    else
+    {
+        config.logLevel = static_cast<Logger::LogLevel>(logLevel);
     }
 
     if (!remoteDaemon.empty())

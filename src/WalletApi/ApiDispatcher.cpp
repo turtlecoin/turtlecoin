@@ -32,6 +32,8 @@
 
 #include <WalletBackend/JsonSerialization.h>
 
+#include <Utilities/Addresses.h>
+
 using namespace httplib;
 
 ApiDispatcher::ApiDispatcher(
@@ -55,7 +57,7 @@ ApiDispatcher::ApiDispatcher(
     /* Route the request through our middleware function, before forwarding
        to the specified function */
     const auto router = [this](const auto function,
-                               const bool walletMustBeOpen,
+                               const WalletState walletState,
                                const bool viewWalletPermitted)
     {
         return [=](const Request &req, Response &res)
@@ -63,147 +65,144 @@ ApiDispatcher::ApiDispatcher(
             /* Pass the inputted function with the arguments passed through
                to middleware */
             middleware(
-                req, res, walletMustBeOpen, viewWalletPermitted,
+                req, res, walletState, viewWalletPermitted,
                 std::bind(function, this, _1, _2, _3)
             );
         };
     };
 
-    /* Makes the below router function easier to parse */
-    const bool walletMustBeOpen = true;
-
-    const bool walletMustBeClosed = false;
-
     const bool viewWalletsAllowed = true;
-
     const bool viewWalletsBanned = false;
 
     /* POST */
-    m_server.Post("/wallet/open", router(&ApiDispatcher::openWallet, walletMustBeClosed, viewWalletsAllowed))
+    m_server.Post("/wallet/open", router(&ApiDispatcher::openWallet, WalletMustBeClosed, viewWalletsAllowed))
 
             /* Import wallet with keys */
-            .Post("/wallet/import/key", router(&ApiDispatcher::keyImportWallet, walletMustBeClosed, viewWalletsAllowed))
+            .Post("/wallet/import/key", router(&ApiDispatcher::keyImportWallet, WalletMustBeClosed, viewWalletsAllowed))
 
             /* Import wallet with seed */
-            .Post("/wallet/import/seed", router(&ApiDispatcher::seedImportWallet, walletMustBeClosed, viewWalletsAllowed))
+            .Post("/wallet/import/seed", router(&ApiDispatcher::seedImportWallet, WalletMustBeClosed, viewWalletsAllowed))
 
             /* Import view wallet */
-            .Post("/wallet/import/view", router(&ApiDispatcher::importViewWallet, walletMustBeClosed, viewWalletsAllowed))
+            .Post("/wallet/import/view", router(&ApiDispatcher::importViewWallet, WalletMustBeClosed, viewWalletsAllowed))
 
             /* Create wallet */
-            .Post("/wallet/create", router(&ApiDispatcher::createWallet, walletMustBeClosed, viewWalletsAllowed))
+            .Post("/wallet/create", router(&ApiDispatcher::createWallet, WalletMustBeClosed, viewWalletsAllowed))
 
             /* Create a random address */
-            .Post("/addresses/create", router(&ApiDispatcher::createAddress, walletMustBeOpen, viewWalletsBanned))
+            .Post("/addresses/create", router(&ApiDispatcher::createAddress, WalletMustBeOpen, viewWalletsBanned))
 
             /* Import an address with a spend secret key */
-            .Post("/addresses/import", router(&ApiDispatcher::importAddress, walletMustBeOpen, viewWalletsBanned))
+            .Post("/addresses/import", router(&ApiDispatcher::importAddress, WalletMustBeOpen, viewWalletsBanned))
 
             /* Import a view only address with a public spend key */
-            .Post("/addresses/import/view", router(&ApiDispatcher::importViewAddress, walletMustBeOpen, viewWalletsAllowed))
+            .Post("/addresses/import/view", router(&ApiDispatcher::importViewAddress, WalletMustBeOpen, viewWalletsAllowed))
+
+            /* Validate an address */
+            .Post("/addresses/validate", router(&ApiDispatcher::validateAddress, DoesntMatter, viewWalletsAllowed))
 
             /* Send a transaction */
-            .Post("/transactions/send/basic", router(&ApiDispatcher::sendBasicTransaction, walletMustBeOpen, viewWalletsBanned))
+            .Post("/transactions/send/basic", router(&ApiDispatcher::sendBasicTransaction, WalletMustBeOpen, viewWalletsBanned))
 
             /* Send a transaction, more parameters specified */
-            .Post("/transactions/send/advanced", router(&ApiDispatcher::sendAdvancedTransaction, walletMustBeOpen, viewWalletsBanned))
+            .Post("/transactions/send/advanced", router(&ApiDispatcher::sendAdvancedTransaction, WalletMustBeOpen, viewWalletsBanned))
 
             /* Send a fusion transaction */
-            .Post("/transactions/send/fusion/basic", router(&ApiDispatcher::sendBasicFusionTransaction, walletMustBeOpen, viewWalletsBanned))
+            .Post("/transactions/send/fusion/basic", router(&ApiDispatcher::sendBasicFusionTransaction, WalletMustBeOpen, viewWalletsBanned))
 
             /* Send a fusion transaction, more parameters specified */
-            .Post("/transactions/send/fusion/advanced", router(&ApiDispatcher::sendAdvancedFusionTransaction, walletMustBeOpen, viewWalletsBanned))
+            .Post("/transactions/send/fusion/advanced", router(&ApiDispatcher::sendAdvancedFusionTransaction, WalletMustBeOpen, viewWalletsBanned))
 
     /* DELETE */
 
             /* Close the current wallet */
-            .Delete("/wallet", router(&ApiDispatcher::closeWallet, walletMustBeOpen, viewWalletsAllowed))
+            .Delete("/wallet", router(&ApiDispatcher::closeWallet, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Delete the given address */
-            .Delete("/addresses/" + ApiConstants::addressRegex, router(&ApiDispatcher::deleteAddress, walletMustBeOpen, viewWalletsAllowed))
+            .Delete("/addresses/" + ApiConstants::addressRegex, router(&ApiDispatcher::deleteAddress, WalletMustBeOpen, viewWalletsAllowed))
 
     /* PUT */
 
             /* Save the wallet */
-            .Put("/save", router(&ApiDispatcher::saveWallet, walletMustBeOpen, viewWalletsAllowed))
+            .Put("/save", router(&ApiDispatcher::saveWallet, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Reset the wallet from zero, or given scan height */
-            .Put("/reset", router(&ApiDispatcher::resetWallet, walletMustBeOpen, viewWalletsAllowed))
+            .Put("/reset", router(&ApiDispatcher::resetWallet, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Swap node details */
-            .Put("/node", router(&ApiDispatcher::setNodeInfo, walletMustBeOpen, viewWalletsAllowed))
+            .Put("/node", router(&ApiDispatcher::setNodeInfo, WalletMustBeOpen, viewWalletsAllowed))
 
     /* GET */
 
             /* Get node details */
-            .Get("/node", router(&ApiDispatcher::getNodeInfo, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/node", router(&ApiDispatcher::getNodeInfo, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get the shared private view key */
-            .Get("/keys", router(&ApiDispatcher::getPrivateViewKey, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/keys", router(&ApiDispatcher::getPrivateViewKey, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get the spend keys for the given address */
-            .Get("/keys/" + ApiConstants::addressRegex, router(&ApiDispatcher::getSpendKeys, walletMustBeOpen, viewWalletsBanned))
+            .Get("/keys/" + ApiConstants::addressRegex, router(&ApiDispatcher::getSpendKeys, WalletMustBeOpen, viewWalletsBanned))
 
             /* Get the mnemonic seed for the given address */
-            .Get("/keys/mnemonic/" + ApiConstants::addressRegex, router(&ApiDispatcher::getMnemonicSeed, walletMustBeOpen, viewWalletsBanned))
+            .Get("/keys/mnemonic/" + ApiConstants::addressRegex, router(&ApiDispatcher::getMnemonicSeed, WalletMustBeOpen, viewWalletsBanned))
 
             /* Get the wallet status */
-            .Get("/status", router(&ApiDispatcher::getStatus, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/status", router(&ApiDispatcher::getStatus, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get a list of all addresses */
-            .Get("/addresses", router(&ApiDispatcher::getAddresses, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/addresses", router(&ApiDispatcher::getAddresses, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get the primary address */
-            .Get("/addresses/primary", router(&ApiDispatcher::getPrimaryAddress, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/addresses/primary", router(&ApiDispatcher::getPrimaryAddress, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Creates an integrated address from the given address and payment ID */
             .Get("/addresses/" + ApiConstants::addressRegex + "/" + ApiConstants::hashRegex, router(
-                &ApiDispatcher::createIntegratedAddress, walletMustBeOpen, viewWalletsAllowed)
+                &ApiDispatcher::createIntegratedAddress, WalletMustBeOpen, viewWalletsAllowed)
             )
 
             /* Get all transactions */
-            .Get("/transactions", router(&ApiDispatcher::getTransactions, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/transactions", router(&ApiDispatcher::getTransactions, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get all (outgoing) unconfirmed transactions */
-            .Get("/transactions/unconfirmed", router(&ApiDispatcher::getUnconfirmedTransactions, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/transactions/unconfirmed", router(&ApiDispatcher::getUnconfirmedTransactions, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get all (outgoing) unconfirmed transactions, belonging to the given address */
             .Get("/transactions/unconfirmed/" + ApiConstants::addressRegex, router(
-                &ApiDispatcher::getUnconfirmedTransactionsForAddress, walletMustBeOpen, viewWalletsAllowed)
+                &ApiDispatcher::getUnconfirmedTransactionsForAddress, WalletMustBeOpen, viewWalletsAllowed)
             )
 
             /* Get the transactions starting at the given block, for 1000 blocks */
-            .Get("/transactions/\\d+", router(&ApiDispatcher::getTransactionsFromHeight, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/transactions/\\d+", router(&ApiDispatcher::getTransactionsFromHeight, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get the transactions starting at the given block, and ending at the given block */
-            .Get("/transactions/\\d+/\\d+", router(&ApiDispatcher::getTransactionsFromHeightToHeight, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/transactions/\\d+/\\d+", router(&ApiDispatcher::getTransactionsFromHeightToHeight, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get the transactions starting at the given block, for 1000 blocks, belonging to the given address */
             .Get("/transactions/address/" + ApiConstants::addressRegex + "/\\d+", router(
-                &ApiDispatcher::getTransactionsFromHeightWithAddress, walletMustBeOpen, viewWalletsAllowed)
+                &ApiDispatcher::getTransactionsFromHeightWithAddress, WalletMustBeOpen, viewWalletsAllowed)
             )
 
             /* Get the transactions starting at the given block, and ending at the given block, belonging to the given address */
             .Get("/transactions/address/" + ApiConstants::addressRegex + "/\\d+/\\d+", router(
-                &ApiDispatcher::getTransactionsFromHeightToHeightWithAddress, walletMustBeOpen, viewWalletsAllowed)
+                &ApiDispatcher::getTransactionsFromHeightToHeightWithAddress, WalletMustBeOpen, viewWalletsAllowed)
             )
 
             /* Get the transaction private key for the given hash */
             .Get("/transactions/privatekey/" + ApiConstants::hashRegex, router(
-                &ApiDispatcher::getTxPrivateKey, walletMustBeOpen, viewWalletsBanned)
+                &ApiDispatcher::getTxPrivateKey, WalletMustBeOpen, viewWalletsBanned)
             )
 
             /* Get details for the given transaction hash, if known */
-            .Get("/transactions/hash/" + ApiConstants::hashRegex, router(&ApiDispatcher::getTransactionDetails, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/transactions/hash/" + ApiConstants::hashRegex, router(&ApiDispatcher::getTransactionDetails, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get balance for the wallet */
-            .Get("/balance", router(&ApiDispatcher::getBalance, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/balance", router(&ApiDispatcher::getBalance, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get balance for a specific address */
-            .Get("/balance/" + ApiConstants::addressRegex, router(&ApiDispatcher::getBalanceForAddress, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/balance/" + ApiConstants::addressRegex, router(&ApiDispatcher::getBalanceForAddress, WalletMustBeOpen, viewWalletsAllowed))
 
             /* Get balances for each address */
-            .Get("/balances", router(&ApiDispatcher::getBalances, walletMustBeOpen, viewWalletsAllowed))
+            .Get("/balances", router(&ApiDispatcher::getBalances, WalletMustBeOpen, viewWalletsAllowed))
 
     /* OPTIONS */
 
@@ -230,7 +229,7 @@ void ApiDispatcher::stop()
 void ApiDispatcher::middleware(
     const Request &req,
     Response &res,
-    const bool walletMustBeOpen,
+    const WalletState walletState,
     const bool viewWalletPermitted,
     std::function<std::tuple<Error, uint16_t>
         (const Request &req,
@@ -270,13 +269,13 @@ void ApiDispatcher::middleware(
     }
 
     /* Wallet must be open for this operation, and it is not */
-    if (walletMustBeOpen && !assertWalletOpen())
+    if (walletState == WalletMustBeOpen && !assertWalletOpen())
     {
         res.status = 403;
         return;
     }
     /* Wallet must not be open for this operation, and it is */
-    else if (!walletMustBeOpen && !assertWalletClosed())
+    else if (walletState == WalletMustBeClosed && !assertWalletClosed())
     {
         res.status = 403;
         return;
@@ -499,7 +498,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createAddress(
     const rapidjson::Document &body)
 {
     const auto [error, address, privateSpendKey] = m_walletBackend->addSubWallet();
-
+    const auto [publicSpendKey, publicViewKey] = Utilities::addressToKeys(address);
     // hope this crap works
     rapidjson::StringBuffer string_buffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
@@ -508,6 +507,8 @@ std::tuple<Error, uint16_t> ApiDispatcher::createAddress(
 	writer.String(address);
     writer.Key("privateSpendKey");
     privateSpendKey.toJSON(writer);
+    writer.Key("publicSpendKey");
+    publicSpendKey.toJSON(writer);
 	writer.EndObject();
 
     res.set_content(string_buffer.GetString() + "\n", "application/json");
@@ -590,6 +591,45 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewAddress(
 
     return {SUCCESS, 201};
 }
+
+std::tuple<Error, uint16_t> ApiDispatcher::validateAddress(
+    const Request &req,
+    Response &res,
+    const nlohmann::json &body)
+{
+    const std::string address = tryGetJsonValue<std::string>(body, "address");
+
+    const Error error = validateAddresses({address}, true);
+
+    if (error != SUCCESS) {
+        return {error, 400};
+    }
+
+    std::string actualAddress = address;
+    std::string paymentID = "";
+
+    const bool isIntegrated = address.length() == WalletConfig::integratedAddressLength;
+
+    if (isIntegrated)
+    {
+        std::tie(actualAddress, paymentID) = Utilities::extractIntegratedAddressData(address);
+    }
+
+    const auto [publicSpendKey, publicViewKey] = Utilities::addressToKeys(actualAddress);
+
+    nlohmann::json j {
+        {"isIntegrated", address.length() == WalletConfig::integratedAddressLength},
+        {"paymentID", paymentID},
+        {"actualAddress", actualAddress},
+        {"publicSpendKey", publicSpendKey},
+        {"publicViewKey", publicViewKey},
+    };
+
+    res.set_content(j.dump(4) + "\n", "application/json");
+
+    return {SUCCESS, 200};
+}
+
 
 std::tuple<Error, uint16_t> ApiDispatcher::sendBasicTransaction(
     const Request &req,

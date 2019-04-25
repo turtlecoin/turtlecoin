@@ -6,6 +6,8 @@
 
 #include <config/CryptoNoteConfig.h>
 
+#include <Logger/Logger.h>
+
 struct Config
 {
     /* Was the wallet file specified on CLI */
@@ -25,6 +27,9 @@ struct Config
 
     /* The wallet password */
     std::string walletPass;
+
+    /* Controls what level of messages to log */
+    Logger::LogLevel logLevel = Logger::DISABLED;
 };
 
 Config parseArguments(int argc, char **argv);

@@ -79,6 +79,8 @@ int main(int argc, char **argv)
 {
     Config config = parseArguments(argc, argv);
 
+    Logger::logger.setLogLevel(config.logLevel);
+
     std::cout << InformationMsg(CryptoNote::getProjectCLIHeader()) << std::endl;
 
     /* Declare outside the try/catch, so if an exception is thrown, it doesn't

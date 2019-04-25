@@ -697,7 +697,7 @@ std::tuple<Error, std::vector<WalletTypes::ObscuredInput>> prepareRingParticipan
     for (const auto walletAmount : sources)
     {
         WalletTypes::GlobalIndexKey realOutput {
-            walletAmount.input.globalOutputIndex.value(),
+            *walletAmount.input.globalOutputIndex,
             walletAmount.input.key
         };
 

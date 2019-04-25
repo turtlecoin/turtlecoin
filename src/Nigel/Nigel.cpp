@@ -12,6 +12,8 @@
 
 #include <Errors/ValidateParameters.h>
 
+#include <Logger/Logger.h>
+
 #include <Utilities/Utilities.h>
 
 using json = nlohmann::json;
@@ -20,6 +22,7 @@ using json = nlohmann::json;
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/error/en.h"
 
 ////////////////////////////////
 /* Constructors / Destructors */
@@ -87,6 +90,12 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
     writer.Key("startTimestamp");
     writer.Uint64(startTimestamp);
 
+    Logger::logger.log(
+        "Fetching blocks from the daemon",
+        Logger::DEBUG,
+        {Logger::SYNC, Logger::DAEMON}
+    );
+
     const auto res = m_httpClient->Post(
         "/getwalletsyncdata", string_buffer.GetString(), "application/json"
     );
@@ -110,7 +119,12 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
             }
         }
         else {
-
+            Logger::logger.log(
+                std::string("Failed to fetch blocks from daemon: ") + "Unable to parse JSON (" +  
+                rapidjson::GetParseError_En(j.GetParseError()) + ")",
+                Logger::INFO,
+                {Logger::SYNC, Logger::DAEMON}
+            );
         }
     }
 
@@ -144,6 +158,12 @@ void Nigel::init()
 
 bool Nigel::getDaemonInfo()
 {
+    Logger::logger.log(
+        "Updating daemon info",
+        Logger::DEBUG,
+        {Logger::SYNC, Logger::DAEMON}
+    );
+
     const auto res = m_httpClient->Get("/info");
 
     if (res && res->status == 200)
@@ -171,7 +191,12 @@ bool Nigel::getDaemonInfo()
             return true;
         }
         else {
-
+            Logger::logger.log(
+                std::string("Failed to update daemon info: ") + "Unable to parse JSON (" +  
+                rapidjson::GetParseError_En(j.GetParseError()) + ")",
+                Logger::INFO,
+                {Logger::SYNC, Logger::DAEMON}
+            );
         }
     }
 
@@ -180,6 +205,12 @@ bool Nigel::getDaemonInfo()
 
 bool Nigel::getFeeInfo()
 {
+    Logger::logger.log(
+        "Fetching fee info",
+        Logger::DEBUG,
+        {Logger::DAEMON}
+    );
+
     const auto res = m_httpClient->Get("/fee");
 
     if (res && res->status == 200)
@@ -201,7 +232,12 @@ bool Nigel::getFeeInfo()
             return true;
         }
         else {
-
+            Logger::logger.log(
+                std::string("Failed to update fee info: ") + "Unable to parse JSON (" +  
+                rapidjson::GetParseError_En(j.GetParseError()) + ")",
+                Logger::INFO,
+                {Logger::SYNC, Logger::DAEMON}
+            );
         }
     }
 
