@@ -14,9 +14,11 @@
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
 #include "Rpc/JsonRpc.h"
 
-#include <Utilities/ColouredMsg.h>
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
-using json = nlohmann::json;
+#include <Utilities/ColouredMsg.h>
 
 BlockchainMonitor::BlockchainMonitor(
     System::Dispatcher& dispatcher,
@@ -81,13 +83,21 @@ void BlockchainMonitor::stop()
 
 std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
 {
-    json j = {
-        {"jsonrpc", "2.0"},
-        {"method", "getlastblockheader"},
-        {"params", {}}
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 
-    auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
+    writer.StartObject();
+    writer.Key("jsonrpc");
+    writer.String("2.0");
+    writer.Key("method");
+    writer.String("2.getlastblockheader");
+    writer.Key("params");
+    // I'm assuming {} is an empty object
+    writer.StartObject();
+    writer.EndObject();
+    writer.EndObject();
+
+    auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
 
     if (!res)
     {
@@ -109,35 +119,30 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
         return std::nullopt;
     }
 
-    try
-    {
-        json j = json::parse(res->body);
+    rapidjson::Document j;
+    j.Parse(res->body);
+    if (!j.HasParseError()) {
+        const std::string status = j["result"]["status"].GetString();
 
-        const std::string status = j.at("result").at("status").get<std::string>();
-
-        if (status != "OK")
-        {
+        if (status != "OK") {
             std::stringstream stream;
-
             stream << "Failed to get block hash from daemon. Response: "
                    << status << std::endl;
-
             std::cout << WarningMsg(stream.str());
 
             return std::nullopt;
         }
 
-        return j.at("result").at("block_header").at("hash").get<Crypto::Hash>();
-    }
-    catch (const json::exception &e)
-    {
+        Crypto::Hash hash;
+        hash.fromString(j["result"]["block_header"]["hash"].GetString());
+        return hash;
+    } else {
         std::stringstream stream;
-
         stream << "Failed to parse block hash from daemon. Received data:\n"
-               << res->body << "\nParse error: " << e.what() << std::endl;
-
+               << res->body << "\nParse error: " << rapidjson::GetParseError_En(j.GetParseError()) 
+               << std::endl;
+        
         std::cout << WarningMsg(stream.str());
-
         return std::nullopt;
     }
 }
