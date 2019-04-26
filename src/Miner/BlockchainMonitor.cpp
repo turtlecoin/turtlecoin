@@ -92,9 +92,7 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
     writer.Key("method");
     writer.String("getlastblockheader");
     writer.Key("params");
-    // I'm assuming {} is an empty object
-    writer.StartObject();
-    writer.EndObject();
+    writer.Null();
     writer.EndObject();
 
     auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
