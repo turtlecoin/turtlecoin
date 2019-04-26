@@ -22,13 +22,15 @@
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
 #include "Rpc/JsonRpc.h"
 
+#include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
+
 #include <Utilities/FormatTools.h>
 
 #include <Utilities/ColouredMsg.h>
 
 using namespace CryptoNote;
-
-using json = nlohmann::json;
 
 namespace Miner {
 
@@ -230,13 +232,21 @@ bool MinerManager::submitBlock(const BlockTemplate& minedBlock)
 {
     CachedBlock cachedBlock(minedBlock);
 
-    json j = {
-        {"jsonrpc", "2.0"},
-        {"method", "submitblock"},
-        {"params", {Common::toHex(toBinaryArray(minedBlock))}}
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 
-    auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
+    writer.StartObject();
+    writer.Key("jsonrpc");
+    writer.String("2.0");
+    writer.Key("method");
+    writer.String("submitblock");
+    writer.Key("params");
+    writer.StartArray();
+    writer.String(Common::toHex(toBinaryArray(minedBlock)));
+    writer.EndArray();
+    writer.EndObject();
+
+    auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
 
     if (!res || res->status == 200)
     {
@@ -256,16 +266,24 @@ BlockMiningParameters MinerManager::requestMiningParameters()
 {
     while (true)
     {
-        json j = {
-            {"jsonrpc", "2.0"},
-            {"method", "getblocktemplate"},
-            {"params", {
-                {"wallet_address", m_config.miningAddress},
-                {"reserve_size", 0}
-            }}
-        };
+        rapidjson::StringBuffer string_buffer;
+        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 
-        auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
+        writer.StartObject();
+        writer.Key("jsonrpc");
+        writer.String("2.0");
+        writer.Key("method");
+        writer.String("submitblock");
+        writer.Key("params");
+        writer.StartObject();
+        writer.Key("wallet_address");
+        writer.String(m_config.miningAddress);
+        writer.Key("reserve_size");
+        writer.Uint(0);
+        writer.EndObject();
+        writer.EndObject();
+
+        auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
 
         if (!res)
         {
@@ -289,51 +307,40 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             continue;
         }
 
-        try
-        {
-            json j = json::parse(res->body);
+        rapidjson::Document j;
+        j.Parse(res->body);
+        if (!j.HasParseError()) {
+            const std::string status = j["result"]["status"].GetString();
 
-            const std::string status = j.at("result").at("status").get<std::string>();
-
-            if (status != "OK")
-            {
+            if (status != "OK") {
                 std::stringstream stream;
-
-                stream << "Failed to get block template from daemon. Response: "
-                       << status << std::endl;
-
+                stream  << "Failed to get block hash from daemon. Response: "
+                        << status << std::endl;
                 std::cout << WarningMsg(stream.str());
-
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
 
             BlockMiningParameters params;
-            params.difficulty = j.at("result").at("difficulty").get<uint64_t>();
+            params.difficulty = j["result"]["difficulty"].GetUint64();
 
             std::vector<uint8_t> blob = Common::fromHex(
-                j.at("result").at("blocktemplate_blob").get<std::string>()
+                j["result"]["blocktemplate_blob"].GetString()
             );
 
-            if(!fromBinaryArray(params.blockTemplate, blob))
-            {
+            if(!fromBinaryArray(params.blockTemplate, blob)) {
                 std::cout << WarningMsg("Couldn't parse block template from daemon.") << std::endl;
-
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
-
             return params;
-        }
-        catch (const json::exception &e)
-        {
+        } else {
             std::stringstream stream;
-
-            stream << "Failed to parse block template from daemon. Received data:\n"
-                   << res->body << "\nParse error: " << e.what() << std::endl;
-
+            stream << "Failed to parse block hash from daemon. Received data:\n"
+                << res->body << "\nParse error: " << rapidjson::GetParseError_En(j.GetParseError()) 
+                << std::endl;
+            
             std::cout << WarningMsg(stream.str());
-
             std::this_thread::sleep_for(std::chrono::seconds(1));
             continue;
         }
