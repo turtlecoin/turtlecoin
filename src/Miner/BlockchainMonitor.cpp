@@ -90,7 +90,7 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
     writer.Key("jsonrpc");
     writer.String("2.0");
     writer.Key("method");
-    writer.String("2.getlastblockheader");
+    writer.String("getlastblockheader");
     writer.Key("params");
     // I'm assuming {} is an empty object
     writer.StartObject();
