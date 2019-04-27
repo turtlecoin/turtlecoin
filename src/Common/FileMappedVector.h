@@ -20,12 +20,12 @@
 #include <cassert>
 #include <cstdint>
 #include <string>
-
-#include <boost/filesystem.hpp>
+#include <random>
 
 #include "System/MemoryMappedFile.h"
 
 #include "Common/ScopeExit.h"
+#include "Common/FileSystemShim.h"
 
 namespace Common {
 
@@ -351,19 +351,25 @@ void FileMappedVector<T>::open(const std::string& path, FileMappedVectorOpenMode
 
   const uint64_t initialCapacity = 10;
 
-  boost::filesystem::path filePath = path;
-  boost::filesystem::path bakPath = path + ".bak";
-  bool fileExists;
-  if (boost::filesystem::exists(filePath)) {
-    if (boost::filesystem::exists(bakPath)) {
-      boost::filesystem::remove(bakPath);
-    }
+  fs::path filePath = path;
+  fs::path bakPath = path + ".bak";
 
+  bool fileExists;
+  if(fs::exists(filePath))
+  {
+    if(fs::exists(bakPath))
+    {
+      fs::remove(bakPath);
+    }
     fileExists = true;
-  } else if (boost::filesystem::exists(bakPath)) {
-    boost::filesystem::rename(bakPath, filePath);
+  }
+  else if (fs::exists(bakPath))
+  {
+    fs::rename(bakPath, filePath);
     fileExists = true;
-  } else {
+  }
+  else
+  {
     fileExists = false;
   }
 
@@ -788,16 +794,22 @@ void FileMappedVector<T>::atomicUpdate0(uint64_t newCapacity, uint64_t newPrefix
     throw std::runtime_error("Vector is mapped to a .bak file due to earlier errors");
   }
 
-  boost::filesystem::path bakPath = m_path + ".bak";
-  boost::filesystem::path tmpPath = boost::filesystem::unique_path(m_path + ".tmp.%%%%-%%%%");
+  fs::path bakPath = m_path + ".bak";
+  /* trying to mimic b**st::filesystem::unique_path,
+     can we just use unix timestamp here? */
+  std::random_device rd;
+  std::uniform_int_distribution<int> dist(10000000, 99999999);
+  std::mt19937 mt(rd());
+  fs::path tmpPath = m_path + ".tmp." + std::to_string(dist(mt));
 
-  if (boost::filesystem::exists(bakPath)) {
-    boost::filesystem::remove(bakPath);
+  if(fs::exists(bakPath))
+  {
+    fs::remove(bakPath);
   }
 
   Tools::ScopeExit tmpFileDeleter([&tmpPath] {
-    boost::system::error_code ignore;
-    boost::filesystem::remove(tmpPath, ignore);
+    std::error_code ignore;
+    fs::remove(tmpPath, ignore);
   });
 
   // Copy file. It is slow but atomic operation
@@ -823,8 +835,8 @@ void FileMappedVector<T>::atomicUpdate0(uint64_t newCapacity, uint64_t newPrefix
 
   // Remove .bak file and ignore errors
   tmpVector.close(ignore);
-  boost::system::error_code boostError;
-  boost::filesystem::remove(bakPath, boostError);
+  std::error_code errCode;
+  fs::remove(bakPath, errCode);
 }
 
 template<class T>

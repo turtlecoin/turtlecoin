@@ -13,7 +13,7 @@
 #include <unordered_set>
 #include <tuple>
 
-#include <boost/filesystem/operations.hpp>
+#include "Common/FileSystemShim.h"
 
 #include <System/Timer.h>
 #include <System/InterruptedException.h>
@@ -557,8 +557,8 @@ std::error_code WalletService::exportWallet(const std::string& fileName) {
       return make_error_code(CryptoNote::error::NOT_INITIALIZED);
     }
 
-    boost::filesystem::path walletPath(config.walletFile);
-    boost::filesystem::path exportPath = walletPath.parent_path() / fileName;
+    fs::path walletPath(config.walletFile);
+    fs::path exportPath = walletPath.parent_path() / fileName;
 
     logger(Logging::INFO, Logging::BRIGHT_WHITE) << "Exporting wallet to " << exportPath.string();
     wallet.exportWallet(exportPath.string());

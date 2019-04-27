@@ -390,8 +390,8 @@ void WalletGreen::exportWallet(const std::string& path, bool encrypt, WalletSave
     Tools::ScopeExit failExitHandler([path, &storageCreated] {
       // Don't delete file if it has existed
       if (storageCreated) {
-        boost::system::error_code ignore;
-        boost::filesystem::remove(path, ignore);
+        std::error_code ignore;
+        fs::remove(path, ignore);
       }
     });
 

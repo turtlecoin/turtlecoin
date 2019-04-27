@@ -31,7 +31,7 @@
 #include <stdio.h>
 #endif
 
-#include <boost/algorithm/string.hpp>
+#include <Utilities/String.h>
 
 using Common::Console::Color;
 
@@ -233,8 +233,7 @@ namespace Common {
   }
 
   void ConsoleHandler::handleCommand(const std::string& cmd) {
-    std::vector<std::string> args;
-    boost::split(args, cmd, boost::is_any_of(" "), boost::token_compress_on);
+    std::vector<std::string> args = Utilities::split(cmd, ' ');
     runCommand(args);
   }
 
@@ -260,7 +259,7 @@ namespace Common {
           break;
         }
 
-        boost::algorithm::trim(line);
+        Utilities::trim(line);
         if (!line.empty()) {
           handleCommand(line);
         }
