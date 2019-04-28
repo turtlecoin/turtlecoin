@@ -20,8 +20,8 @@ bool hasIntersections(const TransactionValidatorState& destination, const Transa
 void excludeFromState(TransactionValidatorState& state, const CachedTransaction& cachedTransaction) {
   const auto& transaction = cachedTransaction.getTransaction();
   for (auto& input : transaction.inputs) {
-    if (input.type() == typeid(KeyInput)) {
-      const auto& in = boost::get<KeyInput>(input);
+    if(mpark::holds_alternative<KeyInput>(input)) {
+      const auto& in = mpark::get<KeyInput>(input);
       assert(state.spentKeyImages.count(in.keyImage) > 0);
       state.spentKeyImages.erase(in.keyImage);
     } else {

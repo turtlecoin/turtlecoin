@@ -40,7 +40,7 @@ namespace CryptoNote {
       if (it == fields.end()) {
         return false;
       }
-      value = boost::get<T>(*it);
+      value = mpark::get<T>(*it);
       return true;
     }
 
@@ -77,11 +77,33 @@ namespace CryptoNote {
   private:
 
     std::vector<CryptoNote::TransactionExtraField>::const_iterator find(const std::type_info& t) const {
-      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) { return t == f.type(); });
+      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) {
+        if (auto pv = mpark::get_if<TransactionExtraPadding>(&f)) {
+          return typeid(*pv) == t;
+        } else if (auto pv = mpark::get_if<TransactionExtraPublicKey>(&f)) {
+          return typeid(*pv) == t;
+        } else if (auto pv = mpark::get_if<TransactionExtraNonce>(&f)) {
+          return typeid(*pv) == t;
+        } else if (auto pv = mpark::get_if<TransactionExtraMergeMiningTag>(&f)) {
+          return typeid(*pv) == t;
+        }
+        return false;
+      });
     }
 
     std::vector<CryptoNote::TransactionExtraField>::iterator find(const std::type_info& t) {
-      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) { return t == f.type(); });
+      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) {
+        if (auto pv = mpark::get_if<TransactionExtraPadding>(&f)) {
+          return typeid(*pv) == t;
+        } else if (auto pv = mpark::get_if<TransactionExtraPublicKey>(&f)) {
+          return typeid(*pv) == t;
+        } else if (auto pv = mpark::get_if<TransactionExtraNonce>(&f)) {
+          return typeid(*pv) == t;
+        } else if (auto pv = mpark::get_if<TransactionExtraMergeMiningTag>(&f)) {
+          return typeid(*pv) == t;
+        }
+        return false;
+      });
     }
 
     std::vector<CryptoNote::TransactionExtraField> fields;

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 #ifdef _WIN32
 #ifndef NOMINMAX

@@ -31,8 +31,8 @@ namespace CryptoNote {
 bool checkInputsKeyimagesDiff(const CryptoNote::TransactionPrefix& tx) {
   std::unordered_set<Crypto::KeyImage> ki;
   for (const auto& in : tx.inputs) {
-    if (in.type() == typeid(KeyInput)) {
-      if (!ki.insert(boost::get<KeyInput>(in).keyImage).second)
+    if(mpark::holds_alternative<KeyInput>(in)) {
+      if (!ki.insert(mpark::get<KeyInput>(in).keyImage).second)
         return false;
     }
   }
@@ -43,27 +43,27 @@ bool checkInputsKeyimagesDiff(const CryptoNote::TransactionPrefix& tx) {
 // TransactionInput helper functions
 
 size_t getRequiredSignaturesCount(const TransactionInput& in) {
-  if (in.type() == typeid(KeyInput)) {
-    return boost::get<KeyInput>(in).outputIndexes.size();
+  if (mpark::holds_alternative<KeyInput>(in)) {
+    return mpark::get<KeyInput>(in).outputIndexes.size();
   }
 
   return 0;
 }
 
 uint64_t getTransactionInputAmount(const TransactionInput& in) {
-  if (in.type() == typeid(KeyInput)) {
-    return boost::get<KeyInput>(in).amount;
+  if (mpark::holds_alternative<KeyInput>(in)) {
+    return mpark::get<KeyInput>(in).amount;
   }
 
   return 0;
 }
 
 TransactionTypes::InputType getTransactionInputType(const TransactionInput& in) {
-  if (in.type() == typeid(KeyInput)) {
+  if (mpark::holds_alternative<KeyInput>(in)) {
     return TransactionTypes::InputType::Key;
   }
-
-  if (in.type() == typeid(BaseInput)) {
+  
+  if (mpark::holds_alternative<BaseInput>(in)) {
     return TransactionTypes::InputType::Generating;
   }
 
@@ -90,7 +90,8 @@ const TransactionInput& getInputChecked(const CryptoNote::TransactionPrefix& tra
 // TransactionOutput helper functions
 
 TransactionTypes::OutputType getTransactionOutputType(const TransactionOutputTarget& out) {
-  if (out.type() == typeid(KeyOutput)) {
+  
+  if (mpark::holds_alternative<KeyOutput>(out)) {
     return TransactionTypes::OutputType::Key;
   }
 
@@ -131,9 +132,8 @@ bool findOutputsToAccount(const CryptoNote::TransactionPrefix& transaction, cons
   generate_key_derivation(txPubKey, keys.viewSecretKey, derivation);
 
   for (const TransactionOutput& o : transaction.outputs) {
-    assert(o.target.type() == typeid(KeyOutput));
-    if (o.target.type() == typeid(KeyOutput)) {
-      if (is_out_to_acc(keys, boost::get<KeyOutput>(o.target), derivation, keyIndex)) {
+    if(mpark::holds_alternative<KeyOutput>(o.target)) {
+      if (is_out_to_acc(keys, mpark::get<KeyOutput>(o.target), derivation, keyIndex)) {
         out.push_back(outputIndex);
         amount += o.amount;
       }

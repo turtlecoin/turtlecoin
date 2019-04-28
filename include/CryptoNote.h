@@ -7,11 +7,10 @@
 
 #include <vector>
 
-#include <boost/variant.hpp>
-
 #include "CryptoTypes.h"
 
 #include <Common/StringTools.h>
+#include <mpark/variant.hpp>
 
 #include "json.hpp"
 
@@ -35,9 +34,9 @@ struct KeyOutput {
   Crypto::PublicKey key;
 };
 
-typedef boost::variant<BaseInput, KeyInput> TransactionInput;
+using TransactionInput = mpark::variant<BaseInput, KeyInput>;
 
-typedef boost::variant<KeyOutput> TransactionOutputTarget;
+using TransactionOutputTarget = mpark::variant<KeyOutput>;
 
 struct TransactionOutput {
   uint64_t amount;

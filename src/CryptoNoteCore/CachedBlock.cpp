@@ -156,10 +156,10 @@ uint32_t CachedBlock::getBlockIndex() const {
       blockIndex = 0;
     } else {
       const auto& in = block.baseTransaction.inputs[0];
-      if (in.type() != typeid(BaseInput)) {
+      if(!mpark::holds_alternative<BaseInput>(in)) {
         blockIndex = 0;
       } else {
-        blockIndex = boost::get<BaseInput>(in).blockIndex;
+        blockIndex = mpark::get<BaseInput>(in).blockIndex;
       }
     }
   }

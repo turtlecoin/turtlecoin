@@ -24,7 +24,7 @@
 #include "CryptoTypes.h"
 #include "CryptoNote.h"
 
-#include <boost/variant.hpp>
+#include <mpark/variant.hpp>
 
 namespace CryptoNote {
 
@@ -56,7 +56,7 @@ struct KeyInputDetails {
 };
 
 
-typedef boost::variant<BaseInputDetails, KeyInputDetails> TransactionInputDetails;
+using TransactionInputDetails = mpark::variant<BaseInputDetails, KeyInputDetails>;
 
 struct TransactionExtraDetails {
   Crypto::PublicKey publicKey; 

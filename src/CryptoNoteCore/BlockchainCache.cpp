@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <tuple>
+#include <mpark/variant.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -370,7 +371,7 @@ void BlockchainCache::pushTransaction(const CachedTransaction& cachedTransaction
     poi.transactionIndex = transactionInBlockIndex;
     poi.outputIndex = outputCount++;
 
-    if (output.target.type() == typeid(KeyOutput)) {
+    if (mpark::holds_alternative<KeyOutput>(output.target)){
       transactionCacheInfo.globalIndexes.push_back(insertKeyOutputToGlobalIndex(output.amount, poi, blockIndex));
     }
   }
@@ -909,8 +910,9 @@ ExtractOutputKeysResult BlockchainCache::extractKeyOutputKeys(uint64_t amount, u
       return ExtractOutputKeysResult::OUTPUT_LOCKED;
     }
 
-    assert(info.outputs[index.outputIndex].type() == typeid(KeyOutput));
-    publicKeys.push_back(boost::get<KeyOutput>(info.outputs[index.outputIndex]).key);
+    assert(mpark::holds_alternative<KeyOutput>(info.outputs[index.outputIndex]));
+    
+    publicKeys.push_back(mpark::get<KeyOutput>(info.outputs[index.outputIndex]).key);
     return ExtractOutputKeysResult::SUCCESS;
   });
 }

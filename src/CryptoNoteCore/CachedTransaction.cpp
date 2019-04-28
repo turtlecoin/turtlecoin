@@ -72,9 +72,9 @@ uint64_t CachedTransaction::getTransactionFee() const {
     }
 
     for (auto& in : transaction.inputs) {
-      if (in.type() == typeid(KeyInput)) {
-        summaryInputAmount += boost::get<KeyInput>(in).amount;
-      } else if (in.type() == typeid(BaseInput)) {
+      if(mpark::holds_alternative<KeyInput>(in)) {
+        summaryInputAmount += mpark::get<KeyInput>(in).amount;
+      } else if (mpark::holds_alternative<BaseInput>(in) ) {
         return 0;
       } else {
         assert(false && "Unknown out type");
