@@ -16,7 +16,9 @@
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-
+#include <typeinfo>
+#include <typeindex>
+#include <iostream>
 #include "CryptoNoteFormatUtils.h"
 #include "TransactionExtra.h"
 
@@ -40,7 +42,7 @@ namespace CryptoNote {
       if (it == fields.end()) {
         return false;
       }
-      value = boost::get<T>(*it);
+      value = mapbox::util::get<T>(*it);
       return true;
     }
 
@@ -77,11 +79,45 @@ namespace CryptoNote {
   private:
 
     std::vector<CryptoNote::TransactionExtraField>::const_iterator find(const std::type_info& t) const {
-      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) { return t == f.type(); });
+      return std::find_if(fields.begin(), fields.end(), [&](const CryptoNote::TransactionExtraField& f) { 
+        bool isMatch = false;
+        f.match(
+            [&t, &isMatch](TransactionExtraPadding tf){
+              isMatch = typeid(tf).hash_code() == t.hash_code();
+            },
+            [&t, &isMatch](TransactionExtraPublicKey tf){
+              isMatch = typeid(tf).hash_code() == t.hash_code();
+            },
+            [&t, &isMatch](TransactionExtraNonce tf){
+              isMatch =  typeid(tf).hash_code() == t.hash_code();
+            },
+            [&t, &isMatch](TransactionExtraMergeMiningTag tf){
+              isMatch =  typeid(tf).hash_code() == t.hash_code();
+            }
+        );
+        return isMatch;
+      });
     }
 
     std::vector<CryptoNote::TransactionExtraField>::iterator find(const std::type_info& t) {
-      return std::find_if(fields.begin(), fields.end(), [&t](const CryptoNote::TransactionExtraField& f) { return t == f.type(); });
+      return std::find_if(fields.begin(), fields.end(), [&](const CryptoNote::TransactionExtraField& f) { 
+        bool isMatch = false;
+        f.match(
+            [&t, &isMatch](TransactionExtraPadding tf){
+              isMatch = typeid(tf).hash_code() == t.hash_code();
+            },
+            [&t, &isMatch](TransactionExtraPublicKey tf){
+              isMatch = typeid(tf).hash_code() == t.hash_code();
+            },
+            [&t, &isMatch](TransactionExtraNonce tf){
+              isMatch =  typeid(tf).hash_code() == t.hash_code();
+            },
+            [&t, &isMatch](TransactionExtraMergeMiningTag tf){
+              isMatch =  typeid(tf).hash_code() == t.hash_code();
+            }
+        );
+        return isMatch;
+      });
     }
 
     std::vector<CryptoNote::TransactionExtraField> fields;

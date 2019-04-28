@@ -123,7 +123,7 @@ bool parseTransactionExtra(const std::vector<uint8_t> &transactionExtra, std::ve
   return true;
 }
 
-struct ExtraSerializerVisitor : public boost::static_visitor<bool> {
+struct ExtraSerializerVisitor {
   std::vector<uint8_t>& extra;
 
   ExtraSerializerVisitor(std::vector<uint8_t>& tx_extra)
@@ -154,7 +154,7 @@ bool writeTransactionExtra(std::vector<uint8_t>& tx_extra, const std::vector<Tra
   ExtraSerializerVisitor visitor(tx_extra);
 
   for (const auto& tag : tx_extra_fields) {
-    if (!boost::apply_visitor(visitor, tag)) {
+    if (!mapbox::util::apply_visitor(visitor, tag)) {
       return false;
     }
   }

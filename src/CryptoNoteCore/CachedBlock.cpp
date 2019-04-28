@@ -8,6 +8,7 @@
 #include <Common/Varint.h>
 #include <config/CryptoNoteConfig.h>
 #include "CryptoNoteTools.h"
+#include "mapbox/variant.hpp"
 
 using namespace Crypto;
 using namespace CryptoNote;
@@ -156,10 +157,11 @@ uint32_t CachedBlock::getBlockIndex() const {
       blockIndex = 0;
     } else {
       const auto& in = block.baseTransaction.inputs[0];
-      if (in.type() != typeid(BaseInput)) {
+      
+      if(!in.is<BaseInput>()){
         blockIndex = 0;
       } else {
-        blockIndex = boost::get<BaseInput>(in).blockIndex;
+        blockIndex = mapbox::util::get<BaseInput>(in).blockIndex;
       }
     }
   }

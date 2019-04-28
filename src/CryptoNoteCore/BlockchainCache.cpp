@@ -370,7 +370,8 @@ void BlockchainCache::pushTransaction(const CachedTransaction& cachedTransaction
     poi.transactionIndex = transactionInBlockIndex;
     poi.outputIndex = outputCount++;
 
-    if (output.target.type() == typeid(KeyOutput)) {
+    if (output.target.is<KeyOutput>())
+    {
       transactionCacheInfo.globalIndexes.push_back(insertKeyOutputToGlobalIndex(output.amount, poi, blockIndex));
     }
   }
@@ -909,8 +910,8 @@ ExtractOutputKeysResult BlockchainCache::extractKeyOutputKeys(uint64_t amount, u
       return ExtractOutputKeysResult::OUTPUT_LOCKED;
     }
 
-    assert(info.outputs[index.outputIndex].type() == typeid(KeyOutput));
-    publicKeys.push_back(boost::get<KeyOutput>(info.outputs[index.outputIndex]).key);
+    assert( info.outputs[index.outputIndex].is<KeyOutput>() );
+    publicKeys.push_back(mapbox::util::get<KeyOutput>(info.outputs[index.outputIndex]).key);
     return ExtractOutputKeysResult::SUCCESS;
   });
 }

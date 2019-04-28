@@ -66,8 +66,8 @@ bool get_tx_fee(const Transaction& tx, uint64_t & fee) {
   uint64_t amount_out = 0;
 
   for (const auto& in : tx.inputs) {
-    if (in.type() == typeid(KeyInput)) {
-      amount_in += boost::get<KeyInput>(in).amount;
+    if (in.is<KeyInput>()) {
+      amount_in += mapbox::util::get<KeyInput>(in).amount;
     }
   }
 
@@ -108,7 +108,7 @@ std::vector<uint32_t> absolute_output_offsets_to_relative(const std::vector<uint
 
 bool checkInputTypesSupported(const TransactionPrefix& tx) {
   for (const auto& in : tx.inputs) {
-    if (in.type() != typeid(KeyInput)) {
+    if (!in.is<KeyInput>()) {
       return false;
     }
   }
@@ -118,7 +118,7 @@ bool checkInputTypesSupported(const TransactionPrefix& tx) {
 
 bool checkOutsValid(const TransactionPrefix& tx, std::string* error) {
   for (const TransactionOutput& out : tx.outputs) {
-    if (out.target.type() == typeid(KeyOutput)) {
+    if (out.target.is<KeyOutput>()) {
       if (out.amount == 0) {
         if (error) {
           *error = "Zero amount ouput";
@@ -126,7 +126,7 @@ bool checkOutsValid(const TransactionPrefix& tx, std::string* error) {
         return false;
       }
 
-      if (!check_key(boost::get<KeyOutput>(out.target).key)) {
+      if (!check_key(mapbox::util::get<KeyOutput>(out.target).key)) {
         if (error) {
           *error = "Output with invalid key";
         }
@@ -149,8 +149,8 @@ bool checkInputsOverflow(const TransactionPrefix &tx) {
   for (const auto &in : tx.inputs) {
     uint64_t amount = 0;
 
-    if (in.type() == typeid(KeyInput)) {
-      amount = boost::get<KeyInput>(in).amount;
+    if (in.is<KeyInput>()) {
+      amount = mapbox::util::get<KeyInput>(in).amount;
     }
 
     if (money > amount + money)

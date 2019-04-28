@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include <vector>
-#include <boost/variant.hpp>
+#include <mapbox/variant.hpp>
 
 #include <CryptoNote.h>
 
@@ -56,19 +56,21 @@ struct TransactionExtraMergeMiningTag {
 //   varint tag;
 //   varint size;
 //   varint data[];
-typedef boost::variant<TransactionExtraPadding, TransactionExtraPublicKey, TransactionExtraNonce, TransactionExtraMergeMiningTag> TransactionExtraField;
+
+using TransactionExtraField = mapbox::util::variant<TransactionExtraPadding, TransactionExtraPublicKey, TransactionExtraNonce, TransactionExtraMergeMiningTag>;
 
 
 
 template<typename T>
 bool findTransactionExtraFieldByType(const std::vector<TransactionExtraField>& tx_extra_fields, T& field) {
-  auto it = std::find_if(tx_extra_fields.begin(), tx_extra_fields.end(),
-    [](const TransactionExtraField& f) { return typeid(T) == f.type(); });
+  
+  auto it = std::find_if( tx_extra_fields.begin(), tx_extra_fields.end(), [](const TransactionExtraField& f) {  return f.is<T>();});
 
   if (tx_extra_fields.end() == it)
+  {
     return false;
-
-  field = boost::get<T>(*it);
+  }
+  field = mapbox::util::get<T>(*it);
   return true;
 }
 

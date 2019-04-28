@@ -777,14 +777,14 @@ bool RpcServer::f_on_block_json(const F_COMMAND_RPC_GET_BLOCK_DETAILS::request& 
   BlockTemplate blk = m_core.getBlockByHash(hash);
   BlockDetails blkDetails = m_core.getBlockDetails(hash);
 
-  if (blk.baseTransaction.inputs.front().type() != typeid(BaseInput)) {
+  if (!blk.baseTransaction.inputs.front().is<BaseInput>()) {
     throw JsonRpc::JsonRpcError{
       CORE_RPC_ERROR_CODE_INTERNAL_ERROR,
       "Internal error: coinbase transaction in the block has the wrong type" };
   }
 
   block_header_response block_header;
-  res.block.height = boost::get<BaseInput>(blk.baseTransaction.inputs.front()).blockIndex;
+  res.block.height = mapbox::util::get<BaseInput>(blk.baseTransaction.inputs.front()).blockIndex;
   fill_block_header_response(blk, false, res.block.height, hash, block_header);
 
   res.block.major_version = block_header.major_version;
@@ -964,10 +964,10 @@ bool RpcServer::f_on_transactions_pool_json(const F_COMMAND_RPC_GET_POOL::reques
 bool RpcServer::f_getMixin(const Transaction& transaction, uint64_t& mixin) {
   mixin = 0;
   for (const TransactionInput& txin : transaction.inputs) {
-    if (txin.type() != typeid(KeyInput)) {
+    if (!txin.is<KeyInput>()) {
       continue;
     }
-    uint64_t currentMixin = boost::get<KeyInput>(txin).outputIndexes.size();
+    uint64_t currentMixin = mapbox::util::get<KeyInput>(txin).outputIndexes.size();
     if (currentMixin > mixin) {
       mixin = currentMixin;
     }
@@ -1173,7 +1173,7 @@ bool RpcServer::on_get_block_header_by_hash(const COMMAND_RPC_GET_BLOCK_HEADER_B
 
   auto block = m_core.getBlockByHash(blockHash);
   CachedBlock cachedBlock(block);
-  assert(block.baseTransaction.inputs.front().type() != typeid(BaseInput));
+  assert(!block.baseTransaction.inputs.front().is<BaseInput>());
 
   fill_block_header_response(block, false, cachedBlock.getBlockIndex(), cachedBlock.getBlockHash(), res.block_header);
   res.status = CORE_RPC_STATUS_OK;
@@ -1228,7 +1228,7 @@ bool RpcServer::on_get_block_headers_range(const COMMAND_RPC_GET_BLOCK_HEADERS_R
 			error_resp.message = "Internal error: coinbase transaction in the block has the wrong type";
 			return false;
 		}
-		uint64_t block_height = boost::get<txin_gen>(blk.miner_tx.vin.front()).height;
+		uint64_t block_height = mapbox::util::get<txin_gen>(blk.miner_tx.vin.front()).height;
 		if (block_height != h)
 		{
 			error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;

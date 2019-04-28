@@ -935,7 +935,7 @@ std::tuple<Error, CryptoNote::Transaction> generateRingSignatures(
         /* Generate the ring signatures - note - modifying the transaction
            post signature generation will invalidate the signatures. */
         const auto [success, signatures] = Crypto::crypto_ops::generateRingSignatures(
-            txPrefixHash, boost::get<CryptoNote::KeyInput>(tx.inputs[i]).keyImage,
+            txPrefixHash, mapbox::util::get<CryptoNote::KeyInput>(tx.inputs[i]).keyImage,
             publicKeys, tmpSecretKeys[i], input.realOutput
         );
 
@@ -963,7 +963,7 @@ std::tuple<Error, CryptoNote::Transaction> generateRingSignatures(
 
         if (!Crypto::crypto_ops::checkRingSignature(
                 txPrefixHash,
-                boost::get<CryptoNote::KeyInput>(tx.inputs[i]).keyImage,
+                mapbox::util::get<CryptoNote::KeyInput>(tx.inputs[i]).keyImage,
                 publicKeys,
                 tx.signatures[i]))
         {
@@ -1157,7 +1157,7 @@ bool verifyTransactionFee(const uint64_t expectedFee, const CryptoNote::Transact
 
     for (const auto input : tx.inputs)
     {
-        inputTotal += boost::get<CryptoNote::KeyInput>(input).amount;
+        inputTotal += mapbox::util::get<CryptoNote::KeyInput>(input).amount;
     }
 
     for (const auto output : tx.outputs)

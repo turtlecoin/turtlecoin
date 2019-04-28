@@ -761,7 +761,7 @@ void DatabaseBlockchainCache::pushTransaction(const CachedTransaction& cachedTra
     poi.transactionIndex = transactionBlockIndex;
     poi.outputIndex = outputCount++;
 
-    if (output.target.type() == typeid(KeyOutput)) {
+    if (output.target.is<KeyOutput>()) {
       keyIndexes[output.amount].push_back(poi);
       auto outputCountForAmount = updateKeyOutputCount(output.amount, 1);
       if (outputCountForAmount == 1) {
@@ -775,7 +775,7 @@ void DatabaseBlockchainCache::pushTransaction(const CachedTransaction& cachedTra
       transactionCacheInfo.amountToKeyIndexes[output.amount].push_back(globalIndex);
 
       KeyOutputInfo outputInfo;
-      outputInfo.publicKey = boost::get<KeyOutput>(output.target).key;
+      outputInfo.publicKey = mapbox::util::get<KeyOutput>(output.target).key;
       outputInfo.transactionHash = transactionCacheInfo.transactionHash;
       outputInfo.unlockTime = transactionCacheInfo.unlockTime;
       outputInfo.outputIndex = poi.outputIndex;
@@ -998,8 +998,8 @@ DatabaseBlockchainCache::extractKeyOutputKeys(uint64_t amount, uint32_t blockInd
     }
 
     auto& output = info.outputs[index.outputIndex];
-    assert(output.type() == typeid(KeyOutput));
-    publicKeys.push_back(boost::get<KeyOutput>(output).key);
+    assert(output.is<KeyOutput>());
+    publicKeys.push_back(mapbox::util::get<KeyOutput>(output).key);
 
     return ExtractOutputKeysResult::SUCCESS;
   });

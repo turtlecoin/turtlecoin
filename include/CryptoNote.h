@@ -7,7 +7,8 @@
 
 #include <vector>
 
-#include <boost/variant.hpp>
+//#include <boost/variant.hpp>
+#include <mapbox/variant.hpp>
 
 #include "CryptoTypes.h"
 
@@ -35,9 +36,10 @@ struct KeyOutput {
   Crypto::PublicKey key;
 };
 
-typedef boost::variant<BaseInput, KeyInput> TransactionInput;
+using TransactionInput = mapbox::util::variant<BaseInput, KeyInput>;
 
-typedef boost::variant<KeyOutput> TransactionOutputTarget;
+
+using TransactionOutputTarget = mapbox::util::variant<KeyOutput>;
 
 struct TransactionOutput {
   uint64_t amount;

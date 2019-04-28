@@ -19,8 +19,8 @@
 
 #include <stdexcept>
 
-#include <boost/variant/static_visitor.hpp>
-#include <boost/variant/apply_visitor.hpp>
+#include <mapbox/variant.hpp>
+#include <mapbox/variant_visitor.hpp>
 
 #include "CryptoNoteCore/CryptoNoteSerialization.h"
 
@@ -32,12 +32,12 @@ using CryptoNote::SerializationTag;
 
 namespace {
 
-struct BinaryVariantTagGetter: boost::static_visitor<uint8_t> {
+struct BinaryVariantTagGetter{
   uint8_t operator()(const CryptoNote::BaseInputDetails) { return static_cast<uint8_t>(SerializationTag::Base); }
   uint8_t operator()(const CryptoNote::KeyInputDetails) { return static_cast<uint8_t>(SerializationTag::Key); }
 };
 
-struct VariantSerializer : boost::static_visitor<> {
+struct VariantSerializer{
   VariantSerializer(CryptoNote::ISerializer& serializer, const std::string& name) : s(serializer), name(name) {}
 
   template <typename T>
@@ -47,8 +47,12 @@ struct VariantSerializer : boost::static_visitor<> {
   const std::string name;
 };
 
-void getVariantValue(CryptoNote::ISerializer& serializer, uint8_t tag, boost::variant<CryptoNote::BaseInputDetails,
-                                                                                      CryptoNote::KeyInputDetails>& in) {
+
+void getVariantValue(
+    CryptoNote::ISerializer& serializer,
+    uint8_t tag,
+    mapbox::util::variant<CryptoNote::BaseInputDetails,CryptoNote::KeyInputDetails>& in
+) {
   switch (static_cast<SerializationTag>(tag)) {
   case SerializationTag::Base: {
     CryptoNote::BaseInputDetails v;
@@ -100,11 +104,11 @@ void serialize(KeyInputDetails& inputToKey, ISerializer& serializer) {
 void serialize(TransactionInputDetails& input, ISerializer& serializer) {
   if (serializer.type() == ISerializer::OUTPUT) {
     BinaryVariantTagGetter tagGetter;
-    uint8_t tag = boost::apply_visitor(tagGetter, input);
+    uint8_t tag = mapbox::util::apply_visitor(tagGetter, input);
     serializer.binary(&tag, sizeof(tag), "type");
 
     VariantSerializer visitor(serializer, "data");
-    boost::apply_visitor(visitor, input);
+    mapbox::util::apply_visitor(visitor, input);
   } else {
     uint8_t tag;
     serializer.binary(&tag, sizeof(tag), "type");

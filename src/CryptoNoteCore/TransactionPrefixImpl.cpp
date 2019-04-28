@@ -143,7 +143,7 @@ TransactionTypes::InputType TransactionPrefixImpl::getInputType(size_t index) co
 }
 
 void TransactionPrefixImpl::getInput(size_t index, KeyInput& input) const {
-  input = boost::get<KeyInput>(getInputChecked(m_txPrefix, index, TransactionTypes::InputType::Key));
+  input = mapbox::util::get<KeyInput>(getInputChecked(m_txPrefix, index, TransactionTypes::InputType::Key));
 }
 
 size_t TransactionPrefixImpl::getOutputCount() const {
@@ -161,7 +161,7 @@ TransactionTypes::OutputType TransactionPrefixImpl::getOutputType(size_t index) 
 
 void TransactionPrefixImpl::getOutput(size_t index, KeyOutput& output, uint64_t& amount) const {
   const auto& out = getOutputChecked(m_txPrefix, index, TransactionTypes::OutputType::Key);
-  output = boost::get<KeyOutput>(out.target);
+  output = mapbox::util::get<KeyOutput>(out.target);
   amount = out.amount;
 }
 

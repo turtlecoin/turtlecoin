@@ -61,8 +61,10 @@ class TransactionSpentInputsChecker {
 public:
   bool haveSpentInputs(const Transaction& transaction) {
     for (const auto& input : transaction.inputs) {
-      if (input.type() == typeid(KeyInput)) {
-        auto inserted = alreadySpentKeyImages.insert(boost::get<KeyInput>(input).keyImage);
+      if (input.is<KeyInput>()) {
+        auto inserted = alreadySpentKeyImages.insert(
+          mapbox::util::get<KeyInput>(input).keyImage
+        );
         if (!inserted.second) {
           return true;
         }
@@ -128,8 +130,8 @@ TransactionValidatorState extractSpentOutputs(const CachedTransaction& transacti
   const auto& cryptonoteTransaction = transaction.getTransaction();
 
   for (const auto& input : cryptonoteTransaction.inputs) {
-    if (input.type() == typeid(KeyInput)) {
-      const KeyInput& in = boost::get<KeyInput>(input);
+    if (input.is<KeyInput>()) {
+      const KeyInput& in = mapbox::util::get<KeyInput>(input);
       bool r = spentOutputs.spentKeyImages.insert(in.keyImage).second;
       if (r) {}
       assert(r);
@@ -717,7 +719,7 @@ WalletTypes::RawCoinbaseTransaction Core::getRawCoinbaseTransaction(
         WalletTypes::KeyOutput keyOutput;
 
         keyOutput.amount = output.amount;
-        keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
+        keyOutput.key = mapbox::util::get<CryptoNote::KeyOutput>(output.target).key;
 
         transaction.keyOutputs.push_back(keyOutput);
     }
@@ -753,7 +755,7 @@ WalletTypes::RawTransaction Core::getRawTransaction(
         WalletTypes::KeyOutput keyOutput;
 
         keyOutput.amount = output.amount;
-        keyOutput.key = boost::get<CryptoNote::KeyOutput>(output.target).key;
+        keyOutput.key = mapbox::util::get<CryptoNote::KeyOutput>(output.target).key;
 
         transaction.keyOutputs.push_back(keyOutput);
     }
@@ -761,7 +763,7 @@ WalletTypes::RawTransaction Core::getRawTransaction(
     /* Simplify the inputs */
     for (const auto &input : t.inputs)
     {
-        transaction.keyInputs.push_back(boost::get<CryptoNote::KeyInput>(input));
+        transaction.keyInputs.push_back(mapbox::util::get<CryptoNote::KeyInput>(input));
     }
 
     return transaction;
@@ -1830,8 +1832,8 @@ auto error = validateSemantic(transaction, fee, blockIndex);
 
   size_t inputIndex = 0;
   for (const auto& input : transaction.inputs) {
-    if (input.type() == typeid(KeyInput)) {
-      const KeyInput& in = boost::get<KeyInput>(input);
+    if (input.is<KeyInput>()) {
+      const KeyInput& in = mapbox::util::get<KeyInput>(input);
       if (!state.spentKeyImages.insert(in.keyImage).second) {
         return error::TransactionValidationError::INPUT_KEYIMAGE_ALREADY_SPENT;
       }
@@ -1902,8 +1904,8 @@ std::error_code Core::validateSemantic(const Transaction& transaction, uint64_t&
       return error::TransactionValidationError::OUTPUT_ZERO_AMOUNT;
     }
 
-    if (output.target.type() == typeid(KeyOutput)) {
-      if (!check_key(boost::get<KeyOutput>(output.target).key)) {
+    if (output.target.is<KeyOutput>()) {
+      if (!check_key(mapbox::util::get<KeyOutput>(output.target).key)) {
         return error::TransactionValidationError::OUTPUT_INVALID_KEY;
       }
     } else {
@@ -1928,8 +1930,8 @@ std::error_code Core::validateSemantic(const Transaction& transaction, uint64_t&
   std::set<std::pair<uint64_t, uint32_t>> outputsUsage;
   for (const auto& input : transaction.inputs) {
     uint64_t amount = 0;
-    if (input.type() == typeid(KeyInput)) {
-      const KeyInput& in = boost::get<KeyInput>(input);
+    if (input.is<KeyInput>()) {
+      const KeyInput& in = mapbox::util::get<KeyInput>(input);
       amount = in.amount;
       if (!ki.insert(in.keyImage).second) {
         return error::TransactionValidationError::INPUT_IDENTICAL_KEYIMAGES;
@@ -2031,11 +2033,11 @@ std::error_code Core::validateBlock(const CachedBlock& cachedBlock, IBlockchainC
     return error::TransactionValidationError::INPUT_WRONG_COUNT;
   }
 
-  if (block.baseTransaction.inputs[0].type() != typeid(BaseInput)) {
+  if (!block.baseTransaction.inputs[0].is<BaseInput>()) {
     return error::TransactionValidationError::INPUT_UNEXPECTED_TYPE;
   }
 
-  if (boost::get<BaseInput>(block.baseTransaction.inputs[0]).blockIndex != previousBlockIndex + 1) {
+  if (mapbox::util::get<BaseInput>(block.baseTransaction.inputs[0]).blockIndex != previousBlockIndex + 1) {
     return error::TransactionValidationError::BASE_INPUT_WRONG_BLOCK_INDEX;
   }
 
@@ -2054,8 +2056,8 @@ std::error_code Core::validateBlock(const CachedBlock& cachedBlock, IBlockchainC
       return error::TransactionValidationError::OUTPUT_ZERO_AMOUNT;
     }
 
-    if (output.target.type() == typeid(KeyOutput)) {
-      if (!check_key(boost::get<KeyOutput>(output.target).key)) {
+    if (output.target.is<KeyOutput>()) {
+      if (!check_key(mapbox::util::get<KeyOutput>(output.target).key)) {
         return error::TransactionValidationError::OUTPUT_INVALID_KEY;
       }
     } else {
@@ -2847,12 +2849,12 @@ TransactionDetails Core::getTransactionDetails(const Crypto::Hash& transactionHa
 
     if (transaction->getInputType(i) == TransactionTypes::InputType::Generating) {
       BaseInputDetails baseDetails;
-      baseDetails.input = boost::get<BaseInput>(rawTransaction.inputs[i]);
+      baseDetails.input = mapbox::util::get<BaseInput>(rawTransaction.inputs[i]);
       baseDetails.amount = transaction->getOutputTotalAmount();
       txInDetails = baseDetails;
     } else if (transaction->getInputType(i) == TransactionTypes::InputType::Key) {
       KeyInputDetails txInToKeyDetails;
-      txInToKeyDetails.input = boost::get<KeyInput>(rawTransaction.inputs[i]);
+      txInToKeyDetails.input = mapbox::util::get<KeyInput>(rawTransaction.inputs[i]);
       std::vector<std::pair<Crypto::Hash, size_t>> outputReferences;
       outputReferences.reserve(txInToKeyDetails.input.outputIndexes.size());
       std::vector<uint32_t> globalIndexes = relativeOutputOffsetsToAbsolute(txInToKeyDetails.input.outputIndexes);

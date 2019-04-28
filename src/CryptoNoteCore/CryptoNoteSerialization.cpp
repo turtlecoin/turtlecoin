@@ -21,8 +21,10 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/variant/static_visitor.hpp>
-#include <boost/variant/apply_visitor.hpp>
+//#include <boost/variant/static_visitor.hpp>
+//#include <boost/variant/apply_visitor.hpp>
+#include "mapbox/variant.hpp"
+#include "mapbox/variant_visitor.hpp"
 
 #include "Serialization/ISerializer.h"
 #include "Serialization/SerializationOverloads.h"
@@ -46,15 +48,19 @@ using namespace CryptoNote;
 using namespace Common;
 
 uint64_t getSignaturesCount(const TransactionInput& input) {
-  struct txin_signature_size_visitor : public boost::static_visitor < uint64_t > {
+  //struct txin_signature_size_visitor : public boost::static_visitor < uint64_t > {
+  //struct txin_signature_size_visitor : public mapbox::util::static_visitor<uint64_t > {
+  struct txin_signature_size_visitor {
     uint64_t operator()(const BaseInput& txin) const { return 0; }
     uint64_t operator()(const KeyInput& txin) const { return txin.outputIndexes.size(); }
   };
 
-  return boost::apply_visitor(txin_signature_size_visitor(), input);
+  // return mapbox::util::apply_visitor(txin_signature_size_visitor(), input);
+  return mapbox::util::apply_visitor(txin_signature_size_visitor(), input);
 }
 
-struct BinaryVariantTagGetter: boost::static_visitor<uint8_t> {
+//struct BinaryVariantTagGetter: boost::static_visitor<uint8_t> {
+struct BinaryVariantTagGetter {  
   uint8_t operator()(const CryptoNote::BaseInput) { return  0xff; }
   uint8_t operator()(const CryptoNote::KeyInput) { return  0x2; }
   uint8_t operator()(const CryptoNote::KeyOutput) { return  0x2; }
@@ -62,7 +68,8 @@ struct BinaryVariantTagGetter: boost::static_visitor<uint8_t> {
   uint8_t operator()(const CryptoNote::BlockTemplate) { return  0xbb; }
 };
 
-struct VariantSerializer : boost::static_visitor<> {
+//struct VariantSerializer : boost::static_visitor<> {
+struct VariantSerializer {
   VariantSerializer(CryptoNote::ISerializer& serializer, const std::string& name) : s(serializer), name(name) {}
 
   template <typename T>
@@ -201,7 +208,7 @@ void serialize(Transaction& tx, ISerializer& serializer) {
 //  serializer.beginArray(sigSize, "signatures");
 
   // ignore base transaction
-  if (serializer.type() == ISerializer::INPUT && !(sigSize == 1 && tx.inputs[0].type() == typeid(BaseInput))) {
+  if (serializer.type() == ISerializer::INPUT && !(sigSize == 1 && tx.inputs[0].is<BaseInput>()) ) {
     tx.signatures.resize(sigSize);
   }
 
@@ -244,11 +251,11 @@ void serialize(Transaction& tx, ISerializer& serializer) {
 void serialize(TransactionInput& in, ISerializer& serializer) {
   if (serializer.type() == ISerializer::OUTPUT) {
     BinaryVariantTagGetter tagGetter;
-    uint8_t tag = boost::apply_visitor(tagGetter, in);
+    uint8_t tag = mapbox::util::apply_visitor(tagGetter, in);
     serializer.binary(&tag, sizeof(tag), "type");
 
     VariantSerializer visitor(serializer, "value");
-    boost::apply_visitor(visitor, in);
+    mapbox::util::apply_visitor(visitor, in);
   } else {
     uint8_t tag;
     serializer.binary(&tag, sizeof(tag), "type");
@@ -275,11 +282,11 @@ void serialize(TransactionOutput& output, ISerializer& serializer) {
 void serialize(TransactionOutputTarget& output, ISerializer& serializer) {
   if (serializer.type() == ISerializer::OUTPUT) {
     BinaryVariantTagGetter tagGetter;
-    uint8_t tag = boost::apply_visitor(tagGetter, output);
+    uint8_t tag = mapbox::util::apply_visitor(tagGetter, output);
     serializer.binary(&tag, sizeof(tag), "type");
 
     VariantSerializer visitor(serializer, "data");
-    boost::apply_visitor(visitor, output);
+    mapbox::util::apply_visitor(visitor, output);
   } else {
     uint8_t tag;
     serializer.binary(&tag, sizeof(tag), "type");
