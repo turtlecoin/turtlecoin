@@ -45,6 +45,11 @@ namespace Utilities
 
     bool parseDaemonAddressFromString(std::string &host, uint16_t &port, std::string address);
 
+    size_t getApproximateMaximumInputCount(
+        const size_t transactionSize,
+        const size_t outputCount,
+        const size_t mixinCount);
+
     /* Verify that a + b will not overflow when added. */
     /* 2 positive numbers - should always get greater (or equal) when summed. */
     /* Any negative numbers - should always get smaller (or equal) when summed. */

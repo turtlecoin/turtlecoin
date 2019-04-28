@@ -15,19 +15,16 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
-#pragma once
+#include "CryptoNoteTools.h"
 
-#include "Common/StringTools.h"
-#include "crypto/crypto.h"
-#include "crypto/hash.h"
-#include "CryptoNoteCore/CryptoNoteBasic.h"
+using namespace CryptoNote;
 
-
-namespace CryptoNote {
-  /************************************************************************/
-  /* CryptoNote helper functions                                          */
-  /************************************************************************/
-  uint64_t getPenalizedAmount(uint64_t amount, size_t medianSize, size_t currentBlockSize);
+void CryptoNote::getBinaryArrayHash(const BinaryArray& binaryArray, Crypto::Hash& hash) {
+  cn_fast_hash(binaryArray.data(), binaryArray.size(), hash);
 }
 
-bool parse_hash256(const std::string& str_hash, Crypto::Hash& hash);
+Crypto::Hash CryptoNote::getBinaryArrayHash(const BinaryArray& binaryArray) {
+  Crypto::Hash hash;
+  getBinaryArrayHash(binaryArray, hash);
+  return hash;
+}

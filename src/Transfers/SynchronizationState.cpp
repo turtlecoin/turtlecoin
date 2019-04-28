@@ -21,7 +21,7 @@
 #include "Common/StdOutputStream.h"
 #include "Serialization/BinaryInputStreamSerializer.h"
 #include "Serialization/BinaryOutputStreamSerializer.h"
-#include "CryptoNoteCore/CryptoNoteSerialization.h"
+#include "Serialization/CryptoNoteSerialization.h"
 
 using namespace Common;
 

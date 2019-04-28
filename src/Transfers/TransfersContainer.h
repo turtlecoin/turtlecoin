@@ -29,7 +29,7 @@
 
 #include "crypto/crypto.h"
 #include "CryptoNoteCore/CryptoNoteBasic.h"
-#include "CryptoNoteCore/CryptoNoteSerialization.h"
+#include "Serialization/CryptoNoteSerialization.h"
 #include "CryptoNoteCore/Currency.h"
 #include "Logging/LoggerRef.h"
 #include "Serialization/ISerializer.h"

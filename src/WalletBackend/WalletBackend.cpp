@@ -11,11 +11,8 @@
 
 #include <config/CryptoNoteConfig.h>
 
+#include <crypto/crypto.h>
 #include <crypto/random.h>
-
-#include <CryptoNoteCore/Account.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
 
 #include <cryptopp/aes.h>
 #include <cryptopp/algparam.h>
@@ -186,43 +183,6 @@ WalletBackend::WalletBackend(
 /* STATIC FUNCTIONS */
 //////////////////////
 
-std::tuple<Error, std::string> WalletBackend::createIntegratedAddress(
-    const std::string address,
-    const std::string paymentID)
-{
-    if (Error error = validatePaymentID(paymentID); error != SUCCESS)
-    {
-        return {error, std::string()};
-    }
-
-    const bool allowIntegratedAddresses = false;
-
-    if (Error error = validateAddresses({address}, allowIntegratedAddresses); error != SUCCESS)
-    {
-        return {error, std::string()};
-    }
-
-    uint64_t prefix;
-
-    CryptoNote::AccountPublicAddress addr;
-
-    /* Get the private + public key from the address */
-    CryptoNote::parseAccountAddressString(prefix, addr, address);
-
-    /* Pack as a binary array */
-    CryptoNote::BinaryArray ba;
-    CryptoNote::toBinaryArray(addr, ba);
-    std::string keys = Common::asString(ba);
-
-    /* Encode prefix + paymentID + keys as an address */
-    const std::string integratedAddress = Tools::Base58::encode_addr(
-        CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
-        paymentID + keys
-    );
-
-    return {SUCCESS, integratedAddress};
-}
-
 /* Imports a wallet from a mnemonic seed. Returns the wallet class,
    or an error. */
 std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importWalletFromSeed(
@@ -251,7 +211,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importWalletFro
     Crypto::SecretKey privateViewKey;
 
     /* Derive the private view key from the private spend key */
-    CryptoNote::AccountBase::generateViewFromSpend(
+    Crypto::crypto_ops::generateViewFromSpend(
         privateSpendKey, privateViewKey
     );
 
@@ -387,7 +347,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::createWallet(
     Crypto::generate_keys(spendKey.publicKey, spendKey.secretKey);
 
     /* Derive the view key from the spend key */
-    CryptoNote::AccountBase::generateViewFromSpend(
+    Crypto::crypto_ops::generateViewFromSpend(
         spendKey.secretKey, privateViewKey, publicViewKey
     );
 
@@ -992,7 +952,7 @@ std::tuple<Error, std::string> WalletBackend::getMnemonicSeedForAddress(
 
     /* Derive the view key from the spend key, and check if it matches the
        actual view key */
-    CryptoNote::AccountBase::generateViewFromSpend(
+    Crypto::crypto_ops::generateViewFromSpend(
         privateSpendKey,
         derivedPrivateViewKey
     );

@@ -20,7 +20,7 @@
 #include "TransactionUtils.h"
 
 #include "Account.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 #include <config/CryptoNoteConfig.h>
 
 #include <boost/optional.hpp>

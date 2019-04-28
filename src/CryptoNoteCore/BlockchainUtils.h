@@ -21,7 +21,7 @@
 
 #include "CachedTransaction.h"
 #include "CryptoNote.h"
-#include "CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 
 namespace CryptoNote {
 namespace Utils {

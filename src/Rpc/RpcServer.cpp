@@ -15,8 +15,10 @@
 #include <config/CryptoNoteConfig.h>
 
 #include <CryptoNoteCore/Core.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
-#include <CryptoNoteCore/TransactionExtra.h>
+#include <CryptoNoteCore/CryptoNoteFormatUtils.h>
+
+#include <Common/CryptoNoteTools.h>
+#include <Common/TransactionExtra.h>
 
 #include <CryptoNoteProtocol/CryptoNoteProtocolHandlerCommon.h>
 

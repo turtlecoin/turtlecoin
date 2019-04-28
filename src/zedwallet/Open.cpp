@@ -114,7 +114,7 @@ std::shared_ptr<WalletInfo> mnemonicImportWallet(CryptoNote::WalletGreen
         {
             Crypto::SecretKey privateViewKey;
 
-            CryptoNote::AccountBase::generateViewFromSpend(
+            Crypto::crypto_ops::generateViewFromSpend(
                 privateSpendKey, privateViewKey
             );
 
@@ -167,7 +167,7 @@ std::shared_ptr<WalletInfo> generateWallet(CryptoNote::WalletGreen &wallet)
 
     Crypto::generate_keys(spendKey.publicKey, spendKey.secretKey);
 
-    CryptoNote::AccountBase::generateViewFromSpend(spendKey.secretKey,
+    Crypto::crypto_ops::generateViewFromSpend(spendKey.secretKey,
                                                    privateViewKey);
 
     wallet.initializeWithViewKey(

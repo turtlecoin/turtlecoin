@@ -17,8 +17,9 @@
 
 #include "CryptoNoteBasicImpl.h"
 #include "CryptoNoteFormatUtils.h"
-#include "CryptoNoteTools.h"
-#include "CryptoNoteSerialization.h"
+#include "Common/CryptoNoteTools.h"
+
+#include "Serialization/CryptoNoteSerialization.h"
 
 #include "Common/Base58.h"
 #include "crypto/hash.h"
@@ -60,34 +61,6 @@ namespace CryptoNote {
 
     return penalizedAmountLo;
   }
-  //-----------------------------------------------------------------------
-  std::string getAccountAddressAsStr(uint64_t prefix, const AccountPublicAddress& adr) {
-    BinaryArray ba;
-    bool r = toBinaryArray(adr, ba);
-    if (r) {}
-    assert(r);
-    return Tools::Base58::encode_addr(prefix, Common::asString(ba));
-  }
-  //-----------------------------------------------------------------------
-  bool parseAccountAddressString(uint64_t& prefix, AccountPublicAddress& adr, const std::string& str) {
-    std::string data;
-
-    return
-      Tools::Base58::decode_addr(str, prefix, data) &&
-      fromBinaryArray(adr, asBinaryArray(data)) &&
-      // ::serialization::parse_binary(data, adr) &&
-      check_key(adr.spendPublicKey) &&
-      check_key(adr.viewPublicKey);
-  }
-  ////-----------------------------------------------------------------------
-  //bool operator ==(const CryptoNote::Transaction& a, const CryptoNote::Transaction& b) {
-  //  return getObjectHash(a) == getObjectHash(b);
-  //}
-  ////-----------------------------------------------------------------------
-  //bool operator ==(const CryptoNote::BlockTemplate& a, const CryptoNote::BlockTemplate& b) {
-
-  //  return CryptoNote::get_block_hash(a) == CryptoNote::get_block_hash(b);
-  //}
 }
 
 //--------------------------------------------------------------------------------

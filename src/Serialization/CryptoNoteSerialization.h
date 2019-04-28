@@ -17,7 +17,8 @@
 
 #pragma once
 
-#include "CryptoNoteBasic.h"
+#include <CryptoNoteCore/CryptoNoteBasic.h>
+
 #include "crypto/chacha8.h"
 #include "Serialization/ISerializer.h"
 #include "crypto/crypto.h"

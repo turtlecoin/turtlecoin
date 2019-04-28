@@ -24,7 +24,7 @@
 #include "CryptoNoteCore/CryptoNoteBasic.h"
 #include "CryptoNoteCore/TransactionApiExtra.h"
 #include "TransactionUtils.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 
 using namespace Crypto;
 

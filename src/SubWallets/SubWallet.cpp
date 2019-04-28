@@ -6,9 +6,6 @@
 #include <SubWallets/SubWallet.h>
 /////////////////////////////////
 
-#include <CryptoNoteCore/Account.h>
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-
 #include <Logger/Logger.h>
 
 #include <Utilities/Utilities.h>

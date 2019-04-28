@@ -106,11 +106,6 @@ class WalletBackend
             const uint16_t daemonPort,
             const bool daemonSSL);
 
-        /* Create an integrated address from an address + paymentID */
-        static std::tuple<Error, std::string> createIntegratedAddress(
-            const std::string address,
-            const std::string paymentID);
-
         /////////////////////////////
         /* Public member functions */
         /////////////////////////////

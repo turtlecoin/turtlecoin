@@ -24,62 +24,14 @@
 #include "Serialization/BinaryOutputStreamSerializer.h"
 #include "Serialization/BinaryInputStreamSerializer.h"
 #include <config/CryptoNoteConfig.h>
-#include "CryptoNoteSerialization.h"
+#include <Serialization/SerializationTools.h>
+#include <Serialization/CryptoNoteSerialization.h>
 
 
 namespace CryptoNote {
 
 void getBinaryArrayHash(const BinaryArray& binaryArray, Crypto::Hash& hash);
 Crypto::Hash getBinaryArrayHash(const BinaryArray& binaryArray);
-
-// noexcept
-template<class T>
-bool toBinaryArray(const T& object, BinaryArray& binaryArray) {
-  try {
-    binaryArray = toBinaryArray(object);
-  } catch (std::exception&) {
-    return false;
-  }
-
-  return true;
-}
-
-template<>
-bool toBinaryArray(const BinaryArray& object, BinaryArray& binaryArray); 
-
-// throws exception if serialization failed
-template<class T>
-BinaryArray toBinaryArray(const T& object) {
-  BinaryArray ba;
-  ::Common::VectorOutputStream stream(ba);
-  BinaryOutputStreamSerializer serializer(stream);
-  serialize(const_cast<T&>(object), serializer);
-  return ba;
-}
-
-template<class T>
-T fromBinaryArray(const BinaryArray& binaryArray) {
-  T object;
-  Common::MemoryInputStream stream(binaryArray.data(), binaryArray.size());
-  BinaryInputStreamSerializer serializer(stream);
-  serialize(object, serializer);
-  if (!stream.endOfStream()) { // check that all data was consumed
-    throw std::runtime_error("failed to unpack type");
-  }
-
-  return object;
-}
-
-template<class T>
-bool fromBinaryArray(T& object, const BinaryArray& binaryArray) {
-  try {
-    object = fromBinaryArray<T>(binaryArray);
-  } catch (std::exception&) {
-    return false;
-  }
-
-  return true;
-}
 
 template<class T>
 bool getObjectBinarySize(const T& object, size_t& size) {
@@ -147,8 +99,4 @@ inline bool getBaseTransactionHash(const BaseTransaction& tx, Crypto::Hash& hash
   }
 }
 
-uint64_t getInputAmount(const Transaction& transaction);
-std::vector<uint64_t> getInputsAmounts(const Transaction& transaction);
-uint64_t getOutputAmount(const Transaction& transaction);
-void decomposeAmount(uint64_t amount, uint64_t dustThreshold, std::vector<uint64_t>& decomposedAmounts);
 }

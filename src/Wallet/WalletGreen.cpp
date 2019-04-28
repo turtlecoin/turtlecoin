@@ -34,8 +34,8 @@
 #include "CryptoNoteCore/Currency.h"
 #include "CryptoNoteCore/CryptoNoteBasicImpl.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
-#include "CryptoNoteCore/CryptoNoteSerialization.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Serialization/CryptoNoteSerialization.h"
+#include "Common/CryptoNoteTools.h"
 #include "CryptoNoteCore/TransactionApi.h"
 #include "crypto/crypto.h"
 #include <crypto/random.h>
@@ -43,6 +43,9 @@
 #include "WalletSerializationV2.h"
 #include "WalletErrors.h"
 #include "WalletUtils.h"
+
+#include <Utilities/Addresses.h>
+#include <Utilities/Utilities.h>
 
 using namespace Common;
 using namespace Crypto;
@@ -158,7 +161,7 @@ void WalletGreen::createViewWallet(const std::string &path,
     CryptoNote::AccountPublicAddress publicKeys;
     uint64_t prefix;
 
-    if (!CryptoNote::parseAccountAddressString(prefix, publicKeys, address))
+    if (!Utilities::parseAccountAddressString(prefix, publicKeys, address))
     {
         throw std::runtime_error("Failed to parse address!");
     }
@@ -3176,7 +3179,7 @@ size_t WalletGreen::createFusionTransaction(uint64_t threshold, uint16_t mixin,
     throw std::runtime_error("You must have at least one address");
   }
 
-  size_t estimatedFusionInputsCount = m_currency.getApproximateMaximumInputCount(m_currency.fusionTxMaxSize(), MAX_FUSION_OUTPUT_COUNT, mixin);
+  size_t estimatedFusionInputsCount = Utilities::getApproximateMaximumInputCount(m_currency.fusionTxMaxSize(), MAX_FUSION_OUTPUT_COUNT, mixin);
   if (estimatedFusionInputsCount < m_currency.fusionTxMinInputCount()) {
     m_logger(ERROR, BRIGHT_RED) << "Fusion transaction mixin is too big " << mixin;
     throw std::system_error(make_error_code(error::MIXIN_COUNT_TOO_BIG));

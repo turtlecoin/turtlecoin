@@ -16,10 +16,14 @@
 #include "CheckDifficulty.h"
 #include "CryptoNoteBasicImpl.h"
 #include "CryptoNoteFormatUtils.h"
-#include "CryptoNoteTools.h"
+#include <Common/CryptoNoteTools.h>
 #include "Difficulty.h"
-#include "TransactionExtra.h"
+#include "Common/TransactionExtra.h"
 #include "UpgradeDetector.h"
+
+#include <config/Constants.h>
+
+#include <Utilities/Addresses.h>
 
 #undef ERROR
 
@@ -27,29 +31,6 @@ using namespace Logging;
 using namespace Common;
 
 namespace CryptoNote {
-
-const std::vector<uint64_t> Currency::PRETTY_AMOUNTS = {
-  1, 2, 3, 4, 5, 6, 7, 8, 9,
-  10, 20, 30, 40, 50, 60, 70, 80, 90,
-  100, 200, 300, 400, 500, 600, 700, 800, 900,
-  1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
-  10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000,
-  100000, 200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000,
-  1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000,
-  10000000, 20000000, 30000000, 40000000, 50000000, 60000000, 70000000, 80000000, 90000000,
-  100000000, 200000000, 300000000, 400000000, 500000000, 600000000, 700000000, 800000000, 900000000,
-  1000000000, 2000000000, 3000000000, 4000000000, 5000000000, 6000000000, 7000000000, 8000000000, 9000000000,
-  10000000000, 20000000000, 30000000000, 40000000000, 50000000000, 60000000000, 70000000000, 80000000000, 90000000000,
-  100000000000, 200000000000, 300000000000, 400000000000, 500000000000, 600000000000, 700000000000, 800000000000, 900000000000,
-  1000000000000, 2000000000000, 3000000000000, 4000000000000, 5000000000000, 6000000000000, 7000000000000, 8000000000000, 9000000000000,
-  10000000000000, 20000000000000, 30000000000000, 40000000000000, 50000000000000, 60000000000000, 70000000000000, 80000000000000, 90000000000000,
-  100000000000000, 200000000000000, 300000000000000, 400000000000000, 500000000000000, 600000000000000, 700000000000000, 800000000000000, 900000000000000,
-  1000000000000000, 2000000000000000, 3000000000000000, 4000000000000000, 5000000000000000, 6000000000000000, 7000000000000000, 8000000000000000, 9000000000000000,
-  10000000000000000, 20000000000000000, 30000000000000000, 40000000000000000, 50000000000000000, 60000000000000000, 70000000000000000, 80000000000000000, 90000000000000000,
-  100000000000000000, 200000000000000000, 300000000000000000, 400000000000000000, 500000000000000000, 600000000000000000, 700000000000000000, 800000000000000000, 900000000000000000,
-  1000000000000000000, 2000000000000000000, 3000000000000000000, 4000000000000000000, 5000000000000000000, 6000000000000000000, 7000000000000000000, 8000000000000000000, 9000000000000000000,
-  10000000000000000000ull
-};
 
 bool Currency::init() {
   if (!generateGenesisBlock()) {
@@ -341,26 +322,26 @@ bool Currency::isAmountApplicableInFusionTransactionInput(uint64_t amount, uint6
     return false;
   }
 
-  auto it = std::lower_bound(PRETTY_AMOUNTS.begin(), PRETTY_AMOUNTS.end(), amount);
-  if (it == PRETTY_AMOUNTS.end() || amount != *it) {
+  auto it = std::lower_bound(Constants::PRETTY_AMOUNTS.begin(), Constants::PRETTY_AMOUNTS.end(), amount);
+  if (it == Constants::PRETTY_AMOUNTS.end() || amount != *it) {
     return false;
   }
 
-  amountPowerOfTen = static_cast<uint8_t>(std::distance(PRETTY_AMOUNTS.begin(), it) / 9);
+  amountPowerOfTen = static_cast<uint8_t>(std::distance(Constants::PRETTY_AMOUNTS.begin(), it) / 9);
   return true;
 }
 
 std::string Currency::accountAddressAsString(const AccountBase& account) const {
-  return getAccountAddressAsStr(m_publicAddressBase58Prefix, account.getAccountKeys().address);
+  return Utilities::getAccountAddressAsStr(m_publicAddressBase58Prefix, account.getAccountKeys().address);
 }
 
 std::string Currency::accountAddressAsString(const AccountPublicAddress& accountPublicAddress) const {
-  return getAccountAddressAsStr(m_publicAddressBase58Prefix, accountPublicAddress);
+  return Utilities::getAccountAddressAsStr(m_publicAddressBase58Prefix, accountPublicAddress);
 }
 
 bool Currency::parseAccountAddressString(const std::string& str, AccountPublicAddress& addr) const {
   uint64_t prefix;
-  if (!CryptoNote::parseAccountAddressString(prefix, addr, str)) {
+  if (!Utilities::parseAccountAddressString(prefix, addr, str)) {
     return false;
   }
 
@@ -624,29 +605,6 @@ bool Currency::checkProofOfWork(const CachedBlock& block, uint64_t currentDiffic
 
   logger(ERROR, BRIGHT_RED) << "Unknown block major version: " << block.getBlock().majorVersion << "." << block.getBlock().minorVersion;
   return false;
-}
-
-size_t Currency::getApproximateMaximumInputCount(size_t transactionSize, size_t outputCount, size_t mixinCount) {
-  const size_t KEY_IMAGE_SIZE = sizeof(Crypto::KeyImage);
-  const size_t OUTPUT_KEY_SIZE = sizeof(decltype(KeyOutput::key));
-  const size_t AMOUNT_SIZE = sizeof(uint64_t) + 2; //varint
-  const size_t GLOBAL_INDEXES_VECTOR_SIZE_SIZE = sizeof(uint8_t);//varint
-  const size_t GLOBAL_INDEXES_INITIAL_VALUE_SIZE = sizeof(uint32_t);//varint
-  const size_t GLOBAL_INDEXES_DIFFERENCE_SIZE = sizeof(uint32_t);//varint
-  const size_t SIGNATURE_SIZE = sizeof(Crypto::Signature);
-  const size_t EXTRA_TAG_SIZE = sizeof(uint8_t);
-  const size_t INPUT_TAG_SIZE = sizeof(uint8_t);
-  const size_t OUTPUT_TAG_SIZE = sizeof(uint8_t);
-  const size_t PUBLIC_KEY_SIZE = sizeof(Crypto::PublicKey);
-  const size_t TRANSACTION_VERSION_SIZE = sizeof(uint8_t);
-  const size_t TRANSACTION_UNLOCK_TIME_SIZE = sizeof(uint64_t);
-
-  const size_t outputsSize = outputCount * (OUTPUT_TAG_SIZE + OUTPUT_KEY_SIZE + AMOUNT_SIZE);
-  const size_t headerSize = TRANSACTION_VERSION_SIZE + TRANSACTION_UNLOCK_TIME_SIZE + EXTRA_TAG_SIZE + PUBLIC_KEY_SIZE;
-  const size_t inputSize = INPUT_TAG_SIZE + AMOUNT_SIZE + KEY_IMAGE_SIZE + SIGNATURE_SIZE + GLOBAL_INDEXES_VECTOR_SIZE_SIZE + GLOBAL_INDEXES_INITIAL_VALUE_SIZE +
-                            mixinCount * (GLOBAL_INDEXES_DIFFERENCE_SIZE + SIGNATURE_SIZE);
-
-  return (transactionSize - headerSize - outputsSize) / inputSize;
 }
 
 Currency::Currency(Currency&& currency) :

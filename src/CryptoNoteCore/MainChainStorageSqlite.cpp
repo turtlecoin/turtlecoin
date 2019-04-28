@@ -4,12 +4,11 @@
 
 #include "MainChainStorageSqlite.h"
 
+#include <Common/CryptoNoteTools.h>
 #include <Common/FileSystemShim.h>
 
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-
-#include "CryptoNoteTools.h"
 
 #include "sqlite3.h"
 

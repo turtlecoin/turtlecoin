@@ -15,9 +15,9 @@
 #include "Common/StringTools.h"
 #include <config/CryptoNoteConfig.h>
 #include "CryptoNoteCore/CachedBlock.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
-#include "CryptoNoteCore/TransactionExtra.h"
+#include "Common/TransactionExtra.h"
 #include "Rpc/HttpClient.h"
 #include "Rpc/CoreRpcServerCommandsDefinitions.h"
 #include "Rpc/JsonRpc.h"

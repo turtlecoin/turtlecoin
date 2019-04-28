@@ -18,9 +18,10 @@
 #include "crypto/hash.h"
 
 #include <CryptoNoteCore/BlockchainStorage.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-#include "CryptoNoteCore/TransactionExtra.h"
+
+#include <Common/TransactionExtra.h>
+#include <Common/CryptoNoteTools.h>
 
 namespace CryptoNote {
 
