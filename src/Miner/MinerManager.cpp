@@ -25,6 +25,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
+#include "rapidjson/error/en.h"
 
 #include <Utilities/FormatTools.h>
 
@@ -337,7 +338,7 @@ BlockMiningParameters MinerManager::requestMiningParameters()
         } else {
             std::stringstream stream;
             stream << "Failed to parse block hash from daemon. Received data:\n"
-                << res->body << "\nParse error: " << rapidjson::GetParseError_En(j.GetParseError()) 
+                << res->body << "\nParse error: " << GetParseError_En(j.GetParseError()) 
                 << std::endl;
             
             std::cout << WarningMsg(stream.str());

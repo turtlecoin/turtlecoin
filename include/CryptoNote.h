@@ -62,7 +62,7 @@ struct KeyInput {
   void fromJSON(const JSONValue &j) {
     amount = getUintFromJSON(j, "amount");
     for (const auto &item : getArrayFromJSON(j, "key_offsets")) {
-      outputIndexes.push_back(item.getUint());
+      outputIndexes.push_back(item.GetUint());
     }
     keyImage.fromString(getStringFromJSON(j, "k_image"));
   }

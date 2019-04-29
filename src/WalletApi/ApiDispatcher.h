@@ -27,7 +27,7 @@ class JsonException : public std::exception {
         const char* what () const throw () {
             return message.c_str();
         }
-}
+};
 
 enum WalletState
 {
@@ -40,15 +40,15 @@ enum WalletState
 template<typename T>
 T tryGetJsonValue(const rapidjson::Document &body, const std::string key)
 {
-    rapidjson::Value::MemberIterator itr = body.FindMember(key);
+    /*rapidjson::Value::ConstMemberIterator itr = body.FindMember(key);
     if (itr == body.MemberEnd()) // value doesn't exist
         throw JsonException("\nExpected json parameter '" + key + "' does not exist.");
 
-    rapidjson::Value& value = itr->value;
+		const rapidjson::Value& value = itr->value;
     if (!value.Is<T>()) // value is not the expected type
         throw JsonException("\nJson parameter '" + key + "' is not of the expected type.");
-
-    return value.Get<T>();
+				*/
+    return NULL;
 }
 
 class ApiDispatcher
@@ -153,7 +153,7 @@ class ApiDispatcher
         std::tuple<Error, uint16_t> validateAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const rapidjson::Document &body);
 
         std::tuple<Error, uint16_t> sendBasicTransaction(
             const httplib::Request &req,
@@ -336,7 +336,7 @@ class ApiDispatcher
 
         /* Extracts {host, port, filename, password}, from body */
         std::tuple<std::string, uint16_t, std::string, std::string>
-            getDefaultWalletParams(const rapidjson::Document body) const;
+            getDefaultWalletParams(const rapidjson::Document &body) const;
 
         /* Assert the wallet is not a view only wallet */
         bool assertIsNotViewWallet() const;

@@ -10,13 +10,9 @@
 
 #include "IWallet.h"
 
-#include "json.hpp"
-
 #include <SubWallets/SubWallet.h>
 
 #include <WalletBackend/WalletBackend.h>
-
-using nlohmann::json;
 
 /* Tmp struct just used in serialization (See cpp for justification) */
 struct Transfer
@@ -31,20 +27,6 @@ struct TxPrivateKey
     Crypto::Hash txHash;
     Crypto::SecretKey txPrivateKey;
 };
-
-/* Transfer */
-void to_json(json &j, const Transfer &t);
-void from_json(const json &j, Transfer &t);
-
-void to_json(json &j, const TxPrivateKey &t);
-void from_json(const json &j, TxPrivateKey &t);
-
-namespace WalletTypes
-{
-    /* WalletTypes::Transaction */
-    void to_json(json &j, const WalletTypes::Transaction &t);
-    void from_json(const json &j, WalletTypes::Transaction &t);
-}
 
 std::vector<Transfer> transfersToVector(
     const std::unordered_map<Crypto::PublicKey, int64_t> transfers);

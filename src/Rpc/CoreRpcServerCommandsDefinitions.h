@@ -224,7 +224,7 @@ struct OutputEntry {
   /* Initializes the class from a json value */
   void fromJSON(const JSONValue &j) {
     global_amount_index = getUintFromJSON(j, "global_amount_index");
-    out_key.fromJSON(j, "out_key");
+    out_key.fromString(getStringFromJSON(j, "out_key"));
   }
 };
 #pragma pack(pop)

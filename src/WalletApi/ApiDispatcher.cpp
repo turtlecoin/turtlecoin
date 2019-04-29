@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-//#include "json.hpp"
+#include <JsonHelper.h>
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
@@ -299,7 +299,7 @@ void ApiDispatcher::middleware(
         writer.String(error.getErrorMessage());
         writer.EndObject();
 
-        res.set_content(string_buffer.GetString() + "\n", "application/json");
+        res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
         return;
     }
 
@@ -322,7 +322,7 @@ void ApiDispatcher::middleware(
             writer.String(error.getErrorMessage());
             writer.EndObject();
 
-            res.set_content(string_buffer.GetString() + "\n", "application/json");
+            res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
         }
         else
         {
@@ -394,8 +394,8 @@ std::tuple<Error, uint16_t> ApiDispatcher::keyImportWallet(
 
     const auto [daemonHost, daemonPort, filename, password] = getDefaultWalletParams(body);
 
-    const Crypto::SecretKey privateViewKey;
-    const Crypto::SecretKey privateSpendKey;
+    Crypto::SecretKey privateViewKey;
+    Crypto::SecretKey privateSpendKey;
     // retrieve strings form the JSON body and assign them to the SecretKey objects
     privateViewKey.fromString(tryGetJsonValue<std::string>(body, "privateViewKey"));
     privateSpendKey.fromString(tryGetJsonValue<std::string>(body, "privateSpendKey"));
@@ -454,7 +454,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewWallet(
     const auto [daemonHost, daemonPort, filename, password] = getDefaultWalletParams(body);
 
     const std::string address = tryGetJsonValue<std::string>(body, "address");
-    const Crypto::SecretKey privateViewKey;
+    Crypto::SecretKey privateViewKey;
     privateViewKey.fromString(tryGetJsonValue<std::string>(body, "privateViewKey"));
 
     uint64_t scanHeight = 0;
@@ -511,7 +511,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createAddress(
     publicSpendKey.toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 201};
 }
@@ -530,7 +530,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importAddress(
         scanHeight = tryGetJsonValue<uint64_t>(body, "scanHeight");
     }
 
-    const Crypto::SecretKey privateSpendKey;
+    Crypto::SecretKey privateSpendKey;
     privateSpendKey.fromString(tryGetJsonValue<std::string>(body, "privateSpendKey"));
 
     const auto [error, address] = m_walletBackend->importSubWallet(
@@ -549,7 +549,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importAddress(
 	writer.String(address);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 201};
 }
@@ -568,7 +568,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewAddress(
         scanHeight = tryGetJsonValue<uint64_t>(body, "scanHeight");
     }
 
-    const Crypto::PublicKey publicSpendKey;
+    Crypto::PublicKey publicSpendKey;
     publicSpendKey.fromString(tryGetJsonValue<std::string>(body, "publicSpendKey"));
 
     const auto [error, address] = m_walletBackend->importViewSubWallet(
@@ -587,7 +587,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewAddress(
 	writer.String(address);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 201};
 }
@@ -595,7 +595,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::importViewAddress(
 std::tuple<Error, uint16_t> ApiDispatcher::validateAddress(
     const Request &req,
     Response &res,
-    const nlohmann::json &body)
+    const rapidjson::Document &body)
 {
     const std::string address = tryGetJsonValue<std::string>(body, "address");
 
@@ -617,15 +617,22 @@ std::tuple<Error, uint16_t> ApiDispatcher::validateAddress(
 
     const auto [publicSpendKey, publicViewKey] = Utilities::addressToKeys(actualAddress);
 
-    nlohmann::json j {
-        {"isIntegrated", address.length() == WalletConfig::integratedAddressLength},
-        {"paymentID", paymentID},
-        {"actualAddress", actualAddress},
-        {"publicSpendKey", publicSpendKey},
-        {"publicViewKey", publicViewKey},
-    };
+    rapidjson::StringBuffer string_buffer;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+    writer.StartObject();
+    writer.Key("isIntegrated");
+    writer.Bool(address.length() == WalletConfig::integratedAddressLength);
+    writer.Key("paymentID");
+    writer.String(paymentID);
+    writer.Key("actualAddress");
+    writer.String(actualAddress);
+    writer.Key("publicSpendKey");
+    publicSpendKey.toJSON(writer);
+    writer.Key("publicViewKey");
+    publicViewKey.toJSON(writer);
+    writer.EndObject();
 
-    res.set_content(j.dump(4) + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -665,7 +672,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendBasicTransaction(
     hash.toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 201};
 }
@@ -675,14 +682,17 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     Response &res,
     const rapidjson::Document &body)
 {
-    const json destinationsJSON = tryGetJsonValue<json>(body, "destinations");
+    if(!body.HasMember("destinations"))
+        throw JsonException("\nBody contains no destinations.");
+
+    const auto destinationsJSON = getArrayFromJSON(body, "destinations");
 
     std::vector<std::pair<std::string, uint64_t>> destinations;
 
-    for (const auto destination : destinationsJSON)
+    for (const auto& destination : destinationsJSON)
     {
-        const std::string address = tryGetJsonValue<std::string>(destination, "address");
-        const uint64_t amount = tryGetJsonValue<uint64_t>(destination, "amount");
+        const std::string address = getStringFromJSON(destination, "address");
+        const uint64_t amount = getUint64FromJSON(destination, "amount");
         destinations.emplace_back(address, amount);
     }
 
@@ -707,16 +717,12 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     }
 
     std::vector<std::string> subWalletsToTakeFrom = {};
-    // retrieving an array from a rapidjson::Document is not as easy as it was with nlohmann
-    rapidjson::Value::MemberIterator itr = body.FindMember("sourceAddresses");
-    if (itr != body.MemberEnd()) {
-        rapidjson::Value& value = itr->value;
-        for (rapidjson::Value::ConstValueIterator it = value.Begin(); it != value.End(); ++it) {
-            if (!(*it).IsString()) // this is in case the array contains invalid values
-                throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
-            subWalletsToTakeFrom.push_back((*it).GetString());
-        }  
-    }
+
+		for (const auto &item : getArrayFromJSON(body, "sourceAddresses")) {
+			if (!item.IsString()) // this is in case the array contains invalid values
+				throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
+			subWalletsToTakeFrom.push_back(item.GetString());
+		}
 
     std::string paymentID;
 
@@ -756,7 +762,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     hash.toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -780,7 +786,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendBasicFusionTransaction(
     hash.toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 201};
 }
@@ -808,15 +814,11 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedFusionTransaction(
 
     std::vector<std::string> subWalletsToTakeFrom;
 
-    rapidjson::Value::MemberIterator itr = body.FindMember("sourceAddresses");
-    if (itr != body.MemberEnd()) {
-        rapidjson::Value& value = itr->value;
-        for (rapidjson::Value::ConstValueIterator it = value.Begin(); it != value.End(); ++it) {
-            if (!(*it).IsString())
-                throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
-            subWalletsToTakeFrom.push_back((*it).GetString());
-        }  
-    }
+		for (const auto &item : getArrayFromJSON(body, "sourceAddresses")) {
+			if (!item.IsString())
+				throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
+			subWalletsToTakeFrom.push_back(item.GetString());
+		}
 
     auto [error, hash] = m_walletBackend->sendFusionTransactionAdvanced(
         mixin, subWalletsToTakeFrom, destination
@@ -834,7 +836,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedFusionTransaction(
     hash.toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 201};
 }
@@ -955,7 +957,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getNodeInfo(
 	writer.String(nodeAddress);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -972,7 +974,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getPrivateViewKey(
     (m_walletBackend->getPrivateViewKey()).toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1007,7 +1009,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getSpendKeys(
     privateSpendKey.toJSON(writer);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1040,7 +1042,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getMnemonicSeed(
     writer.String(mnemonicSeed);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1071,7 +1073,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getStatus(
     writer.Bool(m_walletBackend->getWalletCount());
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1095,7 +1097,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getAddresses(
     writer.EndArray(adresses.size());
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1112,7 +1114,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getPrimaryAddress(
     writer.String(m_walletBackend->getPrimaryAddress());
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1145,7 +1147,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createIntegratedAddress(
     writer.String(integratedAddress);
 	writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1175,7 +1177,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactions(
     string_buffer.Clear();
     rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
     j.Accept(prettywriter);
-    res.set_content(string_buffer.GetString()+ "\n", "application/json");
+		res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1205,7 +1207,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getUnconfirmedTransactions(
     string_buffer.Clear();
     rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
     j.Accept(prettywriter);
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+		res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1257,7 +1259,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getUnconfirmedTransactionsForAddress(
     string_buffer.Clear();
     rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
     j.Accept(prettywriter);
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1297,7 +1299,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeight(
         string_buffer.Clear();
         rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
         j.Accept(prettywriter);
-        res.set_content(string_buffer.GetString() + "\n", "application/json");
+        res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
         return {SUCCESS, 200};
     }
@@ -1364,7 +1366,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeightToHeight(
         string_buffer.Clear();
         rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
         j.Accept(prettywriter);
-        res.set_content(string_buffer.GetString() + "\n", "application/json");
+        res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
         return {SUCCESS, 200};
     }
@@ -1445,7 +1447,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeightWithAddress(
         string_buffer.Clear();
         rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
         j.Accept(prettywriter);
-        res.set_content(string_buffer.GetString() + "\n", "application/json");
+        res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
         return {SUCCESS, 200};
     }
@@ -1541,7 +1543,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeightToHeightWith
         string_buffer.Clear();
         rapidjson::PrettyWriter<rapidjson::StringBuffer> prettywriter(string_buffer);
         j.Accept(prettywriter);
-        res.set_content(string_buffer.GetString() + "\n", "application/json");
+        res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
         return {SUCCESS, 200};
     }
@@ -1578,7 +1580,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionDetails(
             writer.Key("transaction");
             tx.toJSON(writer);
             writer.EndObject();
-            res.set_content(string_buffer.GetString() + "\n", "application/json");
+            res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
             return {SUCCESS, 200};
         }
@@ -1604,7 +1606,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getBalance(
     writer.Uint64(locked);
     writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1632,7 +1634,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getBalanceForAddress(
     writer.Uint64(locked);
     writer.EndObject();
     
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1664,7 +1666,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getBalances(
     }
     writer.EndArray();
     writer.EndObject();
-    res.set_content(string_buffer.GetString() + "\n", "application/json");
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
 }
@@ -1694,7 +1696,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTxPrivateKey(
     key.toJSON(writer);
     writer.EndObject();
 
-    res.set_content(string_buffer.GetString() + "\n", "application/json");*/
+    res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
     return {SUCCESS, 200};
 }
 
@@ -1736,7 +1738,7 @@ void ApiDispatcher::handleOptions(
 }
 
 std::tuple<std::string, uint16_t, std::string, std::string>
-    ApiDispatcher::getDefaultWalletParams(const rapidjson::Document body) const
+    ApiDispatcher::getDefaultWalletParams(const rapidjson::Document &body) const
 {
     std::string daemonHost = "127.0.0.1";
     uint16_t daemonPort = CryptoNote::RPC_DEFAULT_PORT;

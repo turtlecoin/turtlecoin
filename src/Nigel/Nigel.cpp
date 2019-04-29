@@ -84,7 +84,11 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
 
     writer.StartObject();
     writer.Key("blockHashCheckpoints");
-    blockHashcheckpoints.toJSON(writer);
+    writer.StartArray();
+    for (const auto &item : blockHashCheckpoints) {
+        item.toJSON(writer);
+    }
+    writer.EndArray();
     writer.Key("startHeight");
     writer.Uint64(startHeight);
     writer.Key("startTimestamp");
@@ -113,7 +117,7 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
 
             // cooler way to get an array and iterate through it
             for (auto& item : getArrayFromJSON(j, "items")) {
-                WalletBlockInfo wbi;
+                WalletTypes::WalletBlockInfo wbi;
                 wbi.fromJSON(item);
                 items.push_back(wbi);
             }
@@ -326,19 +330,19 @@ bool Nigel::getTransactionsStatus(
             transactionsInPool.clear();
             for (const auto& item : getArrayFromJSON(j, "transactionsInPool")) {
                 Crypto::Hash hash;
-                hash.fromJSON(item);
+                hash.fromString(item.GetString());
                 transactionsInPool.insert(hash);
             }
             transactionsInBlock.clear();
             for (const auto& item : getArrayFromJSON(j, "transactionsInBlock")) {
                 Crypto::Hash hash;
-                hash.fromJSON(item);
+                hash.fromString(item.GetString());
                 transactionsInBlock.insert(hash);
             }
             transactionsUnknown.clear();
             for (const auto& item : getArrayFromJSON(j, "transactionsUnknown")) {
                 Crypto::Hash hash;
-                hash.fromJSON(item);
+                hash.fromString(item.GetString());
                 transactionsUnknown.insert(hash);
             }
 
@@ -385,7 +389,7 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
 
             std::vector<CryptoNote::RandomOuts> outs;
             for (const auto &x : getArrayFromJSON(j, "outs")) {
-                RandomOuts ro;
+                CryptoNote::RandomOuts ro;
                 ro.fromJSON(x);
                 outs.push_back(ro);
             }
@@ -409,7 +413,7 @@ std::tuple<bool, bool> Nigel::sendTransaction(
     writer.StartObject();
     writer.Key("tx_as_hex");
     writer.StartArray();
-    for (const auto& item : Common::toHex(CryptoNote::toBinaryArray(tx)) {
+    for (const auto& item : Common::toHex(CryptoNote::toBinaryArray(tx))) {
         writer.Uint(item);
     }
     writer.EndArray();
@@ -446,11 +450,6 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
         const uint64_t startHeight,
         const uint64_t endHeight) const
 {
-    json j = {
-        {"startHeight", startHeight},
-        {"endHeight", endHeight}
-    };
-
     rapidjson::StringBuffer string_buffer;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 
@@ -479,11 +478,11 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
             for (const auto &index : getArrayFromJSON(j, "indexes")) {
                 // get hash
                 Crypto::Hash hash;
-                hash.fromJSON(getJsonValue(j, "key"));
+                hash.fromString(getStringFromJSON(j, "key"));
                 // get vector
                 std::vector<uint64_t> vec;
-                for (uint64_t x : getArrayFromJSON(j, "value")) {
-                    vec.push_back(getUint64FromJSON(x));
+                for (const auto& x : getArrayFromJSON(j, "value")) {
+                    vec.push_back(x.GetUint64());
                 }
                 // set result
                 result[hash] = vec;

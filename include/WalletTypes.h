@@ -82,10 +82,10 @@ namespace WalletTypes
             writer.EndArray();
             
             writer.Key("hash");
-            hash.toJSON();
+            hash.toJSON(writer);
 
             writer.Key("txPublicKey");
-            transactionPublicKey.toJSON();
+            transactionPublicKey.toJSON(writer);
 
             writer.Key("unlockTime");
             writer.Uint64(unlockTime);
@@ -130,10 +130,10 @@ namespace WalletTypes
             writer.EndArray();
             
             writer.Key("hash");
-            hash.toJSON();
+            hash.toJSON(writer);
 
             writer.Key("txPublicKey");
-            transactionPublicKey.toJSON();
+            transactionPublicKey.toJSON(writer);
 
             writer.Key("unlockTime");
             writer.Uint64(unlockTime);
@@ -154,12 +154,12 @@ namespace WalletTypes
         /* Initializes the class from a json value */
         void fromJSON(const JSONValue &j)
         {
-            r.keyOutputs = j.at("outputs").get<std::vector<KeyOutput>>();
+            /*r.keyOutputs = j.at("outputs").get<std::vector<KeyOutput>>();
             r.hash = j.at("hash").get<Crypto::Hash>();
             r.transactionPublicKey = j.at("txPublicKey").get<Crypto::PublicKey>();
             r.unlockTime = j.at("unlockTime").get<uint64_t>();
             r.paymentID = j.at("paymentID").get<std::string>();
-            r.keyInputs = j.at("inputs").get<std::vector<CryptoNote::KeyInput>>();
+            r.keyInputs = j.at("inputs").get<std::vector<CryptoNote::KeyInput>>();*/
 
             keyOutputs.clear();
             for (const auto &x : getArrayFromJSON(j, "outputs")) {
@@ -175,8 +175,8 @@ namespace WalletTypes
 
             keyInputs.clear();
             for (const auto &x : getArrayFromJSON(j, "outputs")) {
-                KeyInput keyInput;
-                KeyInput.fromJSON(x);
+                CryptoNote::KeyInput keyInput;
+                keyInput.fromJSON(x);
                 keyInputs.push_back(keyInput);
             }
         }
@@ -204,7 +204,7 @@ namespace WalletTypes
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.StartObject();
-            writer.Key("coinbaseTX")
+            writer.Key("coinbaseTX");
             coinbaseTransaction.toJSON(writer);
 
             writer.Key("transactions");
@@ -229,11 +229,11 @@ namespace WalletTypes
         /* Initializes the class from a json value */
         void fromJSON(const JSONValue &j)
         {
-            w.coinbaseTransaction = j.at("coinbaseTX").get<RawCoinbaseTransaction>();
+            /*w.coinbaseTransaction = j.at("coinbaseTX").get<RawCoinbaseTransaction>();
             w.transactions = j.at("transactions").get<std::vector<RawTransaction>>();
             w.blockHeight = j.at("blockHeight").get<uint64_t>();
             w.blockHash = j.at("blockHash").get<Crypto::Hash>();
-            w.blockTimestamp = j.at("blockTimestamp").get<uint64_t>();
+            w.blockTimestamp = j.at("blockTimestamp").get<uint64_t>();*/
 
             coinbaseTransaction.fromJSON(getJsonValue(j, "transactions"));
 
@@ -241,11 +241,11 @@ namespace WalletTypes
             for (const auto &item : getArrayFromJSON(j, "transfers")) {
                 RawTransaction tx;
                 tx.fromJSON(item);
-                transactions.push_back(transaction);
+                transactions.push_back(tx);
             }
 
             blockHeight = getUint64FromJSON(j, "blockHeight");
-            blockHash.fromJSON(getJsonValue(j, "blockHash"));
+            blockHash.fromString(getStringFromJSON(j, "blockHash"));
             blockTimestamp = getUint64FromJSON(j, "blockTimestamp");
         }
     };

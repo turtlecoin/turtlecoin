@@ -362,10 +362,10 @@ std::vector<AddressBookEntry> getAddressBook()
         rapidjson::Document d;
         d.ParseStream(isw);
         // d should be an array
-        for (rapidjson::Value::ConstValueIterator it = d.Begin(); it != d.End(); ++it) {
-			AddressBookEntry addressBookEntry((*it)["friendlyName"].GetString(),
-                                              (*it)["address"].GetString()
-                                              (*it)["paymentID"].GetString());
+        for (const auto& item : d.GetArray()) {
+            AddressBookEntry addressBookEntry(item["friendlyName"].GetString(),
+                                              item["address"].GetString(),
+                                              item["paymentID"].GetString());
 			addressBook.push_back(addressBookEntry);
         }
     }
@@ -385,14 +385,14 @@ bool saveAddressBook(const std::vector<AddressBookEntry> addressBook)
         std::vector<AddressBookEntry>::iterator it;
 
         writer.StartArray();
-        for(it = addressBook.begin(); it != addressBook.end(); it++) {
+        for (const auto& item : addressBook) {
             writer.StartObject();
             writer.Key("friendlyName");
-            writer.String((*it).friendlyName);
+            writer.String(item.friendlyName);
             writer.Key("address");
-            writer.String((*it).address);
+            writer.String(item.address);
             writer.Key("paymentID");
-            writer.String((*it).paymentID);
+            writer.String(item.paymentID);
             writer.EndObject();
         }
         writer.EndArray();
