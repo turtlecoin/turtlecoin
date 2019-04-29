@@ -21,6 +21,8 @@
 
 #include "DBUtils.h"
 
+#include <config/Constants.h>
+
 using namespace CryptoNote;
 
 
@@ -118,7 +120,7 @@ BlockchainReadBatch& BlockchainReadBatch::requestTransactionCountByPaymentId(con
 }
 
 BlockchainReadBatch& BlockchainReadBatch::requestTransactionHashByPaymentId(const Crypto::Hash& paymentId, uint32_t transactionIndexWithinPaymentId) {
-  state.transactionHashesByPaymentIds.emplace(std::make_pair(paymentId, transactionIndexWithinPaymentId), NULL_HASH);
+  state.transactionHashesByPaymentIds.emplace(std::make_pair(paymentId, transactionIndexWithinPaymentId), Constants::NULL_HASH);
   return *this;
 }
 

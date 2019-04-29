@@ -185,7 +185,7 @@ namespace CryptoNote {
   }
 
   PublicKey TransactionImpl::getTransactionPublicKey() const {
-    PublicKey pk(NULL_PUBLIC_KEY);
+    PublicKey pk(Constants::NULL_PUBLIC_KEY);
     extra.getPublicKey(pk);
     return pk;
   }

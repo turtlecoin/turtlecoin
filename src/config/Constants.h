@@ -2,6 +2,10 @@
 // 
 // Please see the included LICENSE file for more information.
 
+#pragma once
+
+#include <CryptoTypes.h>
+
 #include <vector>
 
 namespace Constants
@@ -39,4 +43,25 @@ namespace Constants
 
     /* Indicates the following data is an extra nonce */
     const uint8_t TX_EXTRA_NONCE_IDENTIFIER = 0x02;
+
+    const Crypto::Hash NULL_HASH = Crypto::Hash({
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    });
+
+    const Crypto::PublicKey NULL_PUBLIC_KEY = Crypto::PublicKey({
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    });
+
+    const Crypto::SecretKey NULL_SECRET_KEY = Crypto::SecretKey({
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+    });
 }

@@ -17,16 +17,19 @@
 
 #pragma once
 
-#include <limits>
-#include "Common/MemoryInputStream.h"
-#include "Common/StringTools.h"
-#include "Common/VectorOutputStream.h"
-#include "Serialization/BinaryOutputStreamSerializer.h"
-#include "Serialization/BinaryInputStreamSerializer.h"
-#include <config/CryptoNoteConfig.h>
-#include <Serialization/SerializationTools.h>
-#include <Serialization/CryptoNoteSerialization.h>
+#include <Common/MemoryInputStream.h>
+#include <Common/StringTools.h>
+#include <Common/VectorOutputStream.h>
 
+#include <config/CryptoNoteConfig.h>
+#include <config/Constants.h>
+
+#include <limits>
+
+#include <Serialization/BinaryOutputStreamSerializer.h>
+#include <Serialization/BinaryInputStreamSerializer.h>
+#include <Serialization/CryptoNoteSerialization.h>
+#include <Serialization/SerializationTools.h>
 
 namespace CryptoNote {
 
@@ -56,7 +59,7 @@ template<class T>
 bool getObjectHash(const T& object, Crypto::Hash& hash) {
   BinaryArray ba;
   if (!toBinaryArray(object, ba)) {
-    hash = NULL_HASH;
+    hash = Constants::NULL_HASH;
     return false;
   }
 
@@ -68,7 +71,7 @@ template<class T>
 bool getObjectHash(const T& object, Crypto::Hash& hash, size_t& size) {
   BinaryArray ba;
   if (!toBinaryArray(object, ba)) {
-    hash = NULL_HASH;
+    hash = Constants::NULL_HASH;
     size = (std::numeric_limits<size_t>::max)();
     return false;
   }

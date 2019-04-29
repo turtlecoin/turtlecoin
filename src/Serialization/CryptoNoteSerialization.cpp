@@ -34,9 +34,6 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <CryptoNoteCore/Account.h>
-#include <CryptoNoteCore/CryptoNoteFormatUtils.h>
-
 #include <Common/CryptoNoteTools.h>
 #include <Common/TransactionExtra.h>
 

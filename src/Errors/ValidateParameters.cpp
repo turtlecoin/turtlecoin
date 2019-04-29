@@ -19,8 +19,6 @@ extern "C"
 #include <Common/TransactionExtra.h>
 #include <Common/CryptoNoteTools.h>
 
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-
 #include <regex>
 
 #include <Utilities/Addresses.h>
