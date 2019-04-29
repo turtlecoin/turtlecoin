@@ -40,15 +40,15 @@ enum WalletState
 template<typename T>
 T tryGetJsonValue(const rapidjson::Document &body, const std::string key)
 {
-    /*rapidjson::Value::ConstMemberIterator itr = body.FindMember(key);
+    rapidjson::Value::ConstMemberIterator itr = body.FindMember(key);
     if (itr == body.MemberEnd()) // value doesn't exist
         throw JsonException("\nExpected json parameter '" + key + "' does not exist.");
 
-		const rapidjson::Value& value = itr->value;
+	const rapidjson::Value& value = itr->value;
     if (!value.Is<T>()) // value is not the expected type
         throw JsonException("\nJson parameter '" + key + "' is not of the expected type.");
-				*/
-    return NULL;
+				
+    return value.Get<T>();
 }
 
 class ApiDispatcher

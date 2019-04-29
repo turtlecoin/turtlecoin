@@ -924,7 +924,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::setNodeInfo(
     std::scoped_lock lock(m_mutex);
 
     const std::string daemonHost = tryGetJsonValue<std::string>(body, "daemonHost");
-    const uint16_t daemonPort = tryGetJsonValue<uint16_t>(body, "daemonPort");
+    const uint16_t daemonPort = tryGetJsonValue<uint64_t>(body, "daemonPort");
 
     m_walletBackend->swapNode(daemonHost, daemonPort);
 
@@ -1753,7 +1753,7 @@ std::tuple<std::string, uint16_t, std::string, std::string>
 
     if (body.HasMember("daemonPort"))
     {
-        daemonPort = tryGetJsonValue<uint16_t>(body, "daemonPort");
+        daemonPort = tryGetJsonValue<uint64_t>(body, "daemonPort");
     }
 
     return {daemonHost, daemonPort, filename, password};
