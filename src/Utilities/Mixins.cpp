@@ -13,6 +13,8 @@
 
 #include <tuple>
 
+#include <Wallet/WalletErrors.h>
+
 namespace Utilities
 {
     /* Returns {minMixin, maxMixin, defaultMixin} */
@@ -65,12 +67,12 @@ namespace Utilities
         if (mixin < minMixin)
         {
             str << "Mixin of " << mixin << " under minimum mixin threshold of " << minMixin;
-            return {false, str.str(), std::error_code()};
+            return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_BELOW_THRESHOLD)};
         }
         else if (mixin > maxMixin)
         {
             str << "Mixin of " << mixin << " above maximum mixin threshold of " << maxMixin;
-            return {false, str.str(), std::error_code()};
+            return {false, str.str(), make_error_code(CryptoNote::error::MIXIN_ABOVE_THRESHOLD)};
         }
 
         return {true, std::string(), std::error_code()};
