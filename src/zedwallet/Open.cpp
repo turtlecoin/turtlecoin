@@ -20,6 +20,7 @@
 #include <zedwallet/Types.h>
 #include <zedwallet/PasswordContainer.h>
 #include <config/WalletConfig.h>
+#include <config/Constants.h>
 
 std::shared_ptr<WalletInfo> createViewWallet(CryptoNote::WalletGreen &wallet)
 {
@@ -225,7 +226,7 @@ std::shared_ptr<WalletInfo> openWallet(CryptoNote::WalletGreen &wallet,
 
             bool viewWallet = false;
 
-            if (privateSpendKey == CryptoNote::NULL_SECRET_KEY)
+            if (privateSpendKey == Constants::NULL_SECRET_KEY)
             {
                 std::cout << std::endl
                           << InformationMsg("Your view only wallet ")

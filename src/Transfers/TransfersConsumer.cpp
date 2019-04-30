@@ -16,6 +16,8 @@
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
 #include "CryptoNoteCore/TransactionApi.h"
 
+#include <config/Constants.h>
+
 #include "IWallet.h"
 #include "INode.h"
 #include <future>
@@ -243,7 +245,7 @@ uint32_t TransfersConsumer::onNewBlocks(const CompleteBlock* blocks, uint32_t st
 
       for (const auto& tx : blocks[i].transactions) {
         auto pubKey = tx->getTransactionPublicKey();
-        if (pubKey == NULL_PUBLIC_KEY) {
+        if (pubKey == Constants::NULL_PUBLIC_KEY) {
           ++blockInfo.transactionIndex;
           continue;
         }
@@ -345,7 +347,7 @@ uint32_t TransfersConsumer::onNewBlocks(const CompleteBlock* blocks, uint32_t st
   if (processedBlockCount < count) {
     uint32_t detachIndex = startHeight + processedBlockCount;
     m_logger(ERROR, BRIGHT_RED) << "Not all block transactions are processed, fully processed block count: " << processedBlockCount << " of " << count <<
-        ", last processed block hash " << (processedBlockCount > 0 ? blocks[processedBlockCount - 1].blockHash : NULL_HASH) <<
+        ", last processed block hash " << (processedBlockCount > 0 ? blocks[processedBlockCount - 1].blockHash : Constants::NULL_HASH) <<
         ", detach block index " << detachIndex << " to remove partially processed block";
     forEachSubscription([detachIndex](TransfersSubscription& sub) {
         sub.onBlockchainDetach(detachIndex);

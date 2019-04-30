@@ -100,8 +100,8 @@ void NodeRpcProxy::resetInternalState() {
   lastLocalBlockHeaderInfo.majorVersion = 0;
   lastLocalBlockHeaderInfo.minorVersion = 0;
   lastLocalBlockHeaderInfo.timestamp = 0;
-  lastLocalBlockHeaderInfo.hash = CryptoNote::NULL_HASH;
-  lastLocalBlockHeaderInfo.prevHash = CryptoNote::NULL_HASH;
+  lastLocalBlockHeaderInfo.hash = Constants::NULL_HASH;
+  lastLocalBlockHeaderInfo.prevHash = Constants::NULL_HASH;
   lastLocalBlockHeaderInfo.nonce = 0;
   lastLocalBlockHeaderInfo.isAlternative = false;
   lastLocalBlockHeaderInfo.depth = 0;
