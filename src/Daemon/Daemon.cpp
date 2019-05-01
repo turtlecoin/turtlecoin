@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018, The Karai Developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2019, The CyprusCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -312,7 +313,7 @@ int main(int argc, char* argv[])
     netNodeConfig.init(config.p2pInterface, config.p2pPort, config.p2pExternalPort, config.localIp,
       config.hideMyPort, config.dataDirectory, config.peers,
       config.exclusiveNodes, config.priorityNodes,
-      config.seedNodes);
+      config.seedNodes, config.p2pResetPeerstate);
 
     if (!Tools::create_directories_if_necessary(dbConfig.getDataDir()))
     {
