@@ -1,19 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-//
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2018-2019 Galaxia Project Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 
 #pragma once
 
@@ -35,7 +22,9 @@ enum class BlockValidationError {
   BLOCK_REWARD_MISMATCH,
   CHECKPOINT_BLOCK_HASH_MISMATCH,
   PROOF_OF_WORK_TOO_WEAK,
-  TRANSACTION_ABSENT_IN_POOL
+  TRANSACTION_ABSENT_IN_POOL,
+  TRANSACTION_DUPLICATES,
+  TRANSACTION_INCONSISTENCY
 };
 
 // custom category:
@@ -67,6 +56,8 @@ public:
       case BlockValidationError::CHECKPOINT_BLOCK_HASH_MISMATCH: return "Checkpoint block hash mismatch";
       case BlockValidationError::PROOF_OF_WORK_TOO_WEAK: return "Proof of work is too weak";
       case BlockValidationError::TRANSACTION_ABSENT_IN_POOL: return "Block's transaction is absent in transaction pool";
+      case BlockValidationError::TRANSACTION_DUPLICATES: return "Block contains duplicate transaction hashes";
+      case BlockValidationError::TRANSACTION_INCONSISTENCY: return "Block contains inconsisten transaction hashes";
       default: return "Unknown error";
     }
   }

@@ -411,6 +411,13 @@ void SubWallets::storeTransactionInput(
     /* Check it exists */
     if (it != m_subWallets.end())
     {
+        if (!m_isViewWallet)
+        {
+            /* Add the new key image to the store, so we can detect when we
+               spent a key image easily */
+            m_keyImageOwners[input.keyImage] = publicSpendKey;
+        }
+
         /* If we have a view wallet, don't attempt to derive the key image */
         return it->second.storeTransactionInput(input, m_isViewWallet);
     }
@@ -421,20 +428,11 @@ void SubWallets::storeTransactionInput(
 std::tuple<bool, Crypto::PublicKey>
     SubWallets::getKeyImageOwner(const Crypto::KeyImage keyImage) const
 {
-    /* View wallet can't generate key images */
-    if (m_isViewWallet)
-    {
-        return {false, Crypto::PublicKey()};
-    }
+    const auto it = m_keyImageOwners.find(keyImage);
 
-    std::scoped_lock lock(m_mutex);
-
-    for (const auto & [publicKey, subWallet] : m_subWallets)
+    if (it != m_keyImageOwners.end())
     {
-        if (subWallet.hasKeyImage(keyImage))
-        {
-            return {true, subWallet.publicSpendKey()};
-        }
+        return {true, it->second};
     }
 
     return {false, Crypto::PublicKey()};
@@ -566,7 +564,7 @@ std::tuple<std::vector<WalletTypes::TxInputAndOwner>, uint64_t, uint64_t>
     {
         /* Find out how many digits the amount has, i.e. 1337 has 4 digits,
            420 has 3 digits */
-        int numberOfDigits = log10(walletAmount.input.amount);
+        int numberOfDigits = floor(log10(walletAmount.input.amount)) + 1;
 
         /* Insert the amount into the correct bucket */
         buckets[numberOfDigits].push_back(walletAmount);
@@ -656,7 +654,7 @@ std::vector<std::string> SubWallets::getAddresses() const
 {
     std::vector<std::string> addresses;
 
-    for (const auto [pubKey, subWallet] : m_subWallets)
+    for (const auto &[pubKey, subWallet] : m_subWallets)
     {
         addresses.push_back(subWallet.address());
     }
@@ -688,7 +686,7 @@ std::tuple<uint64_t, uint64_t> SubWallets::getBalance(
 
     uint64_t lockedBalance = 0;
 
-    for (const auto pubKey : subWalletsToTakeFrom)
+    for (const auto &pubKey : subWalletsToTakeFrom)
     {
         const auto [unlocked, locked] = m_subWallets.at(pubKey).getBalance(currentHeight);
 
@@ -848,7 +846,7 @@ std::vector<Crypto::SecretKey> SubWallets::getPrivateSpendKeys() const
 {
     std::vector<Crypto::SecretKey> spendKeys;
 
-    for (const auto [pubKey, subWallet] : m_subWallets)
+    for (const auto &[pubKey, subWallet] : m_subWallets)
     {
         spendKeys.push_back(subWallet.privateSpendKey());
     }
@@ -940,7 +938,7 @@ void SubWallets::convertSyncTimestampToHeight(
 {
     std::scoped_lock lock(m_mutex);
 
-    for (auto [pubKey, subWallet] : m_subWallets)
+    for (auto &[pubKey, subWallet] : m_subWallets)
     {
         subWallet.convertSyncTimestampToHeight(timestamp, height);
     }
@@ -951,14 +949,22 @@ std::vector<std::tuple<std::string, uint64_t, uint64_t>> SubWallets::getBalances
 {
     std::vector<std::tuple<std::string, uint64_t, uint64_t>> balances;
 
-    for (auto [pubKey, subWallet] : m_subWallets)
+    for (const auto &[pubKey, subWallet] : m_subWallets)
     {
-        const auto [unlocked, locked] = m_subWallets.at(pubKey).getBalance(currentHeight);
+        const auto [unlocked, locked] = subWallet.getBalance(currentHeight);
 
         balances.emplace_back(subWallet.address(), unlocked, locked);
     }
 
     return balances;
+}
+
+void SubWallets::pruneSpentInputs(const uint64_t pruneHeight)
+{
+    for (auto &[pubKey, subWallet] : m_subWallets)
+    {
+        subWallet.pruneSpentInputs(pruneHeight);
+    }
 }
 
 void SubWallets::fromJSON(const JSONObject &j)
@@ -975,6 +981,18 @@ void SubWallets::fromJSON(const JSONObject &j)
         SubWallet s;
         s.fromJSON(x);
         m_subWallets[s.publicSpendKey()] = s;
+
+        /* Load the key images hashmap from the loaded subwallets */
+        if (!m_isViewWallet)
+        {
+            for (const auto &[pubKey, subWallet] : m_subWallets)
+            {
+                for (const auto &keyImage : subWallet.getKeyImages())
+                {
+                    m_keyImageOwners[keyImage] = pubKey;
+                }
+            }
+        }
     }
 
     for (const auto &x : getArrayFromJSON(j, "transactions"))
@@ -988,7 +1006,7 @@ void SubWallets::fromJSON(const JSONObject &j)
     {
         WalletTypes::Transaction tx;
         tx.fromJSON(x);
-        m_transactions.push_back(tx);
+        m_lockedTransactions.push_back(tx);
     }
 
     m_privateViewKey.fromString(getStringFromJSON(j, "privateViewKey"));

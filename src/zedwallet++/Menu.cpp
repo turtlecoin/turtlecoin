@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -148,11 +148,11 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend)
         /* User wants to try a different node */
         else if (command == "swap_node")
         {
-            const auto [host, port] = getDaemonAddress();
+            const auto [host, port, ssl] = getDaemonAddress();
 
             std::cout << InformationMsg("\nSwapping node, this may take some time...\n");
 
-            walletBackend->swapNode(host, port);
+            walletBackend->swapNode(host, port, ssl);
 
             std::cout << SuccessMsg("Node swap complete.\n\n");
 

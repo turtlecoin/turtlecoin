@@ -15,14 +15,17 @@
 #include <iostream>
 
 #include <Utilities/ColouredMsg.h>
+#include <Utilities/Input.h>
+#include <Utilities/String.h>
+
 #include <zedwallet++/GetInput.h>
 #include <zedwallet++/Transfer.h>
 #include <zedwallet++/Utilities.h>
 
-#include "rapidjson/document.h"
-#include "rapidjson/istreamwrapper.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/prettywriter.h>
+
 
 const std::string getAddressBookName(const std::vector<AddressBookEntry> addressBook)
 {
@@ -35,7 +38,7 @@ const std::string getAddressBookName(const std::vector<AddressBookEntry> address
 
         std::getline(std::cin, friendlyName);
 
-        Common::trim(friendlyName);
+        Utilities::trim(friendlyName);
 
         const auto it = std::find(addressBook.begin(), addressBook.end(),
                                   AddressBookEntry(friendlyName));
@@ -126,7 +129,7 @@ const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
 
         std::getline(std::cin, friendlyName);
 
-        Common::trim(friendlyName);
+        Utilities::trim(friendlyName);
 
         /* \n == no-op */
         if (friendlyName == "")
@@ -190,7 +193,7 @@ const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
                       << std::endl << std::endl;
         }
 
-        const bool list = ZedUtilities::confirm(
+        const bool list = Utilities::confirm(
             "Would you like to list everyone in your address book?"
         );
 
@@ -276,7 +279,7 @@ void deleteFromAddressBook()
 
         std::getline(std::cin, friendlyName);
 
-        Common::trim(friendlyName);
+        Utilities::trim(friendlyName);
 
         if (friendlyName == "cancel")
         {
@@ -306,7 +309,7 @@ void deleteFromAddressBook()
                   << InformationMsg(friendlyName)
                   << WarningMsg(" in your address book!\n\n");
 
-        const bool list = ZedUtilities::confirm(
+        const bool list = Utilities::confirm(
             "Would you like to list everyone in your address book?"
         );
 
@@ -357,16 +360,19 @@ std::vector<AddressBookEntry> getAddressBook()
     std::vector<AddressBookEntry> addressBook;
     std::ifstream input(WalletConfig::addressBookFilename);
 
-    if (input) {
+    /* If file exists, read current values */
+    if (input)
+    {
         rapidjson::IStreamWrapper isw(input);
-        rapidjson::Document d;
-        d.ParseStream(isw);
-        // d should be an array
-        for (const auto& item : d.GetArray()) {
-            AddressBookEntry addressBookEntry(item["friendlyName"].GetString(),
-                                              item["address"].GetString(),
-                                              item["paymentID"].GetString());
-			addressBook.push_back(addressBookEntry);
+        rapidjson::Document j;
+        if(!j.ParseStream(isw).HasParseError())
+        {
+            for (auto& v : j.GetArray())
+            {
+                AddressBookEntry entry;
+                entry.fromJSON(v);
+                addressBook.push_back(entry);
+            }
         }
     }
 
@@ -375,29 +381,19 @@ std::vector<AddressBookEntry> getAddressBook()
 
 bool saveAddressBook(const std::vector<AddressBookEntry> addressBook)
 {
-    rapidjson::StringBuffer string_buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
-
     std::ofstream output(WalletConfig::addressBookFilename);
 
     if (output)
     {
-        std::vector<AddressBookEntry>::iterator it;
-
+        rapidjson::OStreamWrapper osw(output);
+        rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
         writer.StartArray();
-        for (const auto& item : addressBook) {
-            writer.StartObject();
-            writer.Key("friendlyName");
-            writer.String(item.friendlyName);
-            writer.Key("address");
-            writer.String(item.address);
-            writer.Key("paymentID");
-            writer.String(item.paymentID);
-            writer.EndObject();
+        for(auto &entry : addressBook)
+        {
+            entry.toJSON(writer);
         }
         writer.EndArray();
-        
-        output << std::setw(4) << string_buffer.GetString() << std::endl;
+        writer.Flush();
     }
     else
     {

@@ -30,6 +30,7 @@ public:
 
   virtual void pushBlock(const RawBlock& rawBlock) override;
   virtual void popBlock() override;
+  void rewindTo(const uint32_t index) const override;
 
   virtual RawBlock getBlockByIndex(uint32_t index) const override;
   virtual uint32_t getBlockCount() const override;

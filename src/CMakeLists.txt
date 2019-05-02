@@ -9,6 +9,8 @@ include_directories(${CMAKE_SOURCE_DIR}/external/nlohmann-json)
 include_directories(${CMAKE_SOURCE_DIR}/external/rapidjson)
 include_directories(${CMAKE_SOURCE_DIR}/external/cxxopts)
 include_directories(${CMAKE_SOURCE_DIR}/external/cryptopp)
+include_directories(${CMAKE_SOURCE_DIR}/external/sqlite3)
+include_directories(${CMAKE_SOURCE_DIR}/external/lz4)
 
 # Show cmake where the source files are
 # Note, if you add remove a source file, you will need to re-run cmake so it
@@ -110,6 +112,9 @@ if(MSVC)
     target_link_libraries(System ws2_32)
     target_link_libraries(TurtleCoind Rpcrt4)
     target_link_libraries(service Rpcrt4)
+    target_link_libraries(zedwallet++ ws2_32 advapi32 crypt32 gdi32 user32)
+    target_link_libraries(WalletApi ws2_32 advapi32 crypt32 gdi32 user32)
+    target_link_libraries(miner ws2_32 advapi32 crypt32 gdi32 user32)
 endif ()
 
 # A bit of hackery so we don't have to do the if/else/ for every target that
@@ -124,14 +129,14 @@ elseif (UNIX)
 endif()
 
 if(MSVC)
-	target_link_libraries(TurtleCoind System CryptoNoteCore rocksdb ${Boost_LIBRARIES})
+    target_link_libraries(TurtleCoind System CryptoNoteCore rocksdb lz4 sqlite3 ${Boost_LIBRARIES})
 else()
-	target_link_libraries(TurtleCoind System CryptoNoteCore rocksdblib ${Boost_LIBRARIES})
+    target_link_libraries(TurtleCoind System CryptoNoteCore rocksdblib lz4 sqlite3 ${Boost_LIBRARIES})
 endif()
 
 # Add the dependencies we need
 target_link_libraries(Common __filesystem)
-target_link_libraries(CryptoNoteCore Common Logging Crypto P2P Rpc Http Serialization System ${Boost_LIBRARIES})
+target_link_libraries(CryptoNoteCore Common Logging Crypto P2P Rpc Http Serialization System sqlite3 ${Boost_LIBRARIES})
 target_link_libraries(cryptotest Crypto Common)
 target_link_libraries(Errors Crypto SubWallets)
 target_link_libraries(Logging Common)
@@ -140,13 +145,20 @@ target_link_libraries(Nigel Errors)
 target_link_libraries(P2P CryptoNoteCore upnpc-static)
 target_link_libraries(Rpc P2P Utilities)
 target_link_libraries(service JsonRpcServer Wallet Mnemonics Errors)
-target_link_libraries(SubWallets Utilities CryptoNoteCore)
+target_link_libraries(SubWallets Utilities CryptoNoteCore Logger)
 target_link_libraries(Wallet NodeRpcProxy Transfers CryptoNoteCore Common ${Boost_LIBRARIES})
 target_link_libraries(WalletApi WalletBackend)
 target_link_libraries(WalletBackend Mnemonics CryptoNoteCore Nigel cryptopp-static __filesystem Utilities SubWallets Logger)
 target_link_libraries(WalletService Mnemonics)
 target_link_libraries(zedwallet Mnemonics Wallet Errors Utilities)
 target_link_libraries(zedwallet++ WalletBackend)
+
+if(OPENSSL_FOUND)
+  target_link_libraries(miner ${OPENSSL_LIBRARIES})
+  target_link_libraries(Nigel ${OPENSSL_LIBRARIES})
+  target_link_libraries(WalletApi ${OPENSSL_LIBRARIES})
+  target_link_libraries(zedwallet++ ${OPENSSL_LIBRARIES})
+endif()
 
 # Add dependencies means we have to build the latter before we build the former
 # In this case it's because we need to have the current version name rather

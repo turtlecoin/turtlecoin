@@ -61,7 +61,7 @@ void addPortMapping(Logging::LoggerRef& logger, uint32_t port) {
   // Add UPnP port mapping
   logger(INFO) << "Attempting to add IGD port mapping.";
   int result;
-  UPNPDev* deviceList = upnpDiscover(1000, NULL, NULL, 0, 0, &result);
+  UPNPDev* deviceList = upnpDiscover(1000, NULL, NULL, 0, 0, 2, &result);
   UPNPUrls urls;
   IGDdatas igdData;
   char lanAddress[64];

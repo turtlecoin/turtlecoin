@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -13,6 +13,7 @@
 
 #include <unordered_map>
 #include <optional>
+#include <string>
 
 namespace WalletTypes
 {
@@ -43,12 +44,18 @@ namespace WalletTypes
         void fromJSON(const JSONValue &j) {
             key.fromString(getStringFromJSON(j, "key"));
             amount = getUint64FromJSON(j, "amount");
+            /* If we're talking to a daemon or blockchain cache
+            that returns the globalIndex as part of the structure
+            of a key output, then we need to load that into the
+            data structure. */
+            if (j.HasMember("globalIndex"))
+                globalOutputIndex = getUint64FromJSON(j, "globalIndex");
         }
     };
 
     /* A coinbase transaction (i.e., a miner reward, there is one of these in
-       every block). Coinbase transactions have no inputs. 
-       
+       every block). Coinbase transactions have no inputs.
+
        We call this a raw transaction, because it is simply key images and
        amounts */
     struct RawCoinbaseTransaction
@@ -103,7 +110,15 @@ namespace WalletTypes
             }
             hash.fromString(getStringFromJSON(j, "hash"));
             transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
-            unlockTime = getUint64FromJSON(j, "unlockTime");
+            /* We need to try to get the unlockTime from an integer in the json
+            however, if that fails because we're talking to a blockchain
+            cache API that encodes unlockTime as a string (due to json
+            integer encoding limits), we need to attempt this as a string */
+            try {
+                unlockTime = getUint64FromJSON(j, "unlockTime");
+            } catch (const std::invalid_argument &e) {
+                unlockTime = std::stoull(getStringFromJSON(j, "unlockTime"));
+            }
         }
     };
 
@@ -154,13 +169,6 @@ namespace WalletTypes
         /* Initializes the class from a json value */
         void fromJSON(const JSONValue &j)
         {
-            /*r.keyOutputs = j.at("outputs").get<std::vector<KeyOutput>>();
-            r.hash = j.at("hash").get<Crypto::Hash>();
-            r.transactionPublicKey = j.at("txPublicKey").get<Crypto::PublicKey>();
-            r.unlockTime = j.at("unlockTime").get<uint64_t>();
-            r.paymentID = j.at("paymentID").get<std::string>();
-            r.keyInputs = j.at("inputs").get<std::vector<CryptoNote::KeyInput>>();*/
-
             keyOutputs.clear();
             for (const auto &x : getArrayFromJSON(j, "outputs")) {
                 KeyOutput keyOutput;
@@ -171,6 +179,16 @@ namespace WalletTypes
             hash.fromString(getStringFromJSON(j, "hash"));
             transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
             unlockTime = getUint64FromJSON(j, "unlockTime");
+            /* We need to try to get the unlockTime from an integer in the json
+            however, if that fails because we're talking to a blockchain
+            cache API that encodes unlockTime as a string (due to json
+            integer encoding limits), we need to attempt this as a string */
+            try {
+                unlockTime = getUint64FromJSON(j, "unlockTime");
+            } catch (const std::invalid_argument &e) {
+                unlockTime = std::stoull(getStringFromJSON(j, "unlockTime"));
+            }
+
             paymentID = getStringFromJSON(j, "paymentID");
 
             keyInputs.clear();
@@ -229,12 +247,6 @@ namespace WalletTypes
         /* Initializes the class from a json value */
         void fromJSON(const JSONValue &j)
         {
-            /*w.coinbaseTransaction = j.at("coinbaseTX").get<RawCoinbaseTransaction>();
-            w.transactions = j.at("transactions").get<std::vector<RawTransaction>>();
-            w.blockHeight = j.at("blockHeight").get<uint64_t>();
-            w.blockHash = j.at("blockHash").get<Crypto::Hash>();
-            w.blockTimestamp = j.at("blockTimestamp").get<uint64_t>();*/
-
             coinbaseTransaction.fromJSON(getJsonValue(j, "transactions"));
 
             transactions.clear();
@@ -275,7 +287,7 @@ namespace WalletTypes
 
         /* The transaction key we took from the key outputs */
         Crypto::PublicKey key;
-        
+
         /* If spent, what height did we spend it at. Used to remove spent
            transaction inputs once they are sure to not be removed from a
            forked chain. */
@@ -479,8 +491,8 @@ namespace WalletTypes
             /* A map of public keys to amounts, since one transaction can go to
                multiple addresses. These can be positive or negative, for example
                one address might have sent 10,000 TRTL (-10000) to two recipients
-               (+5000), (+5000) 
-               
+               (+5000), (+5000)
+
                All the public keys in this map, are ones that the wallet container
                owns, it won't store amounts belonging to random people */
             std::unordered_map<Crypto::PublicKey, int64_t> transfers;

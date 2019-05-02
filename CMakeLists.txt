@@ -60,7 +60,6 @@ set(ENABLE_SYNC_FILE_RANGE_WRITE OFF CACHE STRING "Enable RocksDB SYNC_FILE_RANG
 set(ENABLE_PTHREAD_MUTEX_ADAPTIVE_NP OFF CACHE STRING "Enable RocksDB PTHREAD_MUTEX_ADAPTIVE_NP support detection? Defaults to OFF")
 set(ENABLE_MALLOC_USABLE_SIZE OFF CACHE STRING "Enable RocksDB MALLOC_USABLE_SIZE support detection? Defaults to OFF")
 set(ENABLE_SCHED_GETCPU OFF CACHE STRING "Enable RocksDB SCHED_GETCPU support detection? Defaults to OFF")
-
 ## This section is for settings found in the slow-hash routine(s) that may benefit some systems (mostly ARM)
 set(FORCE_USE_HEAP ON CACHE BOOL "Force the use of heap memory allocation")
 set(NO_AES OFF CACHE BOOL "Turn off Hardware AES instructions?")
@@ -109,16 +108,17 @@ set(COMMIT_ID_IN_VERSION ON CACHE BOOL "Include commit ID in version")
 add_definitions(-DRAPIDJSON_HAS_STDSTRING)
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/version")
+
 if (NOT COMMIT_ID_IN_VERSION)
   set(VERSION "${VERSION}-unknown")
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/version.h")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/version.h")
   add_custom_target(version ALL)
 elseif(DEFINED COMMIT)
   string(REPLACE "." "\\." VERSION_RE "${VERSION}")
   if(NOT REFS MATCHES "(\\(|, )tag: v${VERSION_RE}(\\)|, )")
     set(VERSION "${VERSION}-g${COMMIT}")
   endif()
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/version.h")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/version.h")
   add_custom_target(version ALL)
 else()
   find_package(Git QUIET)
@@ -128,7 +128,7 @@ else()
   else()
     message(STATUS "WARNING: Git was not found!")
     set(VERSION "${VERSION}-unknown")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/version.h")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/config/version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/version/version.h")
     add_custom_target(version ALL)
   endif()
 endif()
@@ -253,13 +253,51 @@ elseif(NOT MSVC)
   set(Boost_LIBRARIES "${Boost_LIBRARIES};rt")
 endif()
 
+## Let's see if we have any OpenSSL static libraries available
+set(OPENSSL_USE_STATIC_LIBS ON)
+## On MSVC, we need to link the RT/MT libraries
+if(MSVC)
+  set(OPENSSL_MSVC_STATIC_RT ON)
+endif()
+
+# We have to look for Homebrew OpenSSL a bit differently
+# Borrowed from https://github.com/tarantool/tarantool/commit/6eab201af1843f53a833c8928dc58fceffa08147
+if(APPLE)
+  find_program(HOMEBREW_EXECUTABLE brew)
+  execute_process(COMMAND ${HOMEBREW_EXECUTABLE} --prefix openssl
+                  OUTPUT_VARIABLE HOMEBREW_OPENSSL
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if (DEFINED HOMEBREW_OPENSSL)
+    if (NOT DEFINED OPENSSL_ROOT_DIR)
+        message(STATUS "Setting OpenSSL root to ${HOMEBREW_OPENSSL}")
+        set(OPENSSL_ROOT_DIR "${HOMEBREW_OPENSSL}")
+    endif()
+  endif()
+endif()
+
+find_package(OpenSSL)
+
+if(OPENSSL_FOUND)
+  ## On non MSVC build systems, we need to link ldl with the static OpenSSL library
+  if (NOT MSVC)
+    set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};dl")
+  endif()
+
+  include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
+  add_definitions(-DCPPHTTPLIB_OPENSSL_SUPPORT)
+  message(STATUS "OpenSSL Found: ${OPENSSL_INCLUDE_DIR}")
+  message(STATUS "OpenSSL Libraries: ${OPENSSL_LIBRARIES}")
+else()
+  message(STATUS "OpenSSL Found: No... Skipping...")
+endif()
+
 add_subdirectory(external)
 add_subdirectory(src)
 
 ## We need to setup the RocksDB build environment to match our system
 if(NOT MSVC)
-  execute_process(
-    COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/external/rocksdb -DWITH_GFLAGS=0 -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_TESTS=OFF -DWITH_TOOLS=OFF -DPORTABLE=ON -B${PROJECT_BINARY_DIR}/rocksdb
-  )
+    execute_process(
+        COMMAND cmake ${CMAKE_CURRENT_SOURCE_DIR}/external/rocksdb -DWITH_LZ4=ON -DWITH_GFLAGS=0 -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_TESTS=OFF -DWITH_TOOLS=OFF -DPORTABLE=ON -B${PROJECT_BINARY_DIR}/rocksdb
+    )
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${PROJECT_BINARY_DIR}/rocksdb/librocksdb.a")
 endif()

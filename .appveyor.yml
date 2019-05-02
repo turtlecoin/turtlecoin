@@ -16,7 +16,7 @@ before_build:
 build_script:
   - md build
   - cd build
-  - cmake -G "Visual Studio 15 2017 Win64" ..
+  - cmake -G "Visual Studio 15 2017 Win64" .. -DOPENSSL_ROOT_DIR=C:\OpenSSL-v111-Win64
   - MSBuild TurtleCoin.sln /p:CLToolExe=clcache.exe /p:CLToolPath=c:\Python37\Scripts\ /p:Configuration=Release /m
   - src\Release\cryptotest.exe
 

@@ -3,19 +3,25 @@
 // Please see the included LICENSE file for more information.
 #include "WalletServiceConfiguration.h"
 #include <cxxopts.hpp>
-#include <json.hpp>
-#include <fstream>
 #include <string>
+
+#include <rapidjson/document.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
+#include "rapidjson/stringbuffer.h"
+#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
+#include <fstream>
 
 #include <config/CliHeader.h>
 #include <config/CryptoNoteConfig.h>
 #include <Logging/ILogger.h>
 
 
-using nlohmann::json;
+using namespace rapidjson;
 
 namespace PaymentService {
-  
+
   void handleSettings(int argc, char* argv[], WalletServiceConfiguration& config)
   {
     cxxopts::Options options(argv[0], CryptoNote::getProjectCLIHeader());
@@ -104,7 +110,7 @@ namespace PaymentService {
       {
         config.daemonPort = cli["daemon-port"].as<int>();
       }
-      
+
       if (cli.count("init-timeout") > 0)
       {
         config.initTimeout = cli["init-timeout"].as<int>();
@@ -240,7 +246,7 @@ namespace PaymentService {
     // find key=value pair, respect whitespace before/after "="
     // g0: full match, g1: match key, g2: match value
     static const std::regex cfgItem{R"x(\s*(\S[^ \t=]*)\s*=\s*((\s?\S+)+)\s*$)x"};
-    
+
     // comments, first non space starts with # or ;
     static const std::regex cfgComment{R"x(\s*[;#])x"};
     std::smatch item;
@@ -257,15 +263,15 @@ namespace PaymentService {
 
       if (std::regex_match(line, item, cfgItem))
       {
-        if(item.size() != 4)
+        if (item.size() != 4)
         {
           continue;
         }
-        
+
         cfgKey = item[1].str();
         cfgValue = item[2].str();
 
-        if(cfgKey.compare("daemon-address") == 0)
+        if (cfgKey.compare("daemon-address") == 0)
         {
           config.daemonAddress = cfgValue;
           updated = true;
@@ -280,7 +286,7 @@ namespace PaymentService {
           catch(std::exception& e)
           {
             throw std::runtime_error(std::string(e.what()) + " - Invalid value for " + cfgKey );
-          }  
+          }
         }
         else if (cfgKey.compare("init-timeout")  == 0)
         {
@@ -292,7 +298,7 @@ namespace PaymentService {
           catch(std::exception& e)
           {
             throw std::runtime_error(std::string(e.what()) + " - Invalid value for " + cfgKey );
-          }  
+          }
         }
         else if (cfgKey.compare("log-file")  == 0)
         {
@@ -360,9 +366,9 @@ namespace PaymentService {
         }
         else
         {
-          for (auto c: cfgKey) 
+          for (auto c: cfgKey)
           {
-            if (static_cast<unsigned char>(c) > 127) 
+            if (static_cast<unsigned char>(c) > 127)
             {
                 throw std::runtime_error(std::string("Bad/invalid config file"));
             }
@@ -372,7 +378,7 @@ namespace PaymentService {
       }
     }
 
-    if(!updated)
+    if (!updated)
     {
       return false;
     }
@@ -399,106 +405,114 @@ namespace PaymentService {
       throw std::runtime_error("The --config-file you specified does not exist, please check the filename and try again.");
     }
 
-    json j;
-    data >> j;
-    
-    if (j.find("daemon-address") != j.end())
+    IStreamWrapper isw(data);
+    Document j;
+    j.ParseStream(isw);
+
+    if (j.HasMember("daemon-address"))
     {
-      config.daemonAddress = j["daemon-address"].get<std::string>();
+      config.daemonAddress = j["daemon-address"].GetString();
     }
 
-    if (j.find("daemon-port") != j.end())
+    if (j.HasMember("daemon-port"))
     {
-      config.daemonPort = j["daemon-port"].get<int>();
-    }
-    
-    if (j.find("init-timeout") != j.end())
-    {
-      config.initTimeout = j["init-timeout"].get<int>();
+      config.daemonPort = j["daemon-port"].GetInt();
     }
 
-    if (j.find("log-file") != j.end())
+    if (j.HasMember("init-timeout"))
     {
-      config.logFile = j["log-file"].get<std::string>();
+      config.initTimeout = j["init-timeout"].GetInt();
     }
 
-    if (j.find("log-level") != j.end())
+    if (j.HasMember("log-file"))
     {
-      config.logLevel = j["log-level"].get<int>();
+      config.logFile = j["log-file"].GetString();
     }
 
-    if (j.find("container-file") != j.end())
+    if (j.HasMember("log-level"))
     {
-      config.containerFile = j["container-file"].get<std::string>();
+      config.logLevel = j["log-level"].GetInt();
     }
 
-    if (j.find("container-password") != j.end())
+    if (j.HasMember("container-file"))
     {
-      config.containerPassword = j["container-password"].get<std::string>();
+      config.containerFile = j["container-file"].GetString();
     }
 
-    if (j.find("bind-address") != j.end())
+    if (j.HasMember("container-password"))
     {
-      config.bindAddress = j["bind-address"].get<std::string>();
+      config.containerPassword = j["container-password"].GetString();
     }
 
-    if (j.find("bind-port") != j.end())
+    if (j.HasMember("bind-address"))
     {
-      config.bindPort = j["bind-port"].get<int>();
+      config.bindAddress = j["bind-address"].GetString();
     }
 
-    if (j.find("enable-cors") != j.end())
+    if (j.HasMember("bind-port"))
     {
-      config.corsHeader = j["enable-cors"].get<std::string>();
+      config.bindPort = j["bind-port"].GetInt();
     }
 
-    if (j.find("rpc-legacy-security") != j.end())
+    if (j.HasMember("enable-cors"))
     {
-      config.legacySecurity = j["rpc-legacy-security"].get<bool>();
+      config.corsHeader = j["enable-cors"].GetString();
     }
 
-    if (j.find("rpc-password") != j.end())
+    if (j.HasMember("rpc-legacy-security"))
     {
-      config.rpcPassword = j["rpc-password"].get<std::string>();
+      config.legacySecurity = j["rpc-legacy-security"].GetBool();
     }
 
-    if (j.find("server-root") != j.end())
+    if (j.HasMember("rpc-password"))
     {
-      config.serverRoot = j["server-root"].get<std::string>();
+      config.rpcPassword = j["rpc-password"].GetString();
+    }
+
+    if (j.HasMember("server-root"))
+    {
+      config.serverRoot = j["server-root"].GetString();
     }
   }
 
-  json asJSON(const WalletServiceConfiguration& config)
+  Document asJSON(const WalletServiceConfiguration& config)
   {
-    json j = json {
-      {"daemon-address", config.daemonAddress},
-      {"daemon-port", config.daemonPort},
-      {"log-file", config.logFile},
-      {"log-level", config.logLevel},
-      {"init-timeout", config.initTimeout},
-      {"container-file", config.containerFile},
-      {"container-password", config.containerPassword},
-      {"bind-address", config.bindAddress},
-      {"bind-port", config.bindPort},
-      {"enable-cors", config.corsHeader},
-      {"rpc-legacy-security", config.legacySecurity},
-      {"rpc-password", config.rpcPassword},
-      {"server-root", config.serverRoot},
-    };
+    Document j;
+    j.SetObject();
+    Document::AllocatorType& alloc = j.GetAllocator();
+
+    j.AddMember("daemon-address", config.daemonAddress, alloc);
+    j.AddMember("daemon-port", config.daemonPort, alloc);
+    j.AddMember("log-file", config.logFile, alloc);
+    j.AddMember("log-level", config.logLevel, alloc);
+    j.AddMember("init-timeout", config.initTimeout, alloc);
+    j.AddMember("container-file", config.containerFile, alloc);
+    j.AddMember("container-password", config.containerPassword, alloc);
+    j.AddMember("bind-address", config.bindAddress, alloc);
+    j.AddMember("bind-port", config.bindPort, alloc);
+    j.AddMember("enable-cors", config.corsHeader, alloc);
+    j.AddMember("rpc-legacy-security", config.legacySecurity, alloc);
+    j.AddMember("rpc-password", config.rpcPassword, alloc);
+    j.AddMember("server-root", config.serverRoot, alloc);
 
     return j;
   }
 
   std::string asString(const WalletServiceConfiguration& config)
   {
-    json j = asJSON(config);
-    return j.dump(2);
+    StringBuffer strbuf;
+    PrettyWriter<StringBuffer> writer(strbuf);
+    Document j = asJSON(config);
+    j.Accept(writer);
+    return strbuf.GetString();
   }
 
   void asFile(const WalletServiceConfiguration& config, const std::string& filename)
   {
-    json j = asJSON(config);
+    Document j = asJSON(config);
     std::ofstream data(filename);
-    data << std::setw(2) << j << std::endl;
+    OStreamWrapper osw(data);
+    PrettyWriter<OStreamWrapper> writer(osw);
+    j.Accept(writer);
   }
 }

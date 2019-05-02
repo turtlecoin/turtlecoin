@@ -1,6 +1,8 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
+
+#include <algorithm>
 
 /////////////////////////////////
 #include <zedwallet++/GetInput.h>
@@ -12,11 +14,13 @@
 
 #include "linenoise.hpp"
 
-#include <Utilities/FormatTools.h>
-
 #include <Utilities/ColouredMsg.h>
+#include <Utilities/FormatTools.h>
+#include <Utilities/Input.h>
+#include <Utilities/String.h>
+#include <Utilities/Utilities.h>
+
 #include <zedwallet++/Commands.h>
-#include <zedwallet++/Utilities.h>
 
 /* Note: this is not portable, it only works with terminals that support ANSI
    codes (e.g., not Windows) - however! due to the way linenoise-cpp works,
@@ -81,15 +85,15 @@ std::string getInput(
     std::string command;
 
     bool quit = linenoise::Readline(promptMsg.c_str(), command);
-    
+
     /* User entered ctrl+c or similar */
     if (quit)
     {
         return "exit";
     }
-	
+
     /* Remove any whitespace */
-    Common::trim(command);
+    Utilities::trim(command);
 
     if (command != "")
     {
@@ -116,7 +120,7 @@ std::string getAddress(
             return "cancel";
         }
 
-        Common::trim(address);
+        Utilities::trim(address);
 
         /* \n == no-op */
         if (address == "")
@@ -160,7 +164,7 @@ std::string getPaymentID(
             return "cancel";
         }
 
-        Common::trim(paymentID);
+        Utilities::trim(paymentID);
 
         if (paymentID == "cancel" && cancelAllowed)
         {
@@ -201,7 +205,7 @@ std::string getHash(
             return "cancel";
         }
 
-        Common::trim(hash);
+        Utilities::trim(hash);
 
         if (hash == "cancel" && cancelAllowed)
         {
@@ -244,10 +248,10 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
             continue;
         }
 
-        Common::trim(amountString);
+        Utilities::trim(amountString);
 
         /* If the user entered thousand separators, remove them */
-        ZedUtilities::removeCharFromString(amountString, ',');
+        Utilities::removeCharFromString(amountString, ',');
 
         if (amountString == "cancel" && cancelAllowed)
         {
@@ -258,7 +262,7 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
         const uint64_t decimalPos = amountString.find_last_of('.');
 
         /* Get the length of the decimal part */
-        const uint64_t decimalLength = decimalPos == std::string::npos ? 0 : 
+        const uint64_t decimalLength = decimalPos == std::string::npos ? 0 :
             amountString.substr(decimalPos + 1, amountString.length()).length();
 
         /* Can't send amounts with more decimal places than supported */
@@ -276,9 +280,9 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
         }
 
         /* Remove the decimal place, so we can parse it as an atomic amount */
-        ZedUtilities::removeCharFromString(amountString, '.');
+        Utilities::removeCharFromString(amountString, '.');
 
-        /* Pad the string with 0's at the end, so 123 becomes 12300, so we 
+        /* Pad the string with 0's at the end, so 123 becomes 12300, so we
            can parse it as an atomic amount. 123.45 parses as 12345. */
         amountString.append(WalletConfig::numDecimalPlaces - decimalLength, '0');
 
@@ -309,7 +313,7 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
     }
 }
 
-std::tuple<std::string, uint16_t> getDaemonAddress()
+std::tuple<std::string, uint16_t, bool> getDaemonAddress()
 {
     while (true)
     {
@@ -324,21 +328,27 @@ std::tuple<std::string, uint16_t> getDaemonAddress()
 
         uint16_t port = CryptoNote::RPC_DEFAULT_PORT;
 
+        bool ssl = false;
+
         /* Fixes infinite looping when someone does a ctrl + c */
         if (!std::getline(std::cin, address) || address == "")
         {
-            return {host, port};
+            return {host, port, ssl};
         }
 
-        Common::trim(address);
+        Utilities::trim(address);
 
-        if (!ZedUtilities::parseDaemonAddressFromString(host, port, address))
+        if (!Utilities::parseDaemonAddressFromString(host, port, address))
         {
             std::cout << WarningMsg("\nInvalid daemon address! Try again.\n");
             continue;
         }
 
-        return {host, port};
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+        ssl = Utilities::confirm("Does this daemon support SSL?", false);
+#endif
+
+        return {host, port, ssl};
     }
 }
 

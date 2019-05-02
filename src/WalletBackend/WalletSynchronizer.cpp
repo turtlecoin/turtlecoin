@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 /////////////////////////////////////////////
@@ -133,15 +133,15 @@ std::vector<WalletTypes::WalletBlockInfo> WalletSynchronizer::downloadBlocks()
     With the get wallet sync data call, we give a height or a timestamp to
     start at, and an array of block hashes of the last known blocks we
     know about.
-    
+
     If the daemon can find the hashes, it returns the next one it knows
     about, so if we give a start height of 200,000, and a hash of
     block 300,000, it will return block 300,001 and above.
-    
+
     This works well, since if the chain forks at 300,000, it won't have the
     hash of 300,000, so it will return the next hash we gave it,
     in this case probably 299,999.
-    
+
     On the wallet side, we'll detect a block lower than our last known
     block, and handle the fork.
 
@@ -153,7 +153,7 @@ std::vector<WalletTypes::WalletBlockInfo> WalletSynchronizer::downloadBlocks()
 
     Therefore, we should wait until the local daemon has more blocks than
     us to prevent discarding sync data. */
-    if (localDaemonBlockCount < walletBlockCount) 
+    if (localDaemonBlockCount < walletBlockCount)
     {
         Logger::logger.log(
             "Wallet already synced, not fetching blocks",
@@ -177,6 +177,11 @@ std::vector<WalletTypes::WalletBlockInfo> WalletSynchronizer::downloadBlocks()
        Sleep a bit so we don't spam the daemon. */
     if (!success || blocks.empty())
     {
+        /* We may have also failed because we requested
+           more data than could be returned in a reasonable
+           amount of time, so we'll back off a little bit */
+        m_daemon->decreaseRequestedBlockCount();
+
         Logger::logger.log(
             "Zero blocks received from daemon, possibly fully synced",
             Logger::DEBUG,
@@ -185,6 +190,11 @@ std::vector<WalletTypes::WalletBlockInfo> WalletSynchronizer::downloadBlocks()
 
         return {};
     }
+
+    /* If we received data back, we'll make sure we're back
+       to running at full speed in case we backed off a little
+       bit before */
+    m_daemon->resetRequestedBlockCount();
 
     /* Timestamp is transient and can change - block height is constant. */
     if (m_startTimestamp != 0)
@@ -198,19 +208,24 @@ std::vector<WalletTypes::WalletBlockInfo> WalletSynchronizer::downloadBlocks()
     /* If checkpoints are empty, this is the first sync request. */
     if (blockCheckpoints.empty())
     {
-        const uint64_t actualHeight = blocks.front().blockHeight;
-
         /* Only check if a timestamp isn't given */
         if (m_startTimestamp == 0)
         {
-            /* The height we expect to get back from the daemon */
-            if (actualHeight != m_startHeight)
+            /* Loop through the blocks we got back and make sure that
+               we were given data for the start block we were looking for */
+            const auto it = std::find_if(blocks.begin(), blocks.end(), [this](const auto &block) {
+                return block.blockHeight == m_startHeight;
+            });
+
+            /* If we weren't given a block with the startHeight we were
+               looking for then we don't need to store this data */
+            if (it == blocks.end())
             {
                 std::stringstream stream;
 
                 stream << "Received unexpected block height from daemon. "
-                       << "Expected " << m_startHeight << ", got "
-                       << actualHeight << ". Not returning any blocks.";
+                       << "Expected " << m_startHeight << ", but did not "
+                       "receive that block. Not returning any blocks.";
 
                 Logger::logger.log(
                     stream.str(),
@@ -270,6 +285,13 @@ void WalletSynchronizer::processBlock(const WalletTypes::WalletBlockInfo &block)
         removeForkedTransactions(block.blockHeight);
     }
 
+    /* Prune old inputs that are out of our 'confirmation' window */
+    if (block.blockHeight % Constants::PRUNE_SPENT_INPUTS_INTERVAL == 0
+     && block.blockHeight > Constants::PRUNE_SPENT_INPUTS_INTERVAL)
+    {
+        m_subWallets->pruneSpentInputs(block.blockHeight - Constants::PRUNE_SPENT_INPUTS_INTERVAL);
+    }
+
     auto ourInputs = processBlockOutputs(block);
 
     std::unordered_map<Crypto::Hash, std::vector<uint64_t>> globalIndexes;
@@ -290,7 +312,7 @@ void WalletSynchronizer::processBlock(const WalletTypes::WalletBlockInfo &block)
                is faulty. Print a warning message, then return so we
                can fetch new blocks, in the likely case the daemon has
                forked.
-               
+
                Also need to check there are enough indexes for the one we want */
             if (it == globalIndexes.end() || it->second.size() <= input.transactionIndex)
             {
@@ -532,7 +554,7 @@ std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> Wallet
         /* See if the derived spend key matches any of our spend keys */
         const auto ourSpendKey = std::find(spendKeys.begin(), spendKeys.end(),
                                            derivedSpendKey);
-        
+
         /* If it does, the transaction belongs to us */
         if (ourSpendKey != spendKeys.end())
         {
@@ -642,7 +664,7 @@ void WalletSynchronizer::checkLockedTransactions()
     }
 }
 
-/* Launch the worker thread in the background. It's safest to do this in a 
+/* Launch the worker thread in the background. It's safest to do this in a
    seperate function, so everything in the constructor gets initialized,
    and if we do any inheritance, things don't go awry. */
 void WalletSynchronizer::start()
@@ -674,7 +696,7 @@ void WalletSynchronizer::stop()
 
     /* Tell the threads to stop */
     m_shouldStop = true;
-	
+
     /* Wait for the block downloader thread to finish (if applicable) */
     if (m_syncThread.joinable())
     {

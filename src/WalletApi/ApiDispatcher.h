@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -38,7 +38,7 @@ enum WalletState
 
 /* Functions the same as body.at(key).get<T>(), but gives better error messages */
 template<typename T>
-T tryGetJsonValue(const rapidjson::Document &body, const std::string key)
+T getJsonValue(const rapidjson::Document &body, const std::string key)
 {
     rapidjson::Value::ConstMemberIterator itr = body.FindMember(key);
     if (itr == body.MemberEnd()) // value doesn't exist
@@ -73,7 +73,7 @@ class ApiDispatcher
 
         /* Stops the server */
         void stop();
-        
+
     private:
 
         //////////////////////////////
@@ -101,7 +101,7 @@ class ApiDispatcher
         ///////////////////
         /* POST REQUESTS */
         ///////////////////
-        
+
         /* Opens a wallet */
         std::tuple<Error, uint16_t> openWallet(
             const httplib::Request &req,
@@ -335,7 +335,7 @@ class ApiDispatcher
         //////////////////////////
 
         /* Extracts {host, port, filename, password}, from body */
-        std::tuple<std::string, uint16_t, std::string, std::string>
+        std::tuple<std::string, uint16_t, bool, std::string, std::string>
             getDefaultWalletParams(const rapidjson::Document &body) const;
 
         /* Assert the wallet is not a view only wallet */
@@ -354,7 +354,7 @@ class ApiDispatcher
         void publicKeysToAddresses(rapidjson::Document &j) const;
 
         std::string hashPassword(const std::string password) const;
-        
+
         //////////////////////////////
         /* Private member variables */
         //////////////////////////////

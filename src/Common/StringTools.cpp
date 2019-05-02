@@ -264,25 +264,4 @@ std::string timeIntervalToString(uint64_t intervalInSeconds) {
   return ss.str();
 }
 
-/* Trims any whitespace from left and right */
-void trim(std::string &str)
-{
-    rightTrim(str);
-    leftTrim(str);
-}
-
-void leftTrim(std::string &str)
-{
-    std::string whitespace = " \t\n\r\f\v";
-
-    str.erase(0, str.find_first_not_of(whitespace));
-}
-
-void rightTrim(std::string &str)
-{
-    std::string whitespace = " \t\n\r\f\v";
-
-    str.erase(str.find_last_not_of(whitespace) + 1);
-}
-
 }

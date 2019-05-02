@@ -1,6 +1,10 @@
 sudo: false
 language: cpp
-cache: ccache
+cache:
+ ccache: true
+ directories:
+    - /home/travis/toolchain
+
 matrix:
   include:
 
@@ -11,8 +15,9 @@ matrix:
       apt:
         sources:
         - ubuntu-toolchain-r-test
-        packages: 
+        packages:
           - libboost1.55-all-dev
+          - libssl-dev
           - g++-8
           - gcc-8
     env:
@@ -28,8 +33,9 @@ matrix:
       apt:
         sources:
         - ubuntu-toolchain-r-test
-        packages: 
+        packages:
           - libboost1.55-all-dev
+          - libssl-dev
           - g++-7
           - gcc-7
     env:
@@ -45,8 +51,9 @@ matrix:
         sources:
         - ubuntu-toolchain-r-test
         - llvm-toolchain-trusty-6.0
-        packages: 
+        packages:
           - libboost1.55-all-dev
+          - libssl-dev
           - clang-6.0
           - libstdc++-7-dev
     env:
@@ -97,8 +104,13 @@ install:
 # Need to uninstall oclint to get newer gcc installed https://github.com/travis-ci/travis-ci/issues/8826
 - if [[ "${LABEL:0:3}" == "osx" ]]; then brew cask uninstall --force oclint || true ; fi
 
-# Need a newer version of llvm to link against to get std::filesystem / std::experimental::filesystem 
+# Need a newer version of llvm to link against to get std::filesystem / std::experimental::filesystem
 - if [[ "${LABEL:0:3}" == "osx" ]]; then travis_retry brew install llvm || travis_retry brew upgrade llvm ; fi
+
+# Need to make sure that we have openssl installed
+- if [[ "${LABEL:0:3}" == "osx" ]]; then travis_retry brew install openssl || travis_retry brew upgrade openssl ; fi
+- if [[ "${LABEL:0:3}" == "osx" ]]; then brew link --force openssl ; fi
+- if [[ "${LABEL:0:3}" == "osx" ]]; then ln -s /usr/local/opt/openssl/include/openssl /usr/local/include ; fi
 
 # Neeed to install ccache
 - if [[ "${LABEL:0:3}" == "osx" ]]; then travis_retry brew install ccache ; fi
@@ -108,27 +120,13 @@ install:
 - if [[ "$LABEL" == "osx-g++-8" ]]; then travis_retry brew install gcc@8 ; fi
 - if [[ "$LABEL" == "osx-g++-7" ]]; then travis_retry brew install gcc@7 ; fi
 
-- if [[ "$LABEL" == "aarch64" ]]; then export BASEDIR=`pwd` ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then cd $HOME ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then wget https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/8.2-2018.08/gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu.tar.xz ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then wget http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.gz ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then mkdir toolchain && cd toolchain ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then tar xfv ../gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu.tar.xz >/dev/null ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then cd gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then tar zxvf ../../boost_1_55_0.tar.gz >/dev/null ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then cd boost_1_55_0 ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then ./bootstrap.sh ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then curl https://raw.githubusercontent.com/turtlecoin/turtlecoin/development/scripts/fix_boost_aarch64.sh | sh ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then ./b2 toolset=gcc-aarch64 --with-system --with-filesystem --with-thread --with-date_time --with-chrono --with-regex --with-serialization --with-program_options >/dev/null; fi
-- if [[ "$LABEL" == "aarch64" ]]; then export CUSTOM_BOOST_ROOT="-DBOOST_ROOT=`pwd`" ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then export CUSTOM_TOOLCHAIN="-DCMAKE_TOOLCHAIN_FILE=../scripts/cross-aarch64.cmake" ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then export STRIP="$HOME/toolchain/gcc-arm-8.2-2018.08-x86_64-aarch64-linux-gnu/bin/aarch64-linux-gnu-strip" ; fi
-- if [[ "$LABEL" == "aarch64" ]]; then cd $BASEDIR ; fi
-
 script:
 - eval $MATRIX_EVAL
+# If we're cross compiling aarch64, make sure our build enivornment is setup
+# we do this in the script stage because this happens after the repo is cloned
+- if [[ "$LABEL" == "aarch64" ]]; then source scripts/prep-aarch64.sh ; fi
 - mkdir build && cd build
-- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true .. ${CUSTOM_TOOLCHAIN} ${CUSTOM_BOOST_ROOT} ${ADDITIONAL_CMAKE_ARGS}
+- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
 - make -j2
 - if [[ "$LABEL" != "aarch64" ]]; then ./src/cryptotest ; fi
 
@@ -137,7 +135,7 @@ before_deploy:
 - cd src
 - TARGETS="TurtleCoind miner zedwallet turtle-service zedwallet-beta cryptotest wallet-api"
 - ${STRIP} ${TARGETS}
-- rm -rf turtlecoin-${TRAVIS_TAG} 
+- rm -rf turtlecoin-${TRAVIS_TAG}
 - mkdir turtlecoin-${TRAVIS_TAG}
 - cp ${TARGETS} turtlecoin-${TRAVIS_TAG}/
 - cp ../../LICENSE turtlecoin-${TRAVIS_TAG}/

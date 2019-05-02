@@ -176,7 +176,7 @@ rocksdb::Options RocksDBWrapper::getDBOptions(const DataBaseConfig& config) {
   dbOptions.IncreaseParallelism(config.getBackgroundThreadsCount());
   dbOptions.info_log_level = rocksdb::InfoLogLevel::WARN_LEVEL;
   dbOptions.max_open_files = config.getMaxOpenFiles();
-
+  
   rocksdb::ColumnFamilyOptions fOptions;
   fOptions.write_buffer_size = static_cast<size_t>(config.getWriteBufferSize());
   // merge two memtables when flushing to L0
@@ -202,9 +202,14 @@ rocksdb::Options RocksDBWrapper::getDBOptions(const DataBaseConfig& config) {
   fOptions.compaction_style = rocksdb::kCompactionStyleLevel;
 
   fOptions.compression_per_level.resize(fOptions.num_levels);
+
+  const auto compressionLevel = config.getCompressionEnabled() ? rocksdb::kLZ4Compression : rocksdb::kNoCompression;
   for (int i = 0; i < fOptions.num_levels; ++i) {
-    fOptions.compression_per_level[i] = rocksdb::kNoCompression;
+    // don't compress l0 & l1
+    fOptions.compression_per_level[i] = (i < 2 ? rocksdb::kNoCompression : compressionLevel);
   }
+  // bottom most use lz4hc
+  fOptions.bottommost_compression = config.getCompressionEnabled() ? rocksdb::kLZ4HCCompression : rocksdb::kNoCompression;
 
   rocksdb::BlockBasedTableOptions tableOptions;
   tableOptions.block_cache = rocksdb::NewLRUCache(config.getReadCacheSize());

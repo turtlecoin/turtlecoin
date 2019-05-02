@@ -3,9 +3,7 @@
 // Please see the included LICENSE file for more information.
 
 #include <string>
-
 #include <vector>
-
 #include <WalletBackend/WalletBackend.h>
 
 struct AddressBookEntry
@@ -36,6 +34,30 @@ struct AddressBookEntry
     bool operator==(const AddressBookEntry &rhs) const
     {
         return rhs.friendlyName == friendlyName;
+    }
+
+    template <typename Writer>
+    void toJSON(Writer &writer) const
+    {
+        writer.StartObject();
+
+        writer.Key("friendlyName");
+        writer.String(friendlyName);
+
+        writer.Key("address");
+        writer.String(address);
+
+        writer.Key("paymentID");
+        writer.String(paymentID);
+
+        writer.EndObject();
+    }
+
+    void fromJSON(const JSONValue &j)
+    {
+        friendlyName = getStringFromJSON(j, "friendlyName");
+        address = getStringFromJSON(j, "address");
+        paymentID = getStringFromJSON(j, "paymentID");
     }
 };
 

@@ -1,5 +1,5 @@
+// Portions Copyright (c) 2018-2019, The Catalyst Developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// Copyright (c) 2018-2019, The Catalyst Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -8,15 +8,18 @@
 ///////////////////////////////////////////////
 
 #include <config/WalletConfig.h>
+
 #include <config/CryptoNoteConfig.h>
 
 #include <Errors/ValidateParameters.h>
 
 #include <fstream>
 
-#include <Utilities/FormatTools.h>
-
 #include <Utilities/ColouredMsg.h>
+#include <Utilities/FormatTools.h>
+#include <Utilities/Input.h>
+#include <Utilities/String.h>
+
 #include <zedwallet++/Commands.h>
 #include <zedwallet++/GetInput.h>
 #include <zedwallet++/Menu.h>
@@ -299,7 +302,7 @@ void reset(const std::shared_ptr<WalletBackend> walletBackend)
               << InformationMsg("process.")
               << std::endl << std::endl;
     
-    if (!ZedUtilities::confirm("Are you sure?"))
+    if (!Utilities::confirm("Are you sure?"))
     {
         return;
     }
@@ -361,7 +364,7 @@ void saveCSV(const std::shared_ptr<WalletBackend> walletBackend)
 
         const std::string direction = tx.totalAmount() > 0 ? "IN" : "OUT";
 
-        csv << ZedUtilities::unixTimeToDate(tx.timestamp) << ","    /* Timestamp */
+        csv << Utilities::unixTimeToDate(tx.timestamp) << ","    /* Timestamp */
             << tx.blockHeight << ","                                /* Block Height */
             << tx.hash << ","                                       /* Hash */
             << amount << ","                                        /* Amount */
@@ -387,7 +390,7 @@ void printOutgoingTransfer(const WalletTypes::Transaction tx)
     if (tx.blockHeight != 0 && tx.timestamp != 0)
     {
         stream << "Block height: " << tx.blockHeight << "\n"
-               << "Timestamp: " << ZedUtilities::unixTimeToDate(tx.timestamp) << "\n";
+               << "Timestamp: " << Utilities::unixTimeToDate(tx.timestamp) << "\n";
     }
 
     stream << "Spent: " << Utilities::formatAmount(amount - tx.fee) << "\n"
@@ -410,14 +413,14 @@ void printIncomingTransfer(const WalletTypes::Transaction tx)
 
     stream << "Incoming transfer:\nHash: " << tx.hash << "\n"
            << "Block height: " << tx.blockHeight << "\n"
-           << "Timestamp: " << ZedUtilities::unixTimeToDate(tx.timestamp) << "\n"
+           << "Timestamp: " << Utilities::unixTimeToDate(tx.timestamp) << "\n"
            << "Amount: " << Utilities::formatAmount(amount) << "\n";
 
     if (tx.paymentID != "")
     {
         stream << "Payment ID: " << tx.paymentID << "\n";
     }
-    
+
     /* Display Unlock time, if applicable; otherwise, don't */
     int64_t difference = tx.unlockTime - tx.blockHeight;
 
@@ -431,7 +434,7 @@ void printIncomingTransfer(const WalletTypes::Transaction tx)
                   << InformationMsg(tx.unlockTime)
                   << std::endl
                   << InformationMsg("Unlocks at approximately: ")
-                  << InformationMsg(ZedUtilities::unixTimeToDate(unlockInUnixTime))
+                  << InformationMsg(Utilities::unixTimeToDate(unlockInUnixTime))
                   << std::endl
                   << std::endl;
     }
@@ -440,7 +443,7 @@ void printIncomingTransfer(const WalletTypes::Transaction tx)
     {
         std::cout << SuccessMsg(stream.str())
                   << InformationMsg("Unlocks at: ")
-                  << InformationMsg(ZedUtilities::unixTimeToDate(tx.unlockTime))
+                  << InformationMsg(Utilities::unixTimeToDate(tx.unlockTime))
                   << std::endl
                   << std::endl;
     }
@@ -550,7 +553,7 @@ void createIntegratedAddress()
 
         std::getline(std::cin, address);
 
-        Common::trim(address);
+        Utilities::trim(address);
 
         const bool integratedAddressesAllowed = false;
 
@@ -571,7 +574,7 @@ void createIntegratedAddress()
 
         std::getline(std::cin, paymentID);
 
-        Common::trim(paymentID);
+        Utilities::trim(paymentID);
 
         /* Validate the payment ID */
         if (Error error = validatePaymentID(paymentID); error != SUCCESS)
@@ -631,11 +634,11 @@ void advanced(const std::shared_ptr<WalletBackend> walletBackend)
 
 void swapNode(const std::shared_ptr<WalletBackend> walletBackend)
 {
-    const auto [host, port] = getDaemonAddress();
+    const auto [host, port, ssl] = getDaemonAddress();
 
     std::cout << InformationMsg("\nSwapping node, this may take some time...\n");
 
-    walletBackend->swapNode(host, port);
+    walletBackend->swapNode(host, port, ssl);
 
     std::cout << SuccessMsg("Node swap complete.\n\n");
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -17,6 +17,9 @@
 #include <Errors/ValidateParameters.h>
 
 #include <Utilities/ColouredMsg.h>
+#include <Utilities/String.h>
+#include <Utilities/Input.h>
+
 #include <zedwallet++/CommandImplementations.h>
 #include <zedwallet++/PasswordContainer.h>
 #include <zedwallet++/Utilities.h>
@@ -27,7 +30,7 @@ std::shared_ptr<WalletBackend> importViewWallet(const Config &config)
               << WarningMsg("transactions, and cannot make transfers.")
               << std::endl;
 
-    bool create = ZedUtilities::confirm("Is this OK?");
+    bool create = Utilities::confirm("Is this OK?");
 
     std::cout << "\n";
 
@@ -48,7 +51,7 @@ std::shared_ptr<WalletBackend> importViewWallet(const Config &config)
 
         std::getline(std::cin, address);
 
-        Common::trim(address);
+        Utilities::trim(address);
 
         const bool integratedAddressesAllowed = false;
 
@@ -75,7 +78,7 @@ std::shared_ptr<WalletBackend> importViewWallet(const Config &config)
 
     auto [error, walletBackend] = WalletBackend::importViewWallet(
         privateViewKey, address, walletFileName, walletPass, scanHeight,
-        config.host, config.port
+        config.host, config.port, config.ssl
     );
 
     if (error)
@@ -118,7 +121,7 @@ std::shared_ptr<WalletBackend> importWalletFromKeys(const Config &config)
 
     const auto [error, walletBackend] = WalletBackend::importWalletFromKeys(
         privateSpendKey, privateViewKey, walletFileName, walletPass,
-        scanHeight, config.host, config.port
+        scanHeight, config.host, config.port, config.ssl
     );
 
     if (error)
@@ -148,7 +151,7 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const Config &config)
 
         std::getline(std::cin, mnemonicSeed);
 
-        Common::trim(mnemonicSeed);
+        Utilities::trim(mnemonicSeed);
         
         /* Just to check if it's valid */
         auto [error, privateSpendKey] = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
@@ -175,7 +178,7 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const Config &config)
 
     auto [error, walletBackend] = WalletBackend::importWalletFromSeed(
         mnemonicSeed, walletFileName, walletPass, scanHeight,
-        config.host, config.port
+        config.host, config.port, config.ssl
     );
 
     if (error)
@@ -206,7 +209,7 @@ std::shared_ptr<WalletBackend> createWallet(const Config &config)
     const std::string walletPass = getWalletPassword(verifyPassword, msg);
 
     const auto [error, walletBackend] = WalletBackend::createWallet(
-        walletFileName, walletPass, config.host, config.port
+        walletFileName, walletPass, config.host, config.port, config.ssl
     );
 
     if (error)
@@ -252,7 +255,7 @@ std::shared_ptr<WalletBackend> openWallet(const Config &config)
         }
 
         const auto [error, walletBackend] = WalletBackend::openWallet(
-            walletFileName, walletPass, config.host, config.port
+            walletFileName, walletPass, config.host, config.port, config.ssl
         );
 
         if (error == WRONG_PASSWORD)
@@ -301,7 +304,7 @@ Crypto::SecretKey getPrivateKey(const std::string outputMsg)
 
         std::getline(std::cin, privateKeyString);
 
-        Common::trim(privateKeyString);
+        Utilities::trim(privateKeyString);
 
         if (privateKeyString.length() != privateKeyLen)
         {

@@ -8,7 +8,7 @@
 
 #include <config/WalletConfig.h>
 
-#include <zedwallet++/Utilities.h>
+#include <Utilities/Container.h>
 
 std::vector<Command> startupCommands()
 {
@@ -70,7 +70,7 @@ std::vector<AdvancedCommand> allCommands()
 
 std::vector<AdvancedCommand> basicCommands()
 {
-    return ZedUtilities::filter(allCommands(), [](AdvancedCommand c)
+    return Utilities::filter(allCommands(), [](AdvancedCommand c)
     {
         return !c.advanced;
     });
@@ -78,7 +78,7 @@ std::vector<AdvancedCommand> basicCommands()
 
 std::vector<AdvancedCommand> advancedCommands()
 {
-    return ZedUtilities::filter(allCommands(), [](AdvancedCommand c)
+    return Utilities::filter(allCommands(), [](AdvancedCommand c)
     {
         return c.advanced;
     });
@@ -86,7 +86,7 @@ std::vector<AdvancedCommand> advancedCommands()
 
 std::vector<AdvancedCommand> basicViewWalletCommands()
 {
-    return ZedUtilities::filter(basicCommands(), [](AdvancedCommand c)
+    return Utilities::filter(basicCommands(), [](AdvancedCommand c)
     {
         return c.viewWalletSupport;
     });
@@ -94,7 +94,7 @@ std::vector<AdvancedCommand> basicViewWalletCommands()
 
 std::vector<AdvancedCommand> advancedViewWalletCommands()
 {
-    return ZedUtilities::filter(advancedCommands(), [](AdvancedCommand c)
+    return Utilities::filter(advancedCommands(), [](AdvancedCommand c)
     {
         return c.viewWalletSupport;
     });
@@ -102,7 +102,7 @@ std::vector<AdvancedCommand> advancedViewWalletCommands()
 
 std::vector<AdvancedCommand> allViewWalletCommands()
 {
-    return ZedUtilities::filter(allCommands(), [](AdvancedCommand c)
+    return Utilities::filter(allCommands(), [](AdvancedCommand c)
     {
         return c.viewWalletSupport;
     });

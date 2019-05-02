@@ -113,10 +113,4 @@ bool parseIpAddressAndPort(uint32_t& ip, uint32_t& port, const std::string& addr
 
 std::string timeIntervalToString(uint64_t intervalInSeconds);
 
-void trim(std::string &str);
-
-void leftTrim(std::string &str);
-
-void rightTrim(std::string &str);
-
 }

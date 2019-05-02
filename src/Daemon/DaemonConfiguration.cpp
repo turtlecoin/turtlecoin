@@ -1,12 +1,17 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
 #include "DaemonConfiguration.h"
 #include <cxxopts.hpp>
-#include <json.hpp>
+
+#include <rapidjson/document.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
+#include "rapidjson/stringbuffer.h"
+#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
 #include <fstream>
-#include <sstream>
 
 #include <config/CliHeader.h>
 #include <config/CryptoNoteConfig.h>
@@ -14,10 +19,10 @@
 #include "Common/PathTools.h"
 #include "Common/Util.h"
 
-using nlohmann::json;
+using namespace rapidjson;
 
 namespace DaemonConfig{
-  
+
   DaemonConfiguration initConfiguration(const char* path)
   {
     DaemonConfiguration config;
@@ -32,6 +37,8 @@ namespace DaemonConfig{
     options.add_options("Core")
       ("help", "Display this help message", cxxopts::value<bool>()->implicit_value("true"))
       ("os-version", "Output Operating System version information", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
+      ("resync", "Forces the daemon to delete the blockchain data and start resyncing", cxxopts::value<bool>(config.resync)->default_value("false")->implicit_value("true"))
+      ("rewind-to-height", "Rewinds the local blockchain cache to the specified height.", cxxopts::value<uint32_t>(), "#")
       ("version","Output daemon version information",cxxopts::value<bool>()->default_value("false")->implicit_value("true"));
 
     options.add_options("Genesis Block")
@@ -47,7 +54,9 @@ namespace DaemonConfig{
       ("log-file", "Specify the <path> to the log file", cxxopts::value<std::string>()->default_value(config.logFile), "<path>")
       ("log-level", "Specify log level", cxxopts::value<int>()->default_value(std::to_string(config.logLevel)), "#")
       ("no-console", "Disable daemon console commands", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
-      ("save-config", "Save the configuration to the specified <file>", cxxopts::value<std::string>(), "<file>");
+      ("rocksdb", "Use Rocksdb for local cache files", cxxopts::value<bool>(config.useRocksdbForLocalCaches)->default_value("false")->implicit_value("true"))
+      ("save-config", "Save the configuration to the specified <file>", cxxopts::value<std::string>(), "<file>")
+      ("sqlite", "Use SQLite3 for local cache files", cxxopts::value<bool>(config.useSqliteForLocalCaches)->default_value("false")->implicit_value("true"));
 
     options.add_options("RPC")
       ("enable-blockexplorer", "Enable the Blockchain Explorer RPC", cxxopts::value<bool>()->default_value("false")->implicit_value("true"))
@@ -72,6 +81,7 @@ namespace DaemonConfig{
       ("seed-node", "Connect to a node to retrieve the peer list and then disconnect", cxxopts::value<std::vector<std::string>>(), "<ip:port>");
 
     options.add_options("Database")
+      ("db-enable-compression", "Enable database compression", cxxopts::value<bool>(config.enableDbCompression)->default_value("false")->implicit_value("true"))
       ("db-max-open-files", "Number of files that can be used by the database at one time", cxxopts::value<int>()->default_value(std::to_string(config.dbMaxOpenFiles)), "#")
       ("db-read-buffer-size", "Size of the database read cache in megabytes (MB)", cxxopts::value<int>()->default_value(std::to_string(config.dbReadCacheSizeMB)), "#")
       ("db-threads", "Number of background threads used for compaction and flush operations", cxxopts::value<int>()->default_value(std::to_string(config.dbThreads)), "#")
@@ -111,6 +121,21 @@ namespace DaemonConfig{
         config.osVersion = cli["os-version"].as<bool>();
       }
 
+      if (cli.count("rewind-to-height") > 0)
+      {
+        uint32_t rewindHeight = cli["rewind-to-height"].as<uint32_t>();
+        if (rewindHeight == 0)
+        {
+          std::cout << CryptoNote::getProjectCLIHeader()
+            << "Please use the `--resync` option instead of `--rewind 0` to completely reset the synchronization state." << std::endl;
+          exit(1);
+        }
+        else
+        {
+          config.rewindToHeight = rewindHeight;
+        }
+      }
+
       if (cli.count("print-genesis-tx") > 0)
       {
         config.printGenesisTx = cli["print-genesis-tx"].as<bool>();
@@ -139,6 +164,21 @@ namespace DaemonConfig{
       if (cli.count("log-level") > 0)
       {
         config.logLevel = cli["log-level"].as<int>();
+      }
+
+      if (cli.count("sqlite") > 0)
+      {
+        config.useSqliteForLocalCaches = cli["sqlite"].as<bool>();
+      }
+
+      if (cli.count("rocksdb") > 0)
+      {
+        config.useRocksdbForLocalCaches = cli["rocksdb"].as<bool>();
+      }
+
+      if (cli.count("db-enable-compression") > 0)
+      {
+        config.enableDbCompression = cli["db-enable-compression"].as<bool>();
       }
 
       if (cli.count("no-console") > 0)
@@ -285,7 +325,7 @@ namespace DaemonConfig{
     std::vector<std::string> peers;
     std::vector<std::string> cors;
     bool updated = false;
-    
+
     for (std::string line; std::getline(data, line);)
     {
       if (line.empty() || std::regex_match(line, item, cfgComment))
@@ -295,15 +335,15 @@ namespace DaemonConfig{
 
       if (std::regex_match(line, item, cfgItem))
       {
-        if(item.size() != 4)
+        if (item.size() != 4)
         {
           continue;
         }
-        
+
         cfgKey = item[1].str();
         cfgValue = item[2].str();
 
-        if(cfgKey.compare("data-dir") == 0)
+        if (cfgKey.compare("data-dir") == 0)
         {
           config.dataDirectory = cfgValue;
           updated = true;
@@ -323,16 +363,31 @@ namespace DaemonConfig{
           try
           {
             config.logLevel = std::stoi(cfgValue);
-            updated = true;  
+            updated = true;
           }
           catch(std::exception& e)
           {
             throw std::runtime_error(std::string(e.what()) + " - Invalid value for " + cfgKey );
           }
         }
+        else if (cfgKey.compare("sqlite") == 0)
+        {
+          config.useSqliteForLocalCaches = cfgValue.at(0) == '1';
+          updated = true;
+        }
+        else if (cfgKey.compare("rocksdb") == 0)
+        {
+          config.useRocksdbForLocalCaches = cfgValue.at(0) == '1';
+          updated = true;
+        }
+        else if (cfgKey.compare("db-enable-compression") == 0)
+        {
+          config.enableDbCompression = cfgValue.at(0) == '1';
+          updated = true;
+        }
         else if (cfgKey.compare("no-console") == 0)
         {
-          config.noConsole = cfgValue.at(0) == '1' ? true : false;
+          config.noConsole = cfgValue.at(0) == '1';
           updated = true;
         }
         else if (cfgKey.compare("db-max-open-files") == 0)
@@ -385,12 +440,12 @@ namespace DaemonConfig{
         }
         else if (cfgKey.compare("allow-local-ip") == 0)
         {
-          config.localIp =  cfgValue.at(0) == '1' ? true : false;
+          config.localIp =  cfgValue.at(0) == '1';
           updated = true;
         }
         else if (cfgKey.compare("hide-my-port") == 0)
         {
-          config.hideMyPort =  cfgValue.at(0) == '1' ? true : false;
+          config.hideMyPort =  cfgValue.at(0) == '1';
           updated = true;
         }
         else if (cfgKey.compare("p2p-bind-ip") == 0)
@@ -441,7 +496,7 @@ namespace DaemonConfig{
         }
         else if (cfgKey.compare("add-exclusive-node") == 0)
         {
-          
+
           exclusiveNodes.push_back(cfgValue);
           config.exclusiveNodes = exclusiveNodes;
           updated = true;
@@ -466,7 +521,7 @@ namespace DaemonConfig{
         }
         else if (cfgKey.compare("enable-blockexplorer") == 0)
         {
-          config.enableBlockExplorer =  cfgValue.at(0) == '1' ? true : false;
+          config.enableBlockExplorer =  cfgValue.at(0) == '1';
           updated = true;
         }
         else if (cfgKey.compare("enable-cors") == 0)
@@ -494,9 +549,9 @@ namespace DaemonConfig{
         }
         else
         {
-          for (auto c: cfgKey) 
+          for (auto c: cfgKey)
           {
-            if (static_cast<unsigned char>(c) > 127) 
+            if (static_cast<unsigned char>(c) > 127)
             {
               throw std::runtime_error("Bad/invalid config file");
             }
@@ -506,7 +561,7 @@ namespace DaemonConfig{
       }
     }
 
-    if(!updated)
+    if (!updated)
     {
       return updated;
     }
@@ -533,172 +588,263 @@ namespace DaemonConfig{
       throw std::runtime_error("The --config-file you specified does not exist, please check the filename and try again.");
     }
 
-    json j;
-    data >> j;
+    IStreamWrapper isw(data);
 
-    if (j.find("data-dir") != j.end())
+    Document j;
+    j.ParseStream(isw);
+
+    if (j.HasMember("data-dir"))
     {
-      config.dataDirectory = j["data-dir"].get<std::string>();
+      config.dataDirectory = j["data-dir"].GetString();
     }
 
-    if (j.find("load-checkpoints") != j.end())
+    if (j.HasMember("load-checkpoints"))
     {
-      config.checkPoints = j["load-checkpoints"].get<std::string>();
+      config.checkPoints = j["load-checkpoints"].GetString();
     }
 
-    if (j.find("log-file") != j.end())
+    if (j.HasMember("log-file"))
     {
-      config.logFile = j["log-file"].get<std::string>();
+      config.logFile = j["log-file"].GetString();
     }
 
-    if (j.find("log-level") != j.end())
+    if (j.HasMember("log-level"))
     {
-      config.logLevel = j["log-level"].get<int>();
+      config.logLevel = j["log-level"].GetInt();
     }
 
-    if (j.find("no-console") != j.end())
+    if (j.HasMember("sqlite"))
     {
-      config.noConsole = j["no-console"].get<bool>();
+      config.useSqliteForLocalCaches = j["sqlite"].GetBool();
     }
 
-    if (j.find("db-max-open-files") != j.end())
+    if (j.HasMember("rocksdb"))
     {
-      config.dbMaxOpenFiles = j["db-max-open-files"].get<int>();
+      config.useRocksdbForLocalCaches = j["rocksdb"].GetBool();
     }
 
-    if (j.find("db-read-buffer-size") != j.end())
+    if (j.HasMember("db-enable-compression"))
     {
-      config.dbReadCacheSizeMB = j["db-read-buffer-size"].get<int>();
+      config.enableDbCompression = j["db-enable-compression"].GetBool();
     }
 
-    if (j.find("db-threads") != j.end())
+    if (j.HasMember("no-console"))
     {
-      config.dbThreads = j["db-threads"].get<int>();
+      config.noConsole = j["no-console"].GetBool();
     }
 
-    if (j.find("db-write-buffer-size") != j.end())
+    if (j.HasMember("db-max-open-files"))
     {
-      config.dbWriteBufferSizeMB = j["db-write-buffer-size"].get<int>();
+      config.dbMaxOpenFiles = j["db-max-open-files"].GetInt();
     }
 
-    if (j.find("allow-local-ip") != j.end())
+    if (j.HasMember("db-read-buffer-size"))
     {
-      config.localIp = j["allow-local-ip"].get<bool>();
+      config.dbReadCacheSizeMB = j["db-read-buffer-size"].GetInt();
     }
 
-    if (j.find("hide-my-port") != j.end())
+    if (j.HasMember("db-threads"))
     {
-      config.hideMyPort = j["hide-my-port"].get<bool>();
+      config.dbThreads = j["db-threads"].GetInt();
     }
 
-    if (j.find("p2p-bind-ip") != j.end())
+    if (j.HasMember("db-write-buffer-size"))
     {
-      config.p2pInterface = j["p2p-bind-ip"].get<std::string>();
+      config.dbWriteBufferSizeMB = j["db-write-buffer-size"].GetInt();
     }
 
-    if (j.find("p2p-bind-port") != j.end())
+    if (j.HasMember("allow-local-ip"))
     {
-      config.p2pPort = j["p2p-bind-port"].get<int>();
+      config.localIp = j["allow-local-ip"].GetBool();
     }
 
-    if (j.find("p2p-external-port") != j.end())
+    if (j.HasMember("hide-my-port"))
     {
-      config.p2pExternalPort = j["p2p-external-port"].get<int>();
+      config.hideMyPort = j["hide-my-port"].GetBool();
     }
 
-    if (j.find("rpc-bind-ip") != j.end())
+    if (j.HasMember("p2p-bind-ip"))
     {
-      config.rpcInterface = j["rpc-bind-ip"].get<std::string>();
+      config.p2pInterface = j["p2p-bind-ip"].GetString();
     }
 
-    if (j.find("rpc-bind-port") != j.end())
+    if (j.HasMember("p2p-bind-port"))
     {
-      config.rpcPort = j["rpc-bind-port"].get<int>();
+      config.p2pPort = j["p2p-bind-port"].GetInt();
     }
 
-    if (j.find("add-exclusive-node") != j.end())
+    if (j.HasMember("p2p-external-port"))
     {
-      config.exclusiveNodes = j["add-exclusive-node"].get<std::vector<std::string>>();
+      config.p2pExternalPort = j["p2p-external-port"].GetInt();
     }
 
-    if (j.find("add-peer") != j.end())
+    if (j.HasMember("rpc-bind-ip"))
     {
-      config.peers = j["add-peer"].get<std::vector<std::string>>();
+      config.rpcInterface = j["rpc-bind-ip"].GetString();
     }
 
-    if (j.find("add-priority-node") != j.end())
+    if (j.HasMember("rpc-bind-port"))
     {
-      config.priorityNodes = j["add-priority-node"].get<std::vector<std::string>>();
+      config.rpcPort = j["rpc-bind-port"].GetInt();
     }
 
-    if (j.find("seed-node") != j.end())
+    if (j.HasMember("add-exclusive-node"))
     {
-      config.seedNodes = j["seed-node"].get<std::vector<std::string>>();
+      const Value& va = j["add-exclusive-node"];
+      for (auto& v : va.GetArray())
+      {
+          config.exclusiveNodes.push_back(v.GetString());
+      }
     }
 
-    if (j.find("enable-blockexplorer") != j.end())
+    if (j.HasMember("add-peer"))
     {
-      config.enableBlockExplorer = j["enable-blockexplorer"].get<bool>();
+      const Value& va = j["add-peer"];
+      for (auto& v : va.GetArray())
+      {
+          config.peers.push_back(v.GetString());
+      }
     }
 
-    if (j.find("enable-cors") != j.end())
+    if (j.HasMember("add-priority-node"))
     {
-      config.enableCors = j["enable-cors"].get<std::vector<std::string>>();
+      const Value& va = j["add-priority-node"];
+      for (auto& v : va.GetArray())
+      {
+          config.priorityNodes.push_back(v.GetString());
+      }
     }
 
-    if (j.find("fee-address") != j.end())
+    if (j.HasMember("seed-node"))
     {
-      config.feeAddress = j["fee-address"].get<std::string>();
+      const Value& va = j["seed-node"];
+      for (auto& v : va.GetArray())
+      {
+          config.seedNodes.push_back(v.GetString());
+      }
     }
 
-    if (j.find("fee-amount") != j.end())
+    if (j.HasMember("enable-blockexplorer"))
     {
-      config.feeAmount = j["fee-amount"].get<int>();
+      config.enableBlockExplorer = j["enable-blockexplorer"].GetBool();
+    }
+
+    if (j.HasMember("enable-cors"))
+    {
+      const Value& va = j["enable-cors"];
+      for (auto& v : va.GetArray())
+      {
+          config.enableCors.push_back(v.GetString());
+      }
+    }
+
+    if (j.HasMember("fee-address"))
+    {
+      config.feeAddress = j["fee-address"].GetString();
+    }
+
+    if (j.HasMember("fee-amount"))
+    {
+      config.feeAmount = j["fee-amount"].GetInt();
     }
   }
 
-  json asJSON(const DaemonConfiguration& config)
+  Document asJSON(const DaemonConfiguration& config)
   {
-    json j = json {
-      {"data-dir", config.dataDirectory},
-      {"load-checkpoints", config.checkPoints},
-      {"log-file", config.logFile},
-      {"log-level", config.logLevel},
-      {"no-console", config.noConsole},
-      {"db-max-open-files", config.dbMaxOpenFiles},
-      {"db-read-buffer-size", (config.dbReadCacheSizeMB)},
-      {"db-threads", config.dbThreads},
-      {"db-write-buffer-size", (config.dbWriteBufferSizeMB)},
-      {"allow-local-ip", config.localIp},
-      {"hide-my-port", config.hideMyPort},
-      {"p2p-bind-ip", config.p2pInterface},
-      {"p2p-bind-port", config.p2pPort},
-      {"p2p-external-port", config.p2pExternalPort},
-      {"rpc-bind-ip", config.rpcInterface},
-      {"rpc-bind-port", config.rpcPort},
-      {"add-exclusive-node", config.exclusiveNodes},
-      {"add-peer", config.peers},
-      {"add-priority-node", config.priorityNodes},
-      {"seed-node", config.seedNodes},
-      {"enable-blockexplorer", config.enableBlockExplorer},
-      {"enable-cors", config.enableCors},
-      {"fee-address", config.feeAddress},
-      {"fee-amount", config.feeAmount},
-    };
+    Document j;
+    j.SetObject();
+    Document::AllocatorType& alloc = j.GetAllocator();
+
+    j.AddMember("data-dir", config.dataDirectory, alloc);
+    j.AddMember("load-checkpoints", config.checkPoints, alloc);
+    j.AddMember("log-file", config.logFile, alloc);
+    j.AddMember("log-level", config.logLevel, alloc);
+    j.AddMember("no-console", config.noConsole, alloc);
+    j.AddMember("rocksdb", config.useRocksdbForLocalCaches, alloc);
+    j.AddMember("sqlite", config.useSqliteForLocalCaches, alloc);
+    j.AddMember("db-enable-compression", config.enableDbCompression, alloc);
+    j.AddMember("db-max-open-files", config.dbMaxOpenFiles, alloc);
+    j.AddMember("db-read-buffer-size", (config.dbReadCacheSizeMB), alloc);
+    j.AddMember("db-threads", config.dbThreads, alloc);
+    j.AddMember("db-write-buffer-size", (config.dbWriteBufferSizeMB), alloc);
+    j.AddMember("allow-local-ip", config.localIp, alloc);
+    j.AddMember("hide-my-port", config.hideMyPort, alloc);
+    j.AddMember("p2p-bind-ip", config.p2pInterface, alloc);
+    j.AddMember("p2p-bind-port", config.p2pPort, alloc);
+    j.AddMember("p2p-external-port", config.p2pExternalPort, alloc);
+    j.AddMember("rpc-bind-ip", config.rpcInterface, alloc);
+    j.AddMember("rpc-bind-port", config.rpcPort, alloc);
+
+    {
+        Value arr(rapidjson::kArrayType);
+        for (auto v : config.exclusiveNodes)
+        {
+            arr.PushBack(Value().SetString(StringRef(v.c_str())), alloc);
+        }
+        j.AddMember("add-exclusive-node", arr, alloc);
+    }
+
+    {
+        Value arr(rapidjson::kArrayType);
+        for(auto v : config.peers)
+        {
+            arr.PushBack(Value().SetString(StringRef(v.c_str())), alloc);
+        }
+        j.AddMember("add-peer", arr, alloc);
+    }
+
+    {
+        Value arr(rapidjson::kArrayType);
+        for(auto v : config.priorityNodes)
+        {
+            arr.PushBack(Value().SetString(StringRef(v.c_str())), alloc);
+        }
+        j.AddMember("add-priority-node", arr, alloc);
+    }
+
+    {
+        Value arr(rapidjson::kArrayType);
+        for(auto v : config.seedNodes)
+        {
+            arr.PushBack(Value().SetString(StringRef(v.c_str())), alloc);
+        }
+        j.AddMember("seed-node", arr, alloc);
+    }
+
+    {
+        Value arr(rapidjson::kArrayType);
+        for(auto v : config.enableCors)
+        {
+            arr.PushBack(Value().SetString(StringRef(v.c_str())), alloc);
+        }
+        j.AddMember("enable-cors", arr, alloc);
+    }
+
+    j.AddMember("enable-blockexplorer", config.enableBlockExplorer, alloc);
+    j.AddMember("fee-address", config.feeAddress, alloc);
+    j.AddMember("fee-amount", config.feeAmount, alloc);
 
     return j;
   }
 
   std::string asString(const DaemonConfiguration& config)
   {
-    json j = asJSON(config);
-    return j.dump(2);
+    StringBuffer strbuf;
+    PrettyWriter<StringBuffer> writer(strbuf);
+
+    Document j = asJSON(config);
+    j.Accept(writer);
+
+    return strbuf.GetString();
   }
 
   void asFile(const DaemonConfiguration& config, const std::string& filename)
   {
-    json j = asJSON(config);
+    Document j = asJSON(config);
     std::ofstream data(filename);
-    data << std::setw(2) << j << std::endl;
+    OStreamWrapper osw(data);
+
+    PrettyWriter<OStreamWrapper> writer(osw);
+    j.Accept(writer);
   }
 }

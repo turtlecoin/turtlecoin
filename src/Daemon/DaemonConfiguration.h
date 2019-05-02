@@ -1,16 +1,16 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
-#include <json.hpp>
+#include <rapidjson/document.h>
 #include <config/CryptoNoteConfig.h>
 #include <Logging/ILogger.h>
 #include "Common/PathTools.h"
 #include "Common/Util.h"
 
-using nlohmann::json;
+using namespace rapidjson;
 
 namespace DaemonConfig {
   struct DaemonConfiguration
@@ -28,6 +28,7 @@ namespace DaemonConfig {
       dbReadCacheSizeMB = CryptoNote::DATABASE_READ_BUFFER_MB_DEFAULT_SIZE;
       dbThreads = CryptoNote::DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT;
       dbWriteBufferSizeMB = CryptoNote::DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE;
+      rewindToHeight = 0;
       p2pInterface = "0.0.0.0";
       p2pPort = CryptoNote::P2P_DEFAULT_PORT;
       p2pExternalPort = 0;
@@ -41,7 +42,11 @@ namespace DaemonConfig {
       version = false;
       osVersion = false;
       printGenesisTx = false;
-      dumpConfig = false; 
+      dumpConfig = false;
+      useSqliteForLocalCaches = false;
+      useRocksdbForLocalCaches = false;
+      enableDbCompression = false;
+      resync = false;
     }
 
     std::string dataDirectory;
@@ -67,10 +72,13 @@ namespace DaemonConfig {
     int dbWriteBufferSizeMB;
     int dbReadCacheSizeMB;
 
+    uint32_t rewindToHeight;
+
     bool noConsole;
     bool enableBlockExplorer;
     bool localIp;
     bool hideMyPort;
+    bool resync;
 
     std::string configFile;
     std::string outputFile;
@@ -80,6 +88,9 @@ namespace DaemonConfig {
     bool osVersion;
     bool printGenesisTx;
     bool dumpConfig;
+    bool useSqliteForLocalCaches;
+    bool useRocksdbForLocalCaches;
+    bool enableDbCompression;
   };
 
   DaemonConfiguration initConfiguration(const char* path);
@@ -89,5 +100,5 @@ namespace DaemonConfig {
   void handleSettings(const std::string configFile, DaemonConfiguration& config);
   void asFile(const DaemonConfiguration& config, const std::string& filename);
   std::string asString(const DaemonConfiguration& config);
-  json asJSON(const DaemonConfiguration& config);
+  Document asJSON(const DaemonConfiguration& config);
 }

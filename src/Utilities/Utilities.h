@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -42,6 +42,8 @@ namespace Utilities
     uint64_t getCurrentTimestampAdjusted();
 
     bool isSubtractionSafe(int64_t currentValue, uint64_t transferAmount);
+
+    bool parseDaemonAddressFromString(std::string &host, uint16_t &port, std::string address);
 
     /* Verify that a + b will not overflow when added. */
     /* 2 positive numbers - should always get greater (or equal) when summed. */

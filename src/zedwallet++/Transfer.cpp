@@ -10,9 +10,10 @@
 
 #include <iostream>
 
-#include <Utilities/FormatTools.h>
-
 #include <Utilities/ColouredMsg.h>
+#include <Utilities/FormatTools.h>
+#include <Utilities/Input.h>
+
 #include <zedwallet++/Fusion.h>
 #include <zedwallet++/GetInput.h>
 #include <zedwallet++/Utilities.h>
@@ -206,7 +207,7 @@ void splitTX(
                             "If the node you are using charges a fee,\nyou will "
                             "have to pay this fee for each transction.\n");
 
-    if (!ZedUtilities::confirm("Is this OK?"))
+    if (!Utilities::confirm("Is this OK?"))
     {
         return cancel();
     }
@@ -348,7 +349,7 @@ bool confirmTransaction(
     std::cout << "\n\nFROM: " << SuccessMsg(walletBackend->getWalletLocation())
               << "\nTO: " << SuccessMsg(address) << "\n\n";
 
-    if (ZedUtilities::confirm("Is this correct?"))
+    if (Utilities::confirm("Is this correct?"))
     {
         /* Use default message */
         ZedUtilities::confirmPassword(walletBackend, "Confirm your password: ");

@@ -959,11 +959,22 @@ bool DatabaseBlockchainCache::isTransactionSpendTimeUnlocked(uint64_t unlockTime
   return isTransactionSpendTimeUnlocked(unlockTime, getTopBlockIndex());
 }
 
-// TODO: pass time
 bool DatabaseBlockchainCache::isTransactionSpendTimeUnlocked(uint64_t unlockTime, uint32_t blockIndex) const {
   if (unlockTime < currency.maxBlockHeight()) {
     // interpret as block index
     return blockIndex + currency.lockedTxAllowedDeltaBlocks() >= unlockTime;
+  }
+
+  if (blockIndex >= CryptoNote::parameters::TRANSACTION_INPUT_BLOCKTIME_VALIDATION_HEIGHT)
+  {
+    /* Get the last block timestamp from an existing method call */
+    const std::vector<uint64_t> lastBlockTimestamps = getLastTimestamps(1);
+
+    /* Pop the last timestamp off the vector */
+    const uint64_t lastBlockTimestamp = lastBlockTimestamps.at(0);
+
+    /* Compare our delta seconds plus our last time stamp against the unlock time */
+    return lastBlockTimestamp + currency.lockedTxAllowedDeltaSeconds() >= unlockTime;
   }
 
   // interpret as time

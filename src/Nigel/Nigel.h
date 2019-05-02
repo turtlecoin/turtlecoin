@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -9,6 +9,8 @@
 #include "httplib.h"
 
 #include <Rpc/CoreRpcServerCommandsDefinitions.h>
+
+#include <config/CryptoNoteConfig.h>
 
 #include <string>
 
@@ -28,11 +30,13 @@ class Nigel
 
         Nigel(
             const std::string daemonHost,
-            const uint16_t daemonPort);
+            const uint16_t daemonPort,
+            const bool daemonSSL);
 
         Nigel(
             const std::string daemonHost,
             const uint16_t daemonPort,
+            const bool daemonSSL,
             const std::chrono::seconds timeout);
 
         ~Nigel();
@@ -43,7 +47,11 @@ class Nigel
 
         void init();
 
-        void swapNode(const std::string daemonHost, const uint16_t daemonPort);
+        void swapNode(const std::string daemonHost, const uint16_t daemonPort, const bool daemonSSL);
+
+        void decreaseRequestedBlockCount();
+
+        void resetRequestedBlockCount();
 
         /* Returns whether we've received info from the daemon at some point */
         bool isOnline() const;
@@ -58,7 +66,7 @@ class Nigel
 
         std::tuple<uint64_t, std::string> nodeFee() const;
 
-        std::tuple<std::string, uint16_t> nodeAddress() const;
+        std::tuple<std::string, uint16_t, bool> nodeAddress() const;
 
         std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> getWalletSyncData(
             const std::vector<Crypto::Hash> blockHashCheckpoints,
@@ -105,7 +113,7 @@ class Nigel
 
         /* Stores our http client (Don't really care about it launching threads
            and making our functions non const) */
-        std::shared_ptr<httplib::Client> m_httpClient = nullptr;
+        std::shared_ptr<httplib::Client> m_nodeClient = nullptr;
 
         /* Runs a background refresh on height, hashrate, etc */
         std::thread m_backgroundThread;
@@ -113,9 +121,12 @@ class Nigel
         /* If we should stop the background thread */
         std::atomic<bool> m_shouldStop = false;
 
+        /* Stores how many blocks we'll try to sync */
+        std::atomic<uint64_t> m_blockCount = CryptoNote::BLOCKS_SYNCHRONIZING_DEFAULT_COUNT;
+
         /* The amount of blocks the daemon we're connected to has */
         std::atomic<uint64_t> m_localDaemonBlockCount = 0;
-        
+
         /* The amount of blocks the network has */
         std::atomic<uint64_t> m_networkBlockCount = 0;
 
@@ -124,6 +135,10 @@ class Nigel
 
         /* The hashrate (based on the last local block the daemon has synced) */
         std::atomic<uint64_t> m_lastKnownHashrate = 0;
+
+        /* Whether the daemon is a blockchain cache API
+           see: https://github.com/TurtlePay/blockchain-cache-api */
+        std::atomic<bool> m_isBlockchainCache = false;
 
         /* The address to send the node fee to (May be "") */
         std::string m_nodeFeeAddress;
@@ -139,4 +154,7 @@ class Nigel
 
         /* The daemon port */
         uint16_t m_daemonPort;
+
+        /* If the daemon is SSL */
+        bool m_daemonSSL = false;
 };

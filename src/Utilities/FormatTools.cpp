@@ -354,4 +354,12 @@ std::string prettyPrintBytes(uint64_t input)
     return msg.str();
 }
 
+std::string unixTimeToDate(const uint64_t timestamp)
+{
+    const std::time_t time = timestamp;
+    char buffer[100];
+    std::strftime(buffer, sizeof(buffer), "%F %R", std::localtime(&time));
+    return std::string(buffer);
+}
+
 } // namespace Utilities

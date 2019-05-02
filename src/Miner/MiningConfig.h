@@ -21,7 +21,7 @@ struct MiningConfig
     std::string miningAddress;
     std::string daemonAddress;
     std::string daemonHost;
-    int daemonPort;
+    uint16_t daemonPort;
     size_t threadCount;
     size_t scanPeriod;
     size_t blocksLimit;
