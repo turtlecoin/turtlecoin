@@ -13,9 +13,11 @@
 
 #include "CryptoNoteCore/CryptoNoteBasicImpl.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 #include "CryptoNoteCore/Currency.h"
 #include "P2p/LevinProtocol.h"
+
+#include <Serialization/SerializationTools.h>
 
 #include <Utilities/FormatTools.h>
 

@@ -28,8 +28,6 @@ namespace CryptoNote {
   /* CryptoNote helper functions                                          */
   /************************************************************************/
   uint64_t getPenalizedAmount(uint64_t amount, size_t medianSize, size_t currentBlockSize);
-  std::string getAccountAddressAsStr(uint64_t prefix, const AccountPublicAddress& adr);
-  bool parseAccountAddressString(uint64_t& prefix, AccountPublicAddress& adr, const std::string& str);
 }
 
 bool parse_hash256(const std::string& str_hash, Crypto::Hash& hash);

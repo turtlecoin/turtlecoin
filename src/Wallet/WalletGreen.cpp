@@ -34,8 +34,8 @@
 #include "CryptoNoteCore/Currency.h"
 #include "CryptoNoteCore/CryptoNoteBasicImpl.h"
 #include "CryptoNoteCore/CryptoNoteFormatUtils.h"
-#include "CryptoNoteCore/CryptoNoteSerialization.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Serialization/CryptoNoteSerialization.h"
+#include "Common/CryptoNoteTools.h"
 #include "CryptoNoteCore/TransactionApi.h"
 #include "crypto/crypto.h"
 #include <crypto/random.h>
@@ -43,6 +43,9 @@
 #include "WalletSerializationV2.h"
 #include "WalletErrors.h"
 #include "WalletUtils.h"
+
+#include <Utilities/Addresses.h>
+#include <Utilities/Utilities.h>
 
 using namespace Common;
 using namespace Crypto;
@@ -158,7 +161,7 @@ void WalletGreen::createViewWallet(const std::string &path,
     CryptoNote::AccountPublicAddress publicKeys;
     uint64_t prefix;
 
-    if (!CryptoNote::parseAccountAddressString(prefix, publicKeys, address))
+    if (!Utilities::parseAccountAddressString(prefix, publicKeys, address))
     {
         throw std::runtime_error("Failed to parse address!");
     }
@@ -750,12 +753,12 @@ void WalletGreen::loadSpendKeys() {
     wallet.creationTimestamp = creationTimestamp;
 
     if (i == 0) {
-      isTrackingMode = wallet.spendSecretKey == NULL_SECRET_KEY;
-    } else if ((isTrackingMode && wallet.spendSecretKey != NULL_SECRET_KEY) || (!isTrackingMode && wallet.spendSecretKey == NULL_SECRET_KEY)) {
+      isTrackingMode = wallet.spendSecretKey == Constants::NULL_SECRET_KEY;
+    } else if ((isTrackingMode && wallet.spendSecretKey != Constants::NULL_SECRET_KEY) || (!isTrackingMode && wallet.spendSecretKey == Constants::NULL_SECRET_KEY)) {
       throw std::system_error(make_error_code(error::BAD_ADDRESS), "All addresses must be whether tracking or not");
     }
 
-    if (wallet.spendSecretKey != NULL_SECRET_KEY) {
+    if (wallet.spendSecretKey != Constants::NULL_SECRET_KEY) {
       throwIfKeysMismatch(wallet.spendSecretKey, wallet.spendPublicKey, "Restored spend public key doesn't correspond to secret key");
     } else {
       if (!Crypto::check_key(wallet.spendPublicKey)) {
@@ -933,7 +936,7 @@ std::string WalletGreen::createAddress(const Crypto::PublicKey& spendPublicKey, 
         throw std::system_error(make_error_code(error::WRONG_PARAMETERS), "Wrong public key format");
     }
 
-    return doCreateAddress(spendPublicKey, NULL_SECRET_KEY, scanHeight, newAddress);
+    return doCreateAddress(spendPublicKey, Constants::NULL_SECRET_KEY, scanHeight, newAddress);
 }
 
 std::vector<std::string> WalletGreen::createAddressList(const std::vector<Crypto::SecretKey>& spendSecretKeys, const uint64_t scanHeight, const bool newAddress)
@@ -1058,10 +1061,10 @@ std::string WalletGreen::addWallet(const NewAddressData &addressData, uint64_t s
 
   auto trackingMode = getTrackingMode();
 
-  if ((trackingMode == WalletTrackingMode::TRACKING && spendSecretKey != NULL_SECRET_KEY) ||
-      (trackingMode == WalletTrackingMode::NOT_TRACKING && spendSecretKey == NULL_SECRET_KEY)) {
+  if ((trackingMode == WalletTrackingMode::TRACKING && spendSecretKey != Constants::NULL_SECRET_KEY) ||
+      (trackingMode == WalletTrackingMode::NOT_TRACKING && spendSecretKey == Constants::NULL_SECRET_KEY)) {
     m_logger(ERROR, BRIGHT_RED) << "Failed to add wallet: incompatible tracking mode and spend secret key, tracking mode=" << trackingMode <<
-      ", spendSecretKey " << (spendSecretKey == NULL_SECRET_KEY ? "is null" : "is not null");
+      ", spendSecretKey " << (spendSecretKey == Constants::NULL_SECRET_KEY ? "is null" : "is not null");
     throw std::system_error(make_error_code(error::WRONG_PARAMETERS));
   }
 
@@ -2836,7 +2839,7 @@ void WalletGreen::transactionUpdated(const TransactionInformation& transactionIn
     ", block " << transactionInfo.blockHeight <<
     ", totalAmountIn " << m_currency.formatAmount(transactionInfo.totalAmountIn) <<
     ", totalAmountOut " << m_currency.formatAmount(transactionInfo.totalAmountOut) <<
-    (transactionInfo.paymentId == NULL_HASH ? "" : ", paymentId " + podToHex(transactionInfo.paymentId));
+    (transactionInfo.paymentId == Constants::NULL_HASH ? "" : ", paymentId " + podToHex(transactionInfo.paymentId));
 
   if (m_state == WalletState::NOT_INITIALIZED) {
     return;
@@ -3126,7 +3129,7 @@ WalletGreen::WalletTrackingMode WalletGreen::getTrackingMode() const {
     return WalletTrackingMode::NO_ADDRESSES;
   }
 
-  return m_walletsContainer.get<RandomAccessIndex>().begin()->spendSecretKey == NULL_SECRET_KEY ?
+  return m_walletsContainer.get<RandomAccessIndex>().begin()->spendSecretKey == Constants::NULL_SECRET_KEY ?
         WalletTrackingMode::TRACKING : WalletTrackingMode::NOT_TRACKING;
 }
 
@@ -3176,7 +3179,7 @@ size_t WalletGreen::createFusionTransaction(uint64_t threshold, uint16_t mixin,
     throw std::runtime_error("You must have at least one address");
   }
 
-  size_t estimatedFusionInputsCount = m_currency.getApproximateMaximumInputCount(m_currency.fusionTxMaxSize(), MAX_FUSION_OUTPUT_COUNT, mixin);
+  size_t estimatedFusionInputsCount = Utilities::getApproximateMaximumInputCount(m_currency.fusionTxMaxSize(), MAX_FUSION_OUTPUT_COUNT, mixin);
   if (estimatedFusionInputsCount < m_currency.fusionTxMinInputCount()) {
     m_logger(ERROR, BRIGHT_RED) << "Fusion transaction mixin is too big " << mixin;
     throw std::system_error(make_error_code(error::MIXIN_COUNT_TOO_BIG));

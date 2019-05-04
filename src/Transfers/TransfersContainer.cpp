@@ -25,6 +25,8 @@
 #include "Serialization/BinaryOutputStreamSerializer.h"
 #include "Serialization/SerializationOverloads.h"
 
+#include <config/Constants.h>
+
 using namespace Common;
 using namespace Crypto;
 using namespace Logging;
@@ -210,7 +212,7 @@ void TransfersContainer::addTransaction(const TransactionBlockInfo& block, const
   txInfo.extra = tx.getExtra();
 
   if (!tx.getPaymentId(txInfo.paymentId)) {
-    txInfo.paymentId = NULL_HASH;
+    txInfo.paymentId = Constants::NULL_HASH;
   }
 
   auto result = m_transactions.insert(std::move(txInfo));

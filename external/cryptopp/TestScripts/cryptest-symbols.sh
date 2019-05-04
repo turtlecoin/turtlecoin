@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
 
-# cryptest.sh - written and placed in public domain by Jeffrey Walton and Uri Blumenthal.
-#               Copyright assigned to Crypto++ project.
+# cryptest.sh - written and placed in public domain by Jeffrey Walton and Uri
+#               Blumenthal.
 
-# This is a test script that can be used on some Linux/Unix/Apple machines to automate testing
-# of the shared object to ensure linking and symbols don't go missing from release to release.
+# This is a test script that can be used on some Linux/Unix/Apple machines to
+# automate testing of the shared object to ensure linking and symbols don't go
+# missing from release to release.
+
+# Fixup ancient Bash
+# https://unix.stackexchange.com/q/468579/56041
+if [[ -z "$BASH_SOURCE" ]]; then
+	BASH_SOURCE="$0"
+fi
+
+############################################
+# Cleanup
+
+PWD_DIR=$(pwd)
+function cleanup {
+    rm -f adhoc.cpp *.a *.o *.so *.dylib GNUmakefile-symbols
+    cd "$PWD_DIR"
+}
+trap cleanup EXIT
 
 ############################################
 # Tags to test
 
-OLD_VERSION_TAG=CRYPTOPP_6_1_0
+OLD_VERSION_TAG=CRYPTOPP_8_1_0
 NEW_VERSION_TAG=master
 
 ############################################
@@ -34,11 +51,8 @@ fi
 
 echo
 echo "****************************************************************"
-echo "****************************************************************"
 echo "Testing '$NEW_VERSION_TAG' against '$OLD_VERSION_TAG'"
 echo "****************************************************************"
-echo "****************************************************************"
-echo
 
 ############################################
 # Setup tools and platforms
@@ -224,7 +238,6 @@ echo
 echo "****************************************************************"
 echo "Patching makefile for dynamic linking by cryptest.exe"
 echo "****************************************************************"
-echo
 
 if [[ "$IS_DARWIN" -ne "0" ]]; then
 	"$SED" "$SED_OPTS" -e 's|libcryptopp.a $(TESTOBJS)|libcryptopp.dylib $(TESTOBJS)|g' GNUmakefile-symbols
@@ -282,11 +295,10 @@ fi
 
 echo
 echo "****************************************************************"
-echo "Removing dynamic library for $OLD_VERSION_TAG"
+echo "Removing dynamic library and artifacts for $OLD_VERSION_TAG"
 echo "****************************************************************"
-echo
 
-rm -f adhoc.cpp *.o *.so *.dylib
+rm -f adhoc.cpp *.a *.o *.so *.dylib
 
 git checkout "$NEW_VERSION_TAG" -f &>/dev/null
 

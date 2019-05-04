@@ -8,8 +8,6 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <CryptoNoteCore/Currency.h>
-
 #include <ctime>
 
 #include <mutex>
@@ -547,7 +545,7 @@ std::tuple<std::vector<WalletTypes::TxInputAndOwner>, uint64_t, uint64_t>
 
     /* Get an approximation of the max amount of inputs we can include in this
        transaction */
-    uint64_t maxInputsToTake = CryptoNote::Currency::getApproximateMaximumInputCount(
+    uint64_t maxInputsToTake = Utilities::getApproximateMaximumInputCount(
         CryptoNote::parameters::FUSION_TX_MAX_SIZE,
         CryptoNote::parameters::FUSION_TX_MIN_IN_OUT_COUNT_RATIO,
         mixin

@@ -4,7 +4,8 @@ The History file contains the items that comprise the release notes. The
 items in the list below used to be in Readme.txt. Readme.txt now contans the
 last several releases.
 
-1.0 - First public release.  Withdrawn at the request of RSA DSI.
+1.0 - First public release
+    - Withdrawn at the request of RSA DSI over patent claims
     - included Blowfish, BBS, DES, DH, Diamond, DSA, ElGamal, IDEA,
       MD5, RC4, RC5, RSA, SHA, WAKE, secret sharing, DEFLATE compression
     - had a serious bug in the RSA key generation code.
@@ -432,3 +433,50 @@ last several releases.
       - remove s_nullNameValuePairs from unnamed namespace
       - ported to MSVC 2017, Xcode 9.3, Sun Studio 12.5, GCC 8.0.1,
         MacPorts GCC 7.0, Clang 4.0, Intel C++ 17.00, IBM XL C/C++ 13.1
+
+8.0.0 - December 28, 2018
+      - major release, recompile of programs required
+      - expanded community input and support
+         * 54 unique contributors as of this release
+      - add x25519 key exchange and ed25519 signature scheme
+      - add limited Asymmetric Key Package support from RFC 5958
+      - add Power9 DARN random number generator support
+      - add CHAM, HC-128, HC-256, Hight, LEA, Rabbit, Simeck
+      - fix FixedSizeAllocatorWithCleanup may be unaligned on some platforms
+      - cutover to GNU Make-based cpu feature tests
+      - rename files with dashes to underscores
+      - fix LegacyDecryptor and LegacyDecryptorWithMAC use wrong MAC
+      - fix incorrect AES/CBC decryption on Windows
+      - avoid Singleton<T> when possible, avoid std::call_once completely
+      - fix SPARC alignment problems due to GetAlignmentOf<T>() on word64
+      - add ARM AES asm implementation from Cryptogams
+      - remove CRYPTOPP_ALLOW_UNALIGNED_DATA_ACCESS support
+
+8.1.0 - February 22, 2019
+      - minor release, no recompile of programs required
+      - expanded community input and support
+        * 56 unique contributors as of this release
+      - fix OS X PowerPC builds with Clang
+      - add Microsoft ARM64 support
+      - fix iPhone Simulator build due to missing symbols
+      - add CRYPTOPP_BUGGY_SIMD_LOAD_AND_STORE
+      - add carryless multiplies for NIST b233 and k233 curves
+      - fix OpenMP build due to use of OpenMP 4 with down-level compilers
+      - add SignStream and VerifyStream for ed25519 and large files
+      - fix missing AlgorithmProvider in PanamaHash
+      - add SHAKE-128 and SHAKE-256
+      - fix AVX2 build due to _mm256_broadcastsi128_si256
+      - add IETF ChaCha, XChaCha, ChaChaPoly1305 and XChaChaPoly1305
+
+8.2.0 - April 28, 2019
+      - minor release, no recompile of programs required
+      - expanded community input and support
+        * 56 unique contributors as of this release
+      - use PowerPC unaligned loads and stores with Power8
+      - add SKIPJACK test vectors
+      - fix SHAKE-128 and SHAKE-256 compile
+      - removed IS_NEON from Makefile
+      - fix Aarch64 build on Fedora 29
+      - fix missing GF2NT_233_Multiply_Reduce_CLMUL in FIPS DLL
+      - add missing BLAKE2 constructors
+      - fix missing BlockSize() in BLAKE2 classes

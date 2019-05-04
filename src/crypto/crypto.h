@@ -86,6 +86,15 @@ struct EllipticCurveScalar {
             const KeyImage &image,
             const std::vector<PublicKey> pubs,
             const std::vector<Signature> signatures);
+
+        static void generateViewFromSpend(
+            const Crypto::SecretKey &spend,
+            Crypto::SecretKey &viewSecret);
+
+        static void generateViewFromSpend(
+            const Crypto::SecretKey &spend,
+            Crypto::SecretKey &viewSecret,
+            Crypto::PublicKey &viewPublic);
   };
 
   /* Generate a new key pair

@@ -5,8 +5,11 @@
 #define CRYPTOPP_VALIDATE_H
 
 #include "cryptlib.h"
-#include "integer.h"
 #include "misc.h"
+#include "files.h"
+#include "argnames.h"
+#include "algparam.h"
+#include "hex.h"
 
 #include <iostream>
 #include <sstream>
@@ -16,6 +19,12 @@
 
 NAMESPACE_BEGIN(CryptoPP)
 NAMESPACE_BEGIN(Test)
+
+// A hint to help locate TestData/ and TestVectors/ after install. Due to
+// execve the path can be malicious. If the path is ficticous then we move
+// onto the next potential path. Also note we only read from the path; we
+// never write through it. Storage for the string is in test.cpp.
+extern std::string g_argvPathHint;
 
 bool ValidateAll(bool thorough);
 bool TestSettings();
@@ -30,6 +39,9 @@ bool TestRDRAND();
 bool TestRDSEED();
 bool TestPadlockRNG();
 #endif
+#if (CRYPTOPP_BOOL_PPC32 || CRYPTOPP_BOOL_PPC64)
+bool TestDARN();
+#endif
 bool ValidateBaseCode();
 bool ValidateEncoder();
 bool ValidateCRC32();
@@ -40,6 +52,10 @@ bool ValidateMD4();
 bool ValidateMD5();
 bool ValidateSHA();
 bool ValidateSHA2();
+bool ValidateSHA3();
+bool ValidateSHAKE();      // output <= r, where r is blocksize
+bool ValidateSHAKE_XOF();  // output > r, needs hand crafted tests
+bool ValidateKeccak();
 bool ValidateTiger();
 bool ValidateRIPEMD();
 bool ValidatePanama();
@@ -81,9 +97,22 @@ bool ValidateTwofish();
 bool ValidateSerpent();
 bool ValidateSHACAL2();
 bool ValidateARIA();
+bool ValidateSIMECK();
+bool ValidateCHAM();
+bool ValidateHIGHT();
+bool ValidateLEA();
+bool ValidateSIMON();
+bool ValidateSPECK();
 bool ValidateCamellia();
+
+bool ValidateHC128();
+bool ValidateHC256();
+bool ValidateRabbit();
 bool ValidateSalsa();
+bool ValidateChaCha();
+bool ValidateChaChaTLS();
 bool ValidateSosemanuk();
+
 bool ValidateVMAC();
 bool ValidateCCM();
 bool ValidateGCM();
@@ -115,6 +144,10 @@ bool ValidateESIGN();
 bool ValidateHashDRBG();
 bool ValidateHmacDRBG();
 
+bool TestX25519();
+bool TestEd25519();
+bool ValidateX25519();
+bool ValidateEd25519();
 bool ValidateNaCl();
 
 // If CRYPTOPP_DEBUG or CRYPTOPP_COVERAGE is in effect, then perform additional tests
@@ -137,60 +170,31 @@ bool TestRounding();
 bool TestHuffmanCodes();
 // http://github.com/weidai11/cryptopp/issues/346
 bool TestASN1Parse();
+// https://github.com/weidai11/cryptopp/pull/334
+bool TestStringSink();
 // Additional tests due to no coverage
 bool TestCompressors();
 bool TestEncryptors();
 bool TestMersenne();
 bool TestSharing();
+# if defined(CRYPTOPP_ALTIVEC_AVAILABLE)
+bool TestAltivecOps();
+# endif
 #endif
 
-#if 1
-// Coverity findings in benchmark and validation routines
-class StreamState
+class FixedRNG : public RandomNumberGenerator
 {
 public:
-	StreamState(std::ostream& out)
-		: m_out(out), m_prec(out.precision()), m_width(out.width()), m_fmt(out.flags()), m_fill(out.fill())
-	{
-	}
+	FixedRNG(BufferedTransformation &source) : m_source(source) {}
 
-	~StreamState()
+	void GenerateBlock(byte *output, size_t size)
 	{
-		m_out.fill(m_fill);
-		m_out.flags(m_fmt);
-		m_out.width(m_width);
-		m_out.precision(m_prec);
+		m_source.Get(output, size);
 	}
 
 private:
-	std::ostream& m_out;
-	std::streamsize m_prec;
-	std::streamsize m_width;
-	std::ios_base::fmtflags m_fmt;
-	std::ostream::char_type m_fill;
+	BufferedTransformation &m_source;
 };
-#endif
-
-#if 0
-class StreamState
-{
-public:
-	StreamState(std::ostream& out)
-		: m_out(out), m_state(NULLPTR)
-	{
-		m_state.copyfmt(m_out);
-	}
-
-	~StreamState()
-	{
-		m_out.copyfmt(m_state);
-	}
-
-private:
-	std::ostream& m_out;
-	std::ios m_state;
-};
-#endif
 
 // Safer functions on Windows for C&A, http://github.com/weidai11/cryptopp/issues/55
 inline std::string TimeToString(const time_t& t)
@@ -212,10 +216,10 @@ inline std::string TimeToString(const time_t& t)
 
 	// Cleanup whitespace
 	std::string::size_type pos = 0;
-	while (!str.empty() && std::isspace(*(str.end()-1)))
+	while (!str.empty() && std::isspace(str[str.length()-1]))
 		{str.erase(str.end()-1);}
 	while (!str.empty() && std::string::npos != (pos = str.find("  ", pos)))
-		{ str.erase(pos, 1); }
+		{str.erase(pos, 1);}
 
 	return str;
 }
@@ -234,7 +238,7 @@ inline T StringToValue(const std::string& str)
 	iss >> std::noskipws >> value;
 
 	// Use fail(), not bad()
-	if (iss.fail() || !iss.eof())
+	if (iss.fail())
 		throw InvalidArgument(str + "' is not a value");
 
 	if (NON_NEGATIVE && value < 0)
@@ -257,10 +261,115 @@ inline int StringToValue<int, true>(const std::string& str)
 	return r;
 }
 
-// Functions that need a RNG; uses AES inf CFB mode with Seed.
-CryptoPP::RandomNumberGenerator & GlobalRNG();
+inline std::string AddSeparator(std::string str)
+{
+	if (str.empty()) return "";
+	const char last = str[str.length()-1];
+	if (last != '/' && last != '\\')
+		return str + "/";
+	return str;
+}
 
-bool RunTestDataFile(const char *filename, const CryptoPP::NameValuePairs &overrideParameters=CryptoPP::g_nullNameValuePairs, bool thorough=true);
+// Use CRYPTOPP_DATA_DIR last. The problem this sidesteps is, finding an
+// old version of Crypto++ library in CRYPTOPP_DATA_DIR when the library
+// has been staged in DESTDIR. Using CRYPTOPP_DATA_DIR first only works
+// as expected when CRYPTOPP_DATA_DIR is empty before an install. We
+// encountered this problem rather quickly during testing of Crypto++ 8.1
+// when Crypto++ 8.0 was installed locally. It took some time to realize
+// where the old test data was coming from.
+static std::string GetDataDir()
+{
+	std::ifstream file;
+	std::string name, filename = "TestData/usage.dat";
+
+#ifndef CRYPTOPP_DISABLE_DATA_DIR_SEARCH
+	// Look in $ORIGIN/../share/. This is likely a Linux install directory.
+	name = AddSeparator(g_argvPathHint) + std::string("../share/cryptopp/") + filename;
+	file.open(name.c_str());
+	if (file.is_open())
+		return AddSeparator(g_argvPathHint) + std::string("../share/cryptopp/");
+#endif
+#ifndef CRYPTOPP_DISABLE_DATA_DIR_SEARCH
+	// Look in current working directory
+	name = AddSeparator(g_argvPathHint) + filename;
+	file.open(name.c_str());
+	if (file.is_open())
+		return AddSeparator(g_argvPathHint);
+#endif
+#ifdef CRYPTOPP_DATA_DIR
+	// Honor CRYPTOPP_DATA_DIR. This is likely an install directory if it is not "./".
+	name = AddSeparator(CRYPTOPP_DATA_DIR) + filename;
+	file.open(name.c_str());
+	if (file.is_open())
+		return AddSeparator(CRYPTOPP_DATA_DIR);
+#endif
+	return "./";
+}
+
+inline std::string DataDir(const std::string& filename)
+{
+	std::string name;
+	std::ifstream file;
+
+#if CRYPTOPP_CXX11_DYNAMIC_INIT
+	static std::string path = AddSeparator(GetDataDir());
+	name = path + filename;
+	file.open(name.c_str());
+	if (file.is_open())
+		return name;
+#else
+	// Avoid static initialization problems
+	name = AddSeparator(GetDataDir()) + filename;
+	file.open(name.c_str());
+	if (file.is_open())
+		return name;
+#endif
+
+	// This will cause the expected exception in the caller
+	return filename;
+}
+
+// Definition in test.cpp
+RandomNumberGenerator& GlobalRNG();
+
+// Definition in datatest.cpp
+bool RunTestDataFile(const char *filename, const NameValuePairs &overrideParameters=g_nullNameValuePairs, bool thorough=true);
+
+// Definitions in validat6.cpp
+bool CryptoSystemValidate(PK_Decryptor &priv, PK_Encryptor &pub, bool thorough = false);
+bool SimpleKeyAgreementValidate(SimpleKeyAgreementDomain &d);
+bool AuthenticatedKeyAgreementValidate(AuthenticatedKeyAgreementDomain &d);
+bool SignatureValidate(PK_Signer &priv, PK_Verifier &pub, bool thorough = false);
+
+// Miscellaneous PK definitions in validat6.cpp
+// Key Agreement definitions in validat7.cpp
+// Encryption and Decryption definitions in validat8.cpp
+// Sign and Verify definitions in validat9.cpp
+
+bool ValidateECP();
+bool ValidateEC2N();
+
+bool ValidateRSA_Encrypt();
+bool ValidateRSA_Sign();
+
+bool ValidateLUC_Encrypt();
+bool ValidateLUC_Sign();
+
+bool ValidateLUC_DL_Encrypt();
+bool ValidateLUC_DL_Sign();
+
+bool ValidateRabin_Encrypt();
+bool ValidateRabin_Sign();
+
+bool ValidateECP();
+bool ValidateECP_Agreement();
+bool ValidateECP_Encrypt();
+bool ValidateECP_Sign();
+
+bool ValidateEC2N();
+bool ValidateEC2N_Agreement();
+bool ValidateEC2N_Encrypt();
+bool ValidateEC2N_Sign();
 
 NAMESPACE_END  // Test
 NAMESPACE_END  // CryptoPP

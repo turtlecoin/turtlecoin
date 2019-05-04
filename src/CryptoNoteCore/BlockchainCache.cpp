@@ -16,12 +16,13 @@
 #include "Common/ShuffleGenerator.h"
 
 #include "CryptoNoteCore/CryptoNoteBasicImpl.h"
-#include "CryptoNoteCore/CryptoNoteSerialization.h"
-#include "CryptoNoteCore/CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 #include "CryptoNoteCore/BlockchainStorage.h"
-#include "CryptoNoteCore/TransactionExtra.h"
+#include "Common/TransactionExtra.h"
 
+#include "Serialization/CryptoNoteSerialization.h"
 #include "Serialization/SerializationOverloads.h"
+
 #include "TransactionValidatiorState.h"
 
 namespace CryptoNote {

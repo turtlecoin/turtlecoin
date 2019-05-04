@@ -16,14 +16,13 @@ extern "C"
     #include <crypto/crypto-ops.h>
 }
 
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
-#include <CryptoNoteCore/Mixins.h>
-#include <CryptoNoteCore/TransactionExtra.h>
+#include <Common/TransactionExtra.h>
+#include <Common/CryptoNoteTools.h>
 
 #include <regex>
 
 #include <Utilities/Addresses.h>
+#include <Utilities/Mixins.h>
 #include <Utilities/Utilities.h>
 
 Error validateFusionTransaction(
@@ -210,7 +209,7 @@ Error validatePublicKey(const Crypto::PublicKey &publicKey)
 
 Error validateMixin(const uint64_t mixin, const uint64_t height)
 {
-    const auto [minMixin, maxMixin, defaultMixin] = CryptoNote::Mixins::getMixinAllowableRange(height);
+    const auto [minMixin, maxMixin, defaultMixin] = Utilities::getMixinAllowableRange(height);
 
     if (mixin < minMixin)
     {
@@ -388,7 +387,7 @@ Error validateAddresses(
 
             /* Convert the set of extracted keys back into an address, then
                verify that as a normal address */
-            address = CryptoNote::getAccountAddressAsStr(
+            address = Utilities::getAccountAddressAsStr(
                 CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
                 addr
             );
@@ -400,7 +399,7 @@ Error validateAddresses(
         /* Not used */
         CryptoNote::AccountPublicAddress ignore2;
 
-        if (!parseAccountAddressString(ignore, ignore2, address))
+        if (!Utilities::parseAccountAddressString(ignore, ignore2, address))
         {
             return ADDRESS_NOT_VALID;
         }

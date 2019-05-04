@@ -8,7 +8,7 @@
 ///   <A HREF="https://www.tarsnap.com/scrypt.html">The scrypt key derivation function</A>
 ///   and <A HREF="https://tools.ietf.org/html/rfc7914">RFC 7914, The scrypt Password-Based
 ///   Key Derivation Function</A>
-/// \since Crypto++ 6.2
+/// \since Crypto++ 7.0
 
 #ifndef CRYPTOPP_SCRYPT_H
 #define CRYPTOPP_SCRYPT_H
@@ -25,11 +25,11 @@ NAMESPACE_BEGIN(CryptoPP)
 ///   example, the library is limited to a derived key length of <tt>SIZE_MAX</tt>,
 ///   and not <tt>(2^32 - 1) * 32</tt>.
 /// \sa <A HREF="https://www.tarsnap.com/scrypt/scrypt.pdf">Stronger Key Derivation via
-///   Sequential Memory-Hard Functions</a>,
+///   Sequential Memory-Hard Functions</A>,
 ///   <A HREF="https://www.tarsnap.com/scrypt.html">The scrypt key derivation function</A>
 ///   and <A HREF="https://tools.ietf.org/html/rfc7914">RFC 7914, The scrypt Password-Based
 ///   Key Derivation Function</A>
-/// \since Crypto++ 6.2
+/// \since Crypto++ 7.0
 class Scrypt : public KeyDerivationFunction
 {
 public:
@@ -76,7 +76,9 @@ public:
     /// \details The parameter <tt>blockSize</tt> ("r" in the documents) specifies the block
     ///   size.
     /// \details The <tt>parallelization</tt> parameter ("p" in the documents) is a positive
-    ///   integer less than or equal to <tt>((2^32-1) * 32) / (128 * r)</tt>.
+    ///   integer less than or equal to <tt>((2^32-1) * 32) / (128 * r)</tt>. Due to Microsoft
+    ///   and its OpenMP 2.0 implementation <tt>parallelization</tt> is limited to
+    ///   <tt>std::numeric_limits<int>::max()</tt>.
     /// \details Scrypt always returns 1 because it only performs 1 iteration. Other
     ///   derivation functions, like PBKDF's, will return more interesting values.
     /// \details The Crypto++ implementation of Scrypt is limited by C++ datatypes. For

@@ -9,7 +9,7 @@
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 
-#include "CryptoNoteTools.h"
+#include "Common/CryptoNoteTools.h"
 
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"

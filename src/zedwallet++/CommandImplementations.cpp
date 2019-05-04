@@ -15,6 +15,7 @@
 
 #include <fstream>
 
+#include <Utilities/Addresses.h>
 #include <Utilities/ColouredMsg.h>
 #include <Utilities/FormatTools.h>
 #include <Utilities/Input.h>
@@ -588,7 +589,7 @@ void createIntegratedAddress()
         }
     }
 
-    const auto [error, integratedAddress] = WalletBackend::createIntegratedAddress(
+    const auto [error, integratedAddress] = Utilities::createIntegratedAddress(
         address, paymentID
     );
 

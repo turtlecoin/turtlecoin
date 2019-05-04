@@ -31,11 +31,11 @@ namespace CryptoNote {
 
     void clear() {
       height = 0;
-      id = CryptoNote::NULL_HASH;
+      id = Constants::NULL_HASH;
     }
 
     bool empty() const {
-      return id == CryptoNote::NULL_HASH;
+      return id == Constants::NULL_HASH;
     }
   };
 

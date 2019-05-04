@@ -14,7 +14,7 @@
 
 #if CRYPTOPP_MSC_VERSION
 # pragma warning(push)
-# pragma warning(disable: 4189)
+# pragma warning(disable: 4189 4296)
 #endif
 
 // Issue 340
@@ -42,29 +42,6 @@ class FixedBlockSize
 public:
 	/// \brief The block size of the algorithm provided as a constant.
 	CRYPTOPP_CONSTANT(BLOCKSIZE = N)
-	/// \brief The default blocksize for the algorithm provided as a constant.
-	CRYPTOPP_CONSTANT(DEFAULT_BLOCKSIZE = N)
-	/// \brief The minimum blocksize for the algorithm provided as a constant.
-	CRYPTOPP_CONSTANT(MIN_BLOCKSIZE = N)
-	/// \brief The maximum blocksize for the algorithm provided as a constant.
-	CRYPTOPP_CONSTANT(MAX_BLOCKSIZE = N)
-	/// \brief The default block size for the algorithm provided by a static function.
-	/// \param blocksize the block size, in bytes
-	/// \details The default implementation returns BLOCKSIZE. blocksize is unused
-	///   in the default implementation.
-	CRYPTOPP_STATIC_CONSTEXPR size_t CRYPTOPP_API StaticGetValidBlockSize(size_t blocksize)
-	{
-		return CRYPTOPP_UNUSED(blocksize), static_cast<size_t>(BLOCKSIZE);
-	}
-	/// \brief The default block size under a key provided by a static function.
-	/// \param keylength the size of the key, in bytes
-	/// \param blocksize the block size, in bytes
-	/// \details The default implementation returns BLOCKSIZE. blocksize is unused
-	///   in the default implementation.
-	CRYPTOPP_STATIC_CONSTEXPR size_t CRYPTOPP_API StaticGetValidBlockSize(size_t keylength, size_t blocksize)
-	{
-		return CRYPTOPP_UNUSED(keylength), CRYPTOPP_UNUSED(blocksize), static_cast<size_t>(BLOCKSIZE);
-	}
 };
 
 // ************** rounds ***************
@@ -288,7 +265,7 @@ public:
 	/// \brief The maximum key length used by the algorithm
 	/// \returns maximum key length used by the algorithm, in bytes
 	size_t MaxKeyLength() const
-		{return (size_t)INFO::MAX_KEYLENGTH;}
+		{return static_cast<size_t>(INFO::MAX_KEYLENGTH);}
 
 	/// \brief The default key length used by the algorithm
 	/// \returns default key length used by the algorithm, in bytes
@@ -309,10 +286,11 @@ public:
 	/// \details The default value is NOT_RESYNCHRONIZABLE. See IV_Requirement
 	///  in cryptlib.h for allowed values.
 	SimpleKeyingInterface::IV_Requirement IVRequirement() const
-		{return (SimpleKeyingInterface::IV_Requirement)INFO::IV_REQUIREMENT;}
+		{return static_cast<SimpleKeyingInterface::IV_Requirement>(INFO::IV_REQUIREMENT);}
 
-	/// \brief The default initialization vector length for the algorithm
-	/// \details IVSize is provided in bytes, not bits. The default implementation uses IV_LENGTH, which is 0.
+	/// \brief The initialization vector length for the algorithm
+	/// \details IVSize is provided in bytes, not bits. The default implementation uses
+	///   IV_LENGTH, which is 0.
 	unsigned int IVSize() const
 		{return INFO::IV_LENGTH;}
 };

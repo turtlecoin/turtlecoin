@@ -20,10 +20,10 @@
 #include <boost/utility/value_init.hpp>
 
 #include "CryptoNoteBasic.h"
-#include "CryptoNoteSerialization.h"
 
 #include "Serialization/BinaryOutputStreamSerializer.h"
 #include "Serialization/BinaryInputStreamSerializer.h"
+#include "Serialization/CryptoNoteSerialization.h"
 
 namespace Logging {
 class ILogger;
@@ -45,6 +45,10 @@ bool checkOutsOverflow(const TransactionPrefix& tx);
 std::vector<uint32_t> relativeOutputOffsetsToAbsolute(const std::vector<uint32_t>& off);
 std::vector<uint32_t> absolute_output_offsets_to_relative(const std::vector<uint32_t>& off);
 
+uint64_t getInputAmount(const Transaction& transaction);
+std::vector<uint64_t> getInputsAmounts(const Transaction& transaction);
+uint64_t getOutputAmount(const Transaction& transaction);
+void decomposeAmount(uint64_t amount, uint64_t dustThreshold, std::vector<uint64_t>& decomposedAmounts);
 
 // 62387455827 -> 455827 + 7000000 + 80000000 + 300000000 + 2000000000 + 60000000000, where 455827 <= dust_threshold
 template<typename chunk_handler_t, typename dust_handler_t>

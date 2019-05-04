@@ -16,7 +16,11 @@
 // along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Checkpoints.h"
-#include "Common/StringTools.h"
+
+#include <Common/StringTools.h>
+
+#include <config/Constants.h>
+
 #include <fstream>
 
 using namespace Logging;
@@ -26,7 +30,7 @@ namespace CryptoNote {
 Checkpoints::Checkpoints(std::shared_ptr<Logging::ILogger> log) : logger(log, "checkpoints") {}
 //---------------------------------------------------------------------------
 bool Checkpoints::addCheckpoint(uint32_t index, const std::string &hash_str) {
-  Crypto::Hash h = NULL_HASH;
+  Crypto::Hash h = Constants::NULL_HASH;
 
   if (!Common::podFromHex(hash_str, h)) {
     logger(ERROR, BRIGHT_RED) << "INVALID HASH IN CHECKPOINTS!";

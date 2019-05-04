@@ -12,14 +12,15 @@
 #include <Common/StringTools.h>
 
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
-#include <CryptoNoteCore/TransactionExtra.h>
+#include <Common/CryptoNoteTools.h>
+#include <Common/TransactionExtra.h>
 
 #include <fstream>
 
 #include <iostream>
 
 #include <Utilities/ColouredMsg.h>
+#include <Utilities/Addresses.h>
 #include <zedwallet/PasswordContainer.h>
 #include <config/WalletConfig.h>
 
@@ -207,7 +208,7 @@ std::string createIntegratedAddress(const std::string &address,
     CryptoNote::AccountPublicAddress addr;
 
     /* Get the private + public key from the address */
-    CryptoNote::parseAccountAddressString(prefix, addr, address);
+    Utilities::parseAccountAddressString(prefix, addr, address);
 
     /* Pack as a binary array */
     CryptoNote::BinaryArray ba;

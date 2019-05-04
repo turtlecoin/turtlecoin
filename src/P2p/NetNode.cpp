@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2019, The CyprusCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -249,7 +250,14 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
 
       try {
         std::ifstream p2p_data;
-        p2p_data.open(state_file_path, std::ios_base::binary | std::ios_base::in);
+
+        std::ios_base::openmode open_mode = std::ios_base::binary | std::ios_base::in;
+        /* --p2p-reset-peerstate daemon option 
+          Truncates the file if want the peer state reset */
+        if(m_p2p_state_reset) {
+          open_mode |= std::ios_base::trunc;
+        }
+        p2p_data.open(state_file_path, open_mode);
 
         if (!p2p_data.fail()) {
           StdInputStream inputStream(p2p_data);
@@ -386,6 +394,7 @@ std::string print_peerlist_to_string(const std::list<PeerlistEntry>& pl) {
     }
     m_config_folder = config.getConfigFolder();
     m_p2p_state_filename = config.getP2pStateFilename();
+    m_p2p_state_reset = config.getP2pStateReset();
 
     if (!init_config()) {
       logger(ERROR, BRIGHT_RED) << "Failed to init config.";

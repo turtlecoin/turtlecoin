@@ -9,9 +9,13 @@
 
 #include <numeric>
 
+#include <Common/CryptoNoteTools.h>
 #include <Common/ShuffleGenerator.h>
 #include <Common/Math.h>
 #include <Common/MemoryInputStream.h>
+#include <Common/TransactionExtra.h>
+
+#include <config/Constants.h>
 
 #include <CryptoNoteCore/BlockchainCache.h>
 #include <CryptoNoteCore/BlockchainStorage.h>
@@ -19,12 +23,10 @@
 #include <CryptoNoteCore/Core.h>
 #include <CryptoNoteCore/CoreErrors.h>
 #include <CryptoNoteCore/CryptoNoteFormatUtils.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
 #include <CryptoNoteCore/ITimeProvider.h>
 #include <CryptoNoteCore/MemoryBlockchainStorage.h>
 #include <CryptoNoteCore/Mixins.h>
 #include <CryptoNoteCore/TransactionApi.h>
-#include <CryptoNoteCore/TransactionExtra.h>
 #include <CryptoNoteCore/TransactionPool.h>
 #include <CryptoNoteCore/TransactionPoolCleaner.h>
 #include <CryptoNoteCore/UpgradeManager.h>
@@ -776,15 +778,13 @@ Crypto::PublicKey Core::getPubKeyFromExtra(const std::vector<uint8_t> &extra)
 {
     Crypto::PublicKey publicKey;
 
-    const int TX_EXTRA_PUBKEY_IDENTIFIER = 0x01;
-
     const int pubKeySize = 32;
 
     for (size_t i = 0; i < extra.size(); i++)
     {
         /* If the following data is the transaction public key, this is
            indicated by the preceding value being 0x01. */
-        if (extra[i] == TX_EXTRA_PUBKEY_IDENTIFIER)
+        if (extra[i] == Constants::TX_EXTRA_PUBKEY_IDENTIFIER)
         {
             /* The amount of data remaining in the vector (minus one because
                we start reading the public key from the next character) */
@@ -821,13 +821,10 @@ std::string Core::getPaymentIDFromExtra(const std::vector<uint8_t> &extra)
 {
     const int paymentIDSize = 32;
 
-    const int TX_EXTRA_PAYMENT_ID_IDENTIFIER = 0x00;
-    const int TX_EXTRA_NONCE_IDENTIFIER = 0x02;
-
     for (size_t i = 0; i < extra.size(); i++)
     {
         /* Extra nonce tag found */
-        if (extra[i] == TX_EXTRA_NONCE_IDENTIFIER)
+        if (extra[i] == Constants::TX_EXTRA_NONCE_IDENTIFIER)
         {
             /* Skip the extra nonce tag */
             size_t dataRemaining = extra.size() - i - 1;
@@ -842,7 +839,7 @@ std::string Core::getPaymentIDFromExtra(const std::vector<uint8_t> &extra)
             }
 
             /* Payment ID in extra nonce */
-            if (extra[i+2] == TX_EXTRA_PAYMENT_ID_IDENTIFIER)
+            if (extra[i+2] == Constants::TX_EXTRA_PAYMENT_ID_IDENTIFIER)
             {
                 /* Plus three to skip the two 0x02 0x00 tags and the size value */
                 const auto dataBegin = extra.begin() + i + 3;
@@ -2153,7 +2150,7 @@ void Core::importBlocksFromStorage() {
       logger(Logging::ERROR) << "Local blockchain corruption detected. " << std::endl
                              << "Block with index " << i << " and hash " << cachedBlock.getBlockHash()
                              << " has previous block hash " << blockTemplate.previousBlockHash << ", but parent has hash " << previousBlockHash << "." << std::endl
-                             << "Please try to repair this issue by starting the node with the option: --rewind " << i << std::endl
+                             << "Please try to repair this issue by starting the node with the option: --rewind-to-height " << i << std::endl
                              << "If the above does not repair the issue, please launch the node with the option: --resync" << std::endl;
       throw std::system_error(make_error_code(error::CoreErrorCode::CORRUPTED_BLOCKCHAIN));
     }

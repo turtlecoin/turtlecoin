@@ -18,16 +18,17 @@
 #include "crypto/hash.h"
 
 #include <CryptoNoteCore/BlockchainStorage.h>
-#include <CryptoNoteCore/CryptoNoteTools.h>
 #include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-#include "CryptoNoteCore/TransactionExtra.h"
+
+#include <Common/TransactionExtra.h>
+#include <Common/CryptoNoteTools.h>
 
 namespace CryptoNote {
 
 namespace {
 
 const uint32_t ONE_DAY_SECONDS = 60 * 60 * 24;
-const CachedBlockInfo NULL_CACHED_BLOCK_INFO {NULL_HASH, 0, 0, 0, 0, 0};
+const CachedBlockInfo NULL_CACHED_BLOCK_INFO {Constants::NULL_HASH, 0, 0, 0, 0, 0};
 
 bool requestPackedOutputs(IBlockchainCache::Amount amount, Common::ArrayView<uint32_t> globalIndexes, IDataBase& database, std::vector<PackedOutIndex>& result) {
   BlockchainReadBatch readBatch;

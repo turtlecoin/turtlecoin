@@ -11,9 +11,12 @@
 #include "secblock.h"
 
 // Clang 3.3 integrated assembler crash on Linux. Clang 3.4 due to compiler error with .intel_syntax
-#if CRYPTOPP_BOOL_X32 || defined(CRYPTOPP_DISABLE_INTEL_ASM)
-# define CRYPTOPP_DISABLE_PANAMA_ASM
-#endif
+//#if CRYPTOPP_BOOL_X32 || defined(CRYPTOPP_DISABLE_MIXED_ASM)
+//# define CRYPTOPP_DISABLE_PANAMA_ASM
+//#endif
+
+// https://github.com/weidai11/cryptopp/issues/758
+#define CRYPTOPP_DISABLE_PANAMA_ASM 1
 
 NAMESPACE_BEGIN(CryptoPP)
 
@@ -22,6 +25,8 @@ template <class B>
 class CRYPTOPP_NO_VTABLE Panama
 {
 public:
+	virtual ~Panama() {}
+	std::string AlgorithmProvider() const;
 	void Reset();
 	void Iterate(size_t count, const word32 *p=NULLPTR, byte *output=NULLPTR, const byte *input=NULLPTR, KeystreamOperation operation=WRITE_KEYSTREAM);
 
@@ -40,16 +45,20 @@ class PanamaHash : protected Panama<B>, public AlgorithmImpl<IteratedHash<word32
 {
 public:
 	CRYPTOPP_CONSTANT(DIGESTSIZE = 32)
+	virtual ~PanamaHash() {}
 	PanamaHash() {Panama<B>::Reset();}
 	unsigned int DigestSize() const {return DIGESTSIZE;}
 	void TruncatedFinal(byte *hash, size_t size);
 	CRYPTOPP_STATIC_CONSTEXPR const char* StaticAlgorithmName() {return B::ToEnum() == BIG_ENDIAN_ORDER ? "Panama-BE" : "Panama-LE";}
+	std::string AlgorithmProvider() const {return Panama<B>::AlgorithmProvider();} // Fix https://github.com/weidai11/cryptopp/issues/801
 
 protected:
 	void Init() {Panama<B>::Reset();}
 	void HashEndianCorrectedBlock(const word32 *data) {this->Iterate(1, data);}	// push
 	size_t HashMultipleBlocks(const word32 *input, size_t length);
 	word32* StateBuf() {return NULLPTR;}
+
+	FixedSizeSecBlock<word32, 8> m_buf;
 };
 }
 
@@ -134,6 +143,8 @@ class PanamaCipherPolicy : public AdditiveCipherConcretePolicy<word32, 8>,
 							protected Panama<B>
 {
 protected:
+	virtual ~PanamaCipherPolicy() {}
+	std::string AlgorithmProvider() const;
 	void CipherSetKey(const NameValuePairs &params, const byte *key, size_t length);
 	void OperateKeystream(KeystreamOperation operation, byte *output, const byte *input, size_t iterationCount);
 	bool CipherIsRandomAccess() const {return false;}
@@ -141,6 +152,7 @@ protected:
 	unsigned int GetAlignment() const;
 
 	FixedSizeSecBlock<word32, 8> m_key;
+	FixedSizeSecBlock<word32, 8> m_buf;
 };
 
 /// \brief Panama stream cipher

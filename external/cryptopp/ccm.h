@@ -24,6 +24,8 @@ public:
 	// AuthenticatedSymmetricCipher
 	std::string AlgorithmName() const
 		{return GetBlockCipher().AlgorithmName() + std::string("/CCM");}
+	std::string AlgorithmProvider() const
+		{return GetBlockCipher().AlgorithmProvider();}
 	size_t MinKeyLength() const
 		{return GetBlockCipher().MinKeyLength();}
 	size_t MaxKeyLength() const
@@ -71,7 +73,7 @@ protected:
 	virtual BlockCipher & AccessBlockCipher() =0;
 	virtual int DefaultDigestSize() const =0;
 
-	const BlockCipher & GetBlockCipher() const {return const_cast<CCM_Base *>(this)->AccessBlockCipher();};
+	const BlockCipher & GetBlockCipher() const {return const_cast<CCM_Base *>(this)->AccessBlockCipher();}
 	byte *CBC_Buffer() {return m_buffer+REQUIRED_BLOCKSIZE;}
 
 	enum {REQUIRED_BLOCKSIZE = 16};

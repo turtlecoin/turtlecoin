@@ -4,11 +4,11 @@
 
 #include <CryptoNote.h>
 
-#include <CryptoNoteCore/CryptoNoteFormatUtils.h>
-
 #include <Errors/Errors.h>
 
 #include <Nigel/Nigel.h>
+
+#include <Serialization/SerializationTools.h>
 
 #include <SubWallets/SubWallets.h>
 
@@ -77,8 +77,6 @@ namespace SendTransaction
     std::vector<CryptoNote::TransactionOutput> keyOutputToTransactionOutput(
         const std::vector<WalletTypes::KeyOutput> keyOutputs);
 
-    Crypto::Hash getTransactionHash(CryptoNote::Transaction tx);
-
     std::tuple<Error, std::vector<CryptoNote::RandomOuts>> getRingParticipants(
         const uint64_t mixin,
         const std::shared_ptr<Nigel> daemon,
@@ -144,4 +142,12 @@ namespace SendTransaction
 
     /* Verify fee is as expected */
     bool verifyTransactionFee(const uint64_t expectedFee, CryptoNote::Transaction tx);
+
+    /* Template so we can do transaction, and transactionprefix */
+    template<typename T>
+    Crypto::Hash getTransactionHash(T tx)
+    {
+        std::vector<uint8_t> data = toBinaryArray(tx);
+        return Crypto::cn_fast_hash(data.data(), data.size());
+    }
 }

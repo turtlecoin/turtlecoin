@@ -28,6 +28,11 @@
 #include "ec2n.h"
 #include "misc.h"
 
+// Squash MS LNK4221 and libtool warnings
+#ifndef CRYPTOPP_MANUALLY_INSTANTIATE_TEMPLATES
+extern const char ECCRYPTO_FNAME[] = __FILE__;
+#endif
+
 NAMESPACE_BEGIN(CryptoPP)
 
 #if 0
@@ -94,7 +99,12 @@ template<> struct EcRecommendedParameters<EC2N>
 		StringSource ssA(a, true, new HexDecoder);
 		StringSource ssB(b, true, new HexDecoder);
 		if (t0 == 0)
-			return new EC2N(GF2NT(t2, t3, t4), EC2N::FieldElement(ssA, (size_t)ssA.MaxRetrievable()), EC2N::FieldElement(ssB, (size_t)ssB.MaxRetrievable()));
+		{
+			if (t2 == 233 && t3 == 74 && t4 == 0)
+				return new EC2N(GF2NT233(233, 74, 0), EC2N::FieldElement(ssA, (size_t)ssA.MaxRetrievable()), EC2N::FieldElement(ssB, (size_t)ssB.MaxRetrievable()));
+			else
+				return new EC2N(GF2NT(t2, t3, t4), EC2N::FieldElement(ssA, (size_t)ssA.MaxRetrievable()), EC2N::FieldElement(ssB, (size_t)ssB.MaxRetrievable()));
+		}
 		else
 			return new EC2N(GF2NPP(t0, t1, t2, t3, t4), EC2N::FieldElement(ssA, (size_t)ssA.MaxRetrievable()), EC2N::FieldElement(ssB, (size_t)ssB.MaxRetrievable()));
 	};
@@ -485,7 +495,7 @@ bool DL_GroupParameters_EC<EC>::GetVoidValue(const char *name, const std::type_i
 {
 	if (strcmp(name, Name::GroupOID()) == 0)
 	{
-		if (m_oid.GetValues().empty())
+		if (m_oid.Empty())
 			return false;
 
 		this->ThrowIfTypeMismatch(name, typeid(OID), valueType);
@@ -563,7 +573,7 @@ void DL_GroupParameters_EC<EC>::BERDecode(BufferedTransformation &bt)
 template <class EC>
 void DL_GroupParameters_EC<EC>::DEREncode(BufferedTransformation &bt) const
 {
-	if (m_encodeAsOID && !m_oid.GetValues().empty())
+	if (m_encodeAsOID && !m_oid.Empty())
 		m_oid.DEREncode(bt);
 	else
 	{

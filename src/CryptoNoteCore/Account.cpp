@@ -5,8 +5,8 @@
 // Please see the included LICENSE file for more information.
 
 #include "Account.h"
-#include "CryptoNoteSerialization.h"
-#include "crypto/keccak.c"
+#include "Serialization/CryptoNoteSerialization.h"
+#include "crypto/keccak.h"
 
 namespace CryptoNote {
 //-----------------------------------------------------------------
@@ -26,22 +26,9 @@ void AccountBase::generate() {
      with keccak-256, and then using this as the seed to generate a new set
      of keys - the public and private view keys. See generate_deterministic_keys */
 
-  generateViewFromSpend(m_keys.spendSecretKey, m_keys.viewSecretKey, m_keys.address.viewPublicKey);
+  Crypto::crypto_ops::generateViewFromSpend(m_keys.spendSecretKey, m_keys.viewSecretKey, m_keys.address.viewPublicKey);
   m_creation_timestamp = time(NULL);
 
-}
-void AccountBase::generateViewFromSpend(const Crypto::SecretKey &spend, Crypto::SecretKey &viewSecret, Crypto::PublicKey &viewPublic) {
-  Crypto::SecretKey viewKeySeed;
-
-  keccak((uint8_t *)&spend, sizeof(spend), (uint8_t *)&viewKeySeed, sizeof(viewKeySeed));
-
-  Crypto::generate_deterministic_keys(viewPublic, viewSecret, viewKeySeed);
-}
-
-void AccountBase::generateViewFromSpend(const Crypto::SecretKey &spend, Crypto::SecretKey &viewSecret) {
-  /* If we don't need the pub key */
-  Crypto::PublicKey unused_dummy_variable;
-  generateViewFromSpend(spend, viewSecret, unused_dummy_variable);
 }
 //-----------------------------------------------------------------
 const AccountKeys &AccountBase::getAccountKeys() const {

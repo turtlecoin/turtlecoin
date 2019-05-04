@@ -14,12 +14,11 @@
 #include <ctime>
 
 #include <config/CryptoNoteConfig.h>
+#include <config/WalletConfig.h>
 
-#include <CryptoNoteCore/Core.h>
+#include <iomanip>
 
 #include <Rpc/CoreRpcServerCommandsDefinitions.h>
-
-#include <config/WalletConfig.h>
 
 namespace Utilities
 {

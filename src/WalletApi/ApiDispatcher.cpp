@@ -704,7 +704,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     else
     {
         /* Get the default mixin */
-        std::tie(std::ignore, std::ignore, mixin) = CryptoNote::Mixins::getMixinAllowableRange(
+        std::tie(std::ignore, std::ignore, mixin) = Utilities::getMixinAllowableRange(
             m_walletBackend->getStatus().networkBlockCount
         );
     }
@@ -809,7 +809,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedFusionTransaction(
     else
     {
         /* Get the default mixin */
-        std::tie(std::ignore, std::ignore, mixin) = CryptoNote::Mixins::getMixinAllowableRange(
+        std::tie(std::ignore, std::ignore, mixin) = Utilities::getMixinAllowableRange(
             m_walletBackend->getStatus().networkBlockCount
         );
     }
@@ -1152,7 +1152,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createIntegratedAddress(
     /* Skip the address */
     std::string paymentID = stripped.substr(splitPos + 1);
 
-    const auto [error, integratedAddress] = WalletBackend::createIntegratedAddress(address, paymentID);
+    const auto [error, integratedAddress] = Utilities::createIntegratedAddress(address, paymentID);
 
     if (error)
     {
