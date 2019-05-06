@@ -15,20 +15,6 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/stringbuffer.h"
 
-// JSON exception used in tryGetJsonValue
-class JsonException : public std::exception {
-	std::string message;
-
-    public:
-        JsonException(std::string err) {
-            message = err;
-        }
-
-        const char* what () const throw () {
-            return message.c_str();
-        }
-};
-
 enum WalletState
 {
     WalletMustBeOpen,

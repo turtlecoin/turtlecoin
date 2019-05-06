@@ -176,7 +176,7 @@ const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
             continue;
         }
         /* Input isn't a number */
-        catch (const std::invalid_argument &)
+        catch (const JsonException &)
         {
             const auto it = std::find(addressBook.begin(), addressBook.end(),
                                       AddressBookEntry(friendlyName));

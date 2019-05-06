@@ -116,7 +116,7 @@ namespace WalletTypes
             integer encoding limits), we need to attempt this as a string */
             try {
                 unlockTime = getUint64FromJSON(j, "unlockTime");
-            } catch (const std::invalid_argument &e) {
+            } catch (const JsonException &e) {
                 unlockTime = std::stoull(getStringFromJSON(j, "unlockTime"));
             }
         }
@@ -185,7 +185,7 @@ namespace WalletTypes
             integer encoding limits), we need to attempt this as a string */
             try {
                 unlockTime = getUint64FromJSON(j, "unlockTime");
-            } catch (const std::invalid_argument &e) {
+            } catch (const JsonException &e) {
                 unlockTime = std::stoull(getStringFromJSON(j, "unlockTime"));
             }
 
