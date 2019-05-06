@@ -1097,7 +1097,7 @@ TransactionResult makeTransaction(
         /* Indicate this is the payment ID */
         extra.push_back(Constants::TX_EXTRA_PAYMENT_ID_IDENTIFIER);
 
-        std::copy(std::begin(paymentIDBin.data), std::begin(paymentIDBin.data), std::back_inserter(extra));
+        std::copy(std::begin(paymentIDBin.data), std::end(paymentIDBin.data), std::back_inserter(extra));
     }
 
     /* Add the pub key identifier to extra */
@@ -1106,7 +1106,7 @@ TransactionResult makeTransaction(
     const auto pubKey = result.txKeyPair.publicKey;
 
     /* Append the pub key to extra */
-    std::copy(std::begin(pubKey.data), std::begin(pubKey.data), std::back_inserter(extra));
+    std::copy(std::begin(pubKey.data), std::end(pubKey.data), std::back_inserter(extra));
 
     CryptoNote::Transaction setupTX;
 

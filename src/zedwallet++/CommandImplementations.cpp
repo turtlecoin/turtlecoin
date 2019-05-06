@@ -65,17 +65,15 @@ void printPrivateKeys(const std::shared_ptr<WalletBackend> walletBackend)
 
     const auto [error, mnemonicSeed] = walletBackend->getMnemonicSeed();
 
-    std::cout << SuccessMsg("Private view key:\n")
-              << SuccessMsg(privateViewKey) << "\n";
-
-    /* We've got a private spend, that's it */
-    if (walletBackend->isViewWallet())
+    /* If this isn't a view only wallet, print out the spend key and mnemonic if available */
+    if (!walletBackend->isViewWallet())
     {
-        return;
+        std::cout << SuccessMsg("\nPrivate spend key:\n")
+                  << SuccessMsg(privateSpendKey) << "\n";
     }
 
-    std::cout << SuccessMsg("\nPrivate spend key:\n")
-              << SuccessMsg(privateSpendKey) << "\n";
+    std::cout << SuccessMsg("Private view key:\n")
+              << SuccessMsg(privateViewKey) << "\n";
 
     if (!error)
     {
