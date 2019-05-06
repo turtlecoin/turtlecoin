@@ -1047,7 +1047,7 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
 #ifndef FORCE_USE_HEAP
   RDATA_ALIGN16 uint8_t hp_state[page_size];
 #else
-#warning "ACTIVATING FORCE_USE_HEAP IN aarch64 + crypto in slow-hash.c"
+#pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN aarch64 + crypto in slow-hash.c")
   uint8_t *hp_state = (uint8_t *)aligned_malloc(page_size,16);
 #endif
 
@@ -1284,7 +1284,7 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
 #ifndef FORCE_USE_HEAP
   uint8_t long_state[page_size];
 #else
-#warning "ACTIVATING FORCE_USE_HEAP IN aarch64 && !crypto in slow-hash.c"
+#pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN aarch64 && !crypto in slow-hash.c")
   uint8_t *long_state = (uint8_t *)malloc(page_size);
 #endif
 
@@ -1471,7 +1471,7 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
 #ifndef FORCE_USE_HEAP
   uint8_t long_state[page_size];
 #else
-#warning "ACTIVATING FORCE_USE_HEAP IN portable slow-hash.c"
+#pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN portable slow-hash.c")
   uint8_t *long_state = (uint8_t *)malloc(page_size);
 #endif
 

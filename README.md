@@ -153,13 +153,20 @@ The binaries will be in the `src` folder when you are complete.
 
 ##### Prerequisites
 
+You can build for 32-bit or 64-bit Windows. **If you're not sure, pick 64-bit.**
+
 - Install [Visual Studio 2017 Community Edition](https://www.visualstudio.com/thank-you-downloading-visual-studio/?sku=Community&rel=15&page=inlineinstall)
 - When installing Visual Studio, it is **required** that you install **Desktop development with C++**
-- Install the latest version of [Boost](https://bintray.com/boostorg/release/download_file?file_path=1.68.0%2Fbinaries%2Fboost_1_68_0-msvc-14.1-64.exe) - Currently Boost 1.68.
-- Install the latest full version of [OpenSSL](https://slproweb.com/download/Win64OpenSSL-1_1_1b.exe) - Currently v1.1.1b
+- Install the latest version of Boost (currently Boost 1.68). Select the appropriate version for your system:
+  - [Boost 64-bit](https://bintray.com/boostorg/release/download_file?file_path=1.68.0%2Fbinaries%2Fboost_1_68_0-msvc-14.1-64.exe)
+  - [Boost 32-bit](https://bintray.com/boostorg/release/download_file?file_path=1.68.0%2Fbinaries%2Fboost_1_68_0-msvc-14.1-32.exe)
+- Install the latest full version of OpenSSL (currently OpenSSL 1.1.1b). Select the appropriate version for your system:
+  - [OpenSSL 64-bit](https://slproweb.com/download/Win64OpenSSL-1_1_1b.exe)
+  - [OpenSSL 32-bit](https://slproweb.com/download/Win32OpenSSL-1_1_1b.exe)
 
 ##### Building
 
+For 64-bit:
 - From the start menu, open 'x64 Native Tools Command Prompt for vs2017'.
 - `cd <your_turtlecoin_directory>`
 - `mkdir build`
@@ -168,36 +175,20 @@ The binaries will be in the `src` folder when you are complete.
 - `cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT=C:/local/boost_1_68_0`
 - `MSBuild TurtleCoin.sln /p:Configuration=Release /m`
 
+For 32-bit:
+- From the start menu, open 'x86 Native Tools Command Prompt for vs2017'.
+- `cd <your_turtlecoin_directory>`
+- `mkdir build`
+- `cd build`
+- `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
+- `cmake -G "Visual Studio 15 2017" .. -DBOOST_ROOT=C:/local/boost_1_68_0`
+- `MSBuild TurtleCoin.sln /p:Configuration=Release /p:Platform=Win32 /m`
+
 The binaries will be in the `src/Release` folder when you are complete.
 
 - `cd src`
 - `cd Release`
 - `TurtleCoind.exe --version`
-
-#### Raspberry Pi 3 B+ (AARCH64/ARM64)
-The following images are known to work. Your operation system image **MUST** be 64 bit.
-
-##### Known working images
-
-- https://github.com/Crazyhead90/pi64/releases
-- https://fedoraproject.org/wiki/Architectures/ARM/Raspberry_Pi#aarch64_supported_images_for_Raspberry_Pi_3
-- https://archlinuxarm.org/platforms/armv8/broadcom/raspberry-pi-3
-
-Once you have a 64 bit image installed, setup proceeds the same as any Linux distribution. Ensure you have at least 2GB of ram, or the build is likely to fail. You may need to setup swap space.
-
-##### Building
-
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
-- `mkdir build`
-- `cd build`
-- `cmake ..`
-- `make`
-
-The binaries will be in the `src` folder when you are complete.
-
-- `cd src`
-- `./TurtleCoind --version`
 
 #### Thanks
 Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, TurtleCoin Community
@@ -209,7 +200,7 @@ Hi TurtleCoin contributor, thanks for forking and sending back Pull Requests. Ex
 ```
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 ```
