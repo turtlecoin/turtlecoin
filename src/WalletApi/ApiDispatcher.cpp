@@ -1836,6 +1836,9 @@ bool ApiDispatcher::assertWalletOpen() const
 
 void ApiDispatcher::publicKeysToAddresses(rapidjson::Document &j) const
 {
+    /* Because of some weird stuff going on inside of rapidjson I wasn't able to use
+    JsonHelper.h methods here >:( */
+    
     rapidjson::Value& transactions = j["transactions"];
     for (auto& item : transactions.GetArray()) {
         rapidjson::Value& transfers = item["transfers"];
@@ -1851,7 +1854,7 @@ void ApiDispatcher::publicKeysToAddresses(rapidjson::Document &j) const
             const auto [error, address] = m_walletBackend->getAddress(spendKey);
 
             // Add the address to the json
-            rapidjson::Value addressValue;     // calls Value(double)
+            rapidjson::Value addressValue;
 	        addressValue.SetString(address, j.GetAllocator());
             tx.AddMember("string", addressValue, j.GetAllocator());
 

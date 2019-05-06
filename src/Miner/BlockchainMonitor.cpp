@@ -118,30 +118,34 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
         return std::nullopt;
     }
 
-    rapidjson::Document j;
-    j.Parse(res->body);
-    if (!j.HasParseError()) {
-        const std::string status = j["result"]["status"].GetString();
+    std::cout << "befure parse blockchain monitor" << std::endl;
+    try {
+        rapidjson::Document j;
+        j.Parse(res->body);
+        if (j.HasParseError())
+            throw JsonException(GetParseError_En(j.GetParseError()));
+        const std::string status = getStringFromJSON(getJsonValue(j, "result"), "status");
 
         if (status != "OK") {
             std::stringstream stream;
             stream << "Failed to get block hash from daemon. Response: "
-                   << status << std::endl;
+                << status << std::endl;
             std::cout << WarningMsg(stream.str());
 
             return std::nullopt;
         }
 
         Crypto::Hash hash;
-        hash.fromString(j["result"]["block_header"]["hash"].GetString());
-        return hash;
-    } else {
+        hash.fromString(getStringFromJSON(getJsonValue(getJsonValue(j, "result"), "block_header"), "hash"));
+        return hash;    
+    } catch (const JsonException &e) {
         std::stringstream stream;
         stream << "Failed to parse block hash from daemon. Received data:\n"
-               << res->body << "\nParse error: " << GetParseError_En(j.GetParseError()) 
-               << std::endl;
+            << res->body << "\nParse error: " << e.what()
+            << std::endl;
         
         std::cout << WarningMsg(stream.str());
         return std::nullopt;
     }
+    
 }

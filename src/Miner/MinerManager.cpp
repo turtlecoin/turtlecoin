@@ -231,6 +231,7 @@ void MinerManager::stopBlockchainMonitoring()
 
 bool MinerManager::submitBlock(const BlockTemplate& minedBlock)
 {
+    std::cout << "start submit block" << std::endl;
     CachedBlock cachedBlock(minedBlock);
 
     rapidjson::StringBuffer string_buffer;
@@ -308,10 +309,13 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             continue;
         }
 
-        rapidjson::Document j;
-        j.Parse(res->body);
-        if (!j.HasParseError()) {
-            const std::string status = j["result"]["status"].GetString();
+        try {
+            rapidjson::Document j;
+            j.Parse(res->body);
+            if (j.HasParseError())
+                throw JsonException(GetParseError_En(j.GetParseError()));
+
+            const std::string status = getStringFromJSON(getJsonValue(j, "result"), "status");
 
             if (status != "OK") {
                 std::stringstream stream;
@@ -323,10 +327,10 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             }
 
             BlockMiningParameters params;
-            params.difficulty = j["result"]["difficulty"].GetUint64();
+            params.difficulty = getUint64FromJSON(getJsonValue(j, "result"), "difficulty");
 
             std::vector<uint8_t> blob = Common::fromHex(
-                j["result"]["blocktemplate_blob"].GetString()
+                getStringFromJSON(getJsonValue(j, "result"), "blocktemplate_blob")
             );
 
             if(!fromBinaryArray(params.blockTemplate, blob)) {
@@ -335,10 +339,10 @@ BlockMiningParameters MinerManager::requestMiningParameters()
                 continue;
             }
             return params;
-        } else {
+        } catch (const JsonException &e) {
             std::stringstream stream;
             stream << "Failed to parse block hash from daemon. Received data:\n"
-                << res->body << "\nParse error: " << GetParseError_En(j.GetParseError()) 
+                << res->body << "\nParse error: " << e.what() 
                 << std::endl;
             
             std::cout << WarningMsg(stream.str());
