@@ -39,7 +39,8 @@ struct KeyInput {
 
     writer.Key("key_offsets");
     writer.StartArray();
-    for (const auto item : outputIndexes) {
+    for (const auto item : outputIndexes) 
+    {
       writer.Uint(item);
     }
     writer.EndArray();
@@ -51,9 +52,11 @@ struct KeyInput {
   }
 
   /* Initializes the class from a json value */
-  void fromJSON(const JSONValue &j) {
-    amount = getUintFromJSON(j, "amount");
-    for (const auto &item : getArrayFromJSON(j, "key_offsets")) {
+  void fromJSON(const JSONValue &j) 
+  {
+    amount = getUint64FromJSON(j, "amount");
+    for (const auto &item : getArrayFromJSON(j, "key_offsets")) 
+    {
       outputIndexes.push_back(item.GetUint());
     }
     keyImage.fromString(getStringFromJSON(j, "k_image"));

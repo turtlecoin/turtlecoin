@@ -222,7 +222,8 @@ struct OutputEntry {
   }
 
   /* Initializes the class from a json value */
-  void fromJSON(const JSONValue &j) {
+  void fromJSON(const JSONValue &j) 
+  {
     global_amount_index = getUintFromJSON(j, "global_amount_index");
     out_key.fromString(getStringFromJSON(j, "out_key"));
   }
@@ -248,7 +249,8 @@ struct RandomOuts {
 
     writer.Key("outs");
     writer.StartArray();
-    for (const auto& item : outs) {
+    for (const auto& item : outs) 
+    {
       item.toJSON(writer);
     }
     writer.EndArray();
@@ -257,10 +259,12 @@ struct RandomOuts {
   }
 
   /* Initializes the class from a json value */
-  void fromJSON(const JSONValue &j) {
+  void fromJSON(const JSONValue &j) 
+  {
     amount = getUint64FromJSON(j, "amount");
     outs.clear();
-    for (const auto &x : getArrayFromJSON(j, "outputs")) {
+    for (const auto &x : getArrayFromJSON(j, "outputs")) 
+    {
       OutputEntry outputEntry;
       outputEntry.fromJSON(x);
       outs.push_back(outputEntry);

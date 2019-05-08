@@ -27,13 +27,17 @@ template<typename T>
 T getJsonValue(const rapidjson::Document &body, const std::string key)
 {
     rapidjson::Value::ConstMemberIterator itr = body.FindMember(key);
-    if (itr == body.MemberEnd()) // value doesn't exist
+    if (itr == body.MemberEnd()) // value doesn't exist 
+    {
         throw JsonException("\nExpected json parameter '" + key + "' does not exist.");
+    }
 
 	const rapidjson::Value& value = itr->value;
     if (!value.Is<T>()) // value is not the expected type
+    {
         throw JsonException("\nJson parameter '" + key + "' is not of the expected type.");
-				
+    }
+    		
     return value.Get<T>();
 }
 
@@ -320,7 +324,7 @@ class ApiDispatcher
         /* END OF API FUNCTIONS */
         //////////////////////////
 
-        /* Extracts {host, port, filename, password}, from body */
+        /* Extracts {host, port, ssl, filename, password}, from body */
         std::tuple<std::string, uint16_t, bool, std::string, std::string>
             getDefaultWalletParams(const rapidjson::Document &body) const;
 

@@ -118,15 +118,18 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
         return std::nullopt;
     }
 
-    std::cout << "befure parse blockchain monitor" << std::endl;
-    try {
+    try 
+    {
         rapidjson::Document j;
         j.Parse(res->body);
         if (j.HasParseError())
+        {
             throw JsonException(GetParseError_En(j.GetParseError()));
+        }
         const std::string status = getStringFromJSON(getJsonValue(j, "result"), "status");
 
-        if (status != "OK") {
+        if (status != "OK") 
+        {
             std::stringstream stream;
             stream << "Failed to get block hash from daemon. Response: "
                 << status << std::endl;
@@ -138,7 +141,9 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
         Crypto::Hash hash;
         hash.fromString(getStringFromJSON(getJsonValue(getJsonValue(j, "result"), "block_header"), "hash"));
         return hash;    
-    } catch (const JsonException &e) {
+    } 
+    catch (const JsonException &e) 
+    {
         std::stringstream stream;
         stream << "Failed to parse block hash from daemon. Received data:\n"
             << res->body << "\nParse error: " << e.what()

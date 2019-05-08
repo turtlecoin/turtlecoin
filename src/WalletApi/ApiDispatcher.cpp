@@ -241,12 +241,15 @@ void ApiDispatcher::middleware(
     rapidjson::Document body;
     
     body.Parse(req.body);
-    if(!body.HasParseError()) {
+    if(!body.HasParseError())
+    {
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
         body.Accept(writer);
-        std::cout << "Body:\n" << std::setw(4) << buffer.GetString() << std::endl;
-    } else {
+        std::cout << "Body:\n" << buffer.GetString() << std::endl;
+    } 
+    else 
+    {
         /* Body given, but failed to parse as JSON. Probably a mistake on
            the clients side, but lets report it to help them out. */
         if (!req.body.empty())
@@ -303,7 +306,6 @@ void ApiDispatcher::middleware(
         return;
     }
 
-    // TODO
     try
     {
         const auto [error, statusCode] = handler(req, res, body);
@@ -328,6 +330,14 @@ void ApiDispatcher::middleware(
         {
             res.status = statusCode;
         }
+    }
+    /* Most likely a key was missing. Do the error handling here to make the
+       rest of the code simpler */
+    catch (const JsonException &e)
+    {
+        std::cout << "Caught JSON exception, likely missing required "
+                     "json parameter: " << e.what() << std::endl;
+        res.status = 400;
     }
     catch (const std::exception &e)
     {
@@ -499,7 +509,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::createAddress(
 {
     const auto [error, address, privateSpendKey] = m_walletBackend->addSubWallet();
     const auto [publicSpendKey, publicViewKey] = Utilities::addressToKeys(address);
-    // hope this crap works
+
     rapidjson::StringBuffer string_buffer;
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
@@ -601,7 +611,8 @@ std::tuple<Error, uint16_t> ApiDispatcher::validateAddress(
 
     const Error error = validateAddresses({address}, true);
 
-    if (error != SUCCESS) {
+    if (error != SUCCESS) 
+    {
         return {error, 400};
     }
 
@@ -683,7 +694,9 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
     const rapidjson::Document &body)
 {
     if(!body.HasMember("destinations"))
+    {
         throw JsonException("\nBody contains no destinations.");
+    }
 
     const auto destinationsJSON = getArrayFromJSON(body, "destinations");
 
@@ -718,10 +731,14 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedTransaction(
 
     std::vector<std::string> subWalletsToTakeFrom = {};
 
-    if (body.HasMember("sourceAddresses")) {
-        for (const auto &item : getArrayFromJSON(body, "sourceAddresses")) {
+    if (body.HasMember("sourceAddresses")) 
+    {
+        for (const auto &item : getArrayFromJSON(body, "sourceAddresses")) 
+        {
             if (!item.IsString()) // this is in case the array contains invalid values
-                throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
+            {
+                throw JsonException("\nArray member 'sourceAddresses' contains values that are not of type 'string'.");
+            }
             subWalletsToTakeFrom.push_back(item.GetString());
         }
     }
@@ -816,10 +833,14 @@ std::tuple<Error, uint16_t> ApiDispatcher::sendAdvancedFusionTransaction(
 
     std::vector<std::string> subWalletsToTakeFrom;
 
-	if (body.HasMember("sourceAddresses")) {
-        for (const auto &item : getArrayFromJSON(body, "sourceAddresses")) {
+	if (body.HasMember("sourceAddresses")) 
+    {
+        for (const auto &item : getArrayFromJSON(body, "sourceAddresses")) 
+        {
             if (!item.IsString()) // this is in case the array contains invalid values
-                throw JsonException("\nArray memeber 'sourceAddresses' contains values that are not of type 'string'.");
+            {
+                throw JsonException("\nArray member 'sourceAddresses' contains values that are not of type 'string'.");
+            }
             subWalletsToTakeFrom.push_back(item.GetString());
         }
     }
@@ -927,7 +948,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::setNodeInfo(
 {
     std::scoped_lock lock(m_mutex);
 
-    uint16_t daemonPort = getJsonValue<uint64_t>(body, "daemonPort");
+    uint16_t daemonPort = CryptoNote::RPC_DEFAULT_PORT;
     bool daemonSSL = false;
     /* This parameter is required */
     const std::string daemonHost = getJsonValue<std::string>(body, "daemonHost");
@@ -1106,14 +1127,14 @@ std::tuple<Error, uint16_t> ApiDispatcher::getAddresses(
 	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
     writer.Key("addresses");
-    std::vector<std::string> adresses = m_walletBackend->getAddresses();
-    std::vector<std::string>::iterator it;
+    std::vector<std::string> addresses = m_walletBackend->getAddresses();
     // iterate through the vector and add the addresses to the array element in the JSON object
     writer.StartArray();
-    for(it = adresses.begin(); it != adresses.end(); it++) {
-        writer.String((*it));
+    for (const auto& item : addresses)
+    {
+        writer.String(item);
     }
-    writer.EndArray(adresses.size());
+    writer.EndArray();
 	writer.EndObject();
 
     res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
@@ -1181,10 +1202,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactions(
 	writer.StartObject();
     writer.Key("transactions");
     std::vector<WalletTypes::Transaction> transactions = m_walletBackend->getTransactions();
-    std::vector<WalletTypes::Transaction>::iterator it;
     writer.StartArray();
-    for(it = transactions.begin(); it != transactions.end(); it++) {
-        (*it).toJSON(writer);
+    for (const auto& item : transactions)
+    {
+        item.toJSON(writer);
     }
     writer.EndArray();
 	writer.EndObject();
@@ -1211,10 +1232,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getUnconfirmedTransactions(
 	writer.StartObject();
     writer.Key("transactions");
     std::vector<WalletTypes::Transaction> transactions = m_walletBackend->getUnconfirmedTransactions();
-    std::vector<WalletTypes::Transaction>::iterator it;
     writer.StartArray();
-    for(it = transactions.begin(); it != transactions.end(); it++) {
-        (*it).toJSON(writer);
+    for (const auto& item : transactions)
+    {
+        item.toJSON(writer);
     }
     writer.EndArray();
 	writer.EndObject();
@@ -1263,10 +1284,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getUnconfirmedTransactionsForAddress(
 	rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
 	writer.StartObject();
     writer.Key("transactions");
-    std::vector<WalletTypes::Transaction>::iterator it;
     writer.StartArray();
-    for(it = result.begin(); it != result.end(); it++) {
-        (*it).toJSON(writer);
+    for (const auto& item : result)
+    {
+        item.toJSON(writer);
     }
     writer.EndArray();
 	writer.EndObject();
@@ -1303,10 +1324,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeight(
         writer.StartObject();
         writer.Key("transactions");
         std::vector<WalletTypes::Transaction> transactions = txs;
-        std::vector<WalletTypes::Transaction>::iterator it;
         writer.StartArray();
-        for(it = transactions.begin(); it != transactions.end(); it++) {
-            (*it).toJSON(writer);
+        for (const auto& item : transactions)
+        {
+            item.toJSON(writer);
         }
         writer.EndArray();
         writer.EndObject();
@@ -1370,10 +1391,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeightToHeight(
         writer.StartObject();
         writer.Key("transactions");
         std::vector<WalletTypes::Transaction> transactions = txs;
-        std::vector<WalletTypes::Transaction>::iterator it;
         writer.StartArray();
-        for(it = transactions.begin(); it != transactions.end(); it++) {
-            (*it).toJSON(writer);
+        for (const auto& item : transactions)
+        {
+            item.toJSON(writer);
         }
         writer.EndArray();
         writer.EndObject();
@@ -1451,10 +1472,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeightWithAddress(
         rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
         writer.StartObject();
         writer.Key("transactions");
-        std::vector<WalletTypes::Transaction>::iterator it;
         writer.StartArray();
-        for(it = result.begin(); it != result.end(); it++) {
-            (*it).toJSON(writer);
+        for (const auto& item : result)
+        {
+            item.toJSON(writer);
         }
         writer.EndArray();
         writer.EndObject();
@@ -1547,10 +1568,10 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsFromHeightToHeightWith
         rapidjson::Writer<rapidjson::StringBuffer> writer(string_buffer);
         writer.StartObject();
         writer.Key("transactions");
-        std::vector<WalletTypes::Transaction>::iterator it;
         writer.StartArray();
-        for(it = result.begin(); it != result.end(); it++) {
-            (*it).toJSON(writer);
+        for (const auto& item : result)
+        {
+            item.toJSON(writer);
         }
         writer.EndArray();
         writer.EndObject();
@@ -1667,10 +1688,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getBalances(
 
     rapidjson::StringBuffer string_buffer;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
-    writer.StartObject();
-    /* I had to assign a key to the array. While nlohmann allows a nameless array as a unique member of
-    an object, rapidjson apparently doesn't like it.*/
-    writer.Key("balances");
+
     writer.StartArray();
     for (const auto [address, unlocked, locked] : balances)
     {
@@ -1684,7 +1702,7 @@ std::tuple<Error, uint16_t> ApiDispatcher::getBalances(
         writer.EndObject();
     }
     writer.EndArray();
-    writer.EndObject();
+    
     res.set_content(std::string(string_buffer.GetString()) + "\n", "application/json");
 
     return {SUCCESS, 200};
@@ -1840,9 +1858,11 @@ void ApiDispatcher::publicKeysToAddresses(rapidjson::Document &j) const
     JsonHelper.h methods here >:( */
     
     rapidjson::Value& transactions = j["transactions"];
-    for (auto& item : transactions.GetArray()) {
+    for (auto& item : transactions.GetArray()) 
+    {
         rapidjson::Value& transfers = item["transfers"];
-        for (auto& tx : transfers.GetArray()) {
+        for (auto& tx : transfers.GetArray()) 
+        {
             // tx should be an object
 
             // Get the spend key, we use an iterator to make the removal of the value faster

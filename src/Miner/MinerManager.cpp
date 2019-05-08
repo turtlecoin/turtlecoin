@@ -231,7 +231,6 @@ void MinerManager::stopBlockchainMonitoring()
 
 bool MinerManager::submitBlock(const BlockTemplate& minedBlock)
 {
-    std::cout << "start submit block" << std::endl;
     CachedBlock cachedBlock(minedBlock);
 
     rapidjson::StringBuffer string_buffer;
@@ -309,15 +308,19 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             continue;
         }
 
-        try {
+        try 
+        {
             rapidjson::Document j;
             j.Parse(res->body);
             if (j.HasParseError())
+            {
                 throw JsonException(GetParseError_En(j.GetParseError()));
+            }
 
             const std::string status = getStringFromJSON(getJsonValue(j, "result"), "status");
 
-            if (status != "OK") {
+            if (status != "OK") 
+            {
                 std::stringstream stream;
                 stream  << "Failed to get block hash from daemon. Response: "
                         << status << std::endl;
@@ -333,13 +336,16 @@ BlockMiningParameters MinerManager::requestMiningParameters()
                 getStringFromJSON(getJsonValue(j, "result"), "blocktemplate_blob")
             );
 
-            if(!fromBinaryArray(params.blockTemplate, blob)) {
+            if(!fromBinaryArray(params.blockTemplate, blob)) 
+            {
                 std::cout << WarningMsg("Couldn't parse block template from daemon.") << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
             return params;
-        } catch (const JsonException &e) {
+        } 
+        catch (const JsonException &e)
+         {
             std::stringstream stream;
             stream << "Failed to parse block hash from daemon. Received data:\n"
                 << res->body << "\nParse error: " << e.what() 

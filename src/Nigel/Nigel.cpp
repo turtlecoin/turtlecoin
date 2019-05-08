@@ -120,7 +120,8 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
     writer.StartObject();
     writer.Key("blockHashCheckpoints");
     writer.StartArray();
-    for (const auto &item : blockHashCheckpoints) {
+    for (const auto &item : blockHashCheckpoints) 
+    {
         item.toJSON(writer);
     }
     writer.EndArray();
@@ -141,25 +142,34 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>> Nigel::getWalletSync
         "/getwalletsyncdata", string_buffer.GetString(), "application/json"
     );
 
-    if (res && res->status == 200) {
-        try {
+    if (res && res->status == 200) 
+    {
+        try 
+        {
             rapidjson::Document j;
             j.Parse(res->body);
 
             if(j.HasParseError())
+            {
                 throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+            }
 
             if (getStringFromJSON(j, "status") != "OK")
+            {
                 return {false, {}};
+            }
             
             std::vector<WalletTypes::WalletBlockInfo> items;
             // cooler way to get an array and iterate through it
-            for (auto& item : getArrayFromJSON(j, "items")) {
+            for (const auto& item : getArrayFromJSON(j, "items")) 
+            {
                 WalletTypes::WalletBlockInfo wbi;
                 wbi.fromJSON(item);
                 items.push_back(wbi);
             }
-        } catch (const JsonException &e) {
+        } 
+        catch (const JsonException &e) 
+        {
             Logger::logger.log(
                 std::string("Failed to fetch blocks from daemon: ") + "Unable to parse JSON (" +  
                 e.what() + ")",
@@ -210,24 +220,31 @@ bool Nigel::getDaemonInfo()
 
     if (res && res->status == 200)
     {
-        try {
+        try 
+        {
             rapidjson::Document j;
             j.Parse(res->body);
 
             if(j.HasParseError())
+            {
                 throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+            }
 
             m_localDaemonBlockCount = getUint64FromJSON(j, "height");
             /* Height returned is one more than the current height - but we
             don't want to overflow is the height returned is zero */
-            if (m_localDaemonBlockCount != 0)
+            if (m_localDaemonBlockCount != 0) 
+            {
                 m_localDaemonBlockCount--;
+            }
 
             m_networkBlockCount = getUint64FromJSON(j, "network_height");
             /* Height returned is one more than the current height - but we
             don't want to overflow is the height returned is zero */
             if (m_networkBlockCount != 0)
+            {
                 m_networkBlockCount--;
+            }
 
             m_peerCount = getUint64FromJSON(j, "incoming_connections_count")
                         + getUint64FromJSON(j, "outgoing_connections_count");
@@ -241,7 +258,9 @@ bool Nigel::getDaemonInfo()
                 m_isBlockchainCache = getBoolFromJSON(j, "isCacheApi");
             }
             return true;
-        } catch (const JsonException &e) {
+        }
+        catch (const JsonException &e) 
+        {
             Logger::logger.log(
                 std::string("Failed to update daemon info: ") + "Unable to parse JSON (" +  
                 e.what() + ")",
@@ -266,25 +285,31 @@ bool Nigel::getFeeInfo()
 
     if (res && res->status == 200)
     {
-        try {
+        try 
+        {
             rapidjson::Document j;
             j.Parse(res->body);
 
             if(j.HasParseError())
+            {
                 throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+            }
 
             std::string tmpAddress = getStringFromJSON(j, "address");
             uint32_t tmpFee = getUintFromJSON(j, "amount");
             const bool integratedAddressesAllowed = false;
             Error error = validateAddresses({tmpAddress}, integratedAddressesAllowed);
 
-            if (!error) {
+            if (!error) 
+            {
                 m_nodeFeeAddress = tmpAddress;
                 m_nodeFeeAmount = tmpFee;
             }
 
             return true;
-        } catch (const JsonException &e) {
+        } 
+        catch (const JsonException &e) 
+        {
             Logger::logger.log(
                 std::string("Failed to update fee info: ") + "Unable to parse JSON (" +  
                 e.what() + ")",
@@ -357,7 +382,8 @@ bool Nigel::getTransactionsStatus(
     writer.StartObject();
     writer.Key("transactionHashes");
     writer.StartArray();
-    for (const auto& item : transactionHashes) {
+    for (const auto& item : transactionHashes) 
+    {
         item.toJSON(writer);
     }
     writer.EndArray();
@@ -369,38 +395,47 @@ bool Nigel::getTransactionsStatus(
 
     if (res && res->status == 200)
     {
-        try {
+        try 
+        {
             rapidjson::Document j;
             j.Parse(res->body);
 
             if(j.HasParseError())
+            {
                 throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+            }
 
             if (getStringFromJSON(j, "status") != "OK")
+            {
                 return false;
+            }
 
             transactionsInPool.clear();
-            for (const auto& item : getArrayFromJSON(j, "transactionsInPool")) {
+            for (const auto& item : getArrayFromJSON(j, "transactionsInPool")) 
+            {
                 Crypto::Hash hash;
                 hash.fromString(item.GetString());
                 transactionsInPool.insert(hash);
             }
             transactionsInBlock.clear();
-            for (const auto& item : getArrayFromJSON(j, "transactionsInBlock")) {
+            for (const auto& item : getArrayFromJSON(j, "transactionsInBlock")) 
+            {
                 Crypto::Hash hash;
                 hash.fromString(item.GetString());
                 transactionsInBlock.insert(hash);
             }
             transactionsUnknown.clear();
-            for (const auto& item : getArrayFromJSON(j, "transactionsUnknown")) {
+            for (const auto& item : getArrayFromJSON(j, "transactionsUnknown")) 
+            {
                 Crypto::Hash hash;
                 hash.fromString(item.GetString());
                 transactionsUnknown.insert(hash);
             }
 
             return true;
-        } catch (const JsonException &e) {
-            
+        } 
+        catch (const JsonException &e) 
+        {
         }
     }
 
@@ -417,15 +452,16 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
     writer.StartObject();
     writer.Key("amounts");
     writer.StartArray();
-    for (uint64_t item : amounts) {
+    for (const uint64_t item : amounts) 
+    {
         writer.Uint64(item);
     }
     writer.EndArray();
 
     /* The blockchain cache doesn't call it outs_count
        it calls it mixin */
-    if (m_isBlockchainCache) {
-        // seems like a hacky way to achieve this
+    if (m_isBlockchainCache) 
+    {
         writer.Key("mixin");
         writer.Uint64(requestedOuts);
         writer.EndObject();
@@ -436,59 +472,76 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
             "/randomOutputs", string_buffer.GetString(), "application/json"
         );
 
-        if (res && res->status == 200) {
-            try {
+        if (res && res->status == 200) 
+        {
+            try 
+            {
                 rapidjson::Document j;
                 j.Parse(res->body);
 
                 if(j.HasParseError())
+                {
                     throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+                }
 
                 if (getStringFromJSON(j, "status") != "OK")
+                {
                     return {};
+                }
 
                 std::vector<CryptoNote::RandomOuts> outs;
-                for (const auto &x : getArrayFromJSON(j, "outs")) {
+                for (const auto &x : getArrayFromJSON(j, "outs")) 
+                {
                     CryptoNote::RandomOuts ro;
                     ro.fromJSON(x);
                     outs.push_back(ro);
                 }
 
                 return {true, outs};
-            } catch (const JsonException &e) {
-                
+            } catch (const JsonException &e) 
+            {
             }
         }
-    } else {
+    } 
+    else 
+    {
         writer.Key("outs_count");
         writer.Uint64(requestedOuts);
         writer.EndObject();
 
         auto res = m_nodeClient->Post(
-            "/randomOutputs", string_buffer.GetString(), "application/json"
+            "/getrandom_outs", string_buffer.GetString(), "application/json"
         );
 
-        if (res && res->status == 200) {
-            try {
+        if (res && res->status == 200) 
+        {
+            try 
+            {
                 rapidjson::Document j;
                 j.Parse(res->body);
 
                 if(j.HasParseError())
+                {
                     throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+                }
 
                 if (getStringFromJSON(j, "status") != "OK")
+                {
                     return {};
+                }
 
                 std::vector<CryptoNote::RandomOuts> outs;
-                for (const auto &x : getArrayFromJSON(j, "outs")) {
+                for (const auto &x : getArrayFromJSON(j, "outs")) 
+                {
                     CryptoNote::RandomOuts ro;
                     ro.fromJSON(x);
                     outs.push_back(ro);
                 }
 
                 return {true, outs};
-            } catch (const JsonException &e) {
-                
+            } 
+            catch (const JsonException &e) 
+            {
             }
         }
     }
@@ -504,11 +557,7 @@ std::tuple<bool, bool> Nigel::sendTransaction(
 
     writer.StartObject();
     writer.Key("tx_as_hex");
-    writer.StartArray();
-    for (const auto& item : Common::toHex(CryptoNote::toBinaryArray(tx))) {
-        writer.Uint(item);
-    }
-    writer.EndArray();
+    writer.String(Common::toHex(CryptoNote::toBinaryArray(tx)));
     writer.EndObject();
 
     auto res = m_nodeClient->Post(
@@ -522,16 +571,22 @@ std::tuple<bool, bool> Nigel::sendTransaction(
     {
         connectionError = false;
 
-        try {
+        try 
+        {
             rapidjson::Document j;
             j.Parse(res->body);
             if(j.HasParseError())
+            {
                 throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+            }
 
             if (getStringFromJSON(j, "status") != "OK")
+            {
                 return {};
-        } catch (const JsonException &e) {
-            
+            }
+        } 
+        catch (const JsonException &e) 
+        {
         }
     }
 
@@ -547,7 +602,9 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
        don't need it to because it returns the global indexes
        with the key outputs when we get the wallet sync data */
     if (m_isBlockchainCache)
+    {
       return {false, {}};
+    }
 
     rapidjson::StringBuffer string_buffer;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
@@ -565,24 +622,31 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
 
     if (res && res->status == 200)
     {
-        try {
+        try 
+        {
             std::unordered_map<Crypto::Hash, std::vector<uint64_t>> result;
             rapidjson::Document j;
             j.Parse(res->body);
             if(j.HasParseError())
+            {
                 throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
+            }
 
             if (getStringFromJSON(j, "status") != "OK")
+            {
                 return {false, {}};
+            }
 
             std::vector<CryptoNote::RandomOuts> outs;
-            for (const auto &index : getArrayFromJSON(j, "indexes")) {
+            for (const auto &index : getArrayFromJSON(j, "indexes")) 
+            {
                 // get hash
                 Crypto::Hash hash;
-                hash.fromString(getStringFromJSON(j, "key"));
+                hash.fromString(getStringFromJSON(index, "key"));
                 // get vector
                 std::vector<uint64_t> vec;
-                for (const auto& x : getArrayFromJSON(j, "value")) {
+                for (const auto& x : getArrayFromJSON(index, "value")) 
+                {
                     vec.push_back(x.GetUint64());
                 }
                 // set result
@@ -590,8 +654,9 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
             }
 
             return {true, result};
-        } catch (const JsonException &e) {
-            
+        } 
+        catch (const JsonException &e) 
+        {
         }
     }
 

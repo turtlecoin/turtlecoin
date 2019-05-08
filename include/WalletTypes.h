@@ -41,15 +41,17 @@ namespace WalletTypes
         }
 
         /* Initializes the class from a json value */
-        void fromJSON(const JSONValue &j) {
+        void fromJSON(const JSONValue &j) 
+        {
             key.fromString(getStringFromJSON(j, "key"));
             amount = getUint64FromJSON(j, "amount");
             /* If we're talking to a daemon or blockchain cache
             that returns the globalIndex as part of the structure
             of a key output, then we need to load that into the
             data structure. */
-            if (j.HasMember("globalIndex"))
+            if (j.HasMember("globalIndex")) {
                 globalOutputIndex = getUint64FromJSON(j, "globalIndex");
+            }
         }
     };
 
@@ -83,7 +85,8 @@ namespace WalletTypes
 
             writer.Key("outputs");
             writer.StartArray();
-            for (const auto &item : keyOutputs) {
+            for (const auto &item : keyOutputs) 
+            {
                 item.toJSON(writer);
             }
             writer.EndArray();
@@ -101,9 +104,11 @@ namespace WalletTypes
         }
 
         /* Initializes the class from a json value */
-        void fromJSON(const JSONValue &j) {
+        void fromJSON(const JSONValue &j) 
+        {
             keyOutputs.clear();
-            for (const auto &x : getArrayFromJSON(j, "outputs")) {
+            for (const auto &x : getArrayFromJSON(j, "outputs")) 
+            {
                 KeyOutput keyOutput;
                 keyOutput.fromJSON(x);
                 keyOutputs.push_back(keyOutput);
@@ -114,9 +119,12 @@ namespace WalletTypes
             however, if that fails because we're talking to a blockchain
             cache API that encodes unlockTime as a string (due to json
             integer encoding limits), we need to attempt this as a string */
-            try {
+            try 
+            {
                 unlockTime = getUint64FromJSON(j, "unlockTime");
-            } catch (const JsonException &e) {
+            } 
+            catch (const JsonException &e) 
+            {
                 unlockTime = std::stoull(getStringFromJSON(j, "unlockTime"));
             }
         }
@@ -139,7 +147,8 @@ namespace WalletTypes
 
             writer.Key("outputs");
             writer.StartArray();
-            for (const auto &item : keyOutputs) {
+            for (const auto &item : keyOutputs) 
+            {
                 item.toJSON(writer);
             }
             writer.EndArray();
@@ -158,7 +167,8 @@ namespace WalletTypes
 
             writer.Key("inputs");
             writer.StartArray();
-            for (const auto &item : keyInputs) {
+            for (const auto &item : keyInputs) 
+            {
                 item.toJSON(writer);
             }
             writer.EndArray();
@@ -170,7 +180,8 @@ namespace WalletTypes
         void fromJSON(const JSONValue &j)
         {
             keyOutputs.clear();
-            for (const auto &x : getArrayFromJSON(j, "outputs")) {
+            for (const auto &x : getArrayFromJSON(j, "outputs")) 
+            {
                 KeyOutput keyOutput;
                 keyOutput.fromJSON(x);
                 keyOutputs.push_back(keyOutput);
@@ -183,16 +194,20 @@ namespace WalletTypes
             however, if that fails because we're talking to a blockchain
             cache API that encodes unlockTime as a string (due to json
             integer encoding limits), we need to attempt this as a string */
-            try {
+            try 
+            {
                 unlockTime = getUint64FromJSON(j, "unlockTime");
-            } catch (const JsonException &e) {
+            } 
+            catch (const JsonException &e) 
+            {
                 unlockTime = std::stoull(getStringFromJSON(j, "unlockTime"));
             }
 
             paymentID = getStringFromJSON(j, "paymentID");
 
             keyInputs.clear();
-            for (const auto &x : getArrayFromJSON(j, "outputs")) {
+            for (const auto &x : getArrayFromJSON(j, "outputs")) 
+            {
                 CryptoNote::KeyInput keyInput;
                 keyInput.fromJSON(x);
                 keyInputs.push_back(keyInput);
@@ -227,7 +242,8 @@ namespace WalletTypes
 
             writer.Key("transactions");
             writer.StartArray();
-            for (const auto &tx : transactions) { 
+            for (const auto &tx : transactions) 
+            { 
                 tx.toJSON(writer);
             }
             writer.EndArray();
@@ -250,7 +266,8 @@ namespace WalletTypes
             coinbaseTransaction.fromJSON(getJsonValue(j, "transactions"));
 
             transactions.clear();
-            for (const auto &item : getArrayFromJSON(j, "transfers")) {
+            for (const auto &item : getArrayFromJSON(j, "transfers")) 
+            {
                 RawTransaction tx;
                 tx.fromJSON(item);
                 transactions.push_back(tx);
@@ -570,7 +587,6 @@ namespace WalletTypes
                 {
                     Crypto::PublicKey publicKey;
                     publicKey.fromString(getStringFromJSON(x, "publicKey"));
-
                     transfers[publicKey] = getInt64FromJSON(x, "amount");
                 }
 

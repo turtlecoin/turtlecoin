@@ -175,7 +175,6 @@ namespace Crypto
             {
                 throw std::invalid_argument("Error parsing JSON KeyDerivation, wrong length or not hex");
             }
-
         }
 
         uint8_t data[32];
