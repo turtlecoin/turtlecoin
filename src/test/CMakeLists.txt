@@ -19,11 +19,13 @@ endif()
 add_executable(
   test
   ${CMAKE_SOURCE_DIR}/src/test/test.cpp
+  ${CMAKE_SOURCE_DIR}/src/Common/StringTools.test.cpp
 )
 
 target_link_libraries(
   test
   gtest_main
+  Common
 )
 
 add_test(NAME test COMMAND test)
