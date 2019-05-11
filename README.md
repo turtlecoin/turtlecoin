@@ -190,6 +190,19 @@ The binaries will be in the `src/Release` folder when you are complete.
 - `cd Release`
 - `TurtleCoind.exe --version`
 
+### Run Automated Tests
+Unit tests are implemented using [Googletest](https://github.com/google/googletest). A separate test build configured for `make` creates an executable test runner.  
+After following the build steps above:
+
+- `cd <turtlecoin_directory>`
+- `cd build`
+- `cmake ..`
+- `make test`
+
+The test binary will be in the `src/test` directory when building completes. Run the file to run the tests and view the test report:
+
+- `./test/test`
+
 #### Thanks
 Cryptonote Developers, Bytecoin Developers, Monero Developers, Forknote Project, TurtleCoin Community
 
