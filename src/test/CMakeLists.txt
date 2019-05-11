@@ -17,15 +17,15 @@ endif()
 
 
 add_executable(
-  test
+  turtlecoin_test
   ${CMAKE_SOURCE_DIR}/src/test/test.cpp
   ${CMAKE_SOURCE_DIR}/src/Common/StringTools.test.cpp
 )
 
 target_link_libraries(
-  test
+  turtlecoin_test
   gtest_main
   Common
 )
 
-add_test(NAME test COMMAND test)
+add_test(NAME test COMMAND turtlecoin_test)
