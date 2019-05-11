@@ -189,3 +189,6 @@ set_property(TARGET WalletApi PROPERTY OUTPUT_NAME "wallet-api")
 add_custom_target(pool DEPENDS TurtleCoind WalletService)
 add_custom_target(solominer DEPENDS TurtleCoind zedwallet miner)
 add_custom_target(cli DEPENDS TurtleCoind zedwallet)
+
+enable_testing()
+add_subdirectory(test)
