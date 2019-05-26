@@ -345,7 +345,7 @@ BlockMiningParameters MinerManager::requestMiningParameters()
             return params;
         } 
         catch (const JsonException &e)
-         {
+        {
             std::stringstream stream;
             stream << "Failed to parse block hash from daemon. Received data:\n"
                 << res->body << "\nParse error: " << e.what() 

@@ -49,7 +49,8 @@ namespace WalletTypes
             that returns the globalIndex as part of the structure
             of a key output, then we need to load that into the
             data structure. */
-            if (j.HasMember("globalIndex")) {
+            if (j.HasMember("globalIndex")) 
+            {
                 globalOutputIndex = getUint64FromJSON(j, "globalIndex");
             }
         }
@@ -107,14 +108,17 @@ namespace WalletTypes
         void fromJSON(const JSONValue &j) 
         {
             keyOutputs.clear();
+
             for (const auto &x : getArrayFromJSON(j, "outputs")) 
             {
                 KeyOutput keyOutput;
                 keyOutput.fromJSON(x);
                 keyOutputs.push_back(keyOutput);
             }
+            
             hash.fromString(getStringFromJSON(j, "hash"));
             transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
+
             /* We need to try to get the unlockTime from an integer in the json
             however, if that fails because we're talking to a blockchain
             cache API that encodes unlockTime as a string (due to json
@@ -190,6 +194,7 @@ namespace WalletTypes
             hash.fromString(getStringFromJSON(j, "hash"));
             transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
             unlockTime = getUint64FromJSON(j, "unlockTime");
+            
             /* We need to try to get the unlockTime from an integer in the json
             however, if that fails because we're talking to a blockchain
             cache API that encodes unlockTime as a string (due to json

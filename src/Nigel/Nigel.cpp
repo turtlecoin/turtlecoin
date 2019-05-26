@@ -231,16 +231,18 @@ bool Nigel::getDaemonInfo()
             }
 
             m_localDaemonBlockCount = getUint64FromJSON(j, "height");
+
             /* Height returned is one more than the current height - but we
-            don't want to overflow is the height returned is zero */
+               don't want to overflow is the height returned is zero */
             if (m_localDaemonBlockCount != 0) 
             {
                 m_localDaemonBlockCount--;
             }
 
             m_networkBlockCount = getUint64FromJSON(j, "network_height");
+
             /* Height returned is one more than the current height - but we
-            don't want to overflow is the height returned is zero */
+               don't want to overflow is the height returned is zero */
             if (m_networkBlockCount != 0)
             {
                 m_networkBlockCount--;
@@ -252,11 +254,12 @@ bool Nigel::getDaemonInfo()
                                 / CryptoNote::parameters::DIFFICULTY_TARGET;
 
             /* Look to see if the isCacheApi property exists in the response
-            and if so, set the internal value to whatever it found */
+               and if so, set the internal value to whatever it found */
             if (j.HasMember("isCacheApi"))
             {
                 m_isBlockchainCache = getBoolFromJSON(j, "isCacheApi");
             }
+
             return true;
         }
         catch (const JsonException &e) 
@@ -446,6 +449,7 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
     const std::vector<uint64_t> amounts,
     const uint64_t requestedOuts) const
 {
+    std::string jsonKey, postRoute;
     rapidjson::StringBuffer string_buffer;
     rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
 
@@ -462,87 +466,54 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmou
        it calls it mixin */
     if (m_isBlockchainCache) 
     {
-        writer.Key("mixin");
-        writer.Uint64(requestedOuts);
-        writer.EndObject();
-
-        /* We also need to handle the request and response a bit
-           differently so we'll do this here */
-        auto res = m_nodeClient->Post(
-            "/randomOutputs", string_buffer.GetString(), "application/json"
-        );
-
-        if (res && res->status == 200) 
-        {
-            try 
-            {
-                rapidjson::Document j;
-                j.Parse(res->body);
-
-                if(j.HasParseError())
-                {
-                    throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
-                }
-
-                if (getStringFromJSON(j, "status") != "OK")
-                {
-                    return {};
-                }
-
-                std::vector<CryptoNote::RandomOuts> outs;
-                for (const auto &x : getArrayFromJSON(j, "outs")) 
-                {
-                    CryptoNote::RandomOuts ro;
-                    ro.fromJSON(x);
-                    outs.push_back(ro);
-                }
-
-                return {true, outs};
-            } catch (const JsonException &e) 
-            {
-            }
-        }
+        jsonKey = "mixin";
+        postRoute = "/randomOutputs";
     } 
     else 
     {
-        writer.Key("outs_count");
-        writer.Uint64(requestedOuts);
-        writer.EndObject();
+        jsonKey = "outs_count";
+        postRoute = "/getrandom_outs";
+    }
 
-        auto res = m_nodeClient->Post(
-            "/getrandom_outs", string_buffer.GetString(), "application/json"
-        );
+    /* Now we write the rest of the JSON and send the request 
+       to the specified route */
+    writer.Key(jsonKey);
+    writer.Uint64(requestedOuts);
+    writer.EndObject();
 
-        if (res && res->status == 200) 
+    auto res = m_nodeClient->Post(
+        postRoute, string_buffer.GetString(), "application/json"
+    );
+    
+    if (res && res->status == 200) 
+    {
+        try 
         {
-            try 
+            rapidjson::Document j;
+            j.Parse(res->body);
+
+            if(j.HasParseError())
             {
-                rapidjson::Document j;
-                j.Parse(res->body);
-
-                if(j.HasParseError())
-                {
-                    throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
-                }
-
-                if (getStringFromJSON(j, "status") != "OK")
-                {
-                    return {};
-                }
-
-                std::vector<CryptoNote::RandomOuts> outs;
-                for (const auto &x : getArrayFromJSON(j, "outs")) 
-                {
-                    CryptoNote::RandomOuts ro;
-                    ro.fromJSON(x);
-                    outs.push_back(ro);
-                }
-
-                return {true, outs};
-            } 
-            catch (const JsonException &e) 
-            {
+                throw JsonException(rapidjson::GetParseError_En(j.GetParseError()));
             }
+
+            if (getStringFromJSON(j, "status") != "OK")
+            {
+                return {};
+            }
+
+            std::vector<CryptoNote::RandomOuts> outs;
+            for (const auto &x : getArrayFromJSON(j, "outs")) 
+            {
+                CryptoNote::RandomOuts ro;
+                ro.fromJSON(x);
+                outs.push_back(ro);
+            }
+
+            return {true, outs};
+        } 
+        catch (const JsonException &e) 
+        {
         }
     }
 
@@ -643,12 +614,14 @@ std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
                 // get hash
                 Crypto::Hash hash;
                 hash.fromString(getStringFromJSON(index, "key"));
+
                 // get vector
                 std::vector<uint64_t> vec;
                 for (const auto& x : getArrayFromJSON(index, "value")) 
                 {
                     vec.push_back(x.GetUint64());
                 }
+                
                 // set result
                 result[hash] = vec;
             }

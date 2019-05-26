@@ -11,15 +11,18 @@ typedef rapidjson::GenericObject<true, rapidjson::GenericValue<rapidjson::UTF8<c
 
 typedef rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator>> JSONValue;
 
-class JsonException : public std::exception {
+class JsonException : public std::exception 
+{
 	std::string message;
 
     public:
-        JsonException(std::string err) {
+        JsonException(std::string err) 
+        {
             message = err;
         }
 
-        const char* what () const throw () {
+        const char* what () const throw () 
+        {
             return message.c_str();
         }
 };
