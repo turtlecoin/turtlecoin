@@ -8,6 +8,8 @@
 
 #include <vector>
 
+/* You can change things in this file, but you probably shouldn't. Leastways,
+   without knowing what you're doing. */
 namespace Constants
 {
     /* Amounts we make outputs into (Not mandatory, but a good idea) */

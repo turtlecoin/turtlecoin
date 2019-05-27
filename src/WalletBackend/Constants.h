@@ -41,7 +41,7 @@ namespace Constants
     const uint16_t WALLET_FILE_FORMAT_VERSION = 0;
 
     /* How large should the m_lastKnownBlockHashes container be */
-    const uint32_t LAST_KNOWN_BLOCK_HASHES_SIZE = 100;
+    const size_t LAST_KNOWN_BLOCK_HASHES_SIZE = 50;
 
     /* Save a block hash checkpoint every BLOCK_HASH_CHECKPOINTS_INTERVAL
        blocks */
@@ -61,17 +61,9 @@ namespace Constants
        This value determines how many blocks to take from. */
     const uint64_t GLOBAL_INDEXES_OBSCURITY = 10;
 
-    /* The maximum amount of blocks we can have waiting to be processed in
-       the queue. If we exceed this, we will wait till it drops below this
-       amount. */
-    const uint32_t MAXIMUM_SYNC_QUEUE_SIZE = 1000;
-
-    /* Handy if we don't want to use a secret key (for example, for view wallets)
-       and want to make it explicit that this is uninitialized. */
-    const Crypto::SecretKey BLANK_SECRET_KEY = Crypto::SecretKey({
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-    });
+    /* Amount of blocks to take in one chunk from the block downloader, and
+       then split into threads and process. Too large will result in large
+       jumps in the sync height, but should offer better performance from a
+       decrease in locking of data structures. */
+    const uint64_t BLOCK_PROCESSING_CHUNK = 500;
 }

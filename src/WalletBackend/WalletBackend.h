@@ -64,7 +64,8 @@ class WalletBackend
             const uint64_t scanHeight,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount = std::thread::hardware_concurrency());
 
         /* Imports a wallet from a private spend key and a view key. Returns
            the wallet class, or an error. */
@@ -76,7 +77,8 @@ class WalletBackend
             const uint64_t scanHeight,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount = std::thread::hardware_concurrency());
 
         /* Imports a view wallet from a private view key and an address.
            Returns the wallet class, or an error. */
@@ -88,7 +90,8 @@ class WalletBackend
             const uint64_t scanHeight,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount = std::thread::hardware_concurrency());
 
         /* Creates a new wallet with the given filename and password */
         static std::tuple<Error, std::shared_ptr<WalletBackend>> createWallet(
@@ -96,7 +99,8 @@ class WalletBackend
             const std::string password,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount = std::thread::hardware_concurrency());
 
         /* Opens a wallet already on disk with the given filename + password */
         static std::tuple<Error, std::shared_ptr<WalletBackend>> openWallet(
@@ -104,7 +108,8 @@ class WalletBackend
             const std::string password,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount = std::thread::hardware_concurrency());
 
         /////////////////////////////
         /* Public member functions */
@@ -127,7 +132,8 @@ class WalletBackend
             const std::string password,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount);
 
         /* Send a transaction of amount to destination with paymentID */
         std::tuple<Error, Crypto::Hash> sendTransactionBasic(
@@ -279,7 +285,8 @@ class WalletBackend
             const bool newWallet,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount);
 
         /* View wallet constructor */
         WalletBackend(
@@ -290,7 +297,8 @@ class WalletBackend
             const uint64_t scanHeight,
             const std::string daemonHost,
             const uint16_t daemonPort,
-            const bool daemonSSL);
+            const bool daemonSSL,
+            const unsigned int syncThreadCount);
 
         //////////////////////////////
         /* Private member functions */
@@ -317,23 +325,9 @@ class WalletBackend
         /* The daemon connection */
         std::shared_ptr<Nigel> m_daemon = nullptr;
 
-        /* We use a shared pointer here, because we start the thread in the
-           class, with the class as a context, hence, when we go to move the
-           WalletSynchronizer class, the thread gets moved() across, but it
-           is still pointing to a class which has been moved from, which
-           is undefined behaviour. So, none of our changes to the
-           WalletSynchronizer class reflect in the thread.
-
-           The ideal way to fix this would probably to disable move semantics,
-           and just assign once - however this is pretty tricky to do, as
-           we want to use the factory pattern so we're not initializing
-           with crappy data, and can return a meaningful error to the user
-           rather than having to throw() or check isInitialized() everywhere.
-
-           More info here: https://stackoverflow.com/q/43203869/8737306
-
-           PS: I want to die */
         std::shared_ptr<WalletSynchronizer> m_walletSynchronizer;
 
         std::shared_ptr<WalletSynchronizerRAIIWrapper> m_syncRAIIWrapper;
+
+        unsigned int m_syncThreadCount;
 };

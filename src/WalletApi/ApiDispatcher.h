@@ -52,7 +52,8 @@ class ApiDispatcher
             const uint16_t bindPort,
             const std::string rpcBindIp,
             const std::string rpcPassword,
-            std::string corsHeader);
+            std::string corsHeader,
+            unsigned int walletSyncThreads = std::thread::hardware_concurrency());
 
         /////////////////////////////
         /* Public member functions */
@@ -376,4 +377,7 @@ class ApiDispatcher
 
         /* Used along with our password with pbkdf2 */
         CryptoPP::byte m_salt[16];
+
+        /* Amount of threads to use during wallet syncing */
+        unsigned int m_walletSyncThreads;
 };

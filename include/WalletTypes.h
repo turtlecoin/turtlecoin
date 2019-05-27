@@ -79,6 +79,14 @@ namespace WalletTypes
            as a unix timestamp, else it is treated as a block height. */
         uint64_t unlockTime;
 
+        size_t memoryUsage() const
+        {
+            return keyOutputs.size() * sizeof(KeyOutput) + sizeof(keyOutputs) +
+                   sizeof(hash) +
+                   sizeof(transactionPublicKey) +
+                   sizeof(unlockTime);
+        }
+
         /* Converts the class to a json object */
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
@@ -144,6 +152,13 @@ namespace WalletTypes
            transactions */
         std::vector<CryptoNote::KeyInput> keyInputs;
 
+        size_t memoryUsage() const
+        {
+            return paymentID.size() * sizeof(char) + sizeof(paymentID) +
+                   keyInputs.size() * sizeof(CryptoNote::KeyInput) + sizeof(keyInputs) +
+                   RawCoinbaseTransaction::memoryUsage();
+        }
+        
         /* Converts the class to a json object */
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
@@ -238,6 +253,24 @@ namespace WalletTypes
         /* The timestamp of the block */
         uint64_t blockTimestamp;
 
+        size_t memoryUsage() const
+        {
+            const size_t txUsage = std::accumulate(
+                transactions.begin(),
+                transactions.end(),
+                sizeof(transactions),
+                [](const auto acc, const auto item) {
+
+                return acc + item.memoryUsage();
+            });
+            
+            return coinbaseTransaction.memoryUsage() +
+                   txUsage +
+                   sizeof(blockHeight) +
+                   sizeof(blockHash) +
+                   sizeof(blockTimestamp);
+        }
+        
         /* Converts the class to a json object */
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {

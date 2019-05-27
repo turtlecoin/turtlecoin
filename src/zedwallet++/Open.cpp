@@ -78,7 +78,7 @@ std::shared_ptr<WalletBackend> importViewWallet(const Config &config)
 
     auto [error, walletBackend] = WalletBackend::importViewWallet(
         privateViewKey, address, walletFileName, walletPass, scanHeight,
-        config.host, config.port, config.ssl
+        config.host, config.port, config.ssl, config.threads
     );
 
     if (error)
@@ -121,7 +121,7 @@ std::shared_ptr<WalletBackend> importWalletFromKeys(const Config &config)
 
     const auto [error, walletBackend] = WalletBackend::importWalletFromKeys(
         privateSpendKey, privateViewKey, walletFileName, walletPass,
-        scanHeight, config.host, config.port, config.ssl
+        scanHeight, config.host, config.port, config.ssl, config.threads
     );
 
     if (error)
@@ -178,7 +178,7 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const Config &config)
 
     auto [error, walletBackend] = WalletBackend::importWalletFromSeed(
         mnemonicSeed, walletFileName, walletPass, scanHeight,
-        config.host, config.port, config.ssl
+        config.host, config.port, config.ssl, config.threads
     );
 
     if (error)
@@ -209,7 +209,8 @@ std::shared_ptr<WalletBackend> createWallet(const Config &config)
     const std::string walletPass = getWalletPassword(verifyPassword, msg);
 
     const auto [error, walletBackend] = WalletBackend::createWallet(
-        walletFileName, walletPass, config.host, config.port, config.ssl
+        walletFileName, walletPass, config.host, config.port, config.ssl,
+        config.threads
     );
 
     if (error)
@@ -255,7 +256,8 @@ std::shared_ptr<WalletBackend> openWallet(const Config &config)
         }
 
         const auto [error, walletBackend] = WalletBackend::openWallet(
-            walletFileName, walletPass, config.host, config.port, config.ssl
+            walletFileName, walletPass, config.host, config.port, config.ssl,
+            config.threads
         );
 
         if (error == WRONG_PASSWORD)

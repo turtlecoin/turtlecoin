@@ -6,8 +6,8 @@
 #define PROJECT_COPYRIGHT "Copyright 2018-2019, The TurtleCoin Developers"
 #define APP_VER_MAJOR 0
 #define APP_VER_MINOR 14
-#define APP_VER_REV 6
-#define APP_VER_BUILD 1286
+#define APP_VER_REV 7
+#define APP_VER_BUILD 1287
 
 #define BUILD_COMMIT_ID "@VERSION@"
 #define PROJECT_VERSION STR(APP_VER_MAJOR) "." STR(APP_VER_MINOR) "." STR(APP_VER_REV)

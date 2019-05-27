@@ -32,6 +32,8 @@ Config parseArguments(int argc, char **argv)
 
     int logLevel;
 
+    unsigned int threads;
+
     options.add_options("Core")
         ("h,help", "Display this help message", cxxopts::value<bool>(help)->implicit_value("true"))
         ("v,version", "Output software version information", cxxopts::value<bool>(version)->default_value("false")->implicit_value("true"));
@@ -48,7 +50,8 @@ Config parseArguments(int argc, char **argv)
     options.add_options("Wallet")
         ("w,wallet-file", "Open the wallet <file>", cxxopts::value<std::string>(config.walletFile), "<file>")
         ("p,password", "Use the password <pass> to open the wallet", cxxopts::value<std::string>(config.walletPass), "<pass>")
-        ("log-level", "Specify log level", cxxopts::value<int>(logLevel)->default_value(std::to_string(config.logLevel)), "#");
+        ("log-level", "Specify log level", cxxopts::value<int>(logLevel)->default_value(std::to_string(config.logLevel)), "#")
+        ("threads", "Specify number of wallet sync threads", cxxopts::value<unsigned int>(threads)->default_value(std::to_string(std::max(1u, std::thread::hardware_concurrency()))), "#");
 
     try
     {
@@ -85,6 +88,16 @@ Config parseArguments(int argc, char **argv)
     else
     {
         config.logLevel = static_cast<Logger::LogLevel>(logLevel);
+    }
+
+    if (threads == 0)
+    {
+        std::cout << "Thread count must be at least 1" << std::endl;
+        exit(1);
+    }
+    else
+    {
+        config.threads = threads;
     }
 
     if (!remoteDaemon.empty())

@@ -33,6 +33,8 @@ struct Config
     
     /* Use SSL with daemon */
     bool ssl = false;
+
+    unsigned int threads;
 };
 
 Config parseArguments(int argc, char **argv);

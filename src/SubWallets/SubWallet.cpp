@@ -6,6 +6,8 @@
 #include <SubWallets/SubWallet.h>
 /////////////////////////////////
 
+#include <config/Constants.h>
+
 #include <Logger/Logger.h>
 
 #include <Utilities/Utilities.h>
@@ -28,7 +30,7 @@ SubWallet::SubWallet(
     m_address(address),
     m_syncStartHeight(scanHeight),
     m_syncStartTimestamp(scanTimestamp),
-    m_privateSpendKey(Constants::BLANK_SECRET_KEY),
+    m_privateSpendKey(Constants::NULL_SECRET_KEY),
     m_isPrimaryAddress(isPrimaryAddress)
 {
 }

@@ -2,8 +2,6 @@
 //
 // Please see the included LICENSE file for more information.
 
-#undef NDEBUG
-
 #include <iostream>
 #include <chrono>
 #include <assert.h>
@@ -167,7 +165,13 @@ void testHashFunction(
     }
 
     /* Verify the hash is as expected */
-    assert(CompareHashes(hash, expectedOutput));
+    if(!CompareHashes(hash, expectedOutput))
+    {
+        std::cout << "Hashes are not equal!\n" << "Expected: " << expectedOutput << "\nActual: " << hash
+                  << "\nTerminating.";
+
+        exit(1);
+    }
 }
 
 /* Bit of hackery so we can get the variable name of the passed in function.

@@ -24,6 +24,8 @@ struct Config
 
     /* Controls what level of messages to log */
     Logger::LogLevel logLevel = Logger::DISABLED;
+
+    unsigned int threads;
 };
 
 Config parseArguments(int argc, char **argv);

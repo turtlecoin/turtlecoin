@@ -26,6 +26,10 @@ class SynchronizationStatus
 
         std::vector<Crypto::Hash> getBlockHashCheckpoints() const;
 
+        std::deque<Crypto::Hash> getBlockCheckpoints() const;
+
+        std::deque<Crypto::Hash> getRecentBlockHashes() const;
+
         /* Converts the class to a json object */
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const;
 
