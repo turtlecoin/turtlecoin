@@ -5,11 +5,18 @@
 #pragma once
 
 #include "rapidjson/document.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
 
 /* Yikes! */
 typedef rapidjson::GenericObject<true, rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator>>> JSONObject;
 
 typedef rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator>> JSONValue;
+
+static const std::string kTypeNames[] =
+{ 
+    "Null", "False", "True", "Object", "Array", "String", "Number"
+};
 
 class JsonException : public std::exception 
 {
@@ -27,9 +34,49 @@ class JsonException : public std::exception
         }
 };
 
-static const std::string kTypeNames[] =
+/*  A JSONBody struct, used to simplify the creation of JSON objects
+    that will be used as the body of some HTTP POST request */
+struct JSONBody 
 { 
-    "Null", "False", "True", "Object", "Array", "String", "Number"
+    rapidjson::Value params;
+    std::string methodName;
+
+    JSONBody() { }
+    
+    void setParams (rapidjson::Value& val) 
+    {
+        params = val;
+    }
+
+    void setMethodName (std::string s) 
+    {
+        methodName = s;
+    }
+
+    /*  Upon calling getString(), the resulting JSON will be:
+        {
+            "jsonrpc": "2.0",
+            "method": methodName,
+            "params": params
+        } 
+
+        If no methodName was given, it will result in a "" string value.
+        If no params was given, it will result in a null value 
+        (this is expected behaviour). */
+    std::string toJSONString() const 
+    {
+        rapidjson::Document d;
+        rapidjson::StringBuffer buffer;
+		rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+
+        d.SetObject();
+        d.AddMember("jsonrpc", "2.0", d.GetAllocator());
+        d.AddMember("method", methodName, d.GetAllocator());
+        d.AddMember("params", rapidjson::Value(params, d.GetAllocator()), d.GetAllocator());
+        
+        d.Accept(writer);
+        return buffer.GetString();
+    }
 };
 
 template<typename T>

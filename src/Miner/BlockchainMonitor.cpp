@@ -84,19 +84,10 @@ void BlockchainMonitor::stop()
 
 std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
 {
-    rapidjson::StringBuffer string_buffer;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+    JSONBody body;
+    body.setMethodName("getlastblockheader");
 
-    writer.StartObject();
-    writer.Key("jsonrpc");
-    writer.String("2.0");
-    writer.Key("method");
-    writer.String("getlastblockheader");
-    writer.Key("params");
-    writer.Null();
-    writer.EndObject();
-
-    auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
+    auto res = m_httpClient->Post("/json_rpc", body.toJSONString(), "application/json");
 
     if (!res)
     {

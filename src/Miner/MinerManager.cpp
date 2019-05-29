@@ -233,21 +233,19 @@ bool MinerManager::submitBlock(const BlockTemplate& minedBlock)
 {
     CachedBlock cachedBlock(minedBlock);
 
-    rapidjson::StringBuffer string_buffer;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+    rapidjson::Document params;
+    params.SetArray();
 
-    writer.StartObject();
-    writer.Key("jsonrpc");
-    writer.String("2.0");
-    writer.Key("method");
-    writer.String("submitblock");
-    writer.Key("params");
-    writer.StartArray();
-    writer.String(Common::toHex(toBinaryArray(minedBlock)));
-    writer.EndArray();
-    writer.EndObject();
+    rapidjson::Value str;
+	str.SetString(Common::toHex(toBinaryArray(minedBlock)), params.GetAllocator());
 
-    auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
+    params.PushBack(str, params.GetAllocator());
+
+    JSONBody body;
+    body.setMethodName("submitblock");
+    body.setParams(params);
+
+    auto res = m_httpClient->Post("/json_rpc", body.toJSONString(), "application/json");
 
     if (!res || res->status == 200)
     {
@@ -267,24 +265,16 @@ BlockMiningParameters MinerManager::requestMiningParameters()
 {
     while (true)
     {
-        rapidjson::StringBuffer string_buffer;
-        rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(string_buffer);
+        rapidjson::Document params;
+        params.SetObject();
+        params.AddMember("wallet_address", m_config.miningAddress, params.GetAllocator());
+        params.AddMember("reserve_size", 0, params.GetAllocator());
 
-        writer.StartObject();
-        writer.Key("jsonrpc");
-        writer.String("2.0");
-        writer.Key("method");
-        writer.String("submitblock");
-        writer.Key("params");
-        writer.StartObject();
-        writer.Key("wallet_address");
-        writer.String(m_config.miningAddress);
-        writer.Key("reserve_size");
-        writer.Uint(0);
-        writer.EndObject();
-        writer.EndObject();
+        JSONBody body;
+        body.setMethodName("submitblock");
+        body.setParams(params);
 
-        auto res = m_httpClient->Post("/json_rpc", string_buffer.GetString(), "application/json");
+        auto res = m_httpClient->Post("/json_rpc", body.toJSONString(), "application/json");
 
         if (!res)
         {
