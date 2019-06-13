@@ -45,6 +45,7 @@ private:
 
   std::string get_commands_str();
   bool print_block_by_height(uint32_t height);
+  bool print_block_raw_by_height(uint32_t height);
   bool print_block_by_hash(const std::string& arg);
 
   bool help(const std::vector<std::string>& args);
@@ -63,4 +64,5 @@ private:
   bool start_mining(const std::vector<std::string>& args);
   bool stop_mining(const std::vector<std::string>& args);
   bool status(const std::vector<std::string>& args);
+  bool print_block_raw(const std::vector<std::string>& args);
 };

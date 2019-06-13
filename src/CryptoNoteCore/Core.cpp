@@ -3027,5 +3027,16 @@ std::time_t Core::getStartTime() const
   return start_time;
 }
 
+std::string Core::getRawBlockHex(const uint32_t blockheight)
+{
+    if (blockheight > Core::get_current_blockchain_height())
+    {
+        return "";
+    }
+    
+    RawBlock _block = mainChainStorage->getBlockByIndex(blockheight);
+    
+    return Common::toHex(_block.block);
 }
 
+}

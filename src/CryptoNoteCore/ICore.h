@@ -127,5 +127,6 @@ public:
   virtual TransactionDetails getTransactionDetails(const Crypto::Hash& transactionHash) const = 0;
   virtual std::vector<Crypto::Hash> getBlockHashesByTimestamps(uint64_t timestampBegin, size_t secondsCount) const = 0;
   virtual std::vector<Crypto::Hash> getTransactionHashesByPaymentId(const Crypto::Hash& paymentId) const = 0;
+  virtual std::string getRawBlockHex(const uint32_t blockheight) = 0;
 };
 }
