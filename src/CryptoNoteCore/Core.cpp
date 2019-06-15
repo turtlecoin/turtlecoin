@@ -3033,10 +3033,24 @@ std::string Core::getRawBlockHex(const uint32_t blockheight)
     {
         return "";
     }
-    
+
     RawBlock _block = mainChainStorage->getBlockByIndex(blockheight);
-    
+
     return Common::toHex(_block.block);
+}
+
+std::string Core::getBlockPoWHash(const uint32_t blockheight)
+{
+    if (blockheight > Core::get_current_blockchain_height())
+    {
+        return "";
+    }
+
+    RawBlock _block = mainChainStorage->getBlockByIndex(blockheight);
+
+    BlockTemplate blockTemplate = extractBlockTemplate(_block);
+
+    return Common::podToHex(CachedBlock(blockTemplate).getBlockLongHash());
 }
 
 }

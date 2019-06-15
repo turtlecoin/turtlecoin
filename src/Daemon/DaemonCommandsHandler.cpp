@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include <boost/format.hpp>
@@ -61,7 +61,8 @@ DaemonCommandsHandler::DaemonCommandsHandler(CryptoNote::Core& core, CryptoNote:
   m_consoleHandler.setHandler("print_cn", boost::bind(&DaemonCommandsHandler::print_cn, this, _1), "Print connections");
   m_consoleHandler.setHandler("print_bc", boost::bind(&DaemonCommandsHandler::print_bc, this, _1), "Print blockchain info in a given blocks range, print_bc <begin_height> [<end_height>]");
   m_consoleHandler.setHandler("print_block", boost::bind(&DaemonCommandsHandler::print_block, this, _1), "Print block, print_block <block_hash> | <block_height>");
-  m_consoleHandler.setHandler("print_block_raw", boost::bind(&DaemonCommandsHandler::print_block_raw, this, _1), "Print block, print_block_raw <block_hash> | <block_height>");
+  m_consoleHandler.setHandler("print_block_pow", boost::bind(&DaemonCommandsHandler::print_block_pow, this, _1), "Print block PoW hash, print_block_pow <block_height>");
+  m_consoleHandler.setHandler("print_block_raw", boost::bind(&DaemonCommandsHandler::print_block_raw, this, _1), "Print block, print_block_raw <block_height>");
   m_consoleHandler.setHandler("print_tx", boost::bind(&DaemonCommandsHandler::print_tx, this, _1), "Print transaction, print_tx <transaction_hash>");
   m_consoleHandler.setHandler("print_pool", boost::bind(&DaemonCommandsHandler::print_pool, this, _1), "Print transaction pool (long format)");
   m_consoleHandler.setHandler("print_pool_sh", boost::bind(&DaemonCommandsHandler::print_pool_sh, this, _1), "Print transaction pool (short format)");
@@ -283,6 +284,37 @@ bool DaemonCommandsHandler::print_block_raw_by_height(uint32_t height)
   return true;
 }
 //--------------------------------------------------------------------------------
+bool DaemonCommandsHandler::print_block_pow(const std::vector<std::string> &args) {
+  if (args.empty()) {
+    std::cout << "expected: print_block_pow <block_height>" << std::endl;
+    return true;
+  }
+
+  const std::string &arg = args.front();
+  try {
+    uint32_t height = boost::lexical_cast<uint32_t>(arg);
+    print_block_pow_by_height(height);
+  } catch (boost::bad_lexical_cast &) {
+    std::cout << "Must supply a height" << ENDL;
+  }
+
+  return true;
+}
+//--------------------------------------------------------------------------------
+bool DaemonCommandsHandler::print_block_pow_by_height(uint32_t height)
+{
+  if (height - 1 > m_core.getTopBlockIndex()) {
+    std::cout << "block wasn't found. Current block chain height: " << m_core.getTopBlockIndex() + 1 << ", requested: " << height << std::endl;
+    return false;
+  }
+
+  auto hash = m_core.getBlockHashByIndex(height - 1);
+  std::cout << ENDL << "block_id: " << hash << ENDL;
+  std::cout << ENDL << m_core.getBlockPoWHash(height - 1) << ENDL;
+
+  return true;
+}
+//--------------------------------------------------------------------------------
 bool DaemonCommandsHandler::print_tx(const std::vector<std::string>& args)
 {
   if (args.empty()) {
@@ -350,10 +382,10 @@ bool DaemonCommandsHandler::status(const std::vector<std::string>& args)
   if (!m_prpc_server->on_get_info(ireq, iresp) || iresp.status != CORE_RPC_STATUS_OK) {
     std::cout << "Problem retrieving information from RPC server." << std::endl;
     return false;
-  } 
+  }
 
   std::cout << Utilities::get_status_string(iresp) << std::endl;
-  
+
   return true;
 }
 

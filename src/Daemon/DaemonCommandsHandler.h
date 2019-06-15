@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -47,6 +47,7 @@ private:
   bool print_block_by_height(uint32_t height);
   bool print_block_raw_by_height(uint32_t height);
   bool print_block_by_hash(const std::string& arg);
+  bool print_block_pow_by_height(uint32_t height);
 
   bool help(const std::vector<std::string>& args);
   bool print_pl(const std::vector<std::string>& args);
@@ -65,4 +66,5 @@ private:
   bool stop_mining(const std::vector<std::string>& args);
   bool status(const std::vector<std::string>& args);
   bool print_block_raw(const std::vector<std::string>& args);
+  bool print_block_pow(const std::vector<std::string>& args);
 };
