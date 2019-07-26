@@ -21,23 +21,23 @@ namespace Utilities
     std::tuple<std::string, std::string> extractIntegratedAddressData(const std::string address);
 
     std::string publicKeysToAddress(
-        const Crypto::PublicKey publicSpendKey,
-        const Crypto::PublicKey publicViewKey);
+            const Crypto::PublicKey publicSpendKey,
+            const Crypto::PublicKey publicViewKey);
 
     std::string privateKeysToAddress(
-        const Crypto::SecretKey privateSpendKey,
-        const Crypto::SecretKey privateViewKey);
+            const Crypto::SecretKey privateSpendKey,
+            const Crypto::SecretKey privateViewKey);
 
     std::tuple<Error, std::string> createIntegratedAddress(
-        const std::string address,
-        const std::string paymentID);
+            const std::string address,
+            const std::string paymentID);
 
     std::string getAccountAddressAsStr(
-        const uint64_t prefix,
-        const CryptoNote::AccountPublicAddress& adr);
+            const uint64_t prefix,
+            const CryptoNote::AccountPublicAddress &adr);
 
     bool parseAccountAddressString(
-        uint64_t& prefix,
-        CryptoNote::AccountPublicAddress& adr,
-        const std::string& str);
+            uint64_t &prefix,
+            CryptoNote::AccountPublicAddress &adr,
+            const std::string &str);
 }

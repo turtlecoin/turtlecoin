@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -56,20 +56,16 @@ namespace Logger
         if (level == "disabled")
         {
             return DISABLED;
-        }
-        else if (level == "debug")
+        } else if (level == "debug")
         {
             return DEBUG;
-        }
-        else if (level == "info")
+        } else if (level == "info")
         {
             return INFO;
-        }
-        else if (level == "warning")
+        } else if (level == "warning")
         {
             return WARNING;
-        }
-        else if (level == "fatal")
+        } else if (level == "fatal")
         {
             return FATAL;
         }
@@ -79,7 +75,7 @@ namespace Logger
 
     std::string logCategoryToString(const LogCategory category)
     {
-        switch(category)
+        switch (category)
         {
             case SYNC:
             {
@@ -105,9 +101,9 @@ namespace Logger
     }
 
     void Logger::log(
-        const std::string message,
-        const LogLevel level,
-        const std::vector<LogCategory> categories) const
+            const std::string message,
+            const LogLevel level,
+            const std::vector<LogCategory> categories) const
     {
         if (level == DISABLED)
         {
@@ -134,8 +130,7 @@ namespace Logger
             if (m_callback)
             {
                 m_callback(output.str(), message, level, categories);
-            }
-            else
+            } else
             {
                 std::cout << output.str() << std::endl;
             }
@@ -148,11 +143,11 @@ namespace Logger
     }
 
     void Logger::setLogCallback(
-        std::function<void(
-            const std::string prettyMessage,
-            const std::string message,
-            const LogLevel level,
-            const std::vector<LogCategory> categories)> callback)
+            std::function<void(
+                    const std::string prettyMessage,
+                    const std::string message,
+                    const LogLevel level,
+                    const std::vector<LogCategory> categories)> callback)
     {
         m_callback = callback;
     }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -23,11 +23,11 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> walletInfo)
 
     if (newTransactionCount != walletInfo->knownTransactionCount)
     {
-        for (size_t i = walletInfo->knownTransactionCount; 
-                    i < newTransactionCount; i++)
+        for (size_t i = walletInfo->knownTransactionCount;
+             i < newTransactionCount; i++)
         {
-            const CryptoNote::WalletTransaction t 
-                = walletInfo->wallet.getTransaction(i);
+            const CryptoNote::WalletTransaction t
+                    = walletInfo->wallet.getTransaction(i);
 
             /* Don't print outgoing or fusion transfers */
             if (t.totalAmount > 0 && t.fee != 0)
@@ -40,7 +40,7 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> walletInfo)
                           << SuccessMsg("Hash: " + Common::podToHex(t.hash))
                           << std::endl
                           << SuccessMsg("Amount: "
-                                      + formatAmount(t.totalAmount))
+                                        + formatAmount(t.totalAmount))
                           << std::endl
                           << InformationMsg(getPrompt(walletInfo))
                           << std::flush;
@@ -94,8 +94,7 @@ void syncWallet(CryptoNote::INode &node,
                   << "that belong to you." << std::endl
                   << "Please wait, this will take some time."
                   << std::endl << std::endl;
-    }
-    else
+    } else
     {
         std::cout << "Scanning through the blockchain to find any new "
                   << "transactions you received"
@@ -150,8 +149,7 @@ void syncWallet(CryptoNote::INode &node,
                           << WarningMsg(WalletConfig::contactLink)
                           << WarningMsg(" for support.")
                           << std::endl;
-            }
-            else if (stuckCounter > 19)
+            } else if (stuckCounter > 19)
             {
                 /*
                    Calling save has the side-effect of starting
@@ -162,21 +160,20 @@ void syncWallet(CryptoNote::INode &node,
                 walletInfo->wallet.save();
                 waitSeconds = 5;
             }
-        }
-        else
+        } else
         {
             stuckCounter = 0;
             walletHeight = tmpWalletHeight;
 
             const size_t tmpTransactionCount = walletInfo
-                                             ->wallet.getTransactionCount();
+                    ->wallet.getTransactionCount();
 
             if (tmpTransactionCount != transactionCount)
             {
                 for (size_t i = transactionCount; i < tmpTransactionCount; i++)
                 {
                     CryptoNote::WalletTransaction t
-                        = walletInfo->wallet.getTransaction(i);
+                            = walletInfo->wallet.getTransaction(i);
 
                     /* Don't print out fusion transactions */
                     if (t.totalAmount != 0)
@@ -188,8 +185,7 @@ void syncWallet(CryptoNote::INode &node,
                         if (t.totalAmount < 0)
                         {
                             printOutgoingTransfer(t, node);
-                        }
-                        else
+                        } else
                         {
                             printIncomingTransfer(t, node);
                         }

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -21,96 +21,76 @@ bool handleCommand(const std::string command,
     if (command == "advanced")
     {
         advanced(walletInfo);
-    }
-    else if (command == "address")
+    } else if (command == "address")
     {
         std::cout << SuccessMsg(walletInfo->walletAddress) << std::endl;
-    }
-    else if (command == "balance")
+    } else if (command == "balance")
     {
         balance(node, walletInfo->wallet, walletInfo->viewWallet);
-    }
-    else if (command == "backup")
+    } else if (command == "backup")
     {
         exportKeys(walletInfo);
-    }
-    else if (command == "exit")
+    } else if (command == "exit")
     {
         return false;
-    }
-    else if (command == "help")
+    } else if (command == "help")
     {
         help(walletInfo);
-    }
-    else if (command == "transfer")
+    } else if (command == "transfer")
     {
         transfer(walletInfo, node.getLastKnownBlockHeight(), false,
                  node.feeAddress(), node.feeAmount());
     }
-    /* Advanced commands */
+        /* Advanced commands */
     else if (command == "ab_add")
     {
         addToAddressBook();
-    }
-    else if (command == "ab_delete")
+    } else if (command == "ab_delete")
     {
         deleteFromAddressBook();
-    }
-    else if (command == "ab_list")
+    } else if (command == "ab_list")
     {
         listAddressBook();
-    }
-    else if (command == "ab_send")
+    } else if (command == "ab_send")
     {
         sendFromAddressBook(walletInfo, node.getLastKnownBlockHeight(),
                             node.feeAddress(), node.feeAmount());
-    }
-    else if (command == "change_password")
+    } else if (command == "change_password")
     {
         changePassword(walletInfo);
-    }
-    else if (command == "make_integrated_address")
+    } else if (command == "make_integrated_address")
     {
         createIntegratedAddress();
-    }
-    else if (command == "incoming_transfers")
+    } else if (command == "incoming_transfers")
     {
         listTransfers(true, false, walletInfo->wallet, node);
-    }
-    else if (command == "list_transfers")
+    } else if (command == "list_transfers")
     {
         listTransfers(true, true, walletInfo->wallet, node);
-    }
-    else if (command == "optimize")
+    } else if (command == "optimize")
     {
         fullOptimize(walletInfo->wallet, node.getLastKnownBlockHeight());
-    }
-    else if (command == "outgoing_transfers")
+    } else if (command == "outgoing_transfers")
     {
         listTransfers(false, true, walletInfo->wallet, node);
-    }
-    else if (command == "reset")
+    } else if (command == "reset")
     {
         reset(node, walletInfo);
-    }
-    else if (command == "save")
+    } else if (command == "save")
     {
         save(walletInfo->wallet);
-    }
-    else if (command == "save_csv")
+    } else if (command == "save_csv")
     {
         saveCSV(walletInfo->wallet, node);
-    }
-    else if (command == "send_all")
+    } else if (command == "send_all")
     {
         transfer(walletInfo, node.getLastKnownBlockHeight(), true,
                  node.feeAddress(), node.feeAmount());
-    }
-    else if (command == "status")
+    } else if (command == "status")
     {
         status(node, walletInfo->wallet);
     }
-    /* This should never happen */
+        /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");
@@ -126,24 +106,20 @@ std::shared_ptr<WalletInfo> handleLaunchCommand(CryptoNote::WalletGreen &wallet,
     if (launchCommand == "create")
     {
         return generateWallet(wallet);
-    }
-    else if (launchCommand == "open")
+    } else if (launchCommand == "open")
     {
         return openWallet(wallet, config);
-    }
-    else if (launchCommand == "seed_restore")
+    } else if (launchCommand == "seed_restore")
     {
         return mnemonicImportWallet(wallet);
-    }
-    else if (launchCommand == "key_restore")
+    } else if (launchCommand == "key_restore")
     {
         return importWallet(wallet);
-    }
-    else if (launchCommand == "view_wallet")
+    } else if (launchCommand == "view_wallet")
     {
         return createViewWallet(wallet);
     }
-    /* This should never happen */
+        /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");

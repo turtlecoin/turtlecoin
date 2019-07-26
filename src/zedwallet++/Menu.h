@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -18,14 +18,14 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend);
 std::string getAction(const ZedConfig &config);
 
 void mainLoop(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex);
+        const std::shared_ptr<WalletBackend> walletBackend,
+        const std::shared_ptr<std::mutex> mutex);
 
 template<typename T>
 std::string parseCommand(
-    const std::vector<T> &printableCommands,
-    const std::vector<T> &availableCommands,
-    const std::string prompt)
+        const std::vector<T> &printableCommands,
+        const std::vector<T> &availableCommands,
+        const std::string prompt)
 {
     while (true)
     {
@@ -47,7 +47,7 @@ std::string parseCommand(
         }
 
         int selectionNum;
-        
+
         bool isNumericInput;
 
         try
@@ -63,7 +63,7 @@ std::string parseCommand(
             selectionNum = -1;
             isNumericInput = true;
         }
-        /* Input ain't a number */
+            /* Input ain't a number */
         catch (const std::invalid_argument &)
         {
             isNumericInput = false;
@@ -90,19 +90,18 @@ std::string parseCommand(
             }
 
             return availableCommands[selectionNum].commandName;
-        }
-        else
+        } else
         {
             /* Find the command by command name */
             auto it = std::find_if(availableCommands.begin(), availableCommands.end(),
-            [&selection](const auto command)
-            {
-                std::string cmd = command.commandName;
+                                   [&selection](const auto command)
+                                   {
+                                       std::string cmd = command.commandName;
 
-                std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
+                                       std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
 
-                return cmd == selection;
-            });
+                                       return cmd == selection;
+                                   });
 
             /* Command doesn't exist in availableCommands */
             if (it == availableCommands.end())

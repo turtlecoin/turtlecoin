@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -19,9 +19,9 @@
 #include <zedwallet++/Utilities.h>
 
 bool handleCommand(
-    const std::string command,
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex)
+        const std::string command,
+        const std::shared_ptr<WalletBackend> walletBackend,
+        const std::shared_ptr<std::mutex> mutex)
 {
     /* Aquire the lock so transactions don't get printed whilst we're handling
        a command */
@@ -31,77 +31,62 @@ bool handleCommand(
     if (command == "advanced")
     {
         advanced(walletBackend);
-    }
-    else if (command == "address")
+    } else if (command == "address")
     {
         std::cout << SuccessMsg(walletBackend->getPrimaryAddress()) << std::endl;
-    }
-    else if (command == "balance")
+    } else if (command == "balance")
     {
         balance(walletBackend);
-    }
-    else if (command == "backup")
+    } else if (command == "backup")
     {
         backup(walletBackend);
-    }
-    else if (command == "exit")
+    } else if (command == "exit")
     {
         return false;
-    }
-    else if (command == "help")
+    } else if (command == "help")
     {
         help(walletBackend);
-    }
-    else if (command == "transfer")
+    } else if (command == "transfer")
     {
         const bool sendAll = false;
 
         transfer(walletBackend, sendAll);
     }
-    /* Advanced commands */
+        /* Advanced commands */
     else if (command == "ab_add")
     {
         addToAddressBook();
-    }
-    else if (command == "ab_delete")
+    } else if (command == "ab_delete")
     {
         deleteFromAddressBook();
-    }
-    else if (command == "ab_list")
+    } else if (command == "ab_list")
     {
         listAddressBook();
-    }
-    else if (command == "ab_send")
+    } else if (command == "ab_send")
     {
         sendFromAddressBook(walletBackend);
-    }
-    else if (command == "change_password")
+    } else if (command == "change_password")
     {
         changePassword(walletBackend);
-    }
-    else if (command == "get_tx_private_key")
+    } else if (command == "get_tx_private_key")
     {
         getTxPrivateKey(walletBackend);
-    }
-    else if (command == "make_integrated_address")
+    } else if (command == "make_integrated_address")
     {
         createIntegratedAddress();
-    }
-    else if (command == "incoming_transfers")
+    } else if (command == "incoming_transfers")
     {
         const bool printIncoming = true;
         const bool printOutgoing = false;
 
         listTransfers(printIncoming, printOutgoing, walletBackend);
-    }
-    else if (command == "list_transfers")
+    } else if (command == "list_transfers")
     {
         const bool printIncoming = true;
         const bool printOutgoing = true;
 
         listTransfers(printIncoming, printOutgoing, walletBackend);
-    }
-    else if (command == "optimize")
+    } else if (command == "optimize")
     {
         std::cout << "Attempting to optimize your wallet to allow you to "
                      "send large amounts at once.\n"
@@ -110,50 +95,41 @@ bool handleCommand(
         if (!Utilities::confirm("Do you want to proceed?"))
         {
             std::cout << WarningMsg("Cancelling optimization.") << std::endl;
-        }
-        else
+        } else
         {
             optimize(walletBackend);
         }
-    }
-    else if (command == "outgoing_transfers")
+    } else if (command == "outgoing_transfers")
     {
         const bool printIncoming = false;
         const bool printOutgoing = true;
 
         listTransfers(printIncoming, printOutgoing, walletBackend);
-    }
-    else if (command == "reset")
+    } else if (command == "reset")
     {
         reset(walletBackend);
-    }
-    else if (command == "save")
+    } else if (command == "save")
     {
         save(walletBackend);
-    }
-    else if (command == "save_csv")
+    } else if (command == "save_csv")
     {
         saveCSV(walletBackend);
-    }
-    else if (command == "send_all")
+    } else if (command == "send_all")
     {
         const bool sendAll = true;
 
         transfer(walletBackend, sendAll);
-    }
-    else if (command == "set_log_level")
+    } else if (command == "set_log_level")
     {
         setLogLevel();
-    }
-    else if (command == "status")
+    } else if (command == "status")
     {
         status(walletBackend);
-    }
-    else if (command == "swap_node")
+    } else if (command == "swap_node")
     {
         swapNode(walletBackend);
     }
-    /* This should never happen */
+        /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");
@@ -163,30 +139,26 @@ bool handleCommand(
 }
 
 std::shared_ptr<WalletBackend> handleLaunchCommand(
-    const std::string launchCommand,
-    const ZedConfig &config)
+        const std::string launchCommand,
+        const ZedConfig &config)
 {
     if (launchCommand == "create")
     {
         return createWallet(config);
-    }
-    else if (launchCommand == "open")
+    } else if (launchCommand == "open")
     {
         return openWallet(config);
-    }
-    else if (launchCommand == "seed_restore")
+    } else if (launchCommand == "seed_restore")
     {
         return importWalletFromSeed(config);
-    }
-    else if (launchCommand == "key_restore")
+    } else if (launchCommand == "key_restore")
     {
         return importWalletFromKeys(config);
-    }
-    else if (launchCommand == "view_wallet")
+    } else if (launchCommand == "view_wallet")
     {
         return importViewWallet(config);
     }
-    /* This should never happen */
+        /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");

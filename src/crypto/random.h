@@ -48,11 +48,11 @@ namespace Random
      * Generate a random value of the type specified, in the full range of the
      * type
      */
-    template <typename T>
+    template<typename T>
     T randomValue()
     {
         std::uniform_int_distribution<T> distribution{
-            std::numeric_limits<T>::min(), std::numeric_limits<T>::max()
+                std::numeric_limits<T>::min(), std::numeric_limits<T>::max()
         };
 
         return distribution(gen);
@@ -65,7 +65,7 @@ namespace Random
      *
      * Note that min must be <= max, or undefined behaviour will occur.
      */
-    template <typename T>
+    template<typename T>
     T randomValue(T min, T max)
     {
         std::uniform_int_distribution<T> distribution{min, max};

@@ -22,7 +22,8 @@ std::vector<uint8_t> getParentBlockBinaryArray(const CryptoNote::BlockTemplate &
     return getParentBinaryArray(block, false, headerOnly);
 }
 
-std::vector<uint8_t> getParentBinaryArray(const CryptoNote::BlockTemplate &block, const bool hashTransaction, const bool headerOnly)
+std::vector<uint8_t>
+getParentBinaryArray(const CryptoNote::BlockTemplate &block, const bool hashTransaction, const bool headerOnly)
 {
     std::vector<uint8_t> binaryArray;
 
@@ -40,7 +41,7 @@ std::vector<uint8_t> getBlockHashingBinaryArray(const CryptoNote::BlockTemplate 
 {
     std::vector<uint8_t> blockHashingBinaryArray;
 
-    if (!toBinaryArray(static_cast<const CryptoNote::BlockHeader&>(block), blockHashingBinaryArray))
+    if (!toBinaryArray(static_cast<const CryptoNote::BlockHeader &>(block), blockHashingBinaryArray))
     {
         throw std::runtime_error("Can't serialize BlockHeader");
     }
@@ -69,7 +70,7 @@ Crypto::Hash getBlockHash(const CryptoNote::BlockTemplate &block)
 
     if (block.majorVersion >= CryptoNote::BLOCK_MAJOR_VERSION_2)
     {
-        const auto& parentBlock = getParentBlockHashingBinaryArray(block, false);
+        const auto &parentBlock = getParentBlockHashingBinaryArray(block, false);
         blockHashingBinaryArray.insert(blockHashingBinaryArray.end(), parentBlock.begin(), parentBlock.end());
     }
 
@@ -84,17 +85,17 @@ Crypto::Hash getMerkleRoot(const CryptoNote::BlockTemplate &block)
 Crypto::Hash getBlockLongHash(const CryptoNote::BlockTemplate &block)
 {
     const std::vector<uint8_t> rawHashingBlock = block.majorVersion == CryptoNote::BLOCK_MAJOR_VERSION_1
-        ? getBlockHashingBinaryArray(block)
-        : getParentBlockHashingBinaryArray(block, true);
+                                                 ? getBlockHashingBinaryArray(block)
+                                                 : getParentBlockHashingBinaryArray(block, true);
 
     Crypto::Hash hash;
 
     try
     {
         const auto hashingAlgorithm
-            = CryptoNote::HASHING_ALGORITHMS_BY_BLOCK_VERSION.at(block.majorVersion);
+                = CryptoNote::HASHING_ALGORITHMS_BY_BLOCK_VERSION.at(block.majorVersion);
 
-        hashingAlgorithm(rawHashingBlock.data(), rawHashingBlock.size(), hash); 
+        hashingAlgorithm(rawHashingBlock.data(), rawHashingBlock.size(), hash);
 
         return hash;
     }

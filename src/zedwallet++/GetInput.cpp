@@ -57,24 +57,24 @@ std::string getPrompt(std::shared_ptr<WalletBackend> walletBackend)
 
 template<typename T>
 std::string getInput(
-    const std::vector<T> &availableCommands,
-    const std::string prompt)
+        const std::vector<T> &availableCommands,
+        const std::string prompt)
 {
     linenoise::SetCompletionCallback(
-    [availableCommands](const char *input, std::vector<std::string> &completions)
-    {
-        /* Convert to std::string */
-        std::string c = input;
-
-        for (const auto &command : availableCommands)
-        {
-            /* Does command begin with input? */
-            if (command.commandName.compare(0, c.length(), c) == 0)
+            [availableCommands](const char *input, std::vector<std::string> &completions)
             {
-                completions.push_back(command.commandName);
-            }
-        }
-    });
+                /* Convert to std::string */
+                std::string c = input;
+
+                for (const auto &command : availableCommands)
+                {
+                    /* Does command begin with input? */
+                    if (command.commandName.compare(0, c.length(), c) == 0)
+                    {
+                        completions.push_back(command.commandName);
+                    }
+                }
+            });
 
     const std::string promptMsg = yellowANSIMsg(prompt);
 
@@ -104,9 +104,9 @@ std::string getInput(
 }
 
 std::string getAddress(
-    const std::string msg,
-    const bool integratedAddressesAllowed,
-    const bool cancelAllowed)
+        const std::string msg,
+        const bool integratedAddressesAllowed,
+        const bool cancelAllowed)
 {
     while (true)
     {
@@ -137,8 +137,7 @@ std::string getAddress(
         {
             std::cout << WarningMsg("Invalid address: ")
                       << WarningMsg(error) << std::endl;
-        }
-        else
+        } else
         {
             return address;
         }
@@ -146,8 +145,8 @@ std::string getAddress(
 }
 
 std::string getPaymentID(
-    const std::string msg,
-    const bool cancelAllowed)
+        const std::string msg,
+        const bool cancelAllowed)
 {
     while (true)
     {
@@ -181,8 +180,7 @@ std::string getPaymentID(
         {
             std::cout << WarningMsg("Invalid payment ID: ")
                       << WarningMsg(error) << std::endl;
-        }
-        else
+        } else
         {
             return paymentID;
         }
@@ -190,8 +188,8 @@ std::string getPaymentID(
 }
 
 std::string getHash(
-    const std::string msg,
-    const bool cancelAllowed)
+        const std::string msg,
+        const bool cancelAllowed)
 {
     while (true)
     {
@@ -217,8 +215,7 @@ std::string getHash(
         {
             std::cout << WarningMsg("Invalid hash: ")
                       << WarningMsg(error) << std::endl;
-        }
-        else
+        } else
         {
             return hash;
         }
@@ -227,8 +224,8 @@ std::string getHash(
 
 
 std::tuple<bool, uint64_t> getAmountToAtomic(
-    const std::string msg,
-    const bool cancelAllowed)
+        const std::string msg,
+        const bool cancelAllowed)
 {
     while (true)
     {
@@ -263,7 +260,7 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
 
         /* Get the length of the decimal part */
         const uint64_t decimalLength = decimalPos == std::string::npos ? 0 :
-            amountString.substr(decimalPos + 1, amountString.length()).length();
+                                       amountString.substr(decimalPos + 1, amountString.length()).length();
 
         /* Can't send amounts with more decimal places than supported */
         if (decimalLength > WalletConfig::numDecimalPlaces)
@@ -295,8 +292,7 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
                 std::cout << WarningMsg("The minimum send allowed is ")
                           << WarningMsg(Utilities::formatAmount(WalletConfig::minimumSend))
                           << WarningMsg("!\n");
-            }
-            else
+            } else
             {
                 return {true, amount};
             }

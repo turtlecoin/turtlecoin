@@ -31,7 +31,7 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Zed
 
         /* Handle the user input */
         std::shared_ptr<WalletBackend> walletBackend = handleLaunchCommand(
-            launchCommand, config
+                launchCommand, config
         );
 
         /* Action failed, for example wallet file is corrupted. */
@@ -51,7 +51,7 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Zed
             return {exit, sync, nullptr};
         }
 
-        const auto [feeAmount, feeAddress] = walletBackend->getNodeFee();
+        const auto[feeAmount, feeAddress] = walletBackend->getNodeFee();
 
         if (feeAmount != 0)
         {
@@ -91,7 +91,7 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Zed
         }
 
         const bool exit(false), sync(true);
-    
+
         /* Return the wallet info */
         return {exit, sync, walletBackend};
     }
@@ -126,8 +126,8 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend)
 
         /* See what the user wants to do */
         std::string command = parseCommand(
-            nodeDownCommands(), nodeDownCommands(),
-            "What would you like to do?: "
+                nodeDownCommands(), nodeDownCommands(),
+                "What would you like to do?: "
         );
 
         /* If they want to try again, check the node height again */
@@ -135,20 +135,20 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend)
         {
             continue;
         }
-        /* If they want to exit, exit */
+            /* If they want to exit, exit */
         else if (command == "exit")
         {
             return false;
         }
-        /* If they want to continue, proceed to the menu screen */
+            /* If they want to continue, proceed to the menu screen */
         else if (command == "continue")
         {
             return true;
         }
-        /* User wants to try a different node */
+            /* User wants to try a different node */
         else if (command == "swap_node")
         {
-            const auto [host, port, ssl] = getDaemonAddress();
+            const auto[host, port, ssl] = getDaemonAddress();
 
             std::cout << InformationMsg("\nSwapping node, this may take some time...\n");
 
@@ -173,23 +173,22 @@ std::string getAction(const ZedConfig &config)
     printCommands(startupCommands());
 
     return parseCommand(
-        startupCommands(), startupCommands(), "What would you like to do?: "
+            startupCommands(), startupCommands(), "What would you like to do?: "
     );
 }
 
 void mainLoop(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex)
+        const std::shared_ptr<WalletBackend> walletBackend,
+        const std::shared_ptr<std::mutex> mutex)
 {
     if (walletBackend->isViewWallet())
     {
         printCommands(basicViewWalletCommands());
-    }
-    else
+    } else
     {
         printCommands(basicCommands());
     }
-    
+
     while (true)
     {
         std::string command;
@@ -197,14 +196,13 @@ void mainLoop(
         if (walletBackend->isViewWallet())
         {
             command = parseCommand(
-                basicViewWalletCommands(), allViewWalletCommands(),
-                getPrompt(walletBackend)
+                    basicViewWalletCommands(), allViewWalletCommands(),
+                    getPrompt(walletBackend)
             );
-        }
-        else
+        } else
         {
             command = parseCommand(
-                basicCommands(), allCommands(), getPrompt(walletBackend)
+                    basicCommands(), allCommands(), getPrompt(walletBackend)
             );
         }
 

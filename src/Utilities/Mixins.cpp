@@ -35,14 +35,12 @@ namespace Utilities
             minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
             maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
             defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V3;
-        }
-        else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
+        } else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
         {
             minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
             maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
             defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V2;
-        }
-        else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
+        } else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
         {
             minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V1;
             maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;

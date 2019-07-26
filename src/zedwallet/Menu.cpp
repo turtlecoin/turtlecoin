@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -27,7 +27,7 @@ std::string parseCommand(const std::vector<T> &printableCommands,
         /* Get the input, and refresh the wallet in the background if desired
            (This will be done on the main screen, but not the launch screen) */
         std::string selection = getInputAndWorkInBackground(
-            availableCommands, prompt, backgroundRefresh, walletInfo
+                availableCommands, prompt, backgroundRefresh, walletInfo
         );
 
         /* Convert to lower case */
@@ -67,7 +67,7 @@ std::string parseCommand(const std::vector<T> &printableCommands,
 
             selection = availableCommands[selectionNum].commandName;
         }
-        /* Too lazy to dedupe this part, lol */
+            /* Too lazy to dedupe this part, lol */
         catch (const std::out_of_range &)
         {
             int numCommands = static_cast<int>(availableCommands.size());
@@ -84,7 +84,7 @@ std::string parseCommand(const std::vector<T> &printableCommands,
 
             continue;
         }
-        /* Input ain't a number */
+            /* Input ain't a number */
         catch (const std::invalid_argument &)
         {
             /* Iterator pointing to the command, if it exists */
@@ -114,8 +114,8 @@ std::string parseCommand(const std::vector<T> &printableCommands,
 }
 
 std::tuple<bool, std::shared_ptr<WalletInfo>>
-    selectionScreen(Config &config, CryptoNote::WalletGreen &wallet,
-                    CryptoNote::INode &node)
+selectionScreen(Config &config, CryptoNote::WalletGreen &wallet,
+                CryptoNote::INode &node)
 {
     while (true)
     {
@@ -130,7 +130,7 @@ std::tuple<bool, std::shared_ptr<WalletInfo>>
 
         /* Handle the user input */
         std::shared_ptr<WalletInfo> walletInfo = handleLaunchCommand(
-            wallet, launchCommand, config
+                wallet, launchCommand, config
         );
 
         /* Action failed, for example wallet file is corrupted. */
@@ -147,7 +147,7 @@ std::tuple<bool, std::shared_ptr<WalletInfo>>
         {
             return {true, nullptr};
         }
-    
+
         /* If we're creating a wallet, don't print the lengthy sync process */
         if (launchCommand == "create")
         {
@@ -162,8 +162,7 @@ std::tuple<bool, std::shared_ptr<WalletInfo>>
                 << std::endl;
 
             std::cout << InformationMsg(str.str());
-        }
-        else
+        } else
         {
             /* Need another signal handler here, in case the user does
                ctrl+c whilst syncing, to save the wallet. The walletInfo
@@ -172,12 +171,12 @@ std::tuple<bool, std::shared_ptr<WalletInfo>>
             bool alreadyShuttingDown = false;
 
             Tools::SignalHandler::install([&]
-            {
-                if (shutdown(walletInfo, node, alreadyShuttingDown))
-                {
-                    exit(0);
-                }
-            });
+                                          {
+                                              if (shutdown(walletInfo, node, alreadyShuttingDown))
+                                              {
+                                                  exit(0);
+                                              }
+                                          });
 
             syncWallet(node, walletInfo);
         }
@@ -223,12 +222,12 @@ bool checkNodeStatus(CryptoNote::INode &node)
         {
             continue;
         }
-        /* If they want to exit, exit */
+            /* If they want to exit, exit */
         else if (command == "exit")
         {
             return false;
         }
-        /* If they want to continue, proceed to the menu screen */
+            /* If they want to continue, proceed to the menu screen */
         else if (command == "continue")
         {
             return true;
@@ -256,12 +255,11 @@ void mainLoop(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node)
     if (walletInfo->viewWallet)
     {
         printCommands(basicViewWalletCommands());
-    }
-    else
+    } else
     {
         printCommands(basicCommands());
     }
-    
+
     while (true)
     {
         std::string command;
@@ -269,21 +267,20 @@ void mainLoop(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node)
         if (walletInfo->viewWallet)
         {
             command = parseCommand(
-                basicViewWalletCommands(),
-                allViewWalletCommands(),
-                getPrompt(walletInfo),
-                true,
-                walletInfo
+                    basicViewWalletCommands(),
+                    allViewWalletCommands(),
+                    getPrompt(walletInfo),
+                    true,
+                    walletInfo
             );
-        }
-        else
+        } else
         {
             command = parseCommand(
-                basicCommands(),
-                allCommands(),
-                getPrompt(walletInfo),
-                true,
-                walletInfo
+                    basicCommands(),
+                    allCommands(),
+                    getPrompt(walletInfo),
+                    true,
+                    walletInfo
             );
         }
 

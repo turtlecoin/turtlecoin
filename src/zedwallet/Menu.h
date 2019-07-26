@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -14,8 +14,8 @@ std::string parseCommand(const std::vector<T> &printableCommands,
                          std::shared_ptr<WalletInfo> walletInfo);
 
 std::tuple<bool, std::shared_ptr<WalletInfo>>
-    selectionScreen(Config &config, CryptoNote::WalletGreen &wallet,
-                    CryptoNote::INode &node);
+selectionScreen(Config &config, CryptoNote::WalletGreen &wallet,
+                CryptoNote::INode &node);
 
 bool checkNodeStatus(CryptoNote::INode &node);
 

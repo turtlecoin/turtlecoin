@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -22,15 +22,16 @@ namespace System
     class Dispatcher;
 }
 
-namespace Miner {
-
-class MinerManager
+namespace Miner
 {
+
+    class MinerManager
+    {
     public:
         MinerManager(
-            System::Dispatcher& dispatcher,
-            const CryptoNote::MiningConfig& config,
-            const std::shared_ptr<httplib::Client> httpClient);
+                System::Dispatcher &dispatcher,
+                const CryptoNote::MiningConfig &config,
+                const std::shared_ptr<httplib::Client> httpClient);
 
         void start();
 
@@ -51,20 +52,26 @@ class MinerManager
         std::shared_ptr<httplib::Client> m_httpClient = nullptr;
 
         void eventLoop();
+
         MinerEvent waitEvent();
-        void pushEvent(MinerEvent&& event);
+
+        void pushEvent(MinerEvent &&event);
+
         void printHashRate();
 
-        void startMining(const CryptoNote::BlockMiningParameters& params);
+        void startMining(const CryptoNote::BlockMiningParameters &params);
+
         void stopMining();
 
         void startBlockchainMonitoring();
+
         void stopBlockchainMonitoring();
 
-        bool submitBlock(const CryptoNote::BlockTemplate& minedBlock);
+        bool submitBlock(const CryptoNote::BlockTemplate &minedBlock);
+
         CryptoNote::BlockMiningParameters requestMiningParameters();
 
-        void adjustBlockTemplate(CryptoNote::BlockTemplate& blockTemplate) const;
-};
+        void adjustBlockTemplate(CryptoNote::BlockTemplate &blockTemplate) const;
+    };
 
 } //namespace Miner

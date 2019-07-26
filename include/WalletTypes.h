@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -99,21 +99,22 @@ namespace WalletTypes
         size_t memoryUsage() const
         {
             const size_t txUsage = std::accumulate(
-                transactions.begin(),
-                transactions.end(),
-                sizeof(transactions),
-                [](const auto acc, const auto item) {
+                    transactions.begin(),
+                    transactions.end(),
+                    sizeof(transactions),
+                    [](const auto acc, const auto item)
+                    {
 
-                return acc + item.memoryUsage();
-            });
-            
-            return coinbaseTransaction 
-                        ? coinbaseTransaction->memoryUsage() 
-                        : sizeof(coinbaseTransaction) +
-                   txUsage +
-                   sizeof(blockHeight) +
-                   sizeof(blockHash) +
-                   sizeof(blockTimestamp);
+                        return acc + item.memoryUsage();
+                    });
+
+            return coinbaseTransaction
+                   ? coinbaseTransaction->memoryUsage()
+                   : sizeof(coinbaseTransaction) +
+                     txUsage +
+                     sizeof(blockHeight) +
+                     sizeof(blockHash) +
+                     sizeof(blockTimestamp);
         }
     };
 
@@ -221,13 +222,13 @@ namespace WalletTypes
     struct TxInputAndOwner
     {
         TxInputAndOwner(
-            const TransactionInput input,
-            const Crypto::PublicKey publicSpendKey,
-            const Crypto::SecretKey privateSpendKey) :
+                const TransactionInput input,
+                const Crypto::PublicKey publicSpendKey,
+                const Crypto::SecretKey privateSpendKey) :
 
-            input(input),
-            publicSpendKey(publicSpendKey),
-            privateSpendKey(privateSpendKey)
+                input(input),
+                publicSpendKey(publicSpendKey),
+                privateSpendKey(privateSpendKey)
         {
         }
 
@@ -281,15 +282,16 @@ namespace WalletTypes
 
     class Transaction
     {
-        public:
+    public:
 
-            //////////////////
-            /* Constructors */
-            //////////////////
+        //////////////////
+        /* Constructors */
+        //////////////////
 
-            Transaction() {};
+        Transaction()
+        {};
 
-            Transaction(
+        Transaction(
                 /* Mapping of public key to transaction amount, can be multiple
                    if one transaction sends to multiple subwallets */
                 const std::unordered_map<Crypto::PublicKey, int64_t> transfers,
@@ -309,134 +311,134 @@ namespace WalletTypes
                 paymentID(paymentID),
                 unlockTime(unlockTime),
                 isCoinbaseTransaction(isCoinbaseTransaction)
+        {
+        }
+
+        /////////////////////////////
+        /* Public member functions */
+        /////////////////////////////
+
+        int64_t totalAmount() const
+        {
+            int64_t sum = 0;
+
+            for (const auto[pubKey, amount] : transfers)
             {
+                sum += amount;
             }
 
-            /////////////////////////////
-            /* Public member functions */
-            /////////////////////////////
+            return sum;
+        }
 
-            int64_t totalAmount() const
-            {
-                int64_t sum = 0;
+        /* It's worth noting that this isn't a conclusive check for if a
+           transaction is a fusion transaction - there are some requirements
+           it has to meet - but we don't need to check them, as the daemon
+           will handle that for us - Any transactions that come to the
+           wallet (assuming a non malicious daemon) that are zero and not
+           a coinbase, is a fusion transaction */
+        bool isFusionTransaction() const
+        {
+            return fee == 0 && !isCoinbaseTransaction;
+        }
 
-                for (const auto [pubKey, amount] : transfers)
-                {
-                    sum += amount;
-                }
+        /////////////////////////////
+        /* Public member variables */
+        /////////////////////////////
 
-                return sum;
-            }
+        /* A map of public keys to amounts, since one transaction can go to
+           multiple addresses. These can be positive or negative, for example
+           one address might have sent 10,000 TRTL (-10000) to two recipients
+           (+5000), (+5000)
 
-            /* It's worth noting that this isn't a conclusive check for if a
-               transaction is a fusion transaction - there are some requirements
-               it has to meet - but we don't need to check them, as the daemon
-               will handle that for us - Any transactions that come to the
-               wallet (assuming a non malicious daemon) that are zero and not
-               a coinbase, is a fusion transaction */
-            bool isFusionTransaction() const
-            {
-                return fee == 0 && !isCoinbaseTransaction;
-            }
+           All the public keys in this map, are ones that the wallet container
+           owns, it won't store amounts belonging to random people */
+        std::unordered_map<Crypto::PublicKey, int64_t> transfers;
 
-            /////////////////////////////
-            /* Public member variables */
-            /////////////////////////////
+        /* The hash of the transaction */
+        Crypto::Hash hash;
 
-            /* A map of public keys to amounts, since one transaction can go to
-               multiple addresses. These can be positive or negative, for example
-               one address might have sent 10,000 TRTL (-10000) to two recipients
-               (+5000), (+5000)
+        /* The fee the transaction was sent with (always positive) */
+        uint64_t fee;
 
-               All the public keys in this map, are ones that the wallet container
-               owns, it won't store amounts belonging to random people */
-            std::unordered_map<Crypto::PublicKey, int64_t> transfers;
+        /* The blockheight this transaction is in */
+        uint64_t blockHeight;
 
-            /* The hash of the transaction */
-            Crypto::Hash hash;
+        /* The timestamp of this transaction (taken from the block timestamp) */
+        uint64_t timestamp;
 
-            /* The fee the transaction was sent with (always positive) */
-            uint64_t fee;
+        /* The paymentID of this transaction (will be an empty string if no pid) */
+        std::string paymentID;
 
-            /* The blockheight this transaction is in */
-            uint64_t blockHeight;
+        /* When does the transaction unlock */
+        uint64_t unlockTime;
 
-            /* The timestamp of this transaction (taken from the block timestamp) */
-            uint64_t timestamp;
+        /* Was this transaction a miner reward / coinbase transaction */
+        bool isCoinbaseTransaction;
 
-            /* The paymentID of this transaction (will be an empty string if no pid) */
-            std::string paymentID;
+        /* Converts the class to a json object */
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
 
-            /* When does the transaction unlock */
-            uint64_t unlockTime;
-
-            /* Was this transaction a miner reward / coinbase transaction */
-            bool isCoinbaseTransaction;
-
-            /* Converts the class to a json object */
-            void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+            writer.Key("transfers");
+            writer.StartArray();
+            for (const auto &[publicKey, amount] : transfers)
             {
                 writer.StartObject();
 
-                writer.Key("transfers");
-                writer.StartArray();
-                for (const auto &[publicKey, amount] : transfers)
-                {
-                    writer.StartObject();
+                writer.Key("publicKey");
+                publicKey.toJSON(writer);
 
-                    writer.Key("publicKey");
-                    publicKey.toJSON(writer);
-
-                    writer.Key("amount");
-                    writer.Int64(amount);
-
-                    writer.EndObject();
-                }
-                writer.EndArray();
-
-                writer.Key("hash");
-                hash.toJSON(writer);
-
-                writer.Key("fee");
-                writer.Uint64(fee);
-
-                writer.Key("blockHeight");
-                writer.Uint64(blockHeight);
-
-                writer.Key("timestamp");
-                writer.Uint64(timestamp);
-
-                writer.Key("paymentID");
-                writer.String(paymentID);
-
-                writer.Key("unlockTime");
-                writer.Uint64(unlockTime);
-
-                writer.Key("isCoinbaseTransaction");
-                writer.Bool(isCoinbaseTransaction);
+                writer.Key("amount");
+                writer.Int64(amount);
 
                 writer.EndObject();
             }
+            writer.EndArray();
 
-            /* Initializes the class from a json string */
-            void fromJSON(const JSONValue &j)
+            writer.Key("hash");
+            hash.toJSON(writer);
+
+            writer.Key("fee");
+            writer.Uint64(fee);
+
+            writer.Key("blockHeight");
+            writer.Uint64(blockHeight);
+
+            writer.Key("timestamp");
+            writer.Uint64(timestamp);
+
+            writer.Key("paymentID");
+            writer.String(paymentID);
+
+            writer.Key("unlockTime");
+            writer.Uint64(unlockTime);
+
+            writer.Key("isCoinbaseTransaction");
+            writer.Bool(isCoinbaseTransaction);
+
+            writer.EndObject();
+        }
+
+        /* Initializes the class from a json string */
+        void fromJSON(const JSONValue &j)
+        {
+            for (const auto &x : getArrayFromJSON(j, "transfers"))
             {
-                for (const auto &x : getArrayFromJSON(j, "transfers"))
-                {
-                    Crypto::PublicKey publicKey;
-                    publicKey.fromString(getStringFromJSON(x, "publicKey"));
+                Crypto::PublicKey publicKey;
+                publicKey.fromString(getStringFromJSON(x, "publicKey"));
 
-                    transfers[publicKey] = getInt64FromJSON(x, "amount");
-                }
-
-                hash.fromString(getStringFromJSON(j, "hash"));
-                fee = getUint64FromJSON(j, "fee");
-                blockHeight = getUint64FromJSON(j, "blockHeight");
-                timestamp = getUint64FromJSON(j, "timestamp");
-                paymentID = getStringFromJSON(j, "paymentID");
-                unlockTime = getUint64FromJSON(j, "unlockTime");
-                isCoinbaseTransaction = getBoolFromJSON(j, "isCoinbaseTransaction");
+                transfers[publicKey] = getInt64FromJSON(x, "amount");
             }
+
+            hash.fromString(getStringFromJSON(j, "hash"));
+            fee = getUint64FromJSON(j, "fee");
+            blockHeight = getUint64FromJSON(j, "blockHeight");
+            timestamp = getUint64FromJSON(j, "timestamp");
+            paymentID = getStringFromJSON(j, "paymentID");
+            unlockTime = getUint64FromJSON(j, "unlockTime");
+            isCoinbaseTransaction = getBoolFromJSON(j, "isCoinbaseTransaction");
+        }
     };
 
     struct WalletStatus
@@ -506,8 +508,8 @@ namespace WalletTypes
     inline void to_json(nlohmann::json &j, const TopBlock &t)
     {
         j = {
-            {"hash", t.hash},
-            {"height", t.height}
+                {"hash",   t.hash},
+                {"height", t.height}
         };
     }
 
@@ -520,10 +522,10 @@ namespace WalletTypes
     inline void to_json(nlohmann::json &j, const WalletBlockInfo &w)
     {
         j = {
-            {"transactions", w.transactions},
-            {"blockHeight", w.blockHeight},
-            {"blockHash", w.blockHash},
-            {"blockTimestamp", w.blockTimestamp}
+                {"transactions",   w.transactions},
+                {"blockHeight",    w.blockHeight},
+                {"blockHash",      w.blockHash},
+                {"blockTimestamp", w.blockTimestamp}
         };
 
         if (w.coinbaseTransaction)
@@ -548,10 +550,10 @@ namespace WalletTypes
     inline void to_json(nlohmann::json &j, const RawCoinbaseTransaction &r)
     {
         j = {
-            {"outputs", r.keyOutputs},
-            {"hash", r.hash},
-            {"txPublicKey", r.transactionPublicKey},
-            {"unlockTime", r.unlockTime}
+                {"outputs",     r.keyOutputs},
+                {"hash",        r.hash},
+                {"txPublicKey", r.transactionPublicKey},
+                {"unlockTime",  r.unlockTime}
         };
     }
 
@@ -569,7 +571,7 @@ namespace WalletTypes
         {
             r.unlockTime = j.at("unlockTime").get<uint64_t>();
         }
-        catch (const nlohmann::json::exception &e)
+        catch (const nlohmann::json::exception &)
         {
             r.unlockTime = std::stoull(j.at("unlockTime").get<std::string>());
         }
@@ -578,12 +580,12 @@ namespace WalletTypes
     inline void to_json(nlohmann::json &j, const RawTransaction &r)
     {
         j = {
-            {"outputs", r.keyOutputs},
-            {"hash", r.hash},
-            {"txPublicKey", r.transactionPublicKey},
-            {"unlockTime", r.unlockTime},
-            {"paymentID", r.paymentID},
-            {"inputs", r.keyInputs}
+                {"outputs",     r.keyOutputs},
+                {"hash",        r.hash},
+                {"txPublicKey", r.transactionPublicKey},
+                {"unlockTime",  r.unlockTime},
+                {"paymentID",   r.paymentID},
+                {"inputs",      r.keyInputs}
         };
     }
 
@@ -601,7 +603,7 @@ namespace WalletTypes
         {
             r.unlockTime = j.at("unlockTime").get<uint64_t>();
         }
-        catch (const nlohmann::json::exception &e)
+        catch (const nlohmann::json::exception &)
         {
             r.unlockTime = std::stoull(j.at("unlockTime").get<std::string>());
         }
@@ -612,8 +614,8 @@ namespace WalletTypes
     inline void to_json(nlohmann::json &j, const KeyOutput &k)
     {
         j = {
-            {"key", k.key},
-            {"amount", k.amount}
+                {"key",    k.key},
+                {"amount", k.amount}
         };
     }
 
@@ -635,9 +637,9 @@ namespace WalletTypes
     inline void to_json(nlohmann::json &j, const UnconfirmedInput &u)
     {
         j = {
-            {"amount", u.amount},
-            {"key", u.key},
-            {"parentTransactionHash", u.parentTransactionHash}
+                {"amount",                u.amount},
+                {"key",                   u.key},
+                {"parentTransactionHash", u.parentTransactionHash}
         };
     }
 

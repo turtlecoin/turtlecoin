@@ -23,17 +23,18 @@ namespace Utilities
     uint64_t getTransactionSum(const std::vector<std::pair<std::string, uint64_t>> destinations);
 
     uint64_t getUpperBound(const uint64_t val, const uint64_t nearestMultiple);
+
     uint64_t getLowerBound(const uint64_t val, const uint64_t nearestMultiple);
 
     bool isInputUnlocked(
-        const uint64_t unlockTime,
-        const uint64_t currentHeight);
+            const uint64_t unlockTime,
+            const uint64_t currentHeight);
 
     uint64_t getMaxTxSize(const uint64_t currentHeight);
 
     void sleepUnlessStopping(
-        const std::chrono::milliseconds duration,
-        std::atomic<bool> &condition);
+            const std::chrono::milliseconds duration,
+            std::atomic<bool> &condition);
 
     uint64_t scanHeightToTimestamp(const uint64_t scanHeight);
 
@@ -46,9 +47,9 @@ namespace Utilities
     bool parseDaemonAddressFromString(std::string &host, uint16_t &port, std::string address);
 
     size_t getApproximateMaximumInputCount(
-        const size_t transactionSize,
-        const size_t outputCount,
-        const size_t mixinCount);
+            const size_t transactionSize,
+            const size_t outputCount,
+            const size_t mixinCount);
 
     /* Verify that a + b will not overflow when added. */
     /* 2 positive numbers - should always get greater (or equal) when summed. */

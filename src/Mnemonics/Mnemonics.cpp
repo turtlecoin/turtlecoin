@@ -1,5 +1,5 @@
-// Copyright 2014-2018 The Monero Developers
-// Copyright 2018 The TurtleCoin Developers
+// Copyright 2014-2018, The Monero Developers
+// Copyright 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -42,10 +42,10 @@ namespace Mnemonics
             const std::string wordPlural = len == 1 ? "word" : "words";
 
             Error error(
-                MNEMONIC_WRONG_LENGTH,
-                "The mnemonic seed given is the wrong length. It should be "
-                "25 words long, but it is " + std::to_string(len) + " " +
-                wordPlural + " long."
+                    MNEMONIC_WRONG_LENGTH,
+                    "The mnemonic seed given is the wrong length. It should be "
+                    "25 words long, but it is " + std::to_string(len) + " " +
+                    wordPlural + " long."
             );
 
             return {error, Crypto::SecretKey()};
@@ -61,9 +61,9 @@ namespace Mnemonics
                           WordList::English.end(), word) == WordList::English.end())
             {
                 Error error(
-                    MNEMONIC_INVALID_WORD,
-                    "The mnemonic seed given has a word that is not present "
-                    "in the english word list (" + word + ")."
+                        MNEMONIC_INVALID_WORD,
+                        "The mnemonic seed given has a word that is not present "
+                        "in the english word list (" + word + ")."
                 );
 
                 return {error, Crypto::SecretKey()};
@@ -92,8 +92,8 @@ namespace Mnemonics
 
             /* no idea what this does lol */
             const uint32_t val = static_cast<uint32_t>(
-                w1 + wlLen * (((wlLen - w1) + w2) % wlLen) + wlLen 
-                           * wlLen * (((wlLen - w2) + w3) % wlLen)
+                    w1 + wlLen * (((wlLen - w1) + w2) % wlLen) + wlLen
+                                                                 * wlLen * (((wlLen - w2) + w3) % wlLen)
             );
 
             /* Don't know what this is testing either */
@@ -127,7 +127,7 @@ namespace Mnemonics
         for (int i = 0; i < 32 - 1; i += 4)
         {
             /* Read the array as a uint32_t array */
-            auto ptr = (uint32_t *)&privateKey.data[i];
+            auto ptr = (uint32_t *) &privateKey.data[i];
 
             /* Take the first element of the array (since we have already 
                done the offset */

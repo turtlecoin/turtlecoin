@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -16,7 +16,9 @@
 #include <Common/TransactionExtra.h>
 
 #ifndef MSVC
+
 #include <fstream>
+
 #endif
 
 #include <Mnemonics/Mnemonics.h>
@@ -42,7 +44,7 @@ void changePassword(std::shared_ptr<WalletInfo> walletInfo)
 
     /* Get a new password for the wallet */
     const std::string newPassword
-        = getWalletPassword(true, "Enter your new password: ");
+            = getWalletPassword(true, "Enter your new password: ");
 
     /* Change the wallet password */
     walletInfo->wallet.changePassword(walletInfo->walletPass, newPassword);
@@ -80,10 +82,10 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
     Crypto::SecretKey derivedPrivateViewKey;
 
     Crypto::crypto_ops::generateViewFromSpend(privateSpendKey,
-                                                   derivedPrivateViewKey);
+                                              derivedPrivateViewKey);
 
     const bool deterministicPrivateKeys
-             = derivedPrivateViewKey == privateViewKey;
+            = derivedPrivateViewKey == privateViewKey;
 
     std::cout << SuccessMsg("Private spend key:")
               << std::endl
@@ -126,7 +128,7 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
         confirmedBalance = 0;
 
         size_t numTransactions = wallet.getTransactionCount();
-        
+
         for (size_t i = 0; i < numTransactions; i++)
         {
             const CryptoNote::WalletTransaction t = wallet.getTransaction(i);
@@ -151,7 +153,7 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
 
     if (viewWallet)
     {
-        std::cout << std::endl 
+        std::cout << std::endl
                   << InformationMsg("Please note that view only wallets "
                                     "can only track incoming transactions,")
                   << std::endl
@@ -168,8 +170,8 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
                   << "Your balance may be incorrect until you are fully "
                   << "synced!" << std::endl;
     }
-    /* Small buffer because wallet height doesn't update instantly like node
-       height does */
+        /* Small buffer because wallet height doesn't update instantly like node
+           height does */
     else if (walletHeight + 1000 < remoteHeight)
     {
         std::cout << std::endl
@@ -194,8 +196,7 @@ void printHeights(uint32_t localHeight, uint32_t remoteHeight,
     if (walletHeight + 1000 > remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(walletHeight));
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(std::to_string(walletHeight));
     }
@@ -205,8 +206,7 @@ void printHeights(uint32_t localHeight, uint32_t remoteHeight,
     if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(localHeight));
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(std::to_string(localHeight));
     }
@@ -219,30 +219,28 @@ void printSyncStatus(uint32_t localHeight, uint32_t remoteHeight,
                      uint32_t walletHeight)
 {
     std::string networkSyncPercentage
-        = Utilities::get_sync_percentage(localHeight, remoteHeight) + "%";
+            = Utilities::get_sync_percentage(localHeight, remoteHeight) + "%";
 
     std::string walletSyncPercentage
-        = Utilities::get_sync_percentage(walletHeight, remoteHeight) + "%";
+            = Utilities::get_sync_percentage(walletHeight, remoteHeight) + "%";
 
     std::cout << "Network sync status: ";
 
     if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg(networkSyncPercentage) << std::endl;
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(networkSyncPercentage) << std::endl;
     }
 
     std::cout << "Wallet sync status: ";
-    
+
     /* Small buffer because wallet height is not always completely accurate */
     if (walletHeight + 1000 > remoteHeight)
     {
         std::cout << SuccessMsg(walletSyncPercentage) << std::endl;
-    }
-    else
+    } else
     {
         std::cout << WarningMsg(walletSyncPercentage) << std::endl;
     }
@@ -257,8 +255,7 @@ void printSyncSummary(uint32_t localHeight, uint32_t remoteHeight,
                   << WarningMsg(WalletConfig::daemonName)
                   << WarningMsg(" open!")
                   << std::endl;
-    }
-    else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
+    } else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
     {
         std::cout << InformationMsg("You are synced with the network, but the "
                                     "blockchain is still being scanned for "
@@ -266,12 +263,10 @@ void printSyncSummary(uint32_t localHeight, uint32_t remoteHeight,
                   << std::endl
                   << "Balances might be incorrect whilst this is ongoing."
                   << std::endl;
-    }
-    else if (localHeight == remoteHeight)
+    } else if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg("Yay! You are synced!") << std::endl;
-    }
-    else
+    } else
     {
         std::cout << WarningMsg("Be patient, you are still syncing with the "
                                 "network!") << std::endl;
@@ -294,7 +289,7 @@ void printHashrate(uint64_t difficulty)
 
     /* Hashrate is difficulty divided by block target time */
     uint32_t hashrate = static_cast<uint32_t>(
-        round(difficulty / CryptoNote::parameters::DIFFICULTY_TARGET)
+            round(difficulty / CryptoNote::parameters::DIFFICULTY_TARGET)
     );
 
     std::cout << "Network hashrate: "
@@ -343,12 +338,12 @@ void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> walletInfo)
               << InformationMsg("You can't make any transactions during the ")
               << InformationMsg("process.")
               << std::endl << std::endl;
-    
+
     if (!confirm("Are you sure?"))
     {
         return;
     }
-    
+
     std::cout << InformationMsg("Resetting wallet...") << std::endl;
 
     walletInfo->wallet.reset(scanHeight);
@@ -478,7 +473,7 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
     std::cout << std::endl;
 }
 
-void listTransfers(bool incoming, bool outgoing, 
+void listTransfers(bool incoming, bool outgoing,
                    CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 {
     const size_t numTransactions = wallet.getTransactionCount();
@@ -502,8 +497,7 @@ void listTransfers(bool incoming, bool outgoing,
         {
             printOutgoingTransfer(t, node);
             totalSpent += -t.totalAmount;
-        }
-        else if (t.totalAmount > 0 && incoming)
+        } else if (t.totalAmount > 0 && incoming)
         {
             printIncomingTransfer(t, node);
             totalReceived += t.totalAmount;
@@ -512,8 +506,8 @@ void listTransfers(bool incoming, bool outgoing,
 
     if (incoming)
     {
-        std::cout << SuccessMsg("Total received: " 
-                              + formatAmount(totalReceived))
+        std::cout << SuccessMsg("Total received: "
+                                + formatAmount(totalReceived))
                   << std::endl;
     }
 
@@ -587,8 +581,7 @@ void help(std::shared_ptr<WalletInfo> wallet)
     if (wallet->viewWallet)
     {
         printCommands(basicViewWalletCommands());
-    }
-    else
+    } else
     {
         printCommands(basicCommands());
     }
@@ -602,8 +595,7 @@ void advanced(std::shared_ptr<WalletInfo> wallet)
     {
         printCommands(advancedViewWalletCommands(),
                       basicViewWalletCommands().size());
-    }
-    else
+    } else
     {
         printCommands(advancedCommands(),
                       basicCommands().size());

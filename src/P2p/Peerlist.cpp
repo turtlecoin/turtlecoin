@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -7,7 +7,7 @@
 #include <algorithm>
 
 Peerlist::Peerlist(std::vector<PeerlistEntry> &peers, size_t maxSize) :
-    m_peers(peers), m_maxSize(maxSize)
+        m_peers(peers), m_maxSize(maxSize)
 {
 }
 

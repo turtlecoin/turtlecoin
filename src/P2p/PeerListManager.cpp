@@ -11,41 +11,44 @@
 
 #include "Serialization/SerializationOverloads.h"
 
-void PeerlistManager::serialize(CryptoNote::ISerializer& s) {
-  const uint8_t currentVersion = 1;
-  uint8_t version = currentVersion;
+void PeerlistManager::serialize(CryptoNote::ISerializer &s)
+{
+    const uint8_t currentVersion = 1;
+    uint8_t version = currentVersion;
 
-  s(version, "version");
+    s(version, "version");
 
-  if (version != currentVersion) {
-    return;
-  }
+    if (version != currentVersion)
+    {
+        return;
+    }
 
-  s(m_peers_white, "whitelist");
-  s(m_peers_gray, "graylist");
+    s(m_peers_white, "whitelist");
+    s(m_peers_gray, "graylist");
 }
 
-void serialize(NetworkAddress& na, CryptoNote::ISerializer& s)
+void serialize(NetworkAddress &na, CryptoNote::ISerializer &s)
 {
     s(na.ip, "ip");
     s(na.port, "port");
 }
 
-void serialize(PeerlistEntry& pe, CryptoNote::ISerializer& s)
+void serialize(PeerlistEntry &pe, CryptoNote::ISerializer &s)
 {
     s(pe.adr, "adr");
     s(pe.id, "id");
     s(pe.last_seen, "last_seen");
 }
 
-PeerlistManager::PeerlistManager() : 
-  m_whitePeerlist(m_peers_white, CryptoNote::P2P_LOCAL_WHITE_PEERLIST_LIMIT),
-  m_grayPeerlist(m_peers_gray, CryptoNote::P2P_LOCAL_GRAY_PEERLIST_LIMIT) {}
+PeerlistManager::PeerlistManager() :
+        m_whitePeerlist(m_peers_white, CryptoNote::P2P_LOCAL_WHITE_PEERLIST_LIMIT),
+        m_grayPeerlist(m_peers_gray, CryptoNote::P2P_LOCAL_GRAY_PEERLIST_LIMIT)
+{}
 
 bool PeerlistManager::init(bool allow_local_ip)
 {
-  m_allow_local_ip = allow_local_ip;
-  return true;
+    m_allow_local_ip = allow_local_ip;
+    return true;
 }
 
 void PeerlistManager::trim_white_peerlist()
@@ -58,42 +61,47 @@ void PeerlistManager::trim_gray_peerlist()
     m_grayPeerlist.trim();
 }
 
-bool PeerlistManager::merge_peerlist(const std::list<PeerlistEntry>& outer_bs)
-{ 
-  for(const PeerlistEntry& be : outer_bs) {
-    append_with_peer_gray(be);
-  }
+bool PeerlistManager::merge_peerlist(const std::list<PeerlistEntry> &outer_bs)
+{
+    for (const PeerlistEntry &be : outer_bs)
+    {
+        append_with_peer_gray(be);
+    }
 
-  // delete extra elements
-  trim_gray_peerlist();
-  return true;
+    // delete extra elements
+    trim_gray_peerlist();
+    return true;
 }
 
-bool PeerlistManager::get_white_peer_by_index(PeerlistEntry& p, size_t i) const {
-  return m_whitePeerlist.get(p, i);
+bool PeerlistManager::get_white_peer_by_index(PeerlistEntry &p, size_t i) const
+{
+    return m_whitePeerlist.get(p, i);
 }
 
-bool PeerlistManager::get_gray_peer_by_index(PeerlistEntry& p, size_t i) const {
-  return m_grayPeerlist.get(p, i);
+bool PeerlistManager::get_gray_peer_by_index(PeerlistEntry &p, size_t i) const
+{
+    return m_grayPeerlist.get(p, i);
 }
 
 bool PeerlistManager::is_ip_allowed(uint32_t ip) const
 {
-  System::Ipv4Address addr(networkToHost(ip));
+    System::Ipv4Address addr(networkToHost(ip));
 
-  //never allow loopback ip
-  if (addr.isLoopback()) {
-    return false;
-  }
+    //never allow loopback ip
+    if (addr.isLoopback())
+    {
+        return false;
+    }
 
-  if (!m_allow_local_ip && addr.isPrivate()) {
-    return false;
-  }
+    if (!m_allow_local_ip && addr.isPrivate())
+    {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
-bool PeerlistManager::get_peerlist_head(std::list<PeerlistEntry>& bs_head, uint32_t depth)
+bool PeerlistManager::get_peerlist_head(std::list<PeerlistEntry> &bs_head, uint32_t depth)
 {
     /* Sort the peers by last seen [Newer peers come first] */
     std::sort(m_peers_white.begin(), m_peers_white.end(), [](const auto &lhs, const auto &rhs)
@@ -123,7 +131,7 @@ bool PeerlistManager::get_peerlist_head(std::list<PeerlistEntry>& bs_head, uint3
     return true;
 }
 
-bool PeerlistManager::get_peerlist_full(std::list<PeerlistEntry>& pl_gray, std::list<PeerlistEntry>& pl_white) const
+bool PeerlistManager::get_peerlist_full(std::list<PeerlistEntry> &pl_gray, std::list<PeerlistEntry> &pl_white) const
 {
     std::copy(m_peers_gray.begin(), m_peers_gray.end(), std::back_inserter(pl_gray));
     std::copy(m_peers_white.begin(), m_peers_white.end(), std::back_inserter(pl_white));
@@ -133,28 +141,30 @@ bool PeerlistManager::get_peerlist_full(std::list<PeerlistEntry>& pl_gray, std::
 
 bool PeerlistManager::set_peer_just_seen(uint64_t peer, uint32_t ip, uint32_t port)
 {
-  NetworkAddress addr;
-  addr.ip = ip;
-  addr.port = port;
-  return set_peer_just_seen(peer, addr);
+    NetworkAddress addr;
+    addr.ip = ip;
+    addr.port = port;
+    return set_peer_just_seen(peer, addr);
 }
 
-bool PeerlistManager::set_peer_just_seen(uint64_t peer, const NetworkAddress& addr)
+bool PeerlistManager::set_peer_just_seen(uint64_t peer, const NetworkAddress &addr)
 {
-  try {
-    //find in white list
-    PeerlistEntry ple;
-    ple.adr = addr;
-    ple.id = peer;
-    ple.last_seen = time(NULL);
-    return append_with_peer_white(ple);
-  } catch (std::exception&) {
-  }
+    try
+    {
+        //find in white list
+        PeerlistEntry ple;
+        ple.adr = addr;
+        ple.id = peer;
+        ple.last_seen = time(NULL);
+        return append_with_peer_white(ple);
+    } catch (std::exception &)
+    {
+    }
 
-  return false;
+    return false;
 }
 
-bool PeerlistManager::append_with_peer_white(const PeerlistEntry& newPeer)
+bool PeerlistManager::append_with_peer_white(const PeerlistEntry &newPeer)
 {
     try
     {
@@ -176,7 +186,7 @@ bool PeerlistManager::append_with_peer_white(const PeerlistEntry& newPeer)
             m_peers_white.push_back(newPeer);
             trim_white_peerlist();
         }
-        /* It does, update it */
+            /* It does, update it */
         else
         {
             //update record in white list 
@@ -197,7 +207,7 @@ bool PeerlistManager::append_with_peer_white(const PeerlistEntry& newPeer)
 
         return true;
     }
-    catch (std::exception&)
+    catch (std::exception &)
     {
         return false;
     }
@@ -205,7 +215,7 @@ bool PeerlistManager::append_with_peer_white(const PeerlistEntry& newPeer)
     return false;
 }
 
-bool PeerlistManager::append_with_peer_gray(const PeerlistEntry& newPeer)
+bool PeerlistManager::append_with_peer_gray(const PeerlistEntry &newPeer)
 {
     try
     {
@@ -236,8 +246,7 @@ bool PeerlistManager::append_with_peer_gray(const PeerlistEntry& newPeer)
             //put new record into white list
             m_peers_gray.push_back(newPeer);
             trim_gray_peerlist();
-        }
-        else
+        } else
         {
             //update record in white list 
             *grayListIterator = newPeer;
@@ -245,7 +254,7 @@ bool PeerlistManager::append_with_peer_gray(const PeerlistEntry& newPeer)
 
         return true;
     }
-    catch (std::exception&)
+    catch (std::exception &)
     {
         return false;
     }
@@ -253,12 +262,12 @@ bool PeerlistManager::append_with_peer_gray(const PeerlistEntry& newPeer)
     return false;
 }
 
-Peerlist& PeerlistManager::getWhite()
+Peerlist &PeerlistManager::getWhite()
 {
-    return m_whitePeerlist; 
+    return m_whitePeerlist;
 }
 
-Peerlist& PeerlistManager::getGray()
+Peerlist &PeerlistManager::getGray()
 {
-    return m_grayPeerlist; 
+    return m_grayPeerlist;
 }

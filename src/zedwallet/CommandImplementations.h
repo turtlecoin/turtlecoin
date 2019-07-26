@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -42,7 +42,7 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node);
 
 void save(CryptoNote::WalletGreen &wallet);
 
-void listTransfers(bool incoming, bool outgoing, 
+void listTransfers(bool incoming, bool outgoing,
                    CryptoNote::WalletGreen &wallet, CryptoNote::INode &node);
 
 void printOutgoingTransfer(CryptoNote::WalletTransaction t,

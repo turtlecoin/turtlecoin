@@ -7,7 +7,9 @@
 //////////////////////////////////
 
 #ifndef MSVC
+
 #include <fstream>
+
 #endif
 
 #include <Serialization/SerializationTools.h>
@@ -32,7 +34,7 @@ const std::string getAddressBookName(AddressBook addressBook)
         trim(friendlyName);
 
         const auto it = std::find(addressBook.begin(), addressBook.end(),
-                            AddressBookEntry(friendlyName));
+                                  AddressBookEntry(friendlyName));
 
         if (it != addressBook.end())
         {
@@ -332,8 +334,7 @@ void listAddressBook()
                       << std::endl
                       << std::endl
                       << std::endl;
-        }
-        else
+        } else
         {
             std::cout << std::endl;
         }
@@ -370,8 +371,7 @@ bool saveAddressBook(AddressBook addressBook)
     if (output)
     {
         output << jsonString;
-    }
-    else
+    } else
     {
         std::cout << WarningMsg("Failed to save address book to disk!")
                   << std::endl

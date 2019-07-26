@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -9,9 +9,15 @@
 #include <zedwallet/Types.h>
 #include <config/WalletConfig.h>
 
-enum AddressType {NotAnAddress, IntegratedAddress, StandardAddress};
+enum AddressType
+{
+    NotAnAddress, IntegratedAddress, StandardAddress
+};
 
-enum BalanceInfo {NotEnoughBalance, EnoughBalance, SetMixinToZero};
+enum BalanceInfo
+{
+    NotEnoughBalance, EnoughBalance, SetMixinToZero
+};
 
 void transfer(std::shared_ptr<WalletInfo> walletInfo, uint32_t height,
               bool sendAll = false, std::string nodeAddress = std::string(),
@@ -27,7 +33,7 @@ void splitTX(CryptoNote::WalletGreen &wallet,
              const CryptoNote::TransactionParameters splitTXParams,
              uint32_t nodeFee);
 
-void sendTX(std::shared_ptr<WalletInfo> walletInfo, 
+void sendTX(std::shared_ptr<WalletInfo> walletInfo,
             CryptoNote::TransactionParameters p, uint32_t height,
             bool retried = false, uint32_t nodeFee = 0);
 
@@ -62,7 +68,7 @@ Maybe<uint64_t> getFee();
 Maybe<uint64_t> getTransferAmount();
 
 Maybe<std::pair<std::string, std::string>> extractIntegratedAddress(
-    std::string integratedAddress);
+        std::string integratedAddress);
 
 BalanceInfo doWeHaveEnoughBalance(uint64_t amount, uint64_t fee,
                                   std::shared_ptr<WalletInfo> walletInfo,

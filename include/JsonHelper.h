@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -12,12 +12,12 @@ typedef rapidjson::GenericObject<true, rapidjson::GenericValue<rapidjson::UTF8<c
 typedef rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator>> JSONValue;
 
 static const std::string kTypeNames[] =
-{ 
-    "Null", "False", "True", "Object", "Array", "String", "Number"
-};
+        {
+                "Null", "False", "True", "Object", "Array", "String", "Number"
+        };
 
 template<typename T>
-const rapidjson::Value & getJsonValue(const T &j, const std::string &key)
+const rapidjson::Value &getJsonValue(const T &j, const std::string &key)
 {
     auto val = j.FindMember(key);
 
@@ -37,8 +37,8 @@ uint64_t getUint64FromJSON(const T &j, const std::string &key)
     if (!val.IsUint64())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected uint64_t, got " +
-            kTypeNames[val.GetType()]
+                "JSON parameter is wrong type. Expected uint64_t, got " +
+                kTypeNames[val.GetType()]
         );
     }
 
@@ -53,8 +53,8 @@ uint64_t getInt64FromJSON(const T &j, const std::string &key)
     if (!val.IsInt64())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected int64_t, got " +
-            kTypeNames[val.GetType()]
+                "JSON parameter is wrong type. Expected int64_t, got " +
+                kTypeNames[val.GetType()]
         );
     }
 
@@ -72,8 +72,8 @@ std::string getStringFromJSON(const T &j, const std::string &key)
     if (!val.IsString())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected String, got " +
-            kTypeNames[val.GetType()]
+                "JSON parameter is wrong type. Expected String, got " +
+                kTypeNames[val.GetType()]
         );
     }
 
@@ -90,8 +90,8 @@ std::string getStringFromJSONString(const T &j)
     if (!j.IsString())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected String, got " +
-            kTypeNames[j.GetType()]
+                "JSON parameter is wrong type. Expected String, got " +
+                kTypeNames[j.GetType()]
         );
     }
 
@@ -106,8 +106,8 @@ auto getArrayFromJSON(const T &j, const std::string &key)
     if (!val.IsArray())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected Array, got " +
-            kTypeNames[val.GetType()]
+                "JSON parameter is wrong type. Expected Array, got " +
+                kTypeNames[val.GetType()]
         );
     }
 
@@ -122,8 +122,8 @@ JSONObject getObjectFromJSON(const T &j, const std::string &key)
     if (!val.IsObject())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected Object, got " +
-            kTypeNames[val.GetType()]
+                "JSON parameter is wrong type. Expected Object, got " +
+                kTypeNames[val.GetType()]
         );
     }
 
@@ -138,8 +138,8 @@ bool getBoolFromJSON(const T &j, const std::string &key)
     if (!val.IsBool())
     {
         throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected Bool, got " +
-            kTypeNames[val.GetType()]
+                "JSON parameter is wrong type. Expected Bool, got " +
+                kTypeNames[val.GetType()]
         );
     }
 

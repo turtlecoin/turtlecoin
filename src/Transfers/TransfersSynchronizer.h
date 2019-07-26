@@ -18,63 +18,84 @@
 
 #include "Logging/LoggerRef.h"
 
-namespace CryptoNote {
-class Currency;
+namespace CryptoNote
+{
+    class Currency;
 }
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-class TransfersConsumer;
-class INode;
+    class TransfersConsumer;
 
-class TransfersSyncronizer : public ITransfersSynchronizer, public IBlockchainConsumerObserver {
-public:
-  TransfersSyncronizer(const CryptoNote::Currency& currency, std::shared_ptr<Logging::ILogger> logger, IBlockchainSynchronizer& sync, INode& node);
-  virtual ~TransfersSyncronizer();
+    class INode;
 
-  void initTransactionPool(const std::unordered_set<Crypto::Hash>& uncommitedTransactions);
+    class TransfersSyncronizer : public ITransfersSynchronizer, public IBlockchainConsumerObserver
+    {
+    public:
+        TransfersSyncronizer(const CryptoNote::Currency &currency, std::shared_ptr<Logging::ILogger> logger,
+                             IBlockchainSynchronizer &sync, INode &node);
 
-  // ITransfersSynchronizer
-  virtual ITransfersSubscription& addSubscription(const AccountSubscription& acc) override;
-  virtual bool removeSubscription(const AccountPublicAddress& acc) override;
-  virtual void getSubscriptions(std::vector<AccountPublicAddress>& subscriptions) override;
-  virtual ITransfersSubscription* getSubscription(const AccountPublicAddress& acc) override;
-  virtual std::vector<Crypto::Hash> getViewKeyKnownBlocks(const Crypto::PublicKey& publicViewKey) override;
+        virtual ~TransfersSyncronizer();
 
-  void subscribeConsumerNotifications(const Crypto::PublicKey& viewPublicKey, ITransfersSynchronizerObserver* observer);
-  void unsubscribeConsumerNotifications(const Crypto::PublicKey& viewPublicKey, ITransfersSynchronizerObserver* observer);
+        void initTransactionPool(const std::unordered_set<Crypto::Hash> &uncommitedTransactions);
 
-  void addPublicKeysSeen(const AccountPublicAddress& acc, const Crypto::Hash& transactionHash, const Crypto::PublicKey& outputKey);
+        // ITransfersSynchronizer
+        virtual ITransfersSubscription &addSubscription(const AccountSubscription &acc) override;
 
-  // IStreamSerializable
-  virtual void save(std::ostream& os) override;
-  virtual void load(std::istream& in) override;
+        virtual bool removeSubscription(const AccountPublicAddress &acc) override;
 
-private:
-  Logging::LoggerRef m_logger;
+        virtual void getSubscriptions(std::vector<AccountPublicAddress> &subscriptions) override;
 
-  // map { view public key -> consumer }
-  typedef std::unordered_map<Crypto::PublicKey, std::unique_ptr<TransfersConsumer>> ConsumersContainer;
-  ConsumersContainer m_consumers;
+        virtual ITransfersSubscription *getSubscription(const AccountPublicAddress &acc) override;
 
-  typedef Tools::ObserverManager<ITransfersSynchronizerObserver> SubscribersNotifier;
-  typedef std::unordered_map<Crypto::PublicKey, std::unique_ptr<SubscribersNotifier>> SubscribersContainer;
-  SubscribersContainer m_subscribers;
+        virtual std::vector<Crypto::Hash> getViewKeyKnownBlocks(const Crypto::PublicKey &publicViewKey) override;
 
-  // std::unordered_map<AccountAddress, std::unique_ptr<TransfersConsumer>> m_subscriptions;
-  IBlockchainSynchronizer& m_sync;
-  INode& m_node;
-  const CryptoNote::Currency& m_currency;
+        void subscribeConsumerNotifications(const Crypto::PublicKey &viewPublicKey,
+                                            ITransfersSynchronizerObserver *observer);
 
-  virtual void onBlocksAdded(IBlockchainConsumer* consumer, const std::vector<Crypto::Hash>& blockHashes) override;
-  virtual void onBlockchainDetach(IBlockchainConsumer* consumer, uint32_t blockIndex) override;
-  virtual void onTransactionDeleteBegin(IBlockchainConsumer* consumer, Crypto::Hash transactionHash) override;
-  virtual void onTransactionDeleteEnd(IBlockchainConsumer* consumer, Crypto::Hash transactionHash) override;
-  virtual void onTransactionUpdated(IBlockchainConsumer* consumer, const Crypto::Hash& transactionHash,
-    const std::vector<ITransfersContainer*>& containers) override;
+        void unsubscribeConsumerNotifications(const Crypto::PublicKey &viewPublicKey,
+                                              ITransfersSynchronizerObserver *observer);
 
-  bool findViewKeyForConsumer(IBlockchainConsumer* consumer, Crypto::PublicKey& viewKey) const;
-  SubscribersContainer::const_iterator findSubscriberForConsumer(IBlockchainConsumer* consumer) const;
-};
+        void addPublicKeysSeen(const AccountPublicAddress &acc, const Crypto::Hash &transactionHash,
+                               const Crypto::PublicKey &outputKey);
+
+        // IStreamSerializable
+        virtual void save(std::ostream &os) override;
+
+        virtual void load(std::istream &in) override;
+
+    private:
+        Logging::LoggerRef m_logger;
+
+        // map { view public key -> consumer }
+        typedef std::unordered_map<Crypto::PublicKey, std::unique_ptr<TransfersConsumer>> ConsumersContainer;
+        ConsumersContainer m_consumers;
+
+        typedef Tools::ObserverManager<ITransfersSynchronizerObserver> SubscribersNotifier;
+        typedef std::unordered_map<Crypto::PublicKey, std::unique_ptr<SubscribersNotifier>> SubscribersContainer;
+        SubscribersContainer m_subscribers;
+
+        // std::unordered_map<AccountAddress, std::unique_ptr<TransfersConsumer>> m_subscriptions;
+        IBlockchainSynchronizer &m_sync;
+        INode &m_node;
+        const CryptoNote::Currency &m_currency;
+
+        virtual void
+        onBlocksAdded(IBlockchainConsumer *consumer, const std::vector<Crypto::Hash> &blockHashes) override;
+
+        virtual void onBlockchainDetach(IBlockchainConsumer *consumer, uint32_t blockIndex) override;
+
+        virtual void onTransactionDeleteBegin(IBlockchainConsumer *consumer, Crypto::Hash transactionHash) override;
+
+        virtual void onTransactionDeleteEnd(IBlockchainConsumer *consumer, Crypto::Hash transactionHash) override;
+
+        virtual void onTransactionUpdated(IBlockchainConsumer *consumer, const Crypto::Hash &transactionHash,
+                                          const std::vector<ITransfersContainer *> &containers) override;
+
+        bool findViewKeyForConsumer(IBlockchainConsumer *consumer, Crypto::PublicKey &viewKey) const;
+
+        SubscribersContainer::const_iterator findSubscriberForConsumer(IBlockchainConsumer *consumer) const;
+    };
 
 }

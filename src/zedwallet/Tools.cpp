@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -51,7 +51,7 @@ std::string formatAmount(const uint64_t amount)
     const uint64_t cents = amount % divisor;
 
     return formatDollars(dollars) + "." + formatCents(cents) + " "
-         + WalletConfig::ticker;
+           + WalletConfig::ticker;
 }
 
 std::string formatAmountBasic(const uint64_t amount)
@@ -92,7 +92,7 @@ std::string formatDollars(const uint64_t amount)
        workaround */
     class comma_numpunct : public std::numpunct<char>
     {
-      protected:
+    protected:
         virtual char do_thousands_sep() const
         {
             return ',';
@@ -151,7 +151,7 @@ bool confirm(const std::string &msg, const bool defaultReturn)
 
         const char c = ::tolower(answer[0]);
 
-        switch(c)
+        switch (c)
         {
             /* Lets people spam enter / choose default value */
             case '\0':
@@ -193,10 +193,10 @@ std::string createIntegratedAddress(const std::string &address,
 
     /* Encode prefix + paymentID + keys as an address */
     return Tools::Base58::encode_addr
-    (
-        CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
-        paymentID + keys
-    );
+            (
+                    CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
+                    paymentID + keys
+            );
 }
 
 uint64_t getScanHeight()
@@ -292,7 +292,7 @@ bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
 {
     if (alreadyShuttingDown)
     {
-        std::cout << "Patience little turtle, we're already shutting down!" 
+        std::cout << "Patience little turtle, we're already shutting down!"
                   << std::endl;
 
         return false;
@@ -305,26 +305,26 @@ bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
     bool finishedShutdown = false;
 
     std::thread timelyShutdown([&finishedShutdown]
-    {
-        const auto startTime = std::chrono::system_clock::now();
+                               {
+                                   const auto startTime = std::chrono::system_clock::now();
 
-        /* Has shutdown finished? */
-        while (!finishedShutdown)
-        {
-            const auto currentTime = std::chrono::system_clock::now();
+                                   /* Has shutdown finished? */
+                                   while (!finishedShutdown)
+                                   {
+                                       const auto currentTime = std::chrono::system_clock::now();
 
-            /* If not, wait for a max of 20 seconds then force exit. */
-            if ((currentTime - startTime) > std::chrono::seconds(20))
-            {
-                std::cout << WarningMsg("Wallet took too long to save! "
-                                        "Force closing.") << std::endl
-                          << "Bye." << std::endl;
-                exit(0);
-            }
+                                       /* If not, wait for a max of 20 seconds then force exit. */
+                                       if ((currentTime - startTime) > std::chrono::seconds(20))
+                                       {
+                                           std::cout << WarningMsg("Wallet took too long to save! "
+                                                                   "Force closing.") << std::endl
+                                                     << "Bye." << std::endl;
+                                           exit(0);
+                                       }
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    });
+                                       std::this_thread::sleep_for(std::chrono::seconds(1));
+                                   }
+                               });
 
     if (walletInfo != nullptr)
     {
@@ -349,30 +349,30 @@ bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
     timelyShutdown.join();
 
     std::cout << "Bye." << std::endl;
-    
+
     return true;
 }
 
-std::vector<std::string> split(const std::string& str, char delim = ' ')
+std::vector<std::string> split(const std::string &str, char delim = ' ')
 {
     std::vector<std::string> cont;
     std::stringstream ss(str);
     std::string token;
-    while (std::getline(ss, token, delim)) {
+    while (std::getline(ss, token, delim))
+    {
         cont.push_back(token);
     }
     return cont;
 }
 
-bool parseDaemonAddressFromString(std::string& host, int& port, const std::string& address)
+bool parseDaemonAddressFromString(std::string &host, int &port, const std::string &address)
 {
     std::vector<std::string> parts = split(address, ':');
 
     if (parts.empty())
     {
         return false;
-    }
-    else if (parts.size() >= 2)
+    } else if (parts.size() >= 2)
     {
         try
         {

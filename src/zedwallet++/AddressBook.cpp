@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -76,8 +76,8 @@ void addToAddressBook()
     const bool integratedAddressesAllowed(true), cancelAllowed(true);
 
     const std::string address = getAddress(
-        "\nWhat address does this user have?: ", integratedAddressesAllowed,
-        cancelAllowed
+            "\nWhat address does this user have?: ", integratedAddressesAllowed,
+            cancelAllowed
     );
 
     if (address == "cancel")
@@ -95,8 +95,8 @@ void addToAddressBook()
         const bool cancelAllowed = true;
 
         paymentID = getPaymentID(
-            "\nDoes this address book entry have a payment ID associated "
-            "with it?\n", cancelAllowed
+                "\nDoes this address book entry have a payment ID associated "
+                "with it?\n", cancelAllowed
         );
 
         if (paymentID == "cancel")
@@ -118,7 +118,7 @@ void addToAddressBook()
 }
 
 const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
-    const std::vector<AddressBookEntry> addressBook)
+        const std::vector<AddressBookEntry> addressBook)
 {
     while (true)
     {
@@ -175,7 +175,7 @@ const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
 
             continue;
         }
-        /* Input isn't a number */
+            /* Input isn't a number */
         catch (const std::invalid_argument &)
         {
             const auto it = std::find(addressBook.begin(), addressBook.end(),
@@ -194,7 +194,7 @@ const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
         }
 
         const bool list = Utilities::confirm(
-            "Would you like to list everyone in your address book?"
+                "Would you like to list everyone in your address book?"
         );
 
         std::cout << "\n";
@@ -218,7 +218,7 @@ void sendFromAddressBook(const std::shared_ptr<WalletBackend> walletBackend)
     std::cout << InformationMsg("Note: You can type cancel at any time to ")
               << InformationMsg("cancel the transaction\n\n");
 
-    const auto [cancel, addressBookEntry] = getAddressBookEntry(addressBook);
+    const auto[cancel, addressBookEntry] = getAddressBookEntry(addressBook);
 
     if (cancel)
     {
@@ -228,9 +228,9 @@ void sendFromAddressBook(const std::shared_ptr<WalletBackend> walletBackend)
 
     const bool cancelAllowed = true;
 
-    const auto [success, amount] = getAmountToAtomic(
-        "How much " + WalletConfig::ticker + " do you want to send?: ",
-        cancelAllowed
+    const auto[success, amount] = getAmountToAtomic(
+            "How much " + WalletConfig::ticker + " do you want to send?: ",
+            cancelAllowed
     );
 
     if (!success)
@@ -239,8 +239,8 @@ void sendFromAddressBook(const std::shared_ptr<WalletBackend> walletBackend)
     }
 
     sendTransaction(
-        walletBackend, addressBookEntry.address, amount,
-        addressBookEntry.paymentID
+            walletBackend, addressBookEntry.address, amount,
+            addressBookEntry.paymentID
     );
 }
 
@@ -310,7 +310,7 @@ void deleteFromAddressBook()
                   << WarningMsg(" in your address book!\n\n");
 
         const bool list = Utilities::confirm(
-            "Would you like to list everyone in your address book?"
+                "Would you like to list everyone in your address book?"
         );
 
         std::cout << "\n";
@@ -345,8 +345,7 @@ void listAddressBook()
         {
             std::cout << InformationMsg("Payment ID: ")
                       << SuccessMsg(entry.paymentID) << "\n\n";
-        }
-        else
+        } else
         {
             std::cout << "\n";
         }
@@ -366,9 +365,9 @@ std::vector<AddressBookEntry> getAddressBook()
     {
         rapidjson::IStreamWrapper isw(input);
         rapidjson::Document j;
-        if(!j.ParseStream(isw).HasParseError())
+        if (!j.ParseStream(isw).HasParseError())
         {
-            for (auto& v : j.GetArray())
+            for (auto &v : j.GetArray())
             {
                 AddressBookEntry entry;
                 entry.fromJSON(v);
@@ -389,14 +388,13 @@ bool saveAddressBook(const std::vector<AddressBookEntry> addressBook)
         rapidjson::OStreamWrapper osw(output);
         rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
         writer.StartArray();
-        for(auto &entry : addressBook)
+        for (auto &entry : addressBook)
         {
             entry.toJSON(writer);
         }
         writer.EndArray();
         writer.Flush();
-    }
-    else
+    } else
     {
         std::cout << WarningMsg("Failed to save address book to disk!")
                   << std::endl

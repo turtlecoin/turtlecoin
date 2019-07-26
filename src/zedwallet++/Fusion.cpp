@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -51,13 +51,12 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
        failing the whole round */
     while (failCount < 5)
     {
-        const auto [error, hash] = walletBackend->sendFusionTransactionBasic();
+        const auto[error, hash] = walletBackend->sendFusionTransactionBasic();
 
         if (error == FULLY_OPTIMIZED)
         {
             failCount++;
-        }
-        else if (error)
+        } else if (error)
         {
             failCount++;
 
@@ -66,8 +65,7 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
             stream << "Failed to send fusion transaction: " << error << "\n";
 
             std::cout << WarningMsg(stream.str());
-        }
-        else
+        } else
         {
             failCount = 0;
 
@@ -82,7 +80,7 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
     uint64_t currentBalance = walletBackend->getTotalUnlockedBalance();
 
     /* Wait for balance to unlock, so sending transactions can proceed */
-    while(currentBalance < initialBalance)
+    while (currentBalance < initialBalance)
     {
         std::cout << InformationMsg("Waiting for balance to return and unlock:\n"
                                     "\nTotal balance: ")

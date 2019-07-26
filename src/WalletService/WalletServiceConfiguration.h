@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -15,7 +15,8 @@ namespace PaymentService
 {
     struct WalletServiceConfiguration
     {
-        WalletServiceConfiguration() {};
+        WalletServiceConfiguration()
+        {};
 
         /* Address for the daemon RPC */
         std::string daemonAddress = "127.0.0.1";
@@ -96,23 +97,23 @@ namespace PaymentService
     };
 
     bool updateConfigFormat(
-        const std::string configFile,
-        WalletServiceConfiguration& config);
+            const std::string configFile,
+            WalletServiceConfiguration &config);
 
     void handleSettings(
-        int argc,
-        char* argv[],
-        WalletServiceConfiguration& config);
+            int argc,
+            char *argv[],
+            WalletServiceConfiguration &config);
 
     void handleSettings(
-        const std::string configFile,
-        WalletServiceConfiguration& config);
+            const std::string configFile,
+            WalletServiceConfiguration &config);
 
-    Document asJSON(const WalletServiceConfiguration& config);
+    Document asJSON(const WalletServiceConfiguration &config);
 
-    std::string asString(const WalletServiceConfiguration& config);
+    std::string asString(const WalletServiceConfiguration &config);
 
     void asFile(
-        const WalletServiceConfiguration& config,
-        const std::string& filename);
+            const WalletServiceConfiguration &config,
+            const std::string &filename);
 }

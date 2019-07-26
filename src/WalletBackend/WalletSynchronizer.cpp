@@ -31,9 +31,9 @@
 
 /* Default constructor */
 WalletSynchronizer::WalletSynchronizer() :
-    m_shouldStop(false),
-    m_startTimestamp(0),
-    m_startHeight(0)
+        m_shouldStop(false),
+        m_startTimestamp(0),
+        m_startHeight(0)
 {
     unsigned int threads = std::thread::hardware_concurrency();
 
@@ -49,20 +49,20 @@ WalletSynchronizer::WalletSynchronizer() :
 
 /* Parameterized constructor */
 WalletSynchronizer::WalletSynchronizer(
-    const std::shared_ptr<Nigel> daemon,
-    const uint64_t startHeight,
-    const uint64_t startTimestamp,
-    const Crypto::SecretKey privateViewKey,
-    const std::shared_ptr<EventHandler> eventHandler,
-    unsigned int threadCount) :
+        const std::shared_ptr<Nigel> daemon,
+        const uint64_t startHeight,
+        const uint64_t startTimestamp,
+        const Crypto::SecretKey privateViewKey,
+        const std::shared_ptr<EventHandler> eventHandler,
+        unsigned int threadCount) :
 
-    m_daemon(daemon),
-    m_shouldStop(false),
-    m_startHeight(startHeight),
-    m_startTimestamp(startTimestamp),
-    m_privateViewKey(privateViewKey),
-    m_eventHandler(eventHandler),
-    m_blockDownloader(daemon, nullptr, startHeight, startTimestamp)
+        m_daemon(daemon),
+        m_shouldStop(false),
+        m_startHeight(startHeight),
+        m_startTimestamp(startTimestamp),
+        m_privateViewKey(privateViewKey),
+        m_eventHandler(eventHandler),
+        m_blockDownloader(daemon, nullptr, startHeight, startTimestamp)
 {
     if (threadCount == 0)
     {
@@ -73,14 +73,14 @@ WalletSynchronizer::WalletSynchronizer(
 }
 
 /* Move constructor */
-WalletSynchronizer::WalletSynchronizer(WalletSynchronizer && old)
+WalletSynchronizer::WalletSynchronizer(WalletSynchronizer &&old)
 {
     /* Call the move assignment operator */
     *this = std::move(old);
 }
 
 /* Move assignment operator */
-WalletSynchronizer & WalletSynchronizer::operator=(WalletSynchronizer && old)
+WalletSynchronizer &WalletSynchronizer::operator=(WalletSynchronizer &&old)
 {
     /* Stop any running threads */
     stop();
@@ -150,7 +150,7 @@ void WalletSynchronizer::mainLoop()
                     {
                         return true;
                     }
-                    
+
                     /* Wait until all the blocks have been added to the queue */
                     return m_processedBlocks.size() == chunkSize;
                 });
@@ -166,7 +166,7 @@ void WalletSynchronizer::mainLoop()
                use mutex to access */
             while (!m_processedBlocks.empty_unsafe() && !m_shouldStop)
             {
-                const auto [block, ourInputs, arrivalIndex] = m_processedBlocks.top_unsafe();
+                const auto[block, ourInputs, arrivalIndex] = m_processedBlocks.top_unsafe();
                 completeBlockProcessing(block, ourInputs);
                 m_processedBlocks.pop_unsafe();
             }
@@ -240,9 +240,9 @@ void WalletSynchronizer::blockProcessingThread()
             for (const auto &[block, arrivalIndex] : chunk)
             {
                 Logger::logger.log(
-                    "Processing block " + std::to_string(block.blockHeight),
-                    Logger::DEBUG,
-                    {Logger::SYNC}
+                        "Processing block " + std::to_string(block.blockHeight),
+                        Logger::DEBUG,
+                        {Logger::SYNC}
                 );
 
                 auto ourInputs = processBlockOutputs(block);
@@ -270,11 +270,11 @@ void WalletSynchronizer::blockProcessingThread()
                         if (it == globalIndexes.end() || it->second.size() <= input.transactionIndex)
                         {
                             Logger::logger.log(
-                                "Warning: Failed to get correct global indexes from daemon."
-                                "\nIf you see this error message repeatedly, the daemon "
-                                "may be faulty. More likely, the chain just forked.",
-                                Logger::WARNING,
-                                {Logger::SYNC, Logger::DAEMON}
+                                    "Warning: Failed to get correct global indexes from daemon."
+                                    "\nIf you see this error message repeatedly, the daemon "
+                                    "may be faulty. More likely, the chain just forked.",
+                                    Logger::WARNING,
+                                    {Logger::SYNC, Logger::DAEMON}
                             );
 
                             return;
@@ -284,7 +284,7 @@ void WalletSynchronizer::blockProcessingThread()
                     }
                 }
 
-                processedBlocks.push_back({ block, ourInputs, arrivalIndex });
+                processedBlocks.push_back({block, ourInputs, arrivalIndex});
             }
 
             chunk = m_blockProcessingQueue.front_n_and_remove(chunkSize);
@@ -308,14 +308,14 @@ void WalletSynchronizer::blockProcessingThread()
 }
 
 std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> WalletSynchronizer::processBlockOutputs(
-    const WalletTypes::WalletBlockInfo &block) const
+        const WalletTypes::WalletBlockInfo &block) const
 {
     std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> inputs;
 
     if (!Config::config.wallet.skipCoinbaseTransactions && block.coinbaseTransaction)
     {
         const auto newInputs = processTransactionOutputs(
-            *(block.coinbaseTransaction), block.blockHeight
+                *(block.coinbaseTransaction), block.blockHeight
         );
 
         inputs.insert(inputs.end(), newInputs.begin(), newInputs.end());
@@ -332,8 +332,8 @@ std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> Wallet
 }
 
 void WalletSynchronizer::completeBlockProcessing(
-    const WalletTypes::WalletBlockInfo &block,
-    const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &ourInputs)
+        const WalletTypes::WalletBlockInfo &block,
+        const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &ourInputs)
 {
     const uint64_t walletHeight = m_blockDownloader.getHeight();
 
@@ -341,9 +341,10 @@ void WalletSynchronizer::completeBlockProcessing(
     if (walletHeight >= block.blockHeight && block.blockHeight != 0)
     {
         Logger::logger.log(
-            "Blockchain forked, resolving... (Old height: " + std::to_string(walletHeight) + ", new height: " + std::to_string(block.blockHeight) + ")",
-            Logger::INFO,
-            {Logger::SYNC}
+                "Blockchain forked, resolving... (Old height: " + std::to_string(walletHeight) + ", new height: " +
+                std::to_string(block.blockHeight) + ")",
+                Logger::INFO,
+                {Logger::SYNC}
         );
 
         removeForkedTransactions(block.blockHeight);
@@ -351,7 +352,7 @@ void WalletSynchronizer::completeBlockProcessing(
 
     /* Prune old inputs that are out of our 'confirmation' window */
     if (block.blockHeight % Constants::PRUNE_SPENT_INPUTS_INTERVAL == 0
-     && block.blockHeight > Constants::PRUNE_SPENT_INPUTS_INTERVAL)
+        && block.blockHeight > Constants::PRUNE_SPENT_INPUTS_INTERVAL)
     {
         m_subWallets->pruneSpentInputs(block.blockHeight - Constants::PRUNE_SPENT_INPUTS_INTERVAL);
     }
@@ -365,25 +366,25 @@ void WalletSynchronizer::completeBlockProcessing(
         stream << "Adding transaction: " << tx.hash;
 
         Logger::logger.log(
-            stream.str(),
-            Logger::INFO,
-            {Logger::SYNC, Logger::TRANSACTIONS}
+                stream.str(),
+                Logger::INFO,
+                {Logger::SYNC, Logger::TRANSACTIONS}
         );
 
         m_subWallets->addTransaction(tx);
         m_eventHandler->onTransaction.fire(tx);
     }
 
-    for (const auto [publicKey, input] : blockScanInfo.inputsToAdd)
+    for (const auto[publicKey, input] : blockScanInfo.inputsToAdd)
     {
         std::stringstream stream;
 
         stream << "Adding input: " << input.key;
 
         Logger::logger.log(
-            stream.str(),
-            Logger::INFO,
-            {Logger::SYNC}
+                stream.str(),
+                Logger::INFO,
+                {Logger::SYNC}
         );
 
         m_subWallets->storeTransactionInput(publicKey, input);
@@ -391,16 +392,16 @@ void WalletSynchronizer::completeBlockProcessing(
 
     /* The input has been spent, discard the key image so we
        don't double spend it */
-    for (const auto [publicKey, keyImage] : blockScanInfo.keyImagesToMarkSpent)
+    for (const auto[publicKey, keyImage] : blockScanInfo.keyImagesToMarkSpent)
     {
         std::stringstream stream;
 
         stream << "Marking key image: " << keyImage << " as spent";
 
         Logger::logger.log(
-            stream.str(),
-            Logger::INFO,
-            {Logger::SYNC}
+                stream.str(),
+                Logger::INFO,
+                {Logger::SYNC}
         );
 
         m_subWallets->markInputAsSpent(keyImage, publicKey, block.blockHeight);
@@ -417,15 +418,15 @@ void WalletSynchronizer::completeBlockProcessing(
     }
 
     Logger::logger.log(
-        "Finished processing block " + std::to_string(block.blockHeight),
-        Logger::DEBUG,
-        {Logger::SYNC}
+            "Finished processing block " + std::to_string(block.blockHeight),
+            Logger::DEBUG,
+            {Logger::SYNC}
     );
 }
 
 BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
-    const WalletTypes::WalletBlockInfo &block,
-    const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs) const
+        const WalletTypes::WalletBlockInfo &block,
+        const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs) const
 {
     BlockScanTmpInfo txData;
 
@@ -441,8 +442,8 @@ BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
 
     for (const auto rawTX : block.transactions)
     {
-        const auto [tx, keyImagesToMarkSpent] = processTransaction(
-            block, inputs, rawTX
+        const auto[tx, keyImagesToMarkSpent] = processTransaction(
+                block, inputs, rawTX
         );
 
         if (tx)
@@ -450,9 +451,9 @@ BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
             txData.transactionsToAdd.push_back(*tx);
 
             txData.keyImagesToMarkSpent.insert(
-                txData.keyImagesToMarkSpent.end(),
-                keyImagesToMarkSpent.begin(),
-                keyImagesToMarkSpent.end()
+                    txData.keyImagesToMarkSpent.end(),
+                    keyImagesToMarkSpent.begin(),
+                    keyImagesToMarkSpent.end()
             );
         }
     }
@@ -463,8 +464,8 @@ BlockScanTmpInfo WalletSynchronizer::processBlockTransactions(
 }
 
 std::optional<WalletTypes::Transaction> WalletSynchronizer::processCoinbaseTransaction(
-    const WalletTypes::WalletBlockInfo &block,
-    const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs) const
+        const WalletTypes::WalletBlockInfo &block,
+        const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs) const
 {
     const auto tx = *(block.coinbaseTransaction);
 
@@ -472,7 +473,8 @@ std::optional<WalletTypes::Transaction> WalletSynchronizer::processCoinbaseTrans
 
     std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> relevantInputs;
 
-    std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(relevantInputs), [&](const auto input) {
+    std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(relevantInputs), [&](const auto input)
+    {
         return std::get<1>(input).parentTransactionHash == tx.hash;
     });
 
@@ -488,24 +490,26 @@ std::optional<WalletTypes::Transaction> WalletSynchronizer::processCoinbaseTrans
         const std::string paymentID;
 
         return WalletTypes::Transaction(
-            transfers, tx.hash, fee, block.blockTimestamp, block.blockHeight,
-            paymentID, tx.unlockTime, isCoinbaseTransaction
+                transfers, tx.hash, fee, block.blockTimestamp, block.blockHeight,
+                paymentID, tx.unlockTime, isCoinbaseTransaction
         );
     }
 
     return std::nullopt;
 }
 
-std::tuple<std::optional<WalletTypes::Transaction>, std::vector<std::tuple<Crypto::PublicKey, Crypto::KeyImage>>> WalletSynchronizer::processTransaction(
-    const WalletTypes::WalletBlockInfo &block,
-    const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs,
-    const WalletTypes::RawTransaction &tx) const
+std::tuple<std::optional<WalletTypes::Transaction>, std::vector<std::tuple<Crypto::PublicKey, Crypto::KeyImage>>>
+WalletSynchronizer::processTransaction(
+        const WalletTypes::WalletBlockInfo &block,
+        const std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> &inputs,
+        const WalletTypes::RawTransaction &tx) const
 {
     std::unordered_map<Crypto::PublicKey, int64_t> transfers;
 
     std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> relevantInputs;
 
-    std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(relevantInputs), [&](const auto input) {
+    std::copy_if(inputs.begin(), inputs.end(), std::back_inserter(relevantInputs), [&](const auto input)
+    {
         return std::get<1>(input).parentTransactionHash == tx.hash;
     });
 
@@ -518,8 +522,8 @@ std::tuple<std::optional<WalletTypes::Transaction>, std::vector<std::tuple<Crypt
 
     for (const auto input : tx.keyInputs)
     {
-        const auto [found, publicSpendKey] = m_subWallets->getKeyImageOwner(
-            input.keyImage
+        const auto[found, publicSpendKey] = m_subWallets->getKeyImageOwner(
+                input.keyImage
         );
 
         if (found)
@@ -546,8 +550,8 @@ std::tuple<std::optional<WalletTypes::Transaction>, std::vector<std::tuple<Crypt
         const bool isCoinbaseTransaction = false;
 
         const auto newTX = WalletTypes::Transaction(
-            transfers, tx.hash, fee, block.blockTimestamp, block.blockHeight,
-            tx.paymentID, tx.unlockTime, isCoinbaseTransaction
+                transfers, tx.hash, fee, block.blockTimestamp, block.blockHeight,
+                tx.paymentID, tx.unlockTime, isCoinbaseTransaction
         );
 
         return {newTX, spentKeyImages};
@@ -557,8 +561,8 @@ std::tuple<std::optional<WalletTypes::Transaction>, std::vector<std::tuple<Crypt
 }
 
 std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> WalletSynchronizer::processTransactionOutputs(
-    const WalletTypes::RawCoinbaseTransaction &rawTX,
-    const uint64_t blockHeight) const
+        const WalletTypes::RawCoinbaseTransaction &rawTX,
+        const uint64_t blockHeight) const
 {
     std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> inputs;
 
@@ -588,16 +592,18 @@ std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> Wallet
                key. We use the key images to detect outgoing transactions,
                and we use the transaction inputs to make transactions ourself */
             const Crypto::KeyImage keyImage = m_subWallets->getTxInputKeyImage(
-                derivedSpendKey, derivation, outputIndex
+                    derivedSpendKey, derivation, outputIndex
             );
 
             const uint64_t spendHeight = 0;
 
             const WalletTypes::TransactionInput input({
-                keyImage, output.amount, blockHeight, rawTX.transactionPublicKey,
-                outputIndex, output.globalOutputIndex, output.key, spendHeight,
-                rawTX.unlockTime, rawTX.hash
-            });
+                                                              keyImage, output.amount, blockHeight,
+                                                              rawTX.transactionPublicKey,
+                                                              outputIndex, output.globalOutputIndex, output.key,
+                                                              spendHeight,
+                                                              rawTX.unlockTime, rawTX.hash
+                                                      });
 
             inputs.emplace_back(derivedSpendKey, input);
         }
@@ -615,18 +621,18 @@ std::vector<std::tuple<Crypto::PublicKey, WalletTypes::TransactionInput>> Wallet
    For example, if we want the global indexes for a transaction in block
    17, we get all the indexes from block 10 to block 20. */
 std::unordered_map<Crypto::Hash, std::vector<uint64_t>> WalletSynchronizer::getGlobalIndexes(
-    const uint64_t blockHeight) const
+        const uint64_t blockHeight) const
 {
     uint64_t startHeight = Utilities::getLowerBound(
-        blockHeight, Constants::GLOBAL_INDEXES_OBSCURITY
+            blockHeight, Constants::GLOBAL_INDEXES_OBSCURITY
     );
 
     uint64_t endHeight = Utilities::getUpperBound(
-        blockHeight, Constants::GLOBAL_INDEXES_OBSCURITY
+            blockHeight, Constants::GLOBAL_INDEXES_OBSCURITY
     );
 
-    const auto [success, indexes] = m_daemon->getGlobalIndexesForRange(
-        startHeight, endHeight
+    const auto[success, indexes] = m_daemon->getGlobalIndexesForRange(
+            startHeight, endHeight
     );
 
     if (!success)
@@ -645,9 +651,9 @@ void WalletSynchronizer::checkLockedTransactions()
     if (lockedTxHashes.size() != 0)
     {
         Logger::logger.log(
-            "Checking locked transactions",
-            Logger::DEBUG,
-            {Logger::TRANSACTIONS}
+                "Checking locked transactions",
+                Logger::DEBUG,
+                {Logger::TRANSACTIONS}
         );
 
         /* Transactions that are in the pool - we'll query these again
@@ -664,17 +670,17 @@ void WalletSynchronizer::checkLockedTransactions()
 
         /* Get the status of the locked transactions */
         bool success = m_daemon->getTransactionsStatus(
-            lockedTxHashes, transactionsInPool, transactionsInBlock,
-            cancelledTransactions
+                lockedTxHashes, transactionsInPool, transactionsInBlock,
+                cancelledTransactions
         );
 
         /* Couldn't get info from the daemon, try again later */
         if (!success)
         {
             Logger::logger.log(
-                "Failed to get locked transaction information from daemon",
-                Logger::WARNING,
-                {Logger::TRANSACTIONS, Logger::DAEMON}
+                    "Failed to get locked transaction information from daemon",
+                    Logger::WARNING,
+                    {Logger::TRANSACTIONS, Logger::DAEMON}
             );
 
             return;
@@ -695,9 +701,9 @@ void WalletSynchronizer::checkLockedTransactions()
 void WalletSynchronizer::start()
 {
     Logger::logger.log(
-        "Starting sync process",
-        Logger::DEBUG,
-        {Logger::SYNC}
+            "Starting sync process",
+            Logger::DEBUG,
+            {Logger::SYNC}
     );
 
     /* Reinit any vars which may have changed if we previously called stop() */
@@ -725,9 +731,9 @@ void WalletSynchronizer::start()
 void WalletSynchronizer::stop()
 {
     Logger::logger.log(
-        "Stopping sync process",
-        Logger::DEBUG,
-        {Logger::SYNC}
+            "Stopping sync process",
+            Logger::DEBUG,
+            {Logger::SYNC}
     );
 
     /* Tell the threads to stop */
@@ -781,9 +787,9 @@ void WalletSynchronizer::removeForkedTransactions(const uint64_t forkHeight)
 }
 
 void WalletSynchronizer::initializeAfterLoad(
-    const std::shared_ptr<Nigel> daemon,
-    const std::shared_ptr<EventHandler> eventHandler,
-    unsigned int threadCount)
+        const std::shared_ptr<Nigel> daemon,
+        const std::shared_ptr<EventHandler> eventHandler,
+        unsigned int threadCount)
 {
     m_daemon = daemon;
     m_eventHandler = eventHandler;
@@ -814,9 +820,9 @@ void WalletSynchronizer::fromJSON(const JSONObject &j)
     m_privateViewKey.fromString(getStringFromJSON(j, "privateViewKey"));
 
     m_blockDownloader.fromJSON(
-        getObjectFromJSON(j, "transactionSynchronizerStatus"),
-        m_startHeight,
-        m_startTimestamp
+            getObjectFromJSON(j, "transactionSynchronizerStatus"),
+            m_startHeight,
+            m_startTimestamp
     );
 }
 

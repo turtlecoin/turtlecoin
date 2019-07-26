@@ -30,10 +30,10 @@ namespace Utilities
 
     ParsedExtra parseExtra(const std::vector<uint8_t> &extra)
     {
-        ParsedExtra parsed {
-            Constants::NULL_PUBLIC_KEY,
-            std::string(),
-            { 0, Constants::NULL_HASH }
+        ParsedExtra parsed{
+                Constants::NULL_PUBLIC_KEY,
+                std::string(),
+                {0, Constants::NULL_HASH}
         };
 
         bool seenPubKey = false;
@@ -81,7 +81,7 @@ namespace Utilities
                [...data...] 0x02 [size of extra nonce] 0x00 [payment ID] [...data...]
 
             */
-            if (c == Constants::TX_EXTRA_NONCE_IDENTIFIER 
+            if (c == Constants::TX_EXTRA_NONCE_IDENTIFIER
                 && elementsRemaining > 1 + 1 + 32
                 && *(it + 2) == Constants::TX_EXTRA_PAYMENT_ID_IDENTIFIER
                 && !seenPaymentID)
@@ -111,7 +111,7 @@ namespace Utilities
                 continue;
             }
 
-            if (c == Constants::TX_EXTRA_MERGE_MINING_IDENTIFIER 
+            if (c == Constants::TX_EXTRA_MERGE_MINING_IDENTIFIER
                 && elementsRemaining > 1
                 && !seenMergedMiningTag)
             {
@@ -121,7 +121,7 @@ namespace Utilities
                 if (elementsRemaining > dataSize + 1 && dataSize >= 33)
                 {
                     const uint8_t depth = *(it + 2);
-                    
+
                     Crypto::Hash merkleRoot;
 
                     const auto dataBegin = it + 3;

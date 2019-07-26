@@ -18,7 +18,7 @@ namespace Utilities
 
     bool startsWith(const std::string &str, const std::string &substring);
 
-    std::vector<std::string> split(const std::string& str, char delim);
+    std::vector<std::string> split(const std::string &str, char delimiter);
 
     std::string removePrefix(const std::string &str, const std::string &prefix);
 }

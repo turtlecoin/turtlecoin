@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -36,12 +36,13 @@ int main(int argc, char **argv)
     try
     {
         /* Trigger the shutdown signal if ctrl+c is used */
-        Tools::SignalHandler::install([&ctrl_c] { ctrl_c = true; });
+        Tools::SignalHandler::install([&ctrl_c]
+                                      { ctrl_c = true; });
 
         /* Init the API */
         api = std::make_shared<ApiDispatcher>(
-            config.port, config.rpcBindIp, config.rpcPassword,
-            config.corsHeader, config.threads
+                config.port, config.rpcBindIp, config.rpcPassword,
+                config.corsHeader, config.threads
         );
 
         /* Launch the API */

@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -15,9 +15,9 @@
 #include <zedwallet++/TransactionMonitor.h>
 
 void shutdown(
-    const std::atomic<bool> &ctrl_c,
-    const std::atomic<bool> &stop,
-    const std::shared_ptr<WalletBackend> walletBackend)
+        const std::atomic<bool> &ctrl_c,
+        const std::atomic<bool> &stop,
+        const std::shared_ptr<WalletBackend> walletBackend)
 {
     while (!ctrl_c && !stop)
     {
@@ -51,10 +51,10 @@ void shutdown(
 }
 
 void cleanup(
-    std::thread &txMonitorThread,
-    std::thread &ctrlCWatcher,
-    std::atomic<bool> &stop,
-    std::shared_ptr<TransactionMonitor> txMonitor)
+        std::thread &txMonitorThread,
+        std::thread &ctrlCWatcher,
+        std::atomic<bool> &stop,
+        std::shared_ptr<TransactionMonitor> txMonitor)
 {
     /* Stop the transaction monitor */
     txMonitor->stop();
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 
     try
     {
-        const auto [quit, sync, walletBackend] = selectionScreen(config);
+        const auto[quit, sync, walletBackend] = selectionScreen(config);
 
         if (quit)
         {
@@ -105,14 +105,15 @@ int main(int argc, char **argv)
 
         /* Launch the thread which watches for the shutdown signal */
         ctrlCWatcher = std::thread([&ctrl_c, &stop, &walletBackend = walletBackend]
-        {
-            shutdown(ctrl_c, stop, walletBackend);
-        });
+                                   {
+                                       shutdown(ctrl_c, stop, walletBackend);
+                                   });
 
         /* Trigger the shutdown signal if ctrl+c is used
            We do the actual handling in a separate thread to handle stuff not
            being re-entrant. */
-        Tools::SignalHandler::install([&ctrl_c] { ctrl_c = true; });
+        Tools::SignalHandler::install([&ctrl_c]
+                                      { ctrl_c = true; });
 
         /* Don't explicitly sync in foreground if it's a new wallet */
         if (sync)
@@ -131,7 +132,7 @@ int main(int argc, char **argv)
 
         /* Cleanup the threads */
         cleanup(txMonitorThread, ctrlCWatcher, stop, txMonitor);
-        
+
         std::cout << InformationMsg("\nSaving and shutting down...\n");
 
         /* Wallet backend destructor gets called here, which saves */
@@ -150,6 +151,6 @@ int main(int argc, char **argv)
         /* Cleanup the threads */
         cleanup(txMonitorThread, ctrlCWatcher, stop, txMonitor);
     }
-        
+
     std::cout << "Thanks for stopping by..." << std::endl;
 }

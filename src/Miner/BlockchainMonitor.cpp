@@ -19,15 +19,15 @@
 using json = nlohmann::json;
 
 BlockchainMonitor::BlockchainMonitor(
-    System::Dispatcher& dispatcher,
-    const size_t pollingInterval,
-    const std::shared_ptr<httplib::Client> httpClient):
+        System::Dispatcher &dispatcher,
+        const size_t pollingInterval,
+        const std::shared_ptr<httplib::Client> httpClient) :
 
-    m_dispatcher(dispatcher),
-    m_pollingInterval(pollingInterval),
-    m_stopped(false),
-    m_sleepingContext(dispatcher),
-    m_httpClient(httpClient)
+        m_dispatcher(dispatcher),
+        m_pollingInterval(pollingInterval),
+        m_stopped(false),
+        m_sleepingContext(dispatcher),
+        m_httpClient(httpClient)
 {
 }
 
@@ -37,24 +37,26 @@ void BlockchainMonitor::waitBlockchainUpdate()
 
     auto lastBlockHash = requestLastBlockHash();
 
-    while (!lastBlockHash && !m_stopped) {
+    while (!lastBlockHash && !m_stopped)
+    {
         std::this_thread::sleep_for(std::chrono::seconds(m_pollingInterval));
         lastBlockHash = requestLastBlockHash();
     }
 
-    while(!m_stopped)
+    while (!m_stopped)
     {
-        m_sleepingContext.spawn([this] ()
-        {
-            System::Timer timer(m_dispatcher);
-            timer.sleep(std::chrono::seconds(m_pollingInterval));
-        });
+        m_sleepingContext.spawn([this]()
+                                {
+                                    System::Timer timer(m_dispatcher);
+                                    timer.sleep(std::chrono::seconds(m_pollingInterval));
+                                });
 
         m_sleepingContext.wait();
 
         auto nextBlockHash = requestLastBlockHash();
 
-        while (!nextBlockHash && !m_stopped) {
+        while (!nextBlockHash && !m_stopped)
+        {
             std::this_thread::sleep_for(std::chrono::seconds(m_pollingInterval));
             nextBlockHash = requestLastBlockHash();
         }
@@ -82,9 +84,9 @@ void BlockchainMonitor::stop()
 std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
 {
     json j = {
-        {"jsonrpc", "2.0"},
-        {"method", "getlastblockheader"},
-        {"params", {}}
+            {"jsonrpc", "2.0"},
+            {"method",  "getlastblockheader"},
+            {"params",  {}}
     };
 
     auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");

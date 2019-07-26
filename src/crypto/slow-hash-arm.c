@@ -1,16 +1,16 @@
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2014-2018, The Aeon Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
 /* This file contains the ARM versions of the CryptoNight slow-hash routines */
 
 #if !defined NO_AES && (defined(__arm__) || defined(__aarch64__))
-  #pragma message ("info: Using slow-hash-arm.c")
+#pragma message ("info: Using slow-hash-arm.c")
 
-  #include "slow-hash-common.h"
+#include "slow-hash-common.h"
 
 void slow_hash_allocate_state(void)
 {
@@ -24,42 +24,42 @@ void slow_hash_free_state(void)
     return;
 }
 
-  #if defined(__GNUC__)
-    #define RDATA_ALIGN16 __attribute__ ((aligned(16)))
-    #define STATIC static
-    #define INLINE inline
-  #else /* defined(__GNUC__) */
-    #define RDATA_ALIGN16
-    #define STATIC static
-    #define INLINE
-  #endif /* defined(__GNUC__) */
+#if defined(__GNUC__)
+#define RDATA_ALIGN16 __attribute__ ((aligned(16)))
+#define STATIC static
+#define INLINE inline
+#else /* defined(__GNUC__) */
+#define RDATA_ALIGN16
+#define STATIC static
+#define INLINE
+#endif /* defined(__GNUC__) */
 
-  #define U64(x) ((uint64_t *) (x))
+#define U64(x) ((uint64_t *) (x))
 
 STATIC INLINE void xor64(uint64_t *a, const uint64_t b)
 {
     *a ^= b;
 }
 
-  #if defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO)
+#if defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO)
 
 /* ARMv8-A optimized with NEON and AES instructions.
  * Copied from the x86-64 AES-NI implementation. It has much the same
  * characteristics as x86-64: there's no 64x64=128 multiplier for vectors,
  * and moving between vector and regular registers stalls the pipeline.
  */
-    #include <arm_neon.h>
+#include <arm_neon.h>
 
-    #define state_index(x,div) (((*((uint64_t *)x) >> 4) & (TOTALBLOCKS /(div) - 1)) << 4)
-    #define __mul() __asm__("mul %0, %1, %2\n\t" : "=r"(lo) : "r"(c[0]), "r"(b[0]) ); \
+#define state_index(x,div) (((*((uint64_t *)x) >> 4) & (TOTALBLOCKS /(div) - 1)) << 4)
+#define __mul() __asm__("mul %0, %1, %2\n\t" : "=r"(lo) : "r"(c[0]), "r"(b[0]) ); \
   __asm__("umulh %0, %1, %2\n\t" : "=r"(hi) : "r"(c[0]), "r"(b[0]) );
 
-    #define pre_aes() \
+#define pre_aes() \
   j = state_index(a,lightFlag); \
   _c = vld1q_u8(&hp_state[j]); \
   _a = vld1q_u8((const uint8_t *)a); \
 
-    #define post_aes() \
+#define post_aes() \
   VARIANT2_SHUFFLE_ADD_NEON(hp_state, j); \
   vst1q_u8((uint8_t *)c, _c); \
   vst1q_u8(&hp_state[j], veorq_u8(_b, _c)); \
@@ -215,31 +215,31 @@ STATIC INLINE void aes_pseudo_round_xor(const uint8_t *in, uint8_t *out, const u
     }
 }
 
-    #ifdef FORCE_USE_HEAP
+#ifdef FORCE_USE_HEAP
 STATIC INLINE void* aligned_malloc(size_t size, size_t align)
 {
     void *result;
-      #ifdef _MSC_VER
+#ifdef _MSC_VER
     result = _aligned_malloc(size, align);
-      #else /* _MSC_VER */
+#else /* _MSC_VER */
     if (posix_memalign(&result, align, size))
     {
         result = NULL;
     }
-      #endif /* _MSC_VER */
+#endif /* _MSC_VER */
 
     return result;
 }
 
 STATIC INLINE void aligned_free(void *ptr)
 {
-      #ifdef _MSC_VER
+#ifdef _MSC_VER
     _aligned_free(ptr);
-      #else /*_MSC_VER */
+#else /*_MSC_VER */
     free(ptr);
-      #endif /* _MSC_VER */
+#endif /* _MSC_VER */
 }
-    #endif /* FORCE_USE_HEAP */
+#endif /* FORCE_USE_HEAP */
 
 void cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed, uint32_t page_size, uint32_t scratchpad, uint32_t iterations)
 {
@@ -250,12 +250,12 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
 
     RDATA_ALIGN16 uint8_t expandedKey[240];
 
-    #ifndef FORCE_USE_HEAP
+#ifndef FORCE_USE_HEAP
     RDATA_ALIGN16 uint8_t hp_state[page_size];
-    #else /* FORCE_USE_HEAP */
-      #pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN aarch64 + crypto in slow-hash-arm.c")
+#else /* FORCE_USE_HEAP */
+#pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN aarch64 + crypto in slow-hash-arm.c")
     uint8_t *hp_state = (uint8_t *)aligned_malloc(page_size,16);
-    #endif /* FORCE_USE_HEAP */
+#endif /* FORCE_USE_HEAP */
 
     uint8_t text[INIT_SIZE_BYTE];
     RDATA_ALIGN16 uint64_t a[2];
@@ -346,20 +346,20 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
     hash_permutation(&state.hs);
     extra_hashes[state.hs.b[0] & 3](&state, 200, hash);
 
-    #ifdef FORCE_USE_HEAP
+#ifdef FORCE_USE_HEAP
     aligned_free(hp_state);
-    #endif /*FORCE_USE_HEAP */
+#endif /*FORCE_USE_HEAP */
 }
 
-  #else /* defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO) */
+#else /* defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO) */
 
 // ND: Some minor optimizations for ARMv7 (raspberrry pi 2), effect seems to be ~40-50% faster.
 //     Needs more work.
 
-    #ifdef NO_OPTIMIZED_MULTIPLY_ON_ARM
+#ifdef NO_OPTIMIZED_MULTIPLY_ON_ARM
 /* The asm corresponds to this C code */
-      #define SHORT uint32_t
-      #define LONG uint64_t
+#define SHORT uint32_t
+#define LONG uint64_t
 
 void mul(const uint8_t *ca, const uint8_t *cb, uint8_t *cres)
 {
@@ -393,10 +393,10 @@ void mul(const uint8_t *ca, const uint8_t *cb, uint8_t *cres)
     res[0] = t.tmp[6];
     res[1] = t.tmp[7];
 }
-    #else // !NO_OPTIMIZED_MULTIPLY_ON_ARM
+#else // !NO_OPTIMIZED_MULTIPLY_ON_ARM
 
-      #ifdef __aarch64__ /* ARM64, no crypto */
-        #define mul(a, b, c)	cn_mul128((const uint64_t *)a, (const uint64_t *)b, (uint64_t *)c)
+#ifdef __aarch64__ /* ARM64, no crypto */
+#define mul(a, b, c)	cn_mul128((const uint64_t *)a, (const uint64_t *)b, (uint64_t *)c)
 STATIC void cn_mul128(const uint64_t *a, const uint64_t *b, uint64_t *r)
 {
     uint64_t lo, hi;
@@ -405,8 +405,8 @@ STATIC void cn_mul128(const uint64_t *a, const uint64_t *b, uint64_t *r)
     r[0] = hi;
     r[1] = lo;
 }
-      #else /* ARM32 */
-        #define mul(a, b, c)	cn_mul128((const uint32_t *)a, (const uint32_t *)b, (uint32_t *)c)
+#else /* ARM32 */
+#define mul(a, b, c)	cn_mul128((const uint32_t *)a, (const uint32_t *)b, (uint32_t *)c)
 STATIC void cn_mul128(const uint32_t *aa, const uint32_t *bb, uint32_t *r)
 {
     uint32_t t0, t1, t2=0, t3=0;
@@ -443,8 +443,8 @@ STATIC void cn_mul128(const uint32_t *aa, const uint32_t *bb, uint32_t *r)
         [b]"r"(bb[0]) : "cc"
     );
 }
-      #endif /* !aarch64 */
-    #endif // NO_OPTIMIZED_MULTIPLY_ON_ARM
+#endif /* !aarch64 */
+#endif // NO_OPTIMIZED_MULTIPLY_ON_ARM
 
 STATIC INLINE void copy_block(uint8_t* dst, const uint8_t* src)
 {
@@ -507,12 +507,12 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
         hash_extra_blake, hash_extra_groestl, hash_extra_jh, hash_extra_skein
     };
 
-  #ifndef FORCE_USE_HEAP
+#ifndef FORCE_USE_HEAP
     uint8_t long_state[page_size];
-  #else /* FORCE_USE_HEAP */
-    #pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN aarch64 && !crypto in slow-hash.c")
+#else /* FORCE_USE_HEAP */
+#pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN aarch64 && !crypto in slow-hash.c")
     uint8_t *long_state = (uint8_t *)malloc(page_size);
-  #endif /* FORCE_USE_HEAP */
+#endif /* FORCE_USE_HEAP */
 
     if (prehashed)
     {
@@ -546,8 +546,8 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
 
     for(i = 0; i < aes_rounds; i++)
     {
-    #define MASK(div) ((uint32_t)(((page_size / AES_BLOCK_SIZE) / (div) - 1) << 4))
-    #define state_index(x,div) ((*(uint32_t *) x) & MASK(div))
+#define MASK(div) ((uint32_t)(((page_size / AES_BLOCK_SIZE) / (div) - 1) << 4))
+#define state_index(x,div) ((*(uint32_t *) x) & MASK(div))
 
       // Iteration 1
       j = state_index(a,lightFlag);
@@ -599,11 +599,11 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
     hash_permutation(&state.hs);
     extra_hashes[state.hs.b[0] & 3](&state, 200, hash);
 
-    #ifdef FORCE_USE_HEAP
+#ifdef FORCE_USE_HEAP
     free(long_state);
-    #endif /* FORCE_USE_HEAP */
+#endif /* FORCE_USE_HEAP */
 }
 
-  #endif /* defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO) */
+#endif /* defined(__aarch64__) && defined(__ARM_FEATURE_CRYPTO) */
 
 #endif

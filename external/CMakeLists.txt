@@ -8,24 +8,24 @@ add_subdirectory(cryptopp)
 add_subdirectory(sqlite3)
 add_subdirectory(lz4)
 
-if(MSVC)
+if (MSVC)
     add_subdirectory(rocksDB EXCLUDE_FROM_ALL)
     set_property(TARGET upnpc-static cryptopp-static rocksdb sqlite3 lz4 PROPERTY FOLDER "external")
-elseif(NOT MSVC)
+elseif (NOT MSVC)
     set_property(TARGET upnpc-static cryptopp-static sqlite3 lz4 PROPERTY FOLDER "external")
     add_custom_target(
-       rocksdb
-       COMMAND $(MAKE) rocksdb
-       WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/rocksdb
+            rocksdb
+            COMMAND $(MAKE) rocksdb
+            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/rocksdb
     )
     add_library(rocksdblib STATIC IMPORTED GLOBAL)
     set_target_properties(rocksdblib PROPERTIES IMPORTED_LOCATION ${PROJECT_BINARY_DIR}/rocksdb/librocksdb.a)
     add_dependencies(rocksdblib rocksdb)
-endif()
+endif ()
 
-if(MSVC)
-  set_property(TARGET upnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -wd4244 -wd4267")
-elseif(NOT MSVC)
-  set_property(TARGET upnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-undef -Wno-unused-result -Wno-unused-value")
-endif()
+if (MSVC)
+    set_property(TARGET upnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -wd4244 -wd4267")
+elseif (NOT MSVC)
+    set_property(TARGET upnpc-static APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-undef -Wno-unused-result -Wno-unused-value")
+endif ()
 

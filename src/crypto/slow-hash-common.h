@@ -1,7 +1,7 @@
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2014-2018, The Aeon Project
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -25,7 +25,8 @@
 #define INIT_SIZE_BLK          8
 #define INIT_SIZE_BYTE         (INIT_SIZE_BLK * AES_BLOCK_SIZE)
 
-extern void aesb_single_round(const uint8_t *in, uint8_t*out, const uint8_t *expandedKey);
+extern void aesb_single_round(const uint8_t *in, uint8_t *out, const uint8_t *expandedKey);
+
 extern void aesb_pseudo_round(const uint8_t *in, uint8_t *out, const uint8_t *expandedKey);
 
 #pragma pack(push, 1)
@@ -169,8 +170,8 @@ union cn_slow_hash_state
   } while(0)
 
 #if defined DBL_MANT_DIG && (DBL_MANT_DIG >= 50)
-  // double precision floating point type has enough bits of precision on current platform
-  #define VARIANT2_PORTABLE_INTEGER_MATH(b, ptr) \
+// double precision floating point type has enough bits of precision on current platform
+#define VARIANT2_PORTABLE_INTEGER_MATH(b, ptr) \
     do if (variant == 2) \
     { \
       VARIANT2_INTEGER_MATH_DIVISION_STEP(b, ptr); \
@@ -178,9 +179,9 @@ union cn_slow_hash_state
       VARIANT2_INTEGER_MATH_SQRT_FIXUP(sqrt_result); \
     } while (0)
 #else
-  // double precision floating point type is not good enough on current platform
-  // fall back to the reference code (integer only)
-  #define VARIANT2_PORTABLE_INTEGER_MATH(b, ptr) \
+// double precision floating point type is not good enough on current platform
+// fall back to the reference code (integer only)
+#define VARIANT2_PORTABLE_INTEGER_MATH(b, ptr) \
     do if (variant == 2) \
     { \
       VARIANT2_INTEGER_MATH_DIVISION_STEP(b, ptr); \

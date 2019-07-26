@@ -17,22 +17,23 @@
 
 class BlockchainMonitor
 {
-    public:
-        BlockchainMonitor(
-            System::Dispatcher& dispatcher,
+public:
+    BlockchainMonitor(
+            System::Dispatcher &dispatcher,
             const size_t pollingInterval,
             const std::shared_ptr<httplib::Client> httpClient);
 
-        void waitBlockchainUpdate();
-        void stop();
+    void waitBlockchainUpdate();
 
-    private:
-        System::Dispatcher& m_dispatcher;
-        size_t m_pollingInterval;
-        bool m_stopped;
-        System::ContextGroup m_sleepingContext;
+    void stop();
 
-        std::optional<Crypto::Hash> requestLastBlockHash();
+private:
+    System::Dispatcher &m_dispatcher;
+    size_t m_pollingInterval;
+    bool m_stopped;
+    System::ContextGroup m_sleepingContext;
 
-        std::shared_ptr<httplib::Client> m_httpClient = nullptr;
+    std::optional<Crypto::Hash> requestLastBlockHash();
+
+    std::shared_ptr<httplib::Client> m_httpClient = nullptr;
 };

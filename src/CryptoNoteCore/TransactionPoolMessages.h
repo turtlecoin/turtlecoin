@@ -1,60 +1,57 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
 #include <CryptoNote.h>
 #include <functional>
 
-namespace CryptoNote {
+namespace CryptoNote
+{
 
-enum class TransactionMessageType {
-  AddTransactionType,
-  DeleteTransactionType
-};
+    enum class TransactionMessageType
+    {
+        AddTransactionType,
+        DeleteTransactionType
+    };
 
 // immutable messages
-struct AddTransaction {
-  Crypto::Hash hash;
-};
+    struct AddTransaction
+    {
+        Crypto::Hash hash;
+    };
 
-struct DeleteTransaction {
-  Crypto::Hash hash;
-};
+    struct DeleteTransaction
+    {
+        Crypto::Hash hash;
+    };
 
-class TransactionPoolMessage {
-public:
-  TransactionPoolMessage(const AddTransaction& at);
-  TransactionPoolMessage(const DeleteTransaction& at);
+    class TransactionPoolMessage
+    {
+    public:
+        TransactionPoolMessage(const AddTransaction &at);
 
-  // pattern matchin API
-  void match(std::function<void(const AddTransaction&)>&&, std::function<void(const DeleteTransaction&)>&&);
+        TransactionPoolMessage(const DeleteTransaction &at);
 
-  // API with explicit type handling
-  TransactionMessageType getType() const;
-  AddTransaction  getAddTransaction() const;
-  DeleteTransaction getDeleteTransaction() const;
+        // pattern matchin API
+        void match(std::function<void(const AddTransaction &)> &&, std::function<void(const DeleteTransaction &)> &&);
 
-private:
-  const TransactionMessageType type;
-  union {
-    const AddTransaction addTransaction;
-    const DeleteTransaction deleteTransaction;
-  };
-};
+        // API with explicit type handling
+        TransactionMessageType getType() const;
+
+        AddTransaction getAddTransaction() const;
+
+        DeleteTransaction getDeleteTransaction() const;
+
+    private:
+        const TransactionMessageType type;
+        union
+        {
+            const AddTransaction addTransaction;
+            const DeleteTransaction deleteTransaction;
+        };
+    };
 
 }

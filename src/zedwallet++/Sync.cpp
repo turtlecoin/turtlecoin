@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -19,8 +19,8 @@
 
 void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
 {
-    auto [walletBlockCount, localDaemonBlockCount, networkBlockCount]
-        = walletBackend->getSyncStatus();
+    auto[walletBlockCount, localDaemonBlockCount, networkBlockCount]
+    = walletBackend->getSyncStatus();
 
     /* Fully synced */
     if (walletBlockCount == networkBlockCount)
@@ -46,8 +46,7 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
                << "Please wait, this will take some time.\n\n";
 
         std::cout << InformationMsg(stream.str());
-    }
-    else
+    } else
     {
         std::stringstream stream;
 
@@ -65,8 +64,8 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
 
     while (walletBlockCount < localDaemonBlockCount)
     {
-        auto [tmpWalletBlockCount, localDaemonBlockCount, networkBlockCount]
-            = walletBackend->getSyncStatus();
+        auto[tmpWalletBlockCount, localDaemonBlockCount, networkBlockCount]
+        = walletBackend->getSyncStatus();
 
         std::cout << SuccessMsg(tmpWalletBlockCount) << " of "
                   << InformationMsg(localDaemonBlockCount) << std::endl;
@@ -74,8 +73,7 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
         if (walletBlockCount == tmpWalletBlockCount)
         {
             stuckCounter++;
-        }
-        else
+        } else
         {
             stuckCounter = 0;
         }
@@ -92,8 +90,7 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
                 if (tx.totalAmount() < 0)
                 {
                     printOutgoingTransfer(tx);
-                }
-                else
+                } else
                 {
                     printIncomingTransfer(tx);
                 }

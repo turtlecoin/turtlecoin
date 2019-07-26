@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -9,16 +9,19 @@
 #include "WalletServiceConfiguration.h"
 #include "P2p/NetNodeConfig.h"
 
-namespace PaymentService {
+namespace PaymentService
+{
 
-class ConfigurationManager {
-public:
-  ConfigurationManager();
-  bool init(int argc, char** argv);
+    class ConfigurationManager
+    {
+    public:
+        ConfigurationManager();
 
-  WalletServiceConfiguration serviceConfig;
+        bool init(int argc, char **argv);
 
-  Crypto::Hash rpcSecret;
-};
+        WalletServiceConfiguration serviceConfig;
+
+        Crypto::Hash rpcSecret;
+    };
 
 } //namespace PaymentService

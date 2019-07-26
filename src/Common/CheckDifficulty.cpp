@@ -12,7 +12,7 @@
 
 namespace CryptoNote
 {
-    #if defined(__SIZEOF_INT128__)
+#if defined(__SIZEOF_INT128__)
 
     static inline void mul(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high)
     {
@@ -22,14 +22,14 @@ namespace CryptoNote
         high = (uint64_t) (res >> 64);
     }
 
-    #else
+#else
 
     static inline void mul(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high)
     {
         low = mul128(a, b, &high);
     }
 
-    #endif
+#endif
 
     static inline bool cadd(uint64_t a, uint64_t b)
     {

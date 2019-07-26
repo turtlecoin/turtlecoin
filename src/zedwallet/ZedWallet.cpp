@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -13,7 +13,9 @@
 #include <Logging/LoggerManager.h>
 
 #ifdef _WIN32
+
 #include <windows.h>
+
 #endif
 
 #include <Utilities/ColouredMsg.h>
@@ -28,9 +30,9 @@ int main(int argc, char **argv)
        working" when calling exit(0)... I'm not sure why, this is a bit of
        a hack, it disables that - possibly some deconstructers calling
        terminate() */
-    #ifdef _WIN32
+#ifdef _WIN32
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
-    #endif
+#endif
 
     Config config = parseArguments(argc, argv);
 
@@ -49,15 +51,15 @@ int main(int argc, char **argv)
     }
 
     /* Currency contains our coin parameters, such as decimal places, supply */
-    const CryptoNote::Currency currency 
-        = CryptoNote::CurrencyBuilder(logManager).currency();
+    const CryptoNote::Currency currency
+            = CryptoNote::CurrencyBuilder(logManager).currency();
 
     System::Dispatcher localDispatcher;
     System::Dispatcher *dispatcher = &localDispatcher;
 
     /* Our connection to turtlecoind */
     std::unique_ptr<CryptoNote::INode> node(
-        new CryptoNote::NodeRpcProxy(config.host, config.port, 10, logManager)
+            new CryptoNote::NodeRpcProxy(config.host, config.port, 10, logManager)
     );
 
     std::promise<std::error_code> errorPromise;
@@ -86,8 +88,7 @@ int main(int argc, char **argv)
                       << WarningMsg("Confirm the remote node is functioning, "
                                     "or try a different remote node.")
                       << std::endl << std::endl;
-        }
-        else
+        } else
         {
             std::cout << WarningMsg("Unable to connect to node, "
                                     "connection timed out.")
@@ -100,20 +101,21 @@ int main(int argc, char **argv)
       returned something that it expects us to use for convenience charges
       for using that node to send transactions.
     */
-    if (node->feeAmount() != 0 && !node->feeAddress().empty()) {
-      std::stringstream feemsg;
+    if (node->feeAmount() != 0 && !node->feeAddress().empty())
+    {
+        std::stringstream feemsg;
 
-      feemsg << std::endl << "You have connected to a node that charges " <<
-             "a fee to send transactions." << std::endl << std::endl
-             << "The fee for sending transactions is: " << 
-             formatAmount(node->feeAmount()) << 
-             " per transaction." << std::endl << std::endl <<
-             "If you don't want to pay the node fee, please " <<
-             "relaunch " << WalletConfig::walletName <<
-             " and specify a different node or run your own." <<
-             std::endl;
+        feemsg << std::endl << "You have connected to a node that charges " <<
+               "a fee to send transactions." << std::endl << std::endl
+               << "The fee for sending transactions is: " <<
+               formatAmount(node->feeAmount()) <<
+               " per transaction." << std::endl << std::endl <<
+               "If you don't want to pay the node fee, please " <<
+               "relaunch " << WalletConfig::walletName <<
+               " and specify a different node or run your own." <<
+               std::endl;
 
-      std::cout << WarningMsg(feemsg.str()) << std::endl;
+        std::cout << WarningMsg(feemsg.str()) << std::endl;
     }
 
     /* Create the wallet instance */
@@ -126,7 +128,7 @@ int main(int argc, char **argv)
 void run(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node,
          Config &config)
 {
-    auto [quit, walletInfo] = selectionScreen(config, wallet, node);
+    auto[quit, walletInfo] = selectionScreen(config, wallet, node);
 
     bool alreadyShuttingDown = false;
 
@@ -137,15 +139,15 @@ void run(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node,
            https://stackoverflow.com/a/46115028/8737306 - standard &
            capture works in newer compilers. */
         Tools::SignalHandler::install([&walletInfo = walletInfo, &node,
-                                       &alreadyShuttingDown]
-        {
-            /* If we're already shutting down let control flow continue
-               as normal */
-            if (shutdown(walletInfo, node, alreadyShuttingDown))
-            {
-                exit(0);
-            }
-        });
+                                              &alreadyShuttingDown]
+                                      {
+                                          /* If we're already shutting down let control flow continue
+                                             as normal */
+                                          if (shutdown(walletInfo, node, alreadyShuttingDown))
+                                          {
+                                              exit(0);
+                                          }
+                                      });
 
         mainLoop(walletInfo, node);
     }

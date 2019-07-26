@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -18,8 +18,8 @@ uint64_t SynchronizationStatus::getHeight() const
 }
 
 void SynchronizationStatus::storeBlockHash(
-    const Crypto::Hash hash,
-    const uint64_t height)
+        const Crypto::Hash hash,
+        const uint64_t height)
 {
     m_lastKnownBlockHeight = height;
 

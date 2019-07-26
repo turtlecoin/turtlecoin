@@ -1,4 +1,4 @@
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 // 
 // Please see the included LICENSE file for more information.
 
@@ -29,7 +29,7 @@ std::string getPrompt(std::shared_ptr<WalletInfo> walletInfo)
     std::string walletName = walletInfo->walletFileName;
 
     /* Filename ends in .wallet, remove extension */
-    if (std::equal(extension.rbegin(), extension.rend(), 
+    if (std::equal(extension.rbegin(), extension.rend(),
                    walletInfo->walletFileName.rbegin()))
     {
         const size_t extPos = walletInfo->walletFileName.find_last_of('.');
@@ -56,11 +56,11 @@ std::string getInputAndWorkInBackground(const std::vector<T> &availableCommands,
     {
         auto lastUpdated = std::chrono::system_clock::now();
 
-        std::future<std::string> inputGetter = std::async(std::launch::async, 
-        [&availableCommands, &prompt]
-        {
-            return getInput(availableCommands, prompt);
-        });
+        std::future<std::string> inputGetter = std::async(std::launch::async,
+                                                          [&availableCommands, &prompt]
+                                                          {
+                                                              return getInput(availableCommands, prompt);
+                                                          });
 
 
         while (true)
@@ -68,7 +68,7 @@ std::string getInputAndWorkInBackground(const std::vector<T> &availableCommands,
             /* Check if the user has inputted something yet
                (Wait for zero seconds to instantly return) */
             std::future_status status = inputGetter
-                                       .wait_for(std::chrono::seconds(0));
+                    .wait_for(std::chrono::seconds(0));
 
             /* User has inputted, get what they inputted and return it */
             if (status == std::future_status::ready)
@@ -89,8 +89,7 @@ std::string getInputAndWorkInBackground(const std::vector<T> &availableCommands,
                enters something, but enough that we're not starving the CPU */
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
-    }
-    else
+    } else
     {
         return getInput(availableCommands, prompt);
     }
@@ -101,20 +100,20 @@ std::string getInput(const std::vector<T> &availableCommands,
                      std::string prompt)
 {
     linenoise::SetCompletionCallback(
-    [availableCommands](const char *input, std::vector<std::string> &completions)
-    {
-        /* Convert to std::string */
-        std::string c = input;
-
-        for (const auto &command : availableCommands)
-        {
-            /* Does command begin with input? */
-            if (command.commandName.compare(0, c.length(), c) == 0)
+            [availableCommands](const char *input, std::vector<std::string> &completions)
             {
-                completions.push_back(command.commandName);
-            }
-        }
-    });
+                /* Convert to std::string */
+                std::string c = input;
+
+                for (const auto &command : availableCommands)
+                {
+                    /* Does command begin with input? */
+                    if (command.commandName.compare(0, c.length(), c) == 0)
+                    {
+                        completions.push_back(command.commandName);
+                    }
+                }
+            });
 
     /* Linenoise is printing this out, so we can't write colours to the stream
        like we normally would - have to include the escape characters directly
@@ -129,7 +128,7 @@ std::string getInput(const std::vector<T> &availableCommands,
     std::string command;
 
     bool quit = linenoise::Readline(promptMsg.c_str(), command);
-	
+
     /* Remove any whitespace */
     trim(command);
 
@@ -164,6 +163,7 @@ std::string getInputAndWorkInBackground(const std::vector<Command>
                                         bool backgroundRefresh,
                                         std::shared_ptr<WalletInfo>
                                         walletInfo);
+
 template
 std::string getInputAndWorkInBackground(const std::vector<AdvancedCommand>
                                         &availableCommands,

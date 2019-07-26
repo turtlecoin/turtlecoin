@@ -38,7 +38,7 @@ std::shared_ptr<WalletBackend> importViewWallet(const ZedConfig &config)
     {
         return nullptr;
     }
-    
+
     Crypto::SecretKey privateViewKey = getPrivateKey("Private View Key: ");
 
     std::string address;
@@ -59,8 +59,7 @@ std::shared_ptr<WalletBackend> importViewWallet(const ZedConfig &config)
         {
             std::cout << WarningMsg("Invalid address: ")
                       << WarningMsg(error) << std::endl;
-        }
-        else
+        } else
         {
             break;
         }
@@ -76,9 +75,9 @@ std::shared_ptr<WalletBackend> importViewWallet(const ZedConfig &config)
 
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    auto [error, walletBackend] = WalletBackend::importViewWallet(
-        privateViewKey, address, walletFileName, walletPass, scanHeight,
-        config.host, config.port, config.ssl, config.threads
+    auto[error, walletBackend] = WalletBackend::importViewWallet(
+            privateViewKey, address, walletFileName, walletPass, scanHeight,
+            config.host, config.port, config.ssl, config.threads
     );
 
     if (error)
@@ -104,10 +103,10 @@ std::shared_ptr<WalletBackend> importViewWallet(const ZedConfig &config)
 std::shared_ptr<WalletBackend> importWalletFromKeys(const ZedConfig &config)
 {
     const Crypto::SecretKey privateSpendKey
-        = getPrivateKey("Enter your private spend key: ");
+            = getPrivateKey("Enter your private spend key: ");
 
     const Crypto::SecretKey privateViewKey
-        = getPrivateKey("Enter your private view key: ");
+            = getPrivateKey("Enter your private view key: ");
 
     const std::string walletFileName = getNewWalletFileName();
 
@@ -119,9 +118,9 @@ std::shared_ptr<WalletBackend> importWalletFromKeys(const ZedConfig &config)
 
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    const auto [error, walletBackend] = WalletBackend::importWalletFromKeys(
-        privateSpendKey, privateViewKey, walletFileName, walletPass,
-        scanHeight, config.host, config.port, config.ssl, config.threads
+    const auto[error, walletBackend] = WalletBackend::importWalletFromKeys(
+            privateSpendKey, privateViewKey, walletFileName, walletPass,
+            scanHeight, config.host, config.port, config.ssl, config.threads
     );
 
     if (error)
@@ -152,9 +151,9 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const ZedConfig &config)
         std::getline(std::cin, mnemonicSeed);
 
         Utilities::trim(mnemonicSeed);
-        
+
         /* Just to check if it's valid */
-        auto [error, privateSpendKey] = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
+        auto[error, privateSpendKey] = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
 
         if (!error)
         {
@@ -176,9 +175,9 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const ZedConfig &config)
 
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    auto [error, walletBackend] = WalletBackend::importWalletFromSeed(
-        mnemonicSeed, walletFileName, walletPass, scanHeight,
-        config.host, config.port, config.ssl, config.threads
+    auto[error, walletBackend] = WalletBackend::importWalletFromSeed(
+            mnemonicSeed, walletFileName, walletPass, scanHeight,
+            config.host, config.port, config.ssl, config.threads
     );
 
     if (error)
@@ -208,9 +207,9 @@ std::shared_ptr<WalletBackend> createWallet(const ZedConfig &config)
 
     const std::string walletPass = getWalletPassword(verifyPassword, msg);
 
-    const auto [error, walletBackend] = WalletBackend::createWallet(
-        walletFileName, walletPass, config.host, config.port, config.ssl,
-        config.threads
+    const auto[error, walletBackend] = WalletBackend::createWallet(
+            walletFileName, walletPass, config.host, config.port, config.ssl,
+            config.threads
     );
 
     if (error)
@@ -247,17 +246,16 @@ std::shared_ptr<WalletBackend> openWallet(const ZedConfig &config)
         if (initial && config.passGiven)
         {
             walletPass = config.walletPass;
-        }
-        else
+        } else
         {
             const bool verifyPassword = false;
 
             walletPass = getWalletPassword(verifyPassword, "Enter password: ");
         }
 
-        const auto [error, walletBackend] = WalletBackend::openWallet(
-            walletFileName, walletPass, config.host, config.port, config.ssl,
-            config.threads
+        const auto[error, walletBackend] = WalletBackend::openWallet(
+                walletFileName, walletPass, config.host, config.port, config.ssl,
+                config.threads
         );
 
         if (error == WRONG_PASSWORD)
@@ -265,13 +263,12 @@ std::shared_ptr<WalletBackend> openWallet(const ZedConfig &config)
             /* Don't reuse cli password */
             initial = false;
 
-            std::cout << std::endl 
+            std::cout << std::endl
                       << WarningMsg("Incorrect password! Try again.")
                       << std::endl << std::endl;
 
             continue;
-        }
-        else if (error)
+        } else if (error)
         {
             std::cout << WarningMsg("Failed to open wallet: " + error.getErrorMessage())
                       << std::endl;
@@ -316,10 +313,9 @@ Crypto::SecretKey getPrivateKey(const std::string outputMsg)
                       << std::endl;
 
             continue;
-        }
-        else if (!Common::fromHex(privateKeyString, &privateKeyHash, 
-                  sizeof(privateKeyHash), size)
-               || size != sizeof(privateKeyHash))
+        } else if (!Common::fromHex(privateKeyString, &privateKeyHash,
+                                    sizeof(privateKeyHash), size)
+                   || size != sizeof(privateKeyHash))
         {
             std::cout << WarningMsg("Invalid private key, it is not a valid ")
                       << WarningMsg("hex string! Try again.")
@@ -359,8 +355,7 @@ std::string getExistingWalletFileName(const ZedConfig &config)
         if (config.walletGiven && initial)
         {
             walletName = config.walletFile;
-        }
-        else
+        } else
         {
             std::cout << InformationMsg("What is the name of the wallet ")
                       << InformationMsg("you want to open?: ");
@@ -378,16 +373,14 @@ std::string getExistingWalletFileName(const ZedConfig &config)
             {
                 std::cout << WarningMsg("\nWallet name can't be blank! Try again.\n\n");
             }
-            /* Allow people to enter wallet name with or without file extension */
+                /* Allow people to enter wallet name with or without file extension */
             else if (fs::exists(walletName))
             {
                 return walletName;
-            }
-            else if (fs::exists(walletFileName))
+            } else if (fs::exists(walletFileName))
             {
                 return walletFileName;
-            }
-            else
+            } else
             {
                 std::cout << WarningMsg("\nA wallet with the filename ")
                           << InformationMsg(walletName)
@@ -422,19 +415,17 @@ std::string getNewWalletFileName()
             if (fs::exists(walletFileName))
             {
                 std::cout << std::endl
-                          << WarningMsg("A wallet with the filename " )
+                          << WarningMsg("A wallet with the filename ")
                           << InformationMsg(walletFileName)
                           << WarningMsg(" already exists!")
                           << std::endl
                           << "Try another name." << std::endl << std::endl;
-            }
-            else if (walletName == "")
+            } else if (walletName == "")
             {
                 std::cout << std::endl
                           << WarningMsg("Wallet name can't be blank! Try again.")
                           << std::endl << std::endl;
-            }
-            else
+            } else
             {
                 return walletFileName;
             }
