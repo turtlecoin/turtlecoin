@@ -13,15 +13,18 @@ namespace Common
 
     class VectorOutputStream : public IOutputStream
     {
-    public:
-        VectorOutputStream(std::vector<uint8_t> &out);
+        public:
+            VectorOutputStream(std::vector<uint8_t> &out);
 
-        VectorOutputStream &operator=(const VectorOutputStream &) = delete;
+            VectorOutputStream &operator=(const VectorOutputStream &) = delete;
 
-        uint64_t writeSome(const void *data, uint64_t size) override;
+            uint64_t writeSome(
+                const void *data,
+                uint64_t size
+            ) override;
 
-    private:
-        std::vector<uint8_t> &out;
+        private:
+            std::vector<uint8_t> &out;
     };
 
 }

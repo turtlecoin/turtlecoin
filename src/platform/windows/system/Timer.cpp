@@ -8,10 +8,10 @@
 #include <string>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
-#define NOMINMAX
+    #define NOMINMAX
 #endif
 
 #include <windows.h>
@@ -37,7 +37,9 @@ namespace System
     {
     }
 
-    Timer::Timer(Dispatcher &dispatcher) : dispatcher(&dispatcher), context(nullptr)
+    Timer::Timer(Dispatcher &dispatcher)
+        : dispatcher(&dispatcher),
+          context(nullptr)
     {
     }
 
@@ -85,7 +87,11 @@ namespace System
         QueryPerformanceFrequency(&frequency);
         uint64_t currentTime = ticks.QuadPart / (frequency.QuadPart / 1000);
         uint64_t time = currentTime + duration.count() / 1000000;
-        TimerContext timerContext{time, dispatcher->getCurrentContext(), false};
+        TimerContext timerContext{
+            time,
+            dispatcher->getCurrentContext(),
+            false
+        };
         context = &timerContext;
         dispatcher->addTimer(time, dispatcher->getCurrentContext());
         dispatcher->getCurrentContext()->interruptProcedure = [&]()

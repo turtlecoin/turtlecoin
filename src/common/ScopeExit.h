@@ -12,26 +12,27 @@ namespace Tools
 
     class ScopeExit
     {
-    public:
-        ScopeExit(std::function<void()> &&handler);
+        public:
+            ScopeExit(std::function<void()> &&handler);
 
-        ~ScopeExit();
+            ~ScopeExit();
 
-        ScopeExit(const ScopeExit &) = delete;
+            ScopeExit(const ScopeExit &) = delete;
 
-        ScopeExit(ScopeExit &&) = delete;
+            ScopeExit(ScopeExit &&) = delete;
 
-        ScopeExit &operator=(const ScopeExit &) = delete;
+            ScopeExit &operator=(const ScopeExit &) = delete;
 
-        ScopeExit &operator=(ScopeExit &&) = delete;
+            ScopeExit &operator=(ScopeExit &&) = delete;
 
-        void cancel();
+            void cancel();
 
-        void resume();
+            void resume();
 
-    private:
-        std::function<void()> m_handler;
-        bool m_cancelled;
+        private:
+            std::function<void()> m_handler;
+
+            bool m_cancelled;
     };
 
 }

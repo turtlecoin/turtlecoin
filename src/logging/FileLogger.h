@@ -13,13 +13,13 @@ namespace Logging
 
     class FileLogger : public StreamLogger
     {
-    public:
-        FileLogger(Level level = DEBUGGING);
+        public:
+            FileLogger(Level level = DEBUGGING);
 
-        void init(const std::string &filename);
+            void init(const std::string &filename);
 
-    private:
-        std::ofstream fileStream;
+        private:
+            std::ofstream fileStream;
     };
 
 }

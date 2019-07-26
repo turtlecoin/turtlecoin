@@ -18,69 +18,100 @@
 
 namespace SendTransaction
 {
-    std::tuple<Error, Crypto::Hash> sendFusionTransactionBasic(
-            const std::shared_ptr<Nigel> daemon,
-            const std::shared_ptr<SubWallets> subWallets);
+    std::tuple<
+        Error, Crypto::Hash
+    > sendFusionTransactionBasic(
+        const std::shared_ptr<Nigel> daemon,
+        const std::shared_ptr<SubWallets> subWallets
+    );
 
-    std::tuple<Error, Crypto::Hash> sendFusionTransactionAdvanced(
-            const uint64_t mixin,
-            const std::vector<std::string> addressesToTakeFrom,
-            std::string destination,
-            const std::shared_ptr<Nigel> daemon,
-            const std::shared_ptr<SubWallets> subWallets);
+    std::tuple<
+        Error, Crypto::Hash
+    > sendFusionTransactionAdvanced(
+        const uint64_t mixin,
+        const std::vector<std::string> addressesToTakeFrom,
+        std::string destination,
+        const std::shared_ptr<Nigel> daemon,
+        const std::shared_ptr<SubWallets> subWallets
+    );
 
-    std::tuple<Error, Crypto::Hash> sendTransactionBasic(
-            std::string destination,
-            const uint64_t amount,
-            std::string paymentID,
-            const std::shared_ptr<Nigel> daemon,
-            const std::shared_ptr<SubWallets> subWallets);
+    std::tuple<
+        Error, Crypto::Hash
+    > sendTransactionBasic(
+        std::string destination,
+        const uint64_t amount,
+        std::string paymentID,
+        const std::shared_ptr<Nigel> daemon,
+        const std::shared_ptr<SubWallets> subWallets
+    );
 
-    std::tuple<Error, Crypto::Hash> sendTransactionAdvanced(
-            std::vector<std::pair<std::string, uint64_t>> addressesAndAmounts,
-            const uint64_t mixin,
-            const uint64_t fee,
-            std::string paymentID,
-            const std::vector<std::string> addressesToTakeFrom,
-            std::string changeAddress,
-            const std::shared_ptr<Nigel> daemon,
-            const std::shared_ptr<SubWallets> subWallets,
-            const uint64_t unlockTime);
+    std::tuple<
+        Error, Crypto::Hash
+    > sendTransactionAdvanced(
+        std::vector<
+            std::pair<
+                std::string, uint64_t>> addressesAndAmounts,
+        const uint64_t mixin,
+        const uint64_t fee,
+        std::string paymentID,
+        const std::vector<std::string> addressesToTakeFrom,
+        std::string changeAddress,
+        const std::shared_ptr<Nigel> daemon,
+        const std::shared_ptr<SubWallets> subWallets,
+        const uint64_t unlockTime
+    );
 
     std::vector<WalletTypes::TransactionDestination> setupDestinations(
-            std::vector<std::pair<std::string, uint64_t>> addressesAndAmounts,
-            const uint64_t changeRequired,
-            const std::string changeAddress);
+        std::vector<
+            std::pair<
+                std::string, uint64_t>> addressesAndAmounts,
+        const uint64_t changeRequired,
+        const std::string changeAddress
+    );
 
-    std::tuple<Error, std::vector<WalletTypes::ObscuredInput>> prepareRingParticipants(
-            std::vector<WalletTypes::TxInputAndOwner> sources,
-            const uint64_t mixin,
-            const std::shared_ptr<Nigel> daemon);
+    std::tuple<
+        Error, std::vector<WalletTypes::ObscuredInput>> prepareRingParticipants(
+        std::vector<WalletTypes::TxInputAndOwner> sources,
+        const uint64_t mixin,
+        const std::shared_ptr<Nigel> daemon
+    );
 
-    std::tuple<Error, std::vector<CryptoNote::KeyInput>, std::vector<Crypto::SecretKey>> setupInputs(
-            const std::vector<WalletTypes::ObscuredInput> inputsAndFakes,
-            const Crypto::SecretKey privateViewKey);
+    std::tuple<
+        Error, std::vector<CryptoNote::KeyInput>, std::vector<Crypto::SecretKey>> setupInputs(
+        const std::vector<WalletTypes::ObscuredInput> inputsAndFakes,
+        const Crypto::SecretKey privateViewKey
+    );
 
-    std::tuple<std::vector<WalletTypes::KeyOutput>, CryptoNote::KeyPair> setupOutputs(
-            std::vector<WalletTypes::TransactionDestination> destinations);
+    std::tuple<
+        std::vector<WalletTypes::KeyOutput>, CryptoNote::KeyPair
+    > setupOutputs(
+        std::vector<WalletTypes::TransactionDestination> destinations
+    );
 
-    std::tuple<Error, CryptoNote::Transaction> generateRingSignatures(
-            CryptoNote::Transaction tx,
-            const std::vector<WalletTypes::ObscuredInput> inputsAndFakes,
-            const std::vector<Crypto::SecretKey> tmpSecretKeys);
+    std::tuple<
+        Error, CryptoNote::Transaction
+    > generateRingSignatures(
+        CryptoNote::Transaction tx,
+        const std::vector<WalletTypes::ObscuredInput> inputsAndFakes,
+        const std::vector<Crypto::SecretKey> tmpSecretKeys
+    );
 
     std::vector<uint64_t> splitAmountIntoDenominations(uint64_t amount);
 
     std::vector<CryptoNote::TransactionInput> keyInputToTransactionInput(
-            const std::vector<CryptoNote::KeyInput> keyInputs);
+        const std::vector<CryptoNote::KeyInput> keyInputs
+    );
 
     std::vector<CryptoNote::TransactionOutput> keyOutputToTransactionOutput(
-            const std::vector<WalletTypes::KeyOutput> keyOutputs);
+        const std::vector<WalletTypes::KeyOutput> keyOutputs
+    );
 
-    std::tuple<Error, std::vector<CryptoNote::RandomOuts>> getRingParticipants(
-            const uint64_t mixin,
-            const std::shared_ptr<Nigel> daemon,
-            const std::vector<WalletTypes::TxInputAndOwner> sources);
+    std::tuple<
+        Error, std::vector<CryptoNote::RandomOuts>> getRingParticipants(
+        const uint64_t mixin,
+        const std::shared_ptr<Nigel> daemon,
+        const std::vector<WalletTypes::TxInputAndOwner> sources
+    );
 
     struct TransactionResult
     {
@@ -99,40 +130,50 @@ namespace SendTransaction
     };
 
     TransactionResult makeTransaction(
-            const uint64_t mixin,
-            const std::shared_ptr<Nigel> daemon,
-            const std::vector<WalletTypes::TxInputAndOwner> ourInputs,
-            const std::string paymentID,
-            const std::vector<WalletTypes::TransactionDestination> destinations,
-            const std::shared_ptr<SubWallets> subWallets,
-            const uint64_t unlockTime);
+        const uint64_t mixin,
+        const std::shared_ptr<Nigel> daemon,
+        const std::vector<WalletTypes::TxInputAndOwner> ourInputs,
+        const std::string paymentID,
+        const std::vector<WalletTypes::TransactionDestination> destinations,
+        const std::shared_ptr<SubWallets> subWallets,
+        const uint64_t unlockTime
+    );
 
-    std::tuple<Error, Crypto::Hash> relayTransaction(
-            const CryptoNote::Transaction tx,
-            const std::shared_ptr<Nigel> daemon);
+    std::tuple<
+        Error, Crypto::Hash
+    > relayTransaction(
+        const CryptoNote::Transaction tx,
+        const std::shared_ptr<Nigel> daemon
+    );
 
-    std::tuple<CryptoNote::KeyPair, Crypto::KeyImage> genKeyImage(
-            const WalletTypes::ObscuredInput input,
-            const Crypto::SecretKey privateViewKey);
+    std::tuple<
+        CryptoNote::KeyPair, Crypto::KeyImage
+    > genKeyImage(
+        const WalletTypes::ObscuredInput input,
+        const Crypto::SecretKey privateViewKey
+    );
 
     void storeSentTransaction(
-            const Crypto::Hash hash,
-            const uint64_t fee,
-            const std::string paymentID,
-            const std::vector<WalletTypes::TxInputAndOwner> ourInputs,
-            const std::string changeAddress,
-            const uint64_t changeRequired,
-            const std::shared_ptr<SubWallets> subWallets);
+        const Crypto::Hash hash,
+        const uint64_t fee,
+        const std::string paymentID,
+        const std::vector<WalletTypes::TxInputAndOwner> ourInputs,
+        const std::string changeAddress,
+        const uint64_t changeRequired,
+        const std::shared_ptr<SubWallets> subWallets
+    );
 
     Error isTransactionPayloadTooBig(
-            const CryptoNote::Transaction tx,
-            const uint64_t currentHeight);
+        const CryptoNote::Transaction tx,
+        const uint64_t currentHeight
+    );
 
     void storeUnconfirmedIncomingInputs(
-            const std::shared_ptr<SubWallets> subWallets,
-            const std::vector<WalletTypes::KeyOutput> keyOutputs,
-            const Crypto::PublicKey txPublicKey,
-            const Crypto::Hash txHash);
+        const std::shared_ptr<SubWallets> subWallets,
+        const std::vector<WalletTypes::KeyOutput> keyOutputs,
+        const Crypto::PublicKey txPublicKey,
+        const Crypto::Hash txHash
+    );
 
     /* Verify all amounts in the transaction given are PRETTY_AMOUNTS */
     bool verifyAmounts(const CryptoNote::Transaction tx);
@@ -141,7 +182,10 @@ namespace SendTransaction
     bool verifyAmounts(const std::vector<uint64_t> amounts);
 
     /* Verify fee is as expected */
-    bool verifyTransactionFee(const uint64_t expectedFee, CryptoNote::Transaction tx);
+    bool verifyTransactionFee(
+        const uint64_t expectedFee,
+        CryptoNote::Transaction tx
+    );
 
     /* Template so we can do transaction, and transactionprefix */
     template<typename T>

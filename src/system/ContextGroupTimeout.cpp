@@ -8,19 +8,28 @@
 
 using namespace System;
 
-ContextGroupTimeout::ContextGroupTimeout(Dispatcher &dispatcher, ContextGroup &contextGroup,
-                                         std::chrono::nanoseconds timeout) :
-        workingContextGroup(dispatcher),
-        timeoutTimer(dispatcher)
+ContextGroupTimeout::ContextGroupTimeout(
+    Dispatcher &dispatcher,
+    ContextGroup &contextGroup,
+    std::chrono::nanoseconds timeout
+)
+    : workingContextGroup(dispatcher),
+      timeoutTimer(dispatcher)
 {
-    workingContextGroup.spawn([&, timeout]
-                              {
-                                  try
-                                  {
-                                      timeoutTimer.sleep(timeout);
-                                      contextGroup.interrupt();
-                                  } catch (InterruptedException &)
-                                  {
-                                  }
-                              });
+    workingContextGroup.spawn(
+        [
+            &,
+            timeout
+        ]
+        {
+            try
+            {
+                timeoutTimer.sleep(timeout);
+                contextGroup.interrupt();
+            }
+            catch (InterruptedException &)
+            {
+            }
+        }
+    );
 }

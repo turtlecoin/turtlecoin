@@ -10,26 +10,35 @@ namespace Common
 {
 
     const StringView::Size StringView::INVALID = std::numeric_limits<StringView::Size>::max();
+
     const StringView StringView::EMPTY(reinterpret_cast<Object *>(1), 0);
+
     const StringView StringView::NIL(nullptr, 0);
 
     StringView::StringView()
-#ifndef NDEBUG
+    #ifndef NDEBUG
     : data(nullptr), size(INVALID) // In debug mode, fill in object with invalid state (undefined).
-#endif
+    #endif
     {
     }
 
-    StringView::StringView(const Object *stringData, Size stringSize) : data(stringData), size(stringSize)
+    StringView::StringView(
+        const Object *stringData,
+        Size stringSize
+    )
+        : data(stringData),
+          size(stringSize)
     {
         assert(data != nullptr || size == 0);
     }
 
-    StringView::StringView(const std::string &string) : data(string.data()), size(string.size())
+    StringView::StringView(const std::string &string) : data(string.data()),
+                                                        size(string.size())
     {
     }
 
-    StringView::StringView(const StringView &other) : data(other.data), size(other.size)
+    StringView::StringView(const StringView &other) : data(other.data),
+                                                      size(other.size)
     {
         assert(data != nullptr || size == 0);
     }
@@ -134,7 +143,9 @@ namespace Common
     {
         assert(data != nullptr || size == 0);
         assert(other.data != nullptr || other.size == 0);
-        Size count = other.size < size ? other.size : size;
+        Size count = other.size < size
+                     ? other.size
+                     : size;
         for (Size i = 0; i < count; ++i)
         {
             Object char1 = *(data + i);
@@ -278,14 +289,20 @@ namespace Common
         return StringView(data, size - tailSize);
     }
 
-    StringView StringView::range(Size startIndex, Size endIndex) const
+    StringView StringView::range(
+        Size startIndex,
+        Size endIndex
+    ) const
     {
         assert(data != nullptr || size == 0);
         assert(startIndex <= endIndex && endIndex <= size);
         return StringView(data + startIndex, endIndex - startIndex);
     }
 
-    StringView StringView::slice(Size startIndex, Size sliceSize) const
+    StringView StringView::slice(
+        Size startIndex,
+        Size sliceSize
+    ) const
     {
         assert(data != nullptr || size == 0);
         assert(startIndex <= size && startIndex + sliceSize <= size);

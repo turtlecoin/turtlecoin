@@ -17,13 +17,20 @@ namespace
 {
 
     template<typename T>
-    void writePod(IOutputStream &s, const T &value)
+    void writePod(
+        IOutputStream &s,
+        const T &value
+    )
     {
         write(s, &value, sizeof(T));
     }
 
     template<class T>
-    uint64_t packVarint(IOutputStream &s, uint8_t type_or, uint64_t pv)
+    uint64_t packVarint(
+        IOutputStream &s,
+        uint8_t type_or,
+        uint64_t pv
+    )
     {
         T v = static_cast<T>(pv << 2);
         v |= type_or;
@@ -31,7 +38,10 @@ namespace
         return sizeof(T);
     }
 
-    void writeElementName(IOutputStream &s, Common::StringView name)
+    void writeElementName(
+        IOutputStream &s,
+        Common::StringView name
+    )
     {
         if (name.getSize() > std::numeric_limits<uint8_t>::max())
         {
@@ -43,18 +53,24 @@ namespace
         write(s, name.getData(), len);
     }
 
-    uint64_t writeArraySize(IOutputStream &s, uint64_t val)
+    uint64_t writeArraySize(
+        IOutputStream &s,
+        uint64_t val
+    )
     {
         if (val <= 63)
         {
             return packVarint<uint8_t>(s, PORTABLE_RAW_SIZE_MARK_BYTE, val);
-        } else if (val <= 16383)
+        }
+        else if (val <= 16383)
         {
             return packVarint<uint16_t>(s, PORTABLE_RAW_SIZE_MARK_WORD, val);
-        } else if (val <= 1073741823)
+        }
+        else if (val <= 1073741823)
         {
             return packVarint<uint32_t>(s, PORTABLE_RAW_SIZE_MARK_DWORD, val);
-        } else
+        }
+        else
         {
             if (val > 4611686018427387903)
             {
@@ -122,7 +138,10 @@ namespace CryptoNote
         write(out, objStream.data(), objStream.size());
     }
 
-    bool KVBinaryOutputStreamSerializer::beginArray(uint64_t &size, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::beginArray(
+        uint64_t &size,
+        Common::StringView name
+    )
     {
         m_stack.push_back(Level(name, size));
         return true;
@@ -139,70 +158,100 @@ namespace CryptoNote
         }
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(uint8_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        uint8_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_UINT8, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(uint16_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        uint16_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_UINT16, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(int16_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        int16_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_INT16, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(uint32_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        uint32_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_UINT32, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(int32_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        int32_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_INT32, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(int64_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        int64_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_INT64, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(uint64_t &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        uint64_t &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_UINT64, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(bool &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        bool &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_BOOL, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(double &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        double &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_DOUBLE, name);
         writePod(stream(), value);
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::operator()(std::string &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::operator()(
+        std::string &value,
+        Common::StringView name
+    )
     {
         writeElementPrefix(BIN_KV_SERIALIZE_TYPE_STRING, name);
 
@@ -212,7 +261,11 @@ namespace CryptoNote
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::binary(void *value, uint64_t size, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::binary(
+        void *value,
+        uint64_t size,
+        Common::StringView name
+    )
     {
         if (size > 0)
         {
@@ -224,12 +277,18 @@ namespace CryptoNote
         return true;
     }
 
-    bool KVBinaryOutputStreamSerializer::binary(std::string &value, Common::StringView name)
+    bool KVBinaryOutputStreamSerializer::binary(
+        std::string &value,
+        Common::StringView name
+    )
     {
         return binary(const_cast<char *>(value.data()), value.size(), name);
     }
 
-    void KVBinaryOutputStreamSerializer::writeElementPrefix(uint8_t type, Common::StringView name)
+    void KVBinaryOutputStreamSerializer::writeElementPrefix(
+        uint8_t type,
+        Common::StringView name
+    )
     {
         assert(m_stack.size());
 
@@ -267,7 +326,6 @@ namespace CryptoNote
             level.state = State::Array;
         }
     }
-
 
     MemoryStream &KVBinaryOutputStreamSerializer::stream()
     {

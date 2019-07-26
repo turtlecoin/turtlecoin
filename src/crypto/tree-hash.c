@@ -10,16 +10,22 @@
 
 #include "hash-ops.h"
 
-void tree_hash(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash)
+void tree_hash(
+    const char (*hashes)[HASH_SIZE],
+    size_t count,
+    char *root_hash
+)
 {
     assert(count > 0);
     if (count == 1)
     {
         memcpy(root_hash, hashes, HASH_SIZE);
-    } else if (count == 2)
+    }
+    else if (count == 2)
     {
         cn_fast_hash(hashes, 2 * HASH_SIZE, root_hash);
-    } else
+    }
+    else
     {
         size_t i, j;
         size_t cnt = count - 1;
@@ -64,7 +70,11 @@ size_t tree_depth(size_t count)
     return depth;
 }
 
-void tree_branch(const char (*hashes)[HASH_SIZE], size_t count, char (*branch)[HASH_SIZE])
+void tree_branch(
+    const char (*hashes)[HASH_SIZE],
+    size_t count,
+    char (*branch)[HASH_SIZE]
+)
 {
     size_t i, j;
     size_t cnt = 1;
@@ -101,13 +111,19 @@ void tree_branch(const char (*hashes)[HASH_SIZE], size_t count, char (*branch)[H
     }
 }
 
-void tree_hash_from_branch(const char (*branch)[HASH_SIZE], size_t depth, const char *leaf, const void *path,
-                           char *root_hash)
+void tree_hash_from_branch(
+    const char (*branch)[HASH_SIZE],
+    size_t depth,
+    const char *leaf,
+    const void *path,
+    char *root_hash
+)
 {
     if (depth == 0)
     {
         memcpy(root_hash, leaf, HASH_SIZE);
-    } else
+    }
+    else
     {
         char buffer[2][HASH_SIZE];
         int from_leaf = 1;
@@ -119,7 +135,8 @@ void tree_hash_from_branch(const char (*branch)[HASH_SIZE], size_t depth, const 
             {
                 leaf_path = buffer[1];
                 branch_path = buffer[0];
-            } else
+            }
+            else
             {
                 leaf_path = buffer[0];
                 branch_path = buffer[1];
@@ -128,7 +145,8 @@ void tree_hash_from_branch(const char (*branch)[HASH_SIZE], size_t depth, const 
             {
                 memcpy(leaf_path, leaf, HASH_SIZE);
                 from_leaf = 0;
-            } else
+            }
+            else
             {
                 cn_fast_hash(buffer, 2 * HASH_SIZE, leaf_path);
             }

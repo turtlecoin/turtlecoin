@@ -14,14 +14,17 @@ namespace PaymentService
 
     class ConfigurationManager
     {
-    public:
-        ConfigurationManager();
+        public:
+            ConfigurationManager();
 
-        bool init(int argc, char **argv);
+            bool init(
+                int argc,
+                char **argv
+            );
 
-        WalletServiceConfiguration serviceConfig;
+            WalletServiceConfiguration serviceConfig;
 
-        Crypto::Hash rpcSecret;
+            Crypto::Hash rpcSecret;
     };
 
 } //namespace PaymentService

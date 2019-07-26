@@ -24,7 +24,10 @@ namespace System
     {
     }
 
-    Timer::Timer(Dispatcher &dispatcher) : dispatcher(&dispatcher), context(nullptr), timer(-1)
+    Timer::Timer(Dispatcher &dispatcher)
+        : dispatcher(&dispatcher),
+          context(nullptr),
+          timer(-1)
     {
     }
 
@@ -75,8 +78,9 @@ namespace System
         timer = dispatcher->getTimer();
 
         struct kevent event;
-        EV_SET(&event, timer, EVFILT_TIMER,
-               EV_ADD | EV_ENABLE | EV_ONESHOT, NOTE_NSECONDS, duration.count(), &timerContext);
+        EV_SET(
+            &event, timer, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_ONESHOT, NOTE_NSECONDS, duration.count(), &timerContext
+        );
 
         if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
         {

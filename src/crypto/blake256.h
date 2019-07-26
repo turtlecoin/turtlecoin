@@ -18,20 +18,48 @@ typedef struct
 
 void blake256_init(state *);
 
-void blake256_update(state *, const uint8_t *, uint64_t);
+void blake256_update(
+    state *,
+    const uint8_t *,
+    uint64_t
+);
 
-void blake256_final(state *, uint8_t *);
+void blake256_final(
+    state *,
+    uint8_t *
+);
 
-void blake256_hash(uint8_t *, const uint8_t *, uint64_t);
+void blake256_hash(
+    uint8_t *,
+    const uint8_t *,
+    uint64_t
+);
 
 /* HMAC functions: */
 
-void hmac_blake256_init(hmac_state *, const uint8_t *, uint64_t);
+void hmac_blake256_init(
+    hmac_state *,
+    const uint8_t *,
+    uint64_t
+);
 
-void hmac_blake256_update(hmac_state *, const uint8_t *, uint64_t);
+void hmac_blake256_update(
+    hmac_state *,
+    const uint8_t *,
+    uint64_t
+);
 
-void hmac_blake256_final(hmac_state *, uint8_t *);
+void hmac_blake256_final(
+    hmac_state *,
+    uint8_t *
+);
 
-void hmac_blake256_hash(uint8_t *, const uint8_t *, uint64_t, const uint8_t *, uint64_t);
+void hmac_blake256_hash(
+    uint8_t *,
+    const uint8_t *,
+    uint64_t,
+    const uint8_t *,
+    uint64_t
+);
 
 #endif /* _BLAKE256_H_ */

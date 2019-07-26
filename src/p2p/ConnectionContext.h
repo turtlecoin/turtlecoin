@@ -74,9 +74,15 @@ namespace CryptoNote
 
 namespace std
 {
-    inline std::ostream &operator<<(std::ostream &s, const CryptoNote::CryptoNoteConnectionContext &context)
+    inline std::ostream &operator<<(
+        std::ostream &s,
+        const CryptoNote::CryptoNoteConnectionContext &context
+    )
     {
-        return s << "[" << Common::ipAddressToString(context.m_remote_ip) << ":" <<
-                 context.m_remote_port << (context.m_is_income ? " INC" : " OUT") << "] ";
+        return s << "[" << Common::ipAddressToString(context.m_remote_ip) << ":" << context.m_remote_port << (
+            context.m_is_income
+            ? " INC"
+            : " OUT"
+        ) << "] ";
     }
 }

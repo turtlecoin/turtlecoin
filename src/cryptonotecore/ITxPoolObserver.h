@@ -9,11 +9,11 @@ namespace CryptoNote
 {
     class ITxPoolObserver
     {
-    public:
-        virtual ~ITxPoolObserver()
-        {
-        }
+        public:
+            virtual ~ITxPoolObserver()
+            {
+            }
 
-        virtual void txDeletedFromPool() = 0;
+            virtual void txDeletedFromPool() = 0;
     };
 }

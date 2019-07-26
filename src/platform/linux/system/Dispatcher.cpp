@@ -29,23 +29,23 @@ namespace System
 
         class MutextGuard
         {
-        public:
-            MutextGuard(pthread_mutex_t &_mutex) : mutex(_mutex)
-            {
-                auto ret = pthread_mutex_lock(&mutex);
-                if (ret != 0)
+            public:
+                MutextGuard(pthread_mutex_t &_mutex) : mutex(_mutex)
                 {
-                    throw std::runtime_error("pthread_mutex_lock failed, " + errorMessage(ret));
+                    auto ret = pthread_mutex_lock(&mutex);
+                    if (ret != 0)
+                    {
+                        throw std::runtime_error("pthread_mutex_lock failed, " + errorMessage(ret));
+                    }
                 }
-            }
 
-            ~MutextGuard()
-            {
-                pthread_mutex_unlock(&mutex);
-            }
+                ~MutextGuard()
+                {
+                    pthread_mutex_unlock(&mutex);
+                }
 
-        private:
-            pthread_mutex_t &mutex;
+            private:
+                pthread_mutex_t &mutex;
         };
 
         static_assert(Dispatcher::SIZEOF_PTHREAD_MUTEX_T == sizeof(pthread_mutex_t), "invalid pthread mutex size");
@@ -61,19 +61,22 @@ namespace System
         if (epoll == -1)
         {
             message = "epoll_create1 failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             mainContext.ucontext = new ucontext_t;
             if (getcontext(reinterpret_cast<ucontext_t *>(mainContext.ucontext)) == -1)
             {
                 message = "getcontext failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 remoteSpawnEvent = eventfd(0, O_NONBLOCK);
                 if (remoteSpawnEvent == -1)
                 {
                     message = "eventfd failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     remoteSpawnEventContext.writeContext = nullptr;
                     remoteSpawnEventContext.readContext = nullptr;
@@ -85,7 +88,8 @@ namespace System
                     if (epoll_ctl(epoll, EPOLL_CTL_ADD, remoteSpawnEvent, &remoteSpawnEventEpollEvent) == -1)
                     {
                         message = "epoll_ctl failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         *reinterpret_cast<pthread_mutex_t *>(this->mutex) = pthread_mutex_t(PTHREAD_MUTEX_INITIALIZER);
 
@@ -107,14 +111,16 @@ namespace System
 
                     auto result = close(remoteSpawnEvent);
                     if (result)
-                    {}
+                    {
+                    }
                     assert(result == 0);
                 }
             }
 
             auto result = close(epoll);
             if (result)
-            {}
+            {
+            }
             assert(result == 0);
         }
 
@@ -146,14 +152,16 @@ namespace System
         {
             int result = ::close(timers.top());
             if (result)
-            {}
+            {
+            }
             assert(result == 0);
             timers.pop();
         }
 
         auto result = close(epoll);
         if (result)
-        {}
+        {
+        }
         assert(result == 0);
         result = close(remoteSpawnEvent);
         assert(result == 0);
@@ -213,7 +221,7 @@ namespace System
                     if (transferred == -1)
                     {
                         throw std::runtime_error(
-                                "Dispatcher::dispatch, read(remoteSpawnEvent) failed, " + lastErrorMessage());
+                            "Dispatcher::dispatch, read(remoteSpawnEvent) failed, " + lastErrorMessage());
                     }
 
                     MutextGuard guard(*reinterpret_cast<pthread_mutex_t *>(this->mutex));
@@ -230,11 +238,13 @@ namespace System
                 {
                     context = contextPair->writeContext->context;
                     contextPair->writeContext->events = event.events;
-                } else if ((event.events & EPOLLIN) != 0)
+                }
+                else if ((event.events & EPOLLIN) != 0)
                 {
                     context = contextPair->readContext->context;
                     contextPair->readContext->events = event.events;
-                } else
+                }
+                else
                 {
                     continue;
                 }
@@ -279,7 +289,8 @@ namespace System
             {
                 context->interruptProcedure();
                 context->interruptProcedure = nullptr;
-            } else
+            }
+            else
             {
                 context->interrupted = true;
             }
@@ -302,7 +313,9 @@ namespace System
         assert(context != nullptr);
 
         if (context->inExecutionQueue)
+        {
             return;
+        }
 
         context->next = nullptr;
         context->inExecutionQueue = true;
@@ -311,7 +324,8 @@ namespace System
         {
             assert(lastResumingContext != nullptr);
             lastResumingContext->next = context;
-        } else
+        }
+        else
         {
             firstResumingContext = context;
         }
@@ -341,7 +355,8 @@ namespace System
             context->groupPrev = contextGroup.lastContext;
             assert(contextGroup.lastContext->groupNext == nullptr);
             contextGroup.lastContext->groupNext = context;
-        } else
+        }
+        else
         {
             context->groupPrev = nullptr;
             contextGroup.firstContext = context;
@@ -380,7 +395,7 @@ namespace System
                         if (transferred == -1)
                         {
                             throw std::runtime_error(
-                                    "Dispatcher::dispatch, read(remoteSpawnEvent) failed, " + lastErrorMessage());
+                                "Dispatcher::dispatch, read(remoteSpawnEvent) failed, " + lastErrorMessage());
                         }
 
                         MutextGuard guard(*reinterpret_cast<pthread_mutex_t *>(this->mutex));
@@ -404,7 +419,8 @@ namespace System
                             pushContext(contextPair->writeContext->context);
                             contextPair->writeContext->events = events[i].events;
                         }
-                    } else if ((events[i].events & EPOLLIN) != 0)
+                    }
+                    else if ((events[i].events & EPOLLIN) != 0)
                     {
                         if (contextPair->readContext != nullptr)
                         {
@@ -415,12 +431,14 @@ namespace System
                             pushContext(contextPair->readContext->context);
                             contextPair->readContext->events = events[i].events;
                         }
-                    } else
+                    }
+                    else
                     {
                         continue;
                     }
                 }
-            } else
+            }
+            else
             {
                 if (errno != EINTR)
                 {
@@ -455,8 +473,12 @@ namespace System
             newlyCreatedContext->uc_stack.ss_sp = stackPointer;
             newlyCreatedContext->uc_stack.ss_size = STACK_SIZE;
 
-            ContextMakingData makingContextData{this, newlyCreatedContext};
-            makecontext(newlyCreatedContext, (void (*)()) contextProcedureStatic, 1, reinterpret_cast<int *>(&makingContextData));
+            ContextMakingData makingContextData{
+                this,
+                newlyCreatedContext
+            };
+            makecontext(
+                newlyCreatedContext, (void (*)()) contextProcedureStatic, 1, reinterpret_cast<int *>(&makingContextData));
 
             ucontext_t *oldContext = static_cast<ucontext_t *>(currentContext->ucontext);
             if (swapcontext(oldContext, newlyCreatedContext) == -1)
@@ -495,7 +517,8 @@ namespace System
             {
                 throw std::runtime_error("Dispatcher::getTimer, epoll_ctl failed, " + lastErrorMessage());
             }
-        } else
+        }
+        else
         {
             timer = timers.top();
             timers.pop();
@@ -530,7 +553,8 @@ namespace System
             try
             {
                 context.procedure();
-            } catch (...)
+            }
+            catch (...)
             {
             }
 
@@ -544,12 +568,14 @@ namespace System
                     {
                         assert(context.groupNext->groupPrev == &context);
                         context.groupNext->groupPrev = context.groupPrev;
-                    } else
+                    }
+                    else
                     {
                         assert(context.group->lastContext == &context);
                         context.group->lastContext = context.groupPrev;
                     }
-                } else
+                }
+                else
                 {
                     assert(context.group->firstContext == &context);
                     context.group->firstContext = context.groupNext;
@@ -557,7 +583,8 @@ namespace System
                     {
                         assert(context.groupNext->groupPrev == &context);
                         context.groupNext->groupPrev = nullptr;
-                    } else
+                    }
+                    else
                     {
                         assert(context.group->lastContext == &context);
                         if (context.group->firstWaiter != nullptr)
@@ -566,7 +593,8 @@ namespace System
                             {
                                 assert(lastResumingContext->next == nullptr);
                                 lastResumingContext->next = context.group->firstWaiter;
-                            } else
+                            }
+                            else
                             {
                                 firstResumingContext = context.group->firstWaiter;
                             }

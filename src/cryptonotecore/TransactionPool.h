@@ -26,102 +26,108 @@ namespace CryptoNote
 
     class TransactionPool : public ITransactionPool
     {
-    public:
-        TransactionPool(std::shared_ptr<Logging::ILogger> logger);
+        public:
+            TransactionPool(std::shared_ptr<Logging::ILogger> logger);
 
-        virtual bool
-        pushTransaction(CachedTransaction &&transaction, TransactionValidatorState &&transactionState) override;
+            virtual bool pushTransaction(
+                CachedTransaction &&transaction,
+                TransactionValidatorState &&transactionState
+            ) override;
 
-        virtual const CachedTransaction &getTransaction(const Crypto::Hash &hash) const override;
+            virtual const CachedTransaction &getTransaction(const Crypto::Hash &hash) const override;
 
-        virtual bool removeTransaction(const Crypto::Hash &hash) override;
+            virtual bool removeTransaction(const Crypto::Hash &hash) override;
 
-        virtual size_t getTransactionCount() const override;
+            virtual size_t getTransactionCount() const override;
 
-        virtual std::vector<Crypto::Hash> getTransactionHashes() const override;
+            virtual std::vector<Crypto::Hash> getTransactionHashes() const override;
 
-        virtual bool checkIfTransactionPresent(const Crypto::Hash &hash) const override;
+            virtual bool checkIfTransactionPresent(const Crypto::Hash &hash) const override;
 
-        virtual const TransactionValidatorState &getPoolTransactionValidationState() const override;
+            virtual const TransactionValidatorState &getPoolTransactionValidationState() const override;
 
-        virtual std::vector<CachedTransaction> getPoolTransactions() const override;
+            virtual std::vector<CachedTransaction> getPoolTransactions() const override;
 
-        virtual std::tuple<std::vector<CachedTransaction>, std::vector<CachedTransaction>>
-        getPoolTransactionsForBlockTemplate() const override;
+            virtual std::tuple<
+                std::vector<CachedTransaction>,
+                std::vector<CachedTransaction>> getPoolTransactionsForBlockTemplate() const override;
 
-        virtual uint64_t getTransactionReceiveTime(const Crypto::Hash &hash) const override;
+            virtual uint64_t getTransactionReceiveTime(const Crypto::Hash &hash) const override;
 
-        virtual std::vector<Crypto::Hash> getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const override;
+            virtual std::vector<
+                Crypto::Hash
+            > getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const override;
 
-    private:
-        TransactionValidatorState poolState;
+        private:
+            TransactionValidatorState poolState;
 
-        struct PendingTransactionInfo
-        {
-            uint64_t receiveTime;
-            CachedTransaction cachedTransaction;
-            boost::optional<Crypto::Hash> paymentId;
+            struct PendingTransactionInfo
+            {
+                uint64_t receiveTime;
 
-            const Crypto::Hash &getTransactionHash() const;
-        };
+                CachedTransaction cachedTransaction;
 
-        struct TransactionPriorityComparator
-        {
-            // lhs > hrs
-            bool operator()(const PendingTransactionInfo &lhs, const PendingTransactionInfo &rhs) const;
-        };
+                boost::optional<Crypto::Hash> paymentId;
 
-        struct TransactionHashTag
-        {
-        };
-        struct TransactionCostTag
-        {
-        };
-        struct PaymentIdTag
-        {
-        };
+                const Crypto::Hash &getTransactionHash() const;
+            };
 
-        typedef boost::multi_index::ordered_non_unique<
-                boost::multi_index::tag<TransactionCostTag>,
-                boost::multi_index::identity<PendingTransactionInfo>,
+            struct TransactionPriorityComparator
+            {
+                // lhs > hrs
+                bool operator()(
+                    const PendingTransactionInfo &lhs,
+                    const PendingTransactionInfo &rhs
+                ) const;
+            };
+
+            struct TransactionHashTag
+            {
+            };
+            struct TransactionCostTag
+            {
+            };
+            struct PaymentIdTag
+            {
+            };
+
+            typedef boost::multi_index::ordered_non_unique<
+                boost::multi_index::tag<TransactionCostTag>, boost::multi_index::identity<PendingTransactionInfo>,
                 TransactionPriorityComparator
-        > TransactionCostIndex;
+            > TransactionCostIndex;
 
-        typedef boost::multi_index::hashed_unique<
-                boost::multi_index::tag<TransactionHashTag>,
-                boost::multi_index::const_mem_fun<
-                        PendingTransactionInfo,
-                        const Crypto::Hash &,
-                        &PendingTransactionInfo::getTransactionHash
+            typedef boost::multi_index::hashed_unique<
+                boost::multi_index::tag<TransactionHashTag>, boost::multi_index::const_mem_fun<
+                    PendingTransactionInfo, const Crypto::Hash &, &PendingTransactionInfo::getTransactionHash
                 >
-        > TransactionHashIndex;
+            > TransactionHashIndex;
 
-        struct PaymentIdHasher
-        {
-            size_t operator()(const boost::optional<Crypto::Hash> &paymentId) const;
-        };
+            struct PaymentIdHasher
+            {
+                size_t operator()(const boost::optional<Crypto::Hash> &paymentId) const;
+            };
 
-        typedef boost::multi_index::hashed_non_unique<
+            typedef boost::multi_index::hashed_non_unique<
                 boost::multi_index::tag<PaymentIdTag>,
                 BOOST_MULTI_INDEX_MEMBER(PendingTransactionInfo, boost::optional<Crypto::Hash>, paymentId),
                 PaymentIdHasher
-        > PaymentIdIndex;
+            > PaymentIdIndex;
 
-        typedef boost::multi_index_container<
-                PendingTransactionInfo,
-                boost::multi_index::indexed_by<
-                        TransactionHashIndex,
-                        TransactionCostIndex,
-                        PaymentIdIndex
+            typedef boost::multi_index_container<
+                PendingTransactionInfo, boost::multi_index::indexed_by<
+                    TransactionHashIndex, TransactionCostIndex, PaymentIdIndex
                 >
-        > TransactionsContainer;
+            > TransactionsContainer;
 
-        TransactionsContainer transactions;
-        TransactionsContainer::index<TransactionHashTag>::type &transactionHashIndex;
-        TransactionsContainer::index<TransactionCostTag>::type &transactionCostIndex;
-        TransactionsContainer::index<PaymentIdTag>::type &paymentIdIndex;
+            TransactionsContainer transactions;
 
-        Logging::LoggerRef logger;
+            TransactionsContainer::index<TransactionHashTag>::type &transactionHashIndex;
+
+            TransactionsContainer::index<TransactionCostTag>::type &transactionCostIndex;
+
+            TransactionsContainer::index<PaymentIdTag>::type &paymentIdIndex;
+
+            Logging::LoggerRef logger;
     };
 
 }

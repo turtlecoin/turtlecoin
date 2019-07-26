@@ -26,26 +26,33 @@ namespace System
     {
     }
 
-    TcpListener::TcpListener(Dispatcher &dispatcher, const Ipv4Address &addr, uint16_t port) : dispatcher(&dispatcher)
+    TcpListener::TcpListener(
+        Dispatcher &dispatcher,
+        const Ipv4Address &addr,
+        uint16_t port
+    ) : dispatcher(&dispatcher)
     {
         std::string message;
         listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (listener == -1)
         {
             message = "socket failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             int flags = fcntl(listener, F_GETFL, 0);
             if (flags == -1 || fcntl(listener, F_SETFL, flags | O_NONBLOCK) == -1)
             {
                 message = "fcntl failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 int on = 1;
                 if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on) == -1)
                 {
                     message = "setsockopt failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     sockaddr_in address;
                     address.sin_family = AF_INET;
@@ -54,10 +61,12 @@ namespace System
                     if (bind(listener, reinterpret_cast<sockaddr *>(&address), sizeof address) != 0)
                     {
                         message = "bind failed, " + lastErrorMessage();
-                    } else if (listen(listener, SOMAXCONN) != 0)
+                    }
+                    else if (listen(listener, SOMAXCONN) != 0)
                     {
                         message = "listen failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         epoll_event listenEvent;
                         listenEvent.events = EPOLLONESHOT;
@@ -66,7 +75,8 @@ namespace System
                         if (epoll_ctl(dispatcher.getEpoll(), EPOLL_CTL_ADD, listener, &listenEvent) == -1)
                         {
                             message = "epoll_ctl failed, " + lastErrorMessage();
-                        } else
+                        }
+                        else
                         {
                             context = nullptr;
                             return;
@@ -77,7 +87,8 @@ namespace System
 
             int result = close(listener);
             if (result)
-            {}
+            {
+            }
             assert(result != -1);
         }
 
@@ -102,7 +113,8 @@ namespace System
             assert(context == nullptr);
             int result = close(listener);
             if (result)
-            {}
+            {
+            }
             assert(result != -1);
         }
     }
@@ -154,7 +166,8 @@ namespace System
         if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, listener, &listenEvent) == -1)
         {
             message = "epoll_ctl failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             context = &listenerContext;
             dispatcher->getCurrentContext()->interruptProcedure = [&]()
@@ -171,7 +184,7 @@ namespace System
                     if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, listener, &listenEvent) == -1)
                     {
                         throw std::runtime_error(
-                                "TcpListener::accept, interrupt procedure, epoll_ctl failed, " + lastErrorMessage());
+                            "TcpListener::accept, interrupt procedure, epoll_ctl failed, " + lastErrorMessage());
                     }
 
                     listenerContext->interrupted = true;
@@ -203,20 +216,23 @@ namespace System
             if (connection == -1)
             {
                 message = "accept failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 int flags = fcntl(connection, F_GETFL, 0);
                 if (flags == -1 || fcntl(connection, F_SETFL, flags | O_NONBLOCK) == -1)
                 {
                     message = "fcntl failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     return TcpConnection(*dispatcher, connection);
                 }
 
                 int result = close(connection);
                 if (result)
-                {}
+                {
+                }
                 assert(result != -1);
             }
         }

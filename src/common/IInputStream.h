@@ -13,11 +13,15 @@ namespace Common
 
     class IInputStream
     {
-    public:
-        virtual ~IInputStream()
-        {}
+        public:
+            virtual ~IInputStream()
+            {
+            }
 
-        virtual uint64_t readSome(void *data, uint64_t size) = 0;
+            virtual uint64_t readSome(
+                void *data,
+                uint64_t size
+            ) = 0;
     };
 
 }

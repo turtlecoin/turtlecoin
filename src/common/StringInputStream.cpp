@@ -9,11 +9,16 @@
 namespace Common
 {
 
-    StringInputStream::StringInputStream(const std::string &in) : in(in), offset(0)
+    StringInputStream::StringInputStream(const std::string &in)
+        : in(in),
+          offset(0)
     {
     }
 
-    uint64_t StringInputStream::readSome(void *data, uint64_t size)
+    uint64_t StringInputStream::readSome(
+        void *data,
+        uint64_t size
+    )
     {
         if (size > in.size() - offset)
         {

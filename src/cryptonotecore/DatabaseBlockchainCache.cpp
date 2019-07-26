@@ -30,10 +30,22 @@ namespace CryptoNote
     {
 
         const uint32_t ONE_DAY_SECONDS = 60 * 60 * 24;
-        const CachedBlockInfo NULL_CACHED_BLOCK_INFO{Constants::NULL_HASH, 0, 0, 0, 0, 0};
 
-        bool requestPackedOutputs(IBlockchainCache::Amount amount, Common::ArrayView<uint32_t> globalIndexes,
-                                  IDataBase &database, std::vector<PackedOutIndex> &result)
+        const CachedBlockInfo NULL_CACHED_BLOCK_INFO{
+            Constants::NULL_HASH,
+            0,
+            0,
+            0,
+            0,
+            0
+        };
+
+        bool requestPackedOutputs(
+            IBlockchainCache::Amount amount,
+            Common::ArrayView<uint32_t> globalIndexes,
+            IDataBase &database,
+            std::vector<PackedOutIndex> &result
+        )
         {
             BlockchainReadBatch readBatch;
             result.reserve(result.size() + globalIndexes.getSize());
@@ -57,7 +69,8 @@ namespace CryptoNote
                 {
                     result.push_back(packedOutsMap.at(std::make_pair(amount, globalIndex)));
                 }
-            } catch (std::exception &)
+            }
+            catch (std::exception &)
             {
                 return false;
             }
@@ -65,17 +78,27 @@ namespace CryptoNote
             return true;
         }
 
-        bool requestTransactionHashesForGlobalOutputIndexes(const std::vector<PackedOutIndex> &packedOuts,
-                                                            IDataBase &database,
-                                                            std::vector<Crypto::Hash> &transactionHashes)
+        bool requestTransactionHashesForGlobalOutputIndexes(
+            const std::vector<PackedOutIndex> &packedOuts,
+            IDataBase &database,
+            std::vector<Crypto::Hash> &transactionHashes
+        )
         {
             BlockchainReadBatch readHashesBatch;
 
             std::set<uint32_t> blockIndexes;
-            std::for_each(packedOuts.begin(), packedOuts.end(), [&blockIndexes](PackedOutIndex out)
-            { blockIndexes.insert(out.blockIndex); });
-            std::for_each(blockIndexes.begin(), blockIndexes.end(), [&readHashesBatch](uint32_t blockIndex)
-            { readHashesBatch.requestTransactionHashesByBlock(blockIndex); });
+            std::for_each(
+                packedOuts.begin(), packedOuts.end(), [&blockIndexes](PackedOutIndex out)
+            {
+                blockIndexes.insert(out.blockIndex);
+            }
+            );
+            std::for_each(
+                blockIndexes.begin(), blockIndexes.end(), [&readHashesBatch](uint32_t blockIndex)
+            {
+                readHashesBatch.requestTransactionHashesByBlock(blockIndex);
+            }
+            );
 
             auto dbResult = database.read(readHashesBatch);
             if (dbResult)
@@ -105,15 +128,23 @@ namespace CryptoNote
             return true;
         }
 
-        bool requestCachedTransactionInfos(const std::vector<Crypto::Hash> &transactionHashes, IDataBase &database,
-                                           std::vector<CachedTransactionInfo> &result)
+        bool requestCachedTransactionInfos(
+            const std::vector<Crypto::Hash> &transactionHashes,
+            IDataBase &database,
+            std::vector<CachedTransactionInfo> &result
+        )
         {
             result.reserve(result.size() + transactionHashes.size());
 
             BlockchainReadBatch transactionsBatch;
-            std::for_each(transactionHashes.begin(), transactionHashes.end(), [&transactionsBatch](
-                    const Crypto::Hash &hash)
-            { transactionsBatch.requestCachedTransaction(hash); });
+            std::for_each(
+                transactionHashes.begin(), transactionHashes.end(), [&transactionsBatch](
+                const Crypto::Hash &hash
+            )
+            {
+                transactionsBatch.requestCachedTransaction(hash);
+            }
+            );
             auto dbResult = database.read(transactionsBatch);
             if (dbResult)
             {
@@ -135,27 +166,35 @@ namespace CryptoNote
             return true;
         }
 
-//returns CachedTransactionInfos in the same or as packedOuts are
-/*
-bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts, IDataBase& database, std::vector<CachedTransactionInfo>& result) {
-  std::vector<Crypto::Hash> transactionHashes;
-  if (!requestTransactionHashesForGlobalOutputIndexes(packedOuts, database, transactionHashes)) {
-    return false;
-  }
+        //returns CachedTransactionInfos in the same or as packedOuts are
+        /*
+        bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts, IDataBase& database, std::vector<CachedTransactionInfo>& result) {
+          std::vector<Crypto::Hash> transactionHashes;
+          if (!requestTransactionHashesForGlobalOutputIndexes(packedOuts, database, transactionHashes)) {
+            return false;
+          }
 
-  return requestCachedTransactionInfos(transactionHashes, database, result);
-}
-*/
+          return requestCachedTransactionInfos(transactionHashes, database, result);
+        }
+        */
 
-        bool requestExtendedTransactionInfos(const std::vector<Crypto::Hash> &transactionHashes, IDataBase &database,
-                                             std::vector<ExtendedTransactionInfo> &result)
+        bool requestExtendedTransactionInfos(
+            const std::vector<Crypto::Hash> &transactionHashes,
+            IDataBase &database,
+            std::vector<ExtendedTransactionInfo> &result
+        )
         {
             result.reserve(result.size() + transactionHashes.size());
 
             BlockchainReadBatch transactionsBatch;
-            std::for_each(transactionHashes.begin(), transactionHashes.end(), [&transactionsBatch](
-                    const Crypto::Hash &hash)
-            { transactionsBatch.requestCachedTransaction(hash); });
+            std::for_each(
+                transactionHashes.begin(), transactionHashes.end(), [&transactionsBatch](
+                const Crypto::Hash &hash
+            )
+            {
+                transactionsBatch.requestCachedTransaction(hash);
+            }
+            );
             auto dbResult = database.read(transactionsBatch);
             if (dbResult)
             {
@@ -165,7 +204,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             auto readResult = transactionsBatch.extractResult();
             const auto &transactions = readResult.getCachedTransactions();
 
-            std::unordered_set<Crypto::Hash> uniqueTransactionHashes(transactionHashes.begin(), transactionHashes.end());
+            std::unordered_set<Crypto::Hash>
+                uniqueTransactionHashes(transactionHashes.begin(), transactionHashes.end());
             if (transactions.size() != uniqueTransactionHashes.size())
             {
                 return false;
@@ -179,9 +219,12 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return true;
         }
 
-//returns ExtendedTransactionInfos in the same order as packedOuts are
-        bool requestExtendedTransactionInfos(const std::vector<PackedOutIndex> &packedOuts, IDataBase &database,
-                                             std::vector<ExtendedTransactionInfo> &result)
+        //returns ExtendedTransactionInfos in the same order as packedOuts are
+        bool requestExtendedTransactionInfos(
+            const std::vector<PackedOutIndex> &packedOuts,
+            IDataBase &database,
+            std::vector<ExtendedTransactionInfo> &result
+        )
         {
             std::vector<Crypto::Hash> transactionHashes;
             if (!requestTransactionHashesForGlobalOutputIndexes(packedOuts, database, transactionHashes))
@@ -202,10 +245,18 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return static_cast<uint64_t>((timestamp / ONE_DAY_SECONDS) * ONE_DAY_SECONDS);
         }
 
-        std::pair<boost::optional<uint32_t>, bool>
-        requestClosestBlockIndexByTimestamp(uint64_t timestamp, IDataBase &database)
+        std::pair<
+            boost::optional<uint32_t>, bool
+        > requestClosestBlockIndexByTimestamp(
+            uint64_t timestamp,
+            IDataBase &database
+        )
         {
-            std::pair<boost::optional<uint32_t>, bool> result = {{}, false};
+            std::pair<
+                boost::optional<uint32_t>, bool
+            > result = {{},
+                        false
+            };
 
             BlockchainReadBatch readBatch;
             readBatch.requestClosestTimestampBlockIndex(timestamp);
@@ -225,7 +276,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return result;
         }
 
-        bool requestRawBlock(IDataBase &database, uint32_t blockIndex, RawBlock &block)
+        bool requestRawBlock(
+            IDataBase &database,
+            uint32_t blockIndex,
+            RawBlock &block
+        )
         {
             auto batch = BlockchainReadBatch().requestRawBlock(blockIndex);
 
@@ -246,7 +301,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return true;
         }
 
-        Transaction extractTransaction(const RawBlock &block, uint32_t transactionIndex)
+        Transaction extractTransaction(
+            const RawBlock &block,
+            uint32_t transactionIndex
+        )
         {
             assert(transactionIndex < block.transactions.size() + 1);
 
@@ -255,7 +313,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
                 Transaction transaction;
                 bool r = fromBinaryArray(transaction, block.transactions[transactionIndex - 1]);
                 if (r)
-                {}
+                {
+                }
                 assert(r);
 
                 return transaction;
@@ -264,13 +323,17 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             BlockTemplate blockTemplate;
             bool r = fromBinaryArray(blockTemplate, block.block);
             if (r)
-            {}
+            {
+            }
             assert(r);
 
             return blockTemplate.baseTransaction;
         }
 
-        size_t requestPaymentIdTransactionsCount(IDataBase &database, const Crypto::Hash &paymentId)
+        size_t requestPaymentIdTransactionsCount(
+            IDataBase &database,
+            const Crypto::Hash &paymentId
+        )
         {
             auto batch = BlockchainReadBatch().requestTransactionCountByPaymentId(paymentId);
             auto error = database.read(batch);
@@ -288,7 +351,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return result.getTransactionCountByPaymentIds().at(paymentId);
         }
 
-        bool requestPaymentId(IDataBase &database, const Crypto::Hash &transactionHash, Crypto::Hash &paymentId)
+        bool requestPaymentId(
+            IDataBase &database,
+            const Crypto::Hash &transactionHash,
+            Crypto::Hash &paymentId
+        )
         {
             std::vector<CachedTransactionInfo> cachedTransactions;
 
@@ -312,7 +379,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return getPaymentIdFromTxExtra(transaction.extra, paymentId);
         }
 
-        uint32_t requestKeyOutputGlobalIndexesCountForAmount(IBlockchainCache::Amount amount, IDataBase &database)
+        uint32_t requestKeyOutputGlobalIndexesCountForAmount(
+            IBlockchainCache::Amount amount,
+            IDataBase &database
+        )
         {
             auto batch = BlockchainReadBatch().requestKeyOutputGlobalIndexesCountForAmount(amount);
             auto dbError = database.read(batch);
@@ -326,65 +396,87 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             if (result.getKeyOutputGlobalIndexesCountForAmounts().count(amount) != 0)
             {
                 return result.getKeyOutputGlobalIndexesCountForAmounts().at(amount);
-            } else
+            }
+            else
             {
                 return 0;
             }
         }
 
-        class DbOutputConstIterator
-                : public boost::iterator_facade<DbOutputConstIterator, const PackedOutIndex, boost::random_access_traversal_tag /*boost::forward_traversal_tag*/>
+        class DbOutputConstIterator : public boost::iterator_facade<
+            DbOutputConstIterator, const PackedOutIndex,
+            boost::random_access_traversal_tag /*boost::forward_traversal_tag*/>
         {
-        public:
-            DbOutputConstIterator(std::function<PackedOutIndex(IBlockchainCache::Amount amount,
-                                                               uint32_t globalOutputIndex)> retriever_,
-                                  IBlockchainCache::Amount amount_,
-                                  uint32_t globalOutputIndex_)
-                    : retriever(retriever_), amount(amount_), globalOutputIndex(globalOutputIndex_)
-            {}
+            public:
+                DbOutputConstIterator(
+                    std::function<
+                        PackedOutIndex(
+                            IBlockchainCache::Amount amount,
+                            uint32_t globalOutputIndex
+                        )
+                    > retriever_,
+                    IBlockchainCache::Amount amount_,
+                    uint32_t globalOutputIndex_
+                )
+                    : retriever(retriever_),
+                      amount(amount_),
+                      globalOutputIndex(globalOutputIndex_)
+                {
+                }
 
-            const PackedOutIndex &dereference() const
-            {
-                cachedValue = retriever(amount, globalOutputIndex);
-                return cachedValue;
-            }
+                const PackedOutIndex &dereference() const
+                {
+                    cachedValue = retriever(amount, globalOutputIndex);
+                    return cachedValue;
+                }
 
-            bool equal(const DbOutputConstIterator &other) const
-            {
-                return globalOutputIndex == other.globalOutputIndex;
-            }
+                bool equal(const DbOutputConstIterator &other) const
+                {
+                    return globalOutputIndex == other.globalOutputIndex;
+                }
 
-            void increment()
-            {
-                ++globalOutputIndex;
-            }
+                void increment()
+                {
+                    ++globalOutputIndex;
+                }
 
-            void decrement()
-            {
-                --globalOutputIndex;
-            }
+                void decrement()
+                {
+                    --globalOutputIndex;
+                }
 
-            void advance(difference_type n)
-            {
-                assert(n >= -static_cast<difference_type>(globalOutputIndex));
-                globalOutputIndex += static_cast<uint32_t>(n);
-            }
+                void advance(difference_type n)
+                {
+                    assert(n >= -static_cast<difference_type>(globalOutputIndex));
+                    globalOutputIndex += static_cast<uint32_t>(n);
+                }
 
-            difference_type distance_to(const DbOutputConstIterator &to) const
-            {
-                return static_cast<difference_type>(to.globalOutputIndex) -
-                       static_cast<difference_type>(globalOutputIndex);
-            }
+                difference_type distance_to(const DbOutputConstIterator &to) const
+                {
+                    return static_cast<difference_type>(to.globalOutputIndex) -
+                           static_cast<difference_type>(globalOutputIndex);
+                }
 
-        private:
-            std::function<PackedOutIndex(IBlockchainCache::Amount amount, uint32_t globalOutputIndex)> retriever;
-            IBlockchainCache::Amount amount;
-            uint32_t globalOutputIndex;
-            mutable PackedOutIndex cachedValue;
+            private:
+                std::function<
+                    PackedOutIndex(
+                        IBlockchainCache::Amount amount,
+                        uint32_t globalOutputIndex
+                    )
+                > retriever;
+
+                IBlockchainCache::Amount amount;
+
+                uint32_t globalOutputIndex;
+
+                mutable PackedOutIndex cachedValue;
         };
 
-        PackedOutIndex
-        retrieveKeyOutput(IBlockchainCache::Amount amount, uint32_t globalOutputIndex, IDataBase &database)
+        PackedOutIndex retrieveKeyOutput(
+            IBlockchainCache::Amount amount,
+            uint32_t globalOutputIndex,
+            IDataBase &database
+        )
         {
             BlockchainReadBatch batch;
             auto dbError = database.read(batch.requestKeyOutputGlobalIndexForAmount(amount, globalOutputIndex));
@@ -398,20 +490,27 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             try
             {
                 return result.getKeyOutputGlobalIndexesForAmounts().at(std::make_pair(amount, globalOutputIndex));
-            } catch (std::exception &)
+            }
+            catch (std::exception &)
             {
                 assert(false);
                 throw std::runtime_error(
-                        "Couldn't find key output for amount " + std::to_string(amount) + " with global output index " +
-                        std::to_string(globalOutputIndex));
+                    "Couldn't find key output for amount " + std::to_string(amount) + " with global output index " +
+                    std::to_string(globalOutputIndex));
             }
         }
 
-        std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> getMinGlobalIndexesByAmount(
-                const std::map<IBlockchainCache::Amount, std::vector<IBlockchainCache::GlobalOutputIndex>> &outputIndexes)
+        std::map<
+            IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+        > getMinGlobalIndexesByAmount(
+            const std::map<
+                IBlockchainCache::Amount, std::vector<IBlockchainCache::GlobalOutputIndex>> &outputIndexes
+        )
         {
 
-            std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> minIndexes;
+            std::map<
+                IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+            > minIndexes;
             for (const auto &kv: outputIndexes)
             {
                 auto min = std::min_element(kv.second.begin(), kv.second.end());
@@ -426,8 +525,14 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             return minIndexes;
         }
 
-        void mergeOutputsSplitBoundaries(std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> &dest,
-                                         const std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> &src)
+        void mergeOutputsSplitBoundaries(
+            std::map<
+                IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+            > &dest,
+            const std::map<
+                IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+            > &src
+        )
         {
             for (const auto &elem: src)
             {
@@ -445,7 +550,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             }
         }
 
-        void cutTail(std::deque<CachedBlockInfo> &cache, size_t count)
+        void cutTail(
+            std::deque<CachedBlockInfo> &cache,
+            size_t count
+        )
         {
             if (count >= cache.size())
             {
@@ -460,59 +568,68 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         class DatabaseVersionReadBatch : public IReadBatch
         {
-        public:
-            virtual ~DatabaseVersionReadBatch()
-            {}
-
-            virtual std::vector<std::string> getRawKeys() const override
-            {
-                return {DB_VERSION_KEY};
-            }
-
-            virtual void
-            submitRawResult(const std::vector<std::string> &values, const std::vector<bool> &resultStates) override
-            {
-                assert(values.size() == 1);
-                assert(resultStates.size() == values.size());
-
-                if (!resultStates[0])
+            public:
+                virtual ~DatabaseVersionReadBatch()
                 {
-                    return;
                 }
 
-                version = static_cast<uint32_t>(std::atoi(values[0].c_str()));
-            }
+                virtual std::vector<std::string> getRawKeys() const override
+                {
+                    return {DB_VERSION_KEY};
+                }
 
-            boost::optional<uint32_t> getDbSchemeVersion()
-            {
-                return version;
-            }
+                virtual void submitRawResult(
+                    const std::vector<std::string> &values,
+                    const std::vector<bool> &resultStates
+                ) override
+                {
+                    assert(values.size() == 1);
+                    assert(resultStates.size() == values.size());
 
-        private:
-            boost::optional<uint32_t> version;
+                    if (!resultStates[0])
+                    {
+                        return;
+                    }
+
+                    version = static_cast<uint32_t>(std::atoi(values[0].c_str()));
+                }
+
+                boost::optional<uint32_t> getDbSchemeVersion()
+                {
+                    return version;
+                }
+
+            private:
+                boost::optional<uint32_t> version;
         };
 
         class DatabaseVersionWriteBatch : public IWriteBatch
         {
-        public:
-            DatabaseVersionWriteBatch(uint32_t version) : schemeVersion(version)
-            {}
+            public:
+                DatabaseVersionWriteBatch(uint32_t version) : schemeVersion(version)
+                {
+                }
 
-            virtual ~DatabaseVersionWriteBatch()
-            {}
+                virtual ~DatabaseVersionWriteBatch()
+                {
+                }
 
-            virtual std::vector<std::pair<std::string, std::string> > extractRawDataToInsert() override
-            {
-                return {make_pair(DB_VERSION_KEY, std::to_string(schemeVersion))};
-            }
+                virtual std::vector<
+                    std::pair<
+                        std::string, std::string
+                    >
+                > extractRawDataToInsert() override
+                {
+                    return {make_pair(DB_VERSION_KEY, std::to_string(schemeVersion))};
+                }
 
-            virtual std::vector<std::string> extractRawKeysToRemove() override
-            {
-                return {};
-            }
+                virtual std::vector<std::string> extractRawKeysToRemove() override
+                {
+                    return {};
+                }
 
-        private:
-            uint32_t schemeVersion;
+            private:
+                uint32_t schemeVersion;
         };
 
         const uint32_t CURRENT_DB_SCHEME_VERSION = 2;
@@ -525,12 +642,16 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         uint64_t timestamp;
     };
 
-
-    DatabaseBlockchainCache::DatabaseBlockchainCache(const Currency &curr, IDataBase &dataBase,
-                                                     IBlockchainCacheFactory &blockchainCacheFactory,
-                                                     std::shared_ptr<Logging::ILogger> _logger)
-            : currency(curr), database(dataBase), blockchainCacheFactory(blockchainCacheFactory),
-              logger(_logger, "DatabaseBlockchainCache")
+    DatabaseBlockchainCache::DatabaseBlockchainCache(
+        const Currency &curr,
+        IDataBase &dataBase,
+        IBlockchainCacheFactory &blockchainCacheFactory,
+        std::shared_ptr<Logging::ILogger> _logger
+    )
+        : currency(curr),
+          database(dataBase),
+          blockchainCacheFactory(blockchainCacheFactory),
+          logger(_logger, "DatabaseBlockchainCache")
     {
         DatabaseVersionReadBatch readBatch;
         auto ec = database.read(readBatch);
@@ -550,7 +671,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             {
                 throw std::system_error(writeError);
             }
-        } else
+        }
+        else
         {
             logger(Logging::DEBUGGING) << "Current db scheme version: " << *version;
         }
@@ -562,7 +684,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         }
     }
 
-    bool DatabaseBlockchainCache::checkDBSchemeVersion(IDataBase &database, std::shared_ptr<Logging::ILogger> _logger)
+    bool DatabaseBlockchainCache::checkDBSchemeVersion(
+        IDataBase &database,
+        std::shared_ptr<Logging::ILogger> _logger
+    )
     {
         Logging::LoggerRef logger(_logger, "DatabaseBlockchainCache");
 
@@ -578,26 +703,31 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         {
             //DB scheme version not found. Looks like it was just created.
             return true;
-        } else if (*version < CURRENT_DB_SCHEME_VERSION)
+        }
+        else if (*version < CURRENT_DB_SCHEME_VERSION)
         {
             logger(Logging::WARNING) << "DB scheme version is less than expected. Expected version "
                                      << CURRENT_DB_SCHEME_VERSION << ". Actual version " << *version
                                      << ". DB will be destroyed and recreated from blocks.bin file.";
             return false;
-        } else if (*version > CURRENT_DB_SCHEME_VERSION)
+        }
+        else if (*version > CURRENT_DB_SCHEME_VERSION)
         {
             logger(Logging::ERROR) << "DB scheme version is greater than expected. Expected version "
                                    << CURRENT_DB_SCHEME_VERSION << ". Actual version " << *version
                                    << ". Please update your software.";
             throw std::runtime_error("DB scheme version is greater than expected");
-        } else
+        }
+        else
         {
             return true;
         }
     }
 
-    void DatabaseBlockchainCache::deleteClosestTimestampBlockIndex(BlockchainWriteBatch &writeBatch,
-                                                                   uint32_t splitBlockIndex)
+    void DatabaseBlockchainCache::deleteClosestTimestampBlockIndex(
+        BlockchainWriteBatch &writeBatch,
+        uint32_t splitBlockIndex
+    )
     {
         auto batch = BlockchainReadBatch().requestCachedBlock(splitBlockIndex);
         auto blockResult = readDatabase(batch);
@@ -608,7 +738,7 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         if (!timestampResult.second)
         {
             logger(Logging::ERROR)
-                    << "deleteClosestTimestampBlockIndex error: get closest timestamp block index, database read failed";
+                << "deleteClosestTimestampBlockIndex error: get closest timestamp block index, database read failed";
             throw std::runtime_error("Couldn't get closest timestamp block index");
         }
 
@@ -623,7 +753,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         }
 
         BlockchainReadBatch midnightBatch;
-        while (readDatabase(midnightBatch.requestClosestTimestampBlockIndex(midnight)).getClosestTimestampBlockIndex().count(midnight))
+        while (readDatabase(midnightBatch.requestClosestTimestampBlockIndex(midnight)).getClosestTimestampBlockIndex()
+                                                                                      .count(midnight))
         {
             writeBatch.removeClosestTimestampBlockIndex(midnight);
             midnight += ONE_DAY_SECONDS;
@@ -632,10 +763,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         logger(Logging::TRACE) << "deleted closest timestamp";
     }
 
-/*
- * This methods splits cache, upper part (ie blocks with indexes greater or equal to splitBlockIndex)
- * is copied to new BlockchainCache
- */
+    /*
+     * This methods splits cache, upper part (ie blocks with indexes greater or equal to splitBlockIndex)
+     * is copied to new BlockchainCache
+     */
     std::unique_ptr<IBlockchainCache> DatabaseBlockchainCache::split(uint32_t splitBlockIndex)
     {
         assert(splitBlockIndex <= getTopBlockIndex());
@@ -644,7 +775,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         auto cache = blockchainCacheFactory.createBlockchainCache(currency, this, splitBlockIndex);
 
-        using DeleteBlockInfo = std::tuple<uint32_t, Crypto::Hash, TransactionValidatorState, uint64_t>;
+        using DeleteBlockInfo = std::tuple<
+            uint32_t, Crypto::Hash, TransactionValidatorState, uint64_t
+        >;
         std::vector<DeleteBlockInfo> deletingBlocks;
 
         BlockchainWriteBatch writeBatch;
@@ -668,9 +801,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             uint64_t timestamp = std::get<3>(*it);
 
             writeBatch.removeCachedBlock(blockHash, blockIndex).removeRawBlock(blockIndex);
-            requestDeleteSpentOutputs(writeBatch,
-                                      blockIndex,
-                                      validatorState);
+            requestDeleteSpentOutputs(
+                writeBatch, blockIndex, validatorState
+            );
             requestRemoveTimestamp(writeBatch, timestamp, blockHash);
         }
 
@@ -685,7 +818,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             throw std::runtime_error("failed to request extended transaction info"); //TODO: make error codes
         }
 
-        std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> keyIndexSplitBoundaries;
+        std::map<
+            IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+        > keyIndexSplitBoundaries;
         for (const auto &transaction: extendedTransactions)
         {
             auto txkeyBoundaries = getMinGlobalIndexesByAmount(transaction.amountToKeyIndexes);
@@ -721,30 +856,30 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return cache;
     }
 
-//returns hash of pushed block
-    Crypto::Hash
-    DatabaseBlockchainCache::pushBlockToAnotherCache(IBlockchainCache &segment, PushedBlockInfo &&pushedBlockInfo)
+    //returns hash of pushed block
+    Crypto::Hash DatabaseBlockchainCache::pushBlockToAnotherCache(
+        IBlockchainCache &segment,
+        PushedBlockInfo &&pushedBlockInfo
+    )
     {
         BlockTemplate block;
         bool br = fromBinaryArray(block, pushedBlockInfo.rawBlock.block);
         if (br)
-        {}
+        {
+        }
         assert(br);
 
         std::vector<CachedTransaction> transactions;
         bool tr = Utils::restoreCachedTransactions(pushedBlockInfo.rawBlock.transactions, transactions);
         if (tr)
-        {}
+        {
+        }
         assert(tr);
 
         CachedBlock cachedBlock(block);
-        segment.pushBlock(cachedBlock,
-                          transactions,
-                          pushedBlockInfo.validatorState,
-                          pushedBlockInfo.blockSize,
-                          pushedBlockInfo.generatedCoins,
-                          pushedBlockInfo.blockDifficulty,
-                          std::move(pushedBlockInfo.rawBlock));
+        segment.pushBlock(
+            cachedBlock, transactions, pushedBlockInfo.validatorState, pushedBlockInfo.blockSize, pushedBlockInfo
+            .generatedCoins, pushedBlockInfo.blockDifficulty, std::move(pushedBlockInfo.rawBlock));
 
         return cachedBlock.getBlockHash();
     }
@@ -773,8 +908,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return transactionHashes;
     }
 
-    void DatabaseBlockchainCache::requestDeleteTransactions(BlockchainWriteBatch &writeBatch,
-                                                            const std::vector<Crypto::Hash> &transactionHashes)
+    void DatabaseBlockchainCache::requestDeleteTransactions(
+        BlockchainWriteBatch &writeBatch,
+        const std::vector<Crypto::Hash> &transactionHashes
+    )
     {
         for (const auto &hash: transactionHashes)
         {
@@ -784,10 +921,14 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         }
     }
 
-    void DatabaseBlockchainCache::requestDeletePaymentIds(BlockchainWriteBatch &writeBatch,
-                                                          const std::vector<Crypto::Hash> &transactionHashes)
+    void DatabaseBlockchainCache::requestDeletePaymentIds(
+        BlockchainWriteBatch &writeBatch,
+        const std::vector<Crypto::Hash> &transactionHashes
+    )
     {
-        std::unordered_map<Crypto::Hash, size_t> paymentCounts;
+        std::unordered_map<
+            Crypto::Hash, size_t
+        > paymentCounts;
 
         for (const auto &hash: transactionHashes)
         {
@@ -806,9 +947,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         }
     }
 
-    void
-    DatabaseBlockchainCache::requestDeletePaymentId(BlockchainWriteBatch &writeBatch, const Crypto::Hash &paymentId,
-                                                    size_t toDelete)
+    void DatabaseBlockchainCache::requestDeletePaymentId(
+        BlockchainWriteBatch &writeBatch,
+        const Crypto::Hash &paymentId,
+        size_t toDelete
+    )
     {
         size_t count = requestPaymentIdTransactionsCount(database, paymentId);
         assert(count > 0);
@@ -818,8 +961,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         writeBatch.removePaymentId(paymentId, static_cast<uint32_t>(count - toDelete));
     }
 
-    void DatabaseBlockchainCache::requestDeleteSpentOutputs(BlockchainWriteBatch &writeBatch, uint32_t blockIndex,
-                                                            const TransactionValidatorState &spentOutputs)
+    void DatabaseBlockchainCache::requestDeleteSpentOutputs(
+        BlockchainWriteBatch &writeBatch,
+        uint32_t blockIndex,
+        const TransactionValidatorState &spentOutputs
+    )
     {
         logger(Logging::DEBUGGING) << "Deleting spent outputs for block index " << blockIndex;
 
@@ -828,8 +974,12 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         writeBatch.removeSpentKeyImages(blockIndex, spentKeys);
     }
 
-    void DatabaseBlockchainCache::requestDeleteKeyOutputs(BlockchainWriteBatch &writeBatch,
-                                                          const std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> &boundaries)
+    void DatabaseBlockchainCache::requestDeleteKeyOutputs(
+        BlockchainWriteBatch &writeBatch,
+        const std::map<
+            IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+        > &boundaries
+    )
     {
         if (boundaries.empty())
         {
@@ -844,23 +994,28 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             readBatch.requestKeyOutputGlobalIndexesCountForAmount(kv.first);
         }
 
-        std::unordered_map<IBlockchainCache::Amount, uint32_t> amountCounts = readDatabase(readBatch).getKeyOutputGlobalIndexesCountForAmounts();
+        std::unordered_map<
+            IBlockchainCache::Amount, uint32_t
+        > amountCounts = readDatabase(readBatch).getKeyOutputGlobalIndexesCountForAmounts();
         assert(amountCounts.size() == boundaries.size());
 
         for (const auto &kv: amountCounts)
         {
-            auto it = boundaries.find(kv.first); //can't be equal end() since assert(amountCounts.size() == boundaries.size())
+            auto it =
+                boundaries.find(kv.first); //can't be equal end() since assert(amountCounts.size() == boundaries.size())
             requestDeleteKeyOutputsAmount(writeBatch, kv.first, it->second, kv.second);
         }
     }
 
-    void DatabaseBlockchainCache::requestDeleteKeyOutputsAmount(BlockchainWriteBatch &writeBatch,
-                                                                IBlockchainCache::Amount amount,
-                                                                IBlockchainCache::GlobalOutputIndex boundary,
-                                                                uint32_t outputsCount)
+    void DatabaseBlockchainCache::requestDeleteKeyOutputsAmount(
+        BlockchainWriteBatch &writeBatch,
+        IBlockchainCache::Amount amount,
+        IBlockchainCache::GlobalOutputIndex boundary,
+        uint32_t outputsCount
+    )
     {
-        logger(Logging::DEBUGGING) << "Requesting delete for key output amount " << amount <<
-                                   " starting from global index " << boundary << " to " << (outputsCount - 1);
+        logger(Logging::DEBUGGING) << "Requesting delete for key output amount " << amount
+                                   << " starting from global index " << boundary << " to " << (outputsCount - 1);
 
         writeBatch.removeKeyOutputGlobalIndexes(amount, outputsCount - boundary, boundary);
         for (GlobalOutputIndex index = boundary; index < outputsCount; ++index)
@@ -871,8 +1026,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         updateKeyOutputCount(amount, boundary - outputsCount);
     }
 
-    void DatabaseBlockchainCache::requestRemoveTimestamp(BlockchainWriteBatch &batch, uint64_t timestamp,
-                                                         const Crypto::Hash &blockHash)
+    void DatabaseBlockchainCache::requestRemoveTimestamp(
+        BlockchainWriteBatch &batch,
+        uint64_t timestamp,
+        const Crypto::Hash &blockHash
+    )
     {
         auto readBatch = BlockchainReadBatch().requestBlockHashesByTimestamp(timestamp);
         auto result = readDatabase(readBatch);
@@ -890,17 +1048,20 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         {
             logger(Logging::DEBUGGING) << "Deleting timestamp " << timestamp;
             batch.removeTimestamp(timestamp);
-        } else
+        }
+        else
         {
             logger(Logging::DEBUGGING) << "Deleting block hash " << blockHash << " from timestamp " << timestamp;
             batch.insertTimestamp(timestamp, indexes);
         }
     }
 
-    void DatabaseBlockchainCache::pushTransaction(const CachedTransaction &cachedTransaction,
-                                                  uint32_t blockIndex,
-                                                  uint16_t transactionBlockIndex,
-                                                  BlockchainWriteBatch &batch)
+    void DatabaseBlockchainCache::pushTransaction(
+        const CachedTransaction &cachedTransaction,
+        uint32_t blockIndex,
+        uint16_t transactionBlockIndex,
+        BlockchainWriteBatch &batch
+    )
     {
 
         logger(Logging::DEBUGGING) << "push transaction with hash " << cachedTransaction.getTransactionHash();
@@ -917,7 +1078,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         transactionCacheInfo.globalIndexes.reserve(tx.outputs.size());
         transactionCacheInfo.outputs.reserve(tx.outputs.size());
         auto outputCount = 0;
-        std::unordered_map<Amount, std::vector<PackedOutIndex>> keyIndexes;
+        std::unordered_map<
+            Amount, std::vector<PackedOutIndex>> keyIndexes;
 
         std::set<Amount> newKeyAmounts;
 
@@ -957,8 +1119,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         for (auto &amountToOutputs : keyIndexes)
         {
-            batch.insertKeyOutputGlobalIndexes(amountToOutputs.first, amountToOutputs.second,
-                                               updateKeyOutputCount(amountToOutputs.first, 0)); //Size already updated.
+            batch.insertKeyOutputGlobalIndexes(
+                amountToOutputs.first, amountToOutputs.second, updateKeyOutputCount(
+                amountToOutputs.first, 0
+            )); //Size already updated.
         }
 
         if (!newKeyAmounts.empty())
@@ -979,7 +1143,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
                                    << " finished";
     }
 
-    uint32_t DatabaseBlockchainCache::updateKeyOutputCount(Amount amount, int32_t diff) const
+    uint32_t DatabaseBlockchainCache::updateKeyOutputCount(
+        Amount amount,
+        int32_t diff
+    ) const
     {
         auto it = keyOutputCountsForAmounts.find(amount);
         if (it == keyOutputCountsForAmounts.end())
@@ -989,8 +1156,15 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             BlockchainReadBatch batch;
             auto result = readDatabase(batch.requestKeyOutputGlobalIndexesCountForAmount(amount));
             auto found = result.getKeyOutputGlobalIndexesCountForAmounts().find(amount);
-            auto val = found != result.getKeyOutputGlobalIndexesCountForAmounts().end() ? found->second : 0;
-            it = keyOutputCountsForAmounts.insert({amount, val}).first;
+            auto val = found != result.getKeyOutputGlobalIndexesCountForAmounts().end()
+                       ? found->second
+                       : 0;
+            it = keyOutputCountsForAmounts.insert(
+                {
+                    amount,
+                    val
+                }
+            ).first;
             logger(Logging::TRACE) << "updateKeyOutputCount: database replied: amount " << amount << " value " << val;
 
             if (val == 0)
@@ -1003,7 +1177,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
                 keyOutputAmountsCount = *keyOutputAmountsCount + 1;
             }
-        } else if (!keyOutputAmountsCount)
+        }
+        else if (!keyOutputAmountsCount)
         {
             auto result = readDatabase(BlockchainReadBatch().requestKeyOutputAmountsCount());
             keyOutputAmountsCount = result.getKeyOutputAmountsCount();
@@ -1014,8 +1189,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return it->second;
     }
 
-    void DatabaseBlockchainCache::insertPaymentId(BlockchainWriteBatch &batch, const Crypto::Hash &transactionHash,
-                                                  const Crypto::Hash &paymentId)
+    void DatabaseBlockchainCache::insertPaymentId(
+        BlockchainWriteBatch &batch,
+        const Crypto::Hash &transactionHash,
+        const Crypto::Hash &paymentId
+    )
     {
         BlockchainReadBatch readBatch;
         uint32_t count = 0;
@@ -1031,8 +1209,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         batch.insertPaymentId(transactionHash, paymentId, count);
     }
 
-    void DatabaseBlockchainCache::insertBlockTimestamp(BlockchainWriteBatch &batch, uint64_t timestamp,
-                                                       const Crypto::Hash &blockHash)
+    void DatabaseBlockchainCache::insertBlockTimestamp(
+        BlockchainWriteBatch &batch,
+        uint64_t timestamp,
+        const Crypto::Hash &blockHash
+    )
     {
         BlockchainReadBatch readBatch;
         readBatch.requestBlockHashesByTimestamp(timestamp);
@@ -1050,10 +1231,15 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         batch.insertTimestamp(timestamp, blockHashes);
     }
 
-    void DatabaseBlockchainCache::pushBlock(const CachedBlock &cachedBlock,
-                                            const std::vector<CachedTransaction> &cachedTransactions,
-                                            const TransactionValidatorState &validatorState, size_t blockSize,
-                                            uint64_t generatedCoins, uint64_t blockDifficulty, RawBlock &&rawBlock)
+    void DatabaseBlockchainCache::pushBlock(
+        const CachedBlock &cachedBlock,
+        const std::vector<CachedTransaction> &cachedTransactions,
+        const TransactionValidatorState &validatorState,
+        size_t blockSize,
+        uint64_t generatedCoins,
+        uint64_t blockDifficulty,
+        RawBlock &&rawBlock
+    )
     {
         BlockchainWriteBatch batch;
         logger(Logging::DEBUGGING) << "push block with hash " << cachedBlock.getBlockHash() << ", and "
@@ -1093,7 +1279,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             pushTransaction(transaction, getTopBlockIndex() + 1, transactionIndex++, batch);
         }
 
-        auto closestBlockIndexDb = requestClosestBlockIndexByTimestamp(roundToMidnight(cachedBlock.getBlock().timestamp), database);
+        auto closestBlockIndexDb =
+            requestClosestBlockIndexByTimestamp(roundToMidnight(cachedBlock.getBlock().timestamp), database);
         if (!closestBlockIndexDb.second)
         {
             logger(Logging::ERROR) << "push block " << cachedBlock.getBlockHash()
@@ -1103,8 +1290,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         if (!closestBlockIndexDb.first)
         {
-            batch.insertClosestTimestampBlockIndex(roundToMidnight(cachedBlock.getBlock().timestamp),
-                                                   getTopBlockIndex() + 1);
+            batch.insertClosestTimestampBlockIndex(
+                roundToMidnight(cachedBlock.getBlock().timestamp), getTopBlockIndex() + 1
+            );
         }
 
         insertBlockTimestamp(batch, cachedBlock.getBlock().timestamp, cachedBlock.getBlockHash());
@@ -1132,7 +1320,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return getExtendedPushedBlockInfo(blockIndex).pushedBlockInfo;
     }
 
-    bool DatabaseBlockchainCache::checkIfSpent(const Crypto::KeyImage &keyImage, uint32_t blockIndex) const
+    bool DatabaseBlockchainCache::checkIfSpent(
+        const Crypto::KeyImage &keyImage,
+        uint32_t blockIndex
+    ) const
     {
         auto batch = BlockchainReadBatch().requestBlockIndexBySpentKeyImage(keyImage);
         auto res = database.read(batch);
@@ -1158,7 +1349,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return isTransactionSpendTimeUnlocked(unlockTime, getTopBlockIndex());
     }
 
-    bool DatabaseBlockchainCache::isTransactionSpendTimeUnlocked(uint64_t unlockTime, uint32_t blockIndex) const
+    bool DatabaseBlockchainCache::isTransactionSpendTimeUnlocked(
+        uint64_t unlockTime,
+        uint32_t blockIndex
+    ) const
     {
         if (unlockTime < currency.maxBlockHeight())
         {
@@ -1182,20 +1376,32 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return static_cast<uint64_t>(time(nullptr)) + currency.lockedTxAllowedDeltaSeconds() >= unlockTime;
     }
 
-    ExtractOutputKeysResult
-    DatabaseBlockchainCache::extractKeyOutputKeys(uint64_t amount, Common::ArrayView<uint32_t> globalIndexes,
-                                                  std::vector<Crypto::PublicKey> &publicKeys) const
+    ExtractOutputKeysResult DatabaseBlockchainCache::extractKeyOutputKeys(
+        uint64_t amount,
+        Common::ArrayView<uint32_t> globalIndexes,
+        std::vector<Crypto::PublicKey> &publicKeys
+    ) const
     {
         return extractKeyOutputKeys(amount, getTopBlockIndex(), globalIndexes, publicKeys);
     }
 
-    ExtractOutputKeysResult
-    DatabaseBlockchainCache::extractKeyOutputKeys(uint64_t amount, uint32_t blockIndex,
-                                                  Common::ArrayView<uint32_t> globalIndexes,
-                                                  std::vector<Crypto::PublicKey> &publicKeys) const
+    ExtractOutputKeysResult DatabaseBlockchainCache::extractKeyOutputKeys(
+        uint64_t amount,
+        uint32_t blockIndex,
+        Common::ArrayView<uint32_t> globalIndexes,
+        std::vector<Crypto::PublicKey> &publicKeys
+    ) const
     {
-        return extractKeyOutputs(amount, blockIndex, globalIndexes, [this, &publicKeys, blockIndex](
-                const CachedTransactionInfo &info, PackedOutIndex index, uint32_t globalIndex)
+        return extractKeyOutputs(
+            amount, blockIndex, globalIndexes, [
+            this,
+            &publicKeys,
+            blockIndex
+        ](
+            const CachedTransactionInfo &info,
+            PackedOutIndex index,
+            uint32_t globalIndex
+        )
         {
             if (!isTransactionSpendTimeUnlocked(info.unlockTime, blockIndex))
             {
@@ -1208,12 +1414,15 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             publicKeys.push_back(boost::get<KeyOutput>(output).key);
 
             return ExtractOutputKeysResult::SUCCESS;
-        });
+        }
+        );
     }
 
-    ExtractOutputKeysResult DatabaseBlockchainCache::extractKeyOtputIndexes(uint64_t amount,
-                                                                            Common::ArrayView<uint32_t> globalIndexes,
-                                                                            std::vector<PackedOutIndex> &outIndexes) const
+    ExtractOutputKeysResult DatabaseBlockchainCache::extractKeyOtputIndexes(
+        uint64_t amount,
+        Common::ArrayView<uint32_t> globalIndexes,
+        std::vector<PackedOutIndex> &outIndexes
+    ) const
     {
         if (!requestPackedOutputs(amount, globalIndexes, database, outIndexes))
         {
@@ -1225,16 +1434,25 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
     }
 
     ExtractOutputKeysResult DatabaseBlockchainCache::extractKeyOtputReferences(
-            uint64_t amount, Common::ArrayView<uint32_t> globalIndexes,
-            std::vector<std::pair<Crypto::Hash, size_t>> &outputReferences) const
+        uint64_t amount,
+        Common::ArrayView<uint32_t> globalIndexes,
+        std::vector<
+            std::pair<
+                Crypto::Hash, size_t>> &outputReferences
+    ) const
     {
 
-        return extractKeyOutputs(amount, getTopBlockIndex(), globalIndexes, [&outputReferences](
-                const CachedTransactionInfo &info, PackedOutIndex index, uint32_t globalIndex)
+        return extractKeyOutputs(
+            amount, getTopBlockIndex(), globalIndexes, [&outputReferences](
+            const CachedTransactionInfo &info,
+            PackedOutIndex index,
+            uint32_t globalIndex
+        )
         {
             outputReferences.push_back(std::make_pair(info.transactionHash, index.outputIndex));
             return ExtractOutputKeysResult::SUCCESS;
-        });
+        }
+        );
     }
 
     uint32_t DatabaseBlockchainCache::getTopBlockIndex() const
@@ -1291,7 +1509,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             {
                 logger(Logging::TRACE) << "Transactions count does not exist in database";
                 transactionsCount = 0;
-            } else
+            }
+            else
             {
                 transactionsCount = readResult.getTransactionsCount().first;
             }
@@ -1347,11 +1566,18 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return getLastTimestamps(count, getTopBlockIndex(), UseGenesis{true});
     }
 
-    std::vector<uint64_t> DatabaseBlockchainCache::getLastTimestamps(size_t count, uint32_t blockIndex,
-                                                                     UseGenesis useGenesis) const
+    std::vector<uint64_t> DatabaseBlockchainCache::getLastTimestamps(
+        size_t count,
+        uint32_t blockIndex,
+        UseGenesis useGenesis
+    ) const
     {
-        return getLastUnits(count, blockIndex, useGenesis, [](const CachedBlockInfo &inf)
-        { return inf.timestamp; });
+        return getLastUnits(
+            count, blockIndex, useGenesis, [](const CachedBlockInfo &inf)
+        {
+            return inf.timestamp;
+        }
+        );
     }
 
     std::vector<uint64_t> DatabaseBlockchainCache::getLastBlocksSizes(size_t count) const
@@ -1359,19 +1585,32 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return getLastBlocksSizes(count, getTopBlockIndex(), UseGenesis{true});
     }
 
-    std::vector<uint64_t> DatabaseBlockchainCache::getLastBlocksSizes(size_t count, uint32_t blockIndex,
-                                                                      UseGenesis useGenesis) const
+    std::vector<uint64_t> DatabaseBlockchainCache::getLastBlocksSizes(
+        size_t count,
+        uint32_t blockIndex,
+        UseGenesis useGenesis
+    ) const
     {
-        return getLastUnits(count, blockIndex, useGenesis, [](const CachedBlockInfo &cb)
-        { return cb.blockSize; });
+        return getLastUnits(
+            count, blockIndex, useGenesis, [](const CachedBlockInfo &cb)
+        {
+            return cb.blockSize;
+        }
+        );
     }
 
-    std::vector<uint64_t> DatabaseBlockchainCache::getLastCumulativeDifficulties(size_t count, uint32_t blockIndex,
-                                                                                 UseGenesis useGenesis) const
+    std::vector<uint64_t> DatabaseBlockchainCache::getLastCumulativeDifficulties(
+        size_t count,
+        uint32_t blockIndex,
+        UseGenesis useGenesis
+    ) const
     {
-        return getLastUnits(count, blockIndex, useGenesis,
-                            [](const CachedBlockInfo &info)
-                            { return info.cumulativeDifficulty; });
+        return getLastUnits(
+            count, blockIndex, useGenesis, [](const CachedBlockInfo &info)
+        {
+            return info.cumulativeDifficulty;
+        }
+        );
     }
 
     std::vector<uint64_t> DatabaseBlockchainCache::getLastCumulativeDifficulties(size_t count) const
@@ -1388,12 +1627,18 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
     {
         assert(blockIndex <= getTopBlockIndex());
         uint8_t nextBlockMajorVersion = getBlockMajorVersionForHeight(blockIndex + 1);
-        auto timestamps = getLastTimestamps(currency.difficultyBlocksCountByBlockVersion(nextBlockMajorVersion, blockIndex), blockIndex, UseGenesis{
-                false});
-        auto commulativeDifficulties =
-                getLastCumulativeDifficulties(currency.difficultyBlocksCountByBlockVersion(nextBlockMajorVersion, blockIndex), blockIndex, UseGenesis{
-                        false});
-        return currency.getNextDifficulty(nextBlockMajorVersion, blockIndex, std::move(timestamps), std::move(commulativeDifficulties));
+        auto timestamps = getLastTimestamps(
+            currency.difficultyBlocksCountByBlockVersion(nextBlockMajorVersion, blockIndex), blockIndex, UseGenesis{
+            false
+        }
+        );
+        auto commulativeDifficulties = getLastCumulativeDifficulties(
+            currency.difficultyBlocksCountByBlockVersion(nextBlockMajorVersion, blockIndex), blockIndex, UseGenesis{
+            false
+        }
+        );
+        return currency.getNextDifficulty(
+            nextBlockMajorVersion, blockIndex, std::move(timestamps), std::move(commulativeDifficulties));
     }
 
     uint64_t DatabaseBlockchainCache::getCurrentCumulativeDifficulty() const
@@ -1429,8 +1674,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return getCachedBlockInfo(blockIndex).alreadyGeneratedTransactions;
     }
 
-    std::vector<CachedBlockInfo>
-    DatabaseBlockchainCache::getLastCachedUnits(uint32_t blockIndex, size_t count, UseGenesis useGenesis) const
+    std::vector<CachedBlockInfo> DatabaseBlockchainCache::getLastCachedUnits(
+        uint32_t blockIndex,
+        size_t count,
+        UseGenesis useGenesis
+    ) const
     {
         assert(blockIndex <= getTopBlockIndex());
 
@@ -1469,8 +1717,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return cachedResult;
     }
 
-    std::vector<CachedBlockInfo>
-    DatabaseBlockchainCache::getLastDbUnits(uint32_t blockIndex, size_t count, UseGenesis useGenesis) const
+    std::vector<CachedBlockInfo> DatabaseBlockchainCache::getLastDbUnits(
+        uint32_t blockIndex,
+        size_t count,
+        UseGenesis useGenesis
+    ) const
     {
         uint32_t readFrom = blockIndex + 1 - std::min(blockIndex + 1, static_cast<uint32_t>(count));
         if (readFrom == 0 && !useGenesis)
@@ -1498,21 +1749,26 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
             auto res = readDatabase(batch);
 
-            std::map<uint32_t, CachedBlockInfo> sortedResult(res.getCachedBlocks().begin(), res.getCachedBlocks().end());
+            std::map<
+                uint32_t, CachedBlockInfo
+            > sortedResult(res.getCachedBlocks().begin(), res.getCachedBlocks().end());
             for (const auto &kv: sortedResult)
             {
                 units.push_back(kv.second);
             }
-//    std::transform(sortedResult.begin(), sortedResult.end(), std::back_inserter(units),
-//                   [&](const std::pair<uint32_t, CachedBlockInfo>& cb) { return pred(cb.second); });
+            //    std::transform(sortedResult.begin(), sortedResult.end(), std::back_inserter(units),
+            //                   [&](const std::pair<uint32_t, CachedBlockInfo>& cb) { return pred(cb.second); });
         }
 
         return units;
     }
 
-    std::vector<uint64_t>
-    DatabaseBlockchainCache::getLastUnits(size_t count, uint32_t blockIndex, UseGenesis useGenesis,
-                                          std::function<uint64_t(const CachedBlockInfo &)> pred) const
+    std::vector<uint64_t> DatabaseBlockchainCache::getLastUnits(
+        size_t count,
+        uint32_t blockIndex,
+        UseGenesis useGenesis,
+        std::function<uint64_t(const CachedBlockInfo &)> pred
+    ) const
     {
         assert(count <= std::numeric_limits<uint32_t>::max());
 
@@ -1572,7 +1828,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return result.getCachedBlocks().at(blockIndex).blockHash;
     }
 
-    std::vector<Crypto::Hash> DatabaseBlockchainCache::getBlockHashes(uint32_t startIndex, size_t maxCount) const
+    std::vector<Crypto::Hash> DatabaseBlockchainCache::getBlockHashes(
+        uint32_t startIndex,
+        size_t maxCount
+    ) const
     {
         assert(startIndex <= getTopBlockIndex());
         assert(maxCount <= std::numeric_limits<uint32_t>::max());
@@ -1596,12 +1855,21 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         std::vector<Crypto::Hash> hashes;
         hashes.reserve(count);
 
-        std::map<uint32_t, CachedBlockInfo> sortedResult(
-                result.getCachedBlocks().begin(), result.getCachedBlocks().end());
+        std::map<
+            uint32_t, CachedBlockInfo
+        > sortedResult(
+            result.getCachedBlocks().begin(), result.getCachedBlocks().end());
 
-        std::transform(sortedResult.begin(), sortedResult.end(), std::back_inserter(hashes),
-                       [](const std::pair<uint32_t, CachedBlockInfo> &cb)
-                       { return cb.second.blockHash; });
+        std::transform(
+            sortedResult.begin(), sortedResult.end(), std::back_inserter(hashes), [](
+            const std::pair<
+                uint32_t, CachedBlockInfo
+            > &cb
+        )
+        {
+            return cb.second.blockHash;
+        }
+        );
         return hashes;
     }
 
@@ -1615,7 +1883,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return 0;
     }
 
-    size_t DatabaseBlockchainCache::getKeyOutputsCountForAmount(uint64_t amount, uint32_t blockIndex) const
+    size_t DatabaseBlockchainCache::getKeyOutputsCountForAmount(
+        uint64_t amount,
+        uint32_t blockIndex
+    ) const
     {
         uint32_t outputsCount = requestKeyOutputGlobalIndexesCountForAmount(amount, database);
 
@@ -1623,10 +1894,15 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         auto begin = DbOutputConstIterator(getOutput, amount, 0);
         auto end = DbOutputConstIterator(getOutput, amount, outputsCount);
 
-        auto it = std::lower_bound(begin, end, blockIndex, [](const PackedOutIndex &output, uint32_t blockIndex)
+        auto it = std::lower_bound(
+            begin, end, blockIndex, [](
+            const PackedOutIndex &output,
+            uint32_t blockIndex
+        )
         {
             return output.blockIndex < blockIndex;
-        });
+        }
+        );
 
         size_t result = static_cast<size_t>(std::distance(begin, it));
         logger(Logging::DEBUGGING) << "Key outputs count for amount " << amount << " is " << result
@@ -1635,7 +1911,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return result;
     }
 
-    std::tuple<bool, uint64_t> DatabaseBlockchainCache::getBlockHeightForTimestamp(uint64_t timestamp) const
+    std::tuple<
+        bool, uint64_t
+    > DatabaseBlockchainCache::getBlockHeightForTimestamp(uint64_t timestamp) const
     {
         const auto midnight = roundToMidnight(timestamp);
 
@@ -1651,10 +1929,16 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         /* Failed to find the block height with this timestamp */
         if (!blockHeight)
         {
-            return {false, 0};
+            return {
+                false,
+                0
+            };
         }
 
-        return {true, *blockHeight};
+        return {
+            true,
+            *blockHeight
+        };
     }
 
     uint32_t DatabaseBlockchainCache::getTimestampLowerBoundBlockIndex(uint64_t timestamp) const
@@ -1682,8 +1966,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return 0;
     }
 
-    bool DatabaseBlockchainCache::getTransactionGlobalIndexes(const Crypto::Hash &transactionHash,
-                                                              std::vector<uint32_t> &globalIndexes) const
+    bool DatabaseBlockchainCache::getTransactionGlobalIndexes(
+        const Crypto::Hash &transactionHash,
+        std::vector<uint32_t> &globalIndexes
+    ) const
     {
         auto batch = BlockchainReadBatch().requestCachedTransaction(transactionHash);
         auto result = database.read(batch);
@@ -1731,17 +2017,21 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
     {
     }
 
-    std::vector<BinaryArray>
-    DatabaseBlockchainCache::getRawTransactions(const std::vector<Crypto::Hash> &transactions,
-                                                std::vector<Crypto::Hash> &missedTransactions) const
+    std::vector<BinaryArray> DatabaseBlockchainCache::getRawTransactions(
+        const std::vector<Crypto::Hash> &transactions,
+        std::vector<Crypto::Hash> &missedTransactions
+    ) const
     {
         std::vector<BinaryArray> found;
         getRawTransactions(transactions, found, missedTransactions);
         return found;
     }
 
-    std::vector<BinaryArray>
-    DatabaseBlockchainCache::getRawTransactions(const std::vector<Crypto::Hash> &transactions) const
+    std::vector<BinaryArray> DatabaseBlockchainCache::getRawTransactions(
+        const std::vector<
+            Crypto::Hash
+        > &transactions
+    ) const
     {
         std::vector<Crypto::Hash> missed;
         std::vector<BinaryArray> found;
@@ -1749,9 +2039,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return found;
     }
 
-    void DatabaseBlockchainCache::getRawTransactions(const std::vector<Crypto::Hash> &transactions,
-                                                     std::vector<BinaryArray> &foundTransactions,
-                                                     std::vector<Crypto::Hash> &missedTransactions) const
+    void DatabaseBlockchainCache::getRawTransactions(
+        const std::vector<Crypto::Hash> &transactions,
+        std::vector<BinaryArray> &foundTransactions,
+        std::vector<Crypto::Hash> &missedTransactions
+    ) const
     {
         BlockchainReadBatch batch;
         for (auto &hash : transactions)
@@ -1794,11 +2086,13 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             {
                 auto block = fromBinaryArray<BlockTemplate>(blockIt->second.block);
                 foundTransactions.emplace_back(toBinaryArray(block.baseTransaction));
-            } else
+            }
+            else
             {
                 assert(blockIt->second.transactions.size() >= transactionIt->second.transactionIndex - 1);
-                foundTransactions.emplace_back(blockIt->second.transactions[transactionIt->second.transactionIndex -
-                                                                            1]);
+                foundTransactions.emplace_back(
+                    blockIt->second.transactions[transactionIt->second.transactionIndex - 1]
+                );
             }
         }
     }
@@ -1810,7 +2104,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return std::move(res.getRawBlocks().at(index));
     }
 
-    BinaryArray DatabaseBlockchainCache::getRawTransaction(uint32_t blockIndex, uint32_t transactionIndex) const
+    BinaryArray DatabaseBlockchainCache::getRawTransaction(
+        uint32_t blockIndex,
+        uint32_t transactionIndex
+    ) const
     {
         return getBlockByIndex(blockIndex).transactions.at(transactionIndex);
     }
@@ -1821,8 +2118,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return {};
     }
 
-    std::vector<uint32_t> DatabaseBlockchainCache::getRandomOutsByAmount(uint64_t amount, size_t count,
-                                                                         uint32_t blockIndex) const
+    std::vector<uint32_t> DatabaseBlockchainCache::getRandomOutsByAmount(
+        uint64_t amount,
+        size_t count,
+        uint32_t blockIndex
+    ) const
     {
         auto batch = BlockchainReadBatch().requestKeyOutputGlobalIndexesCountForAmount(amount);
         auto result = readDatabase(batch);
@@ -1842,17 +2142,20 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
             try
             {
                 for (uint32_t i = 0; i < outputsToPick; ++i, globalIndexes.push_back(generator()))
-                {}
+                {
+                }
                 //std::generate_n(std::back_inserter(globalIndexes), outputsToPick, generator);
-            } catch (const SequenceEnded &)
+            }
+            catch (const SequenceEnded &)
             {
                 logger(Logging::TRACE) << "getRandomOutsByAmount: generator reached sequence end";
                 return resultOuts;
             }
 
             std::vector<PackedOutIndex> outputs;
-            if (extractKeyOtputIndexes(amount, Common::ArrayView<uint32_t>(globalIndexes.data(), globalIndexes.size()), outputs) !=
-                ExtractOutputKeysResult::SUCCESS)
+            if (extractKeyOtputIndexes(
+                amount, Common::ArrayView<uint32_t>(globalIndexes.data(), globalIndexes.size()), outputs
+            ) != ExtractOutputKeysResult::SUCCESS)
             {
                 logger(Logging::DEBUGGING) << "getRandomOutsByAmount: failed to extract key output indexes";
                 throw std::runtime_error("Invalid output index"); //TODO: make error code
@@ -1890,9 +2193,17 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
     }
 
     ExtractOutputKeysResult DatabaseBlockchainCache::extractKeyOutputs(
-            uint64_t amount, uint32_t blockIndex, Common::ArrayView<uint32_t> globalIndexes,
-            std::function<ExtractOutputKeysResult(const CachedTransactionInfo &info, PackedOutIndex index,
-                                                  uint32_t globalIndex)> callback) const
+        uint64_t amount,
+        uint32_t blockIndex,
+        Common::ArrayView<uint32_t> globalIndexes,
+        std::function<
+            ExtractOutputKeysResult(
+                const CachedTransactionInfo &info,
+                PackedOutIndex index,
+                uint32_t globalIndex
+            )
+        > callback
+    ) const
     {
         BlockchainReadBatch batch;
         for (auto it = globalIndexes.begin(); it != globalIndexes.end(); ++it)
@@ -1901,7 +2212,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         }
 
         auto result = readDatabase(batch).getKeyOutputInfo();
-        std::map<std::pair<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex>, KeyOutputInfo> sortedResult(result.begin(), result.end());
+        std::map<
+            std::pair<
+                IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex
+            >, KeyOutputInfo
+        > sortedResult(result.begin(), result.end());
         for (const auto &kv: sortedResult)
         {
             ExtendedTransactionInfo tx;
@@ -1924,11 +2239,13 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return ExtractOutputKeysResult::SUCCESS;
     }
 
-    std::vector<Crypto::Hash>
-    DatabaseBlockchainCache::getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const
+    std::vector<
+        Crypto::Hash
+    > DatabaseBlockchainCache::getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const
     {
         auto countBatch = BlockchainReadBatch().requestTransactionCountByPaymentId(paymentId);
-        uint32_t transactionsCountByPaymentId = readDatabase(countBatch).getTransactionCountByPaymentIds().at(paymentId);
+        uint32_t
+            transactionsCountByPaymentId = readDatabase(countBatch).getTransactionCountByPaymentIds().at(paymentId);
 
         BlockchainReadBatch transactionBatch;
         for (uint32_t i = 0; i < transactionsCountByPaymentId; ++i)
@@ -1947,8 +2264,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return transactionHashes;
     }
 
-    std::vector<Crypto::Hash>
-    DatabaseBlockchainCache::getBlockHashesByTimestamps(uint64_t timestampBegin, size_t secondsCount) const
+    std::vector<Crypto::Hash> DatabaseBlockchainCache::getBlockHashesByTimestamps(
+        uint64_t timestampBegin,
+        size_t secondsCount
+    ) const
     {
         std::vector<Crypto::Hash> blockHashes;
         if (secondsCount == 0)
@@ -1957,15 +2276,15 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         }
 
         BlockchainReadBatch batch;
-        for (uint64_t timestamp = timestampBegin;
-             timestamp < timestampBegin + static_cast<uint64_t>(secondsCount); ++timestamp)
+        for (uint64_t timestamp = timestampBegin; timestamp < timestampBegin + static_cast<uint64_t>(secondsCount);
+             ++timestamp)
         {
             batch.requestBlockHashesByTimestamp(timestamp);
         }
 
         auto result = readDatabase(batch);
-        for (uint64_t timestamp = timestampBegin;
-             timestamp < timestampBegin + static_cast<uint64_t>(secondsCount); ++timestamp)
+        for (uint64_t timestamp = timestampBegin; timestamp < timestampBegin + static_cast<uint64_t>(secondsCount);
+             ++timestamp)
         {
             if (result.getBlockHashesByTimestamp().count(timestamp) == 0)
             {
@@ -1980,8 +2299,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
     }
 
     std::vector<RawBlock> DatabaseBlockchainCache::getNonEmptyBlocks(
-            const uint64_t startHeight,
-            const size_t blockCount) const
+        const uint64_t startHeight,
+        const size_t blockCount
+    ) const
     {
         std::vector<RawBlock> orderedBlocks;
 
@@ -2020,7 +2340,9 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
     }
 
     std::vector<RawBlock> DatabaseBlockchainCache::getBlocksByHeight(
-            const uint64_t startHeight, uint64_t endHeight) const
+        const uint64_t startHeight,
+        uint64_t endHeight
+    ) const
     {
         auto blockBatch = BlockchainReadBatch().requestRawBlocks(startHeight, endHeight);
 
@@ -2038,8 +2360,10 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return orderedBlocks;
     }
 
-    std::unordered_map<Crypto::Hash, std::vector<uint64_t>> DatabaseBlockchainCache::getGlobalIndexes(
-            const std::vector<Crypto::Hash> transactionHashes) const
+    std::unordered_map<
+        Crypto::Hash, std::vector<uint64_t>> DatabaseBlockchainCache::getGlobalIndexes(
+        const std::vector<Crypto::Hash> transactionHashes
+    ) const
     {
         auto txBatch = BlockchainReadBatch().requestCachedTransactions(transactionHashes);
 
@@ -2047,7 +2371,8 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         auto txs = txBatch.extractResult().getCachedTransactions();
 
-        std::unordered_map<Crypto::Hash, std::vector<uint64_t>> indexes;
+        std::unordered_map<
+            Crypto::Hash, std::vector<uint64_t>> indexes;
 
         for (const auto[txHash, transaction] : txs)
         {
@@ -2057,15 +2382,12 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         return indexes;
     }
 
-    DatabaseBlockchainCache::ExtendedPushedBlockInfo
-    DatabaseBlockchainCache::getExtendedPushedBlockInfo(uint32_t blockIndex) const
+    DatabaseBlockchainCache::ExtendedPushedBlockInfo DatabaseBlockchainCache::getExtendedPushedBlockInfo(uint32_t blockIndex) const
     {
         assert(blockIndex <= getTopBlockIndex());
 
-        auto batch = BlockchainReadBatch()
-                .requestRawBlock(blockIndex)
-                .requestCachedBlock(blockIndex)
-                .requestSpentKeyImagesByBlock(blockIndex);
+        auto batch = BlockchainReadBatch().requestRawBlock(blockIndex).requestCachedBlock(blockIndex)
+                                          .requestSpentKeyImagesByBlock(blockIndex);
 
         if (blockIndex > 0)
         {
@@ -2074,17 +2396,18 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         auto dbResult = readDatabase(batch);
         const CachedBlockInfo &blockInfo = dbResult.getCachedBlocks().at(blockIndex);
-        const CachedBlockInfo &previousBlockInfo =
-                blockIndex > 0 ? dbResult.getCachedBlocks().at(blockIndex - 1) : NULL_CACHED_BLOCK_INFO;
+        const CachedBlockInfo &previousBlockInfo = blockIndex > 0
+                                                   ? dbResult.getCachedBlocks().at(blockIndex - 1)
+                                                   : NULL_CACHED_BLOCK_INFO;
 
         ExtendedPushedBlockInfo extendedInfo;
 
         extendedInfo.pushedBlockInfo.rawBlock = dbResult.getRawBlocks().at(blockIndex);
         extendedInfo.pushedBlockInfo.blockSize = blockInfo.blockSize;
         extendedInfo.pushedBlockInfo.blockDifficulty =
-                blockInfo.cumulativeDifficulty - previousBlockInfo.cumulativeDifficulty;
+            blockInfo.cumulativeDifficulty - previousBlockInfo.cumulativeDifficulty;
         extendedInfo.pushedBlockInfo.generatedCoins =
-                blockInfo.alreadyGeneratedCoins - previousBlockInfo.alreadyGeneratedCoins;
+            blockInfo.alreadyGeneratedCoins - previousBlockInfo.alreadyGeneratedCoins;
 
         const auto &spentKeyImages = dbResult.getSpentKeyImagesByBlock().at(blockIndex);
 
@@ -2143,8 +2466,14 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
 
         BlockchainWriteBatch batch;
 
-        CachedBlockInfo blockInfo{genesisBlock.getBlockHash(), genesisBlock.getBlock().timestamp, 1,
-                                  minerReward, 1, uint32_t(baseTransactionSize)};
+        CachedBlockInfo blockInfo{
+            genesisBlock.getBlockHash(),
+            genesisBlock.getBlock().timestamp,
+            1,
+            minerReward,
+            1,
+            uint32_t(baseTransactionSize)
+        };
 
         auto baseTransaction = genesisBlock.getBlock().baseTransaction;
         auto cachedBaseTransaction = CachedTransaction{std::move(baseTransaction)};
@@ -2152,7 +2481,11 @@ bool requestCachedTransactionInfos(const std::vector<PackedOutIndex>& packedOuts
         pushTransaction(cachedBaseTransaction, 0, 0, batch);
 
         batch.insertCachedBlock(blockInfo, 0, {cachedBaseTransaction.getTransactionHash()});
-        batch.insertRawBlock(0, {toBinaryArray(genesisBlock.getBlock()), {}});
+        batch.insertRawBlock(
+            0, {
+            toBinaryArray(genesisBlock.getBlock()),
+            {}}
+        );
         batch.insertClosestTimestampBlockIndex(roundToMidnight(genesisBlock.getBlock().timestamp), 0);
 
         auto res = database.write(batch);

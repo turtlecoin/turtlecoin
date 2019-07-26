@@ -40,11 +40,11 @@
 
 #if defined(WIN32)
 
-#include <crtdbg.h>
-#include <io.h>
+    #include <crtdbg.h>
+    #include <io.h>
 
 #else
-#include <unistd.h>
+    #include <unistd.h>
 #endif
 
 using Common::JsonValue;
@@ -52,7 +52,10 @@ using namespace CryptoNote;
 using namespace Logging;
 using namespace DaemonConfig;
 
-void print_genesis_tx_hex(const bool blockExplorerMode, std::shared_ptr<LoggerManager> logManager)
+void print_genesis_tx_hex(
+    const bool blockExplorerMode,
+    std::shared_ptr<LoggerManager> logManager
+)
 {
     CryptoNote::CurrencyBuilder currencyBuilder(logManager);
     currencyBuilder.isBlockexplorer(blockExplorerMode);
@@ -64,13 +67,15 @@ void print_genesis_tx_hex(const bool blockExplorerMode, std::shared_ptr<LoggerMa
     std::string transactionHex = Common::toHex(CryptoNote::toBinaryArray(transaction));
     std::cout << getProjectCLIHeader() << std::endl << std::endl
               << "Replace the current GENESIS_COINBASE_TX_HEX line in src/config/CryptoNoteConfig.h with this one:"
-              << std::endl
-              << "const char GENESIS_COINBASE_TX_HEX[] = \"" << transactionHex << "\";" << std::endl;
+              << std::endl << "const char GENESIS_COINBASE_TX_HEX[] = \"" << transactionHex << "\";" << std::endl;
 
     return;
 }
 
-JsonValue buildLoggerConfiguration(Level level, const std::string &logfile)
+JsonValue buildLoggerConfiguration(
+    Level level,
+    const std::string &logfile
+)
 {
     JsonValue loggerConfiguration(JsonValue::OBJECT);
     loggerConfiguration.insert("globalLevel", static_cast<int64_t>(level));
@@ -90,14 +95,17 @@ JsonValue buildLoggerConfiguration(Level level, const std::string &logfile)
     return loggerConfiguration;
 }
 
-int main(int argc, char *argv[])
+int main(
+    int argc,
+    char *argv[]
+)
 {
     fs::path temp = fs::path(argv[0]).filename();
     DaemonConfiguration config = initConfiguration(temp.string().c_str());
 
-#ifdef WIN32
+    #ifdef WIN32
     _CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
+    #endif
 
     const auto logManager = std::make_shared<LoggerManager>();
     LoggerRef logger(logManager, "daemon");
@@ -154,7 +162,8 @@ int main(int argc, char *argv[])
     {
         std::cout << getProjectCLIHeader() << asString(config) << std::endl;
         exit(0);
-    } else if (!config.outputFile.empty())
+    }
+    else if (!config.outputFile.empty())
     {
         try
         {
@@ -164,8 +173,8 @@ int main(int argc, char *argv[])
         }
         catch (std::exception &e)
         {
-            std::cout << getProjectCLIHeader() << "Could not save configuration to: " << config.outputFile
-                      << std::endl << e.what() << std::endl;
+            std::cout << getProjectCLIHeader() << "Could not save configuration to: " << config.outputFile << std::endl
+                      << e.what() << std::endl;
             exit(1);
         }
     }
@@ -176,12 +185,12 @@ int main(int argc, char *argv[])
         std::error_code ec;
 
         std::vector<std::string> removablePaths = {
-                config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME,
-                config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKINDEXES_FILENAME,
-                config.dataDirectory + "/" + CryptoNote::parameters::P2P_NET_DATA_FILENAME,
-                config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME + ".sqlite3",
-                config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME + ".rocksdb",
-                config.dataDirectory + "/DB"
+            config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME,
+            config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKINDEXES_FILENAME,
+            config.dataDirectory + "/" + CryptoNote::parameters::P2P_NET_DATA_FILENAME,
+            config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME + ".sqlite3",
+            config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME + ".rocksdb",
+            config.dataDirectory + "/DB"
         };
 
         for (const auto path : removablePaths)
@@ -205,7 +214,8 @@ int main(int argc, char *argv[])
         if (cfgLogFile.empty())
         {
             cfgLogFile = modulePath.replace_extension(".log");
-        } else
+        }
+        else
         {
             if (!cfgLogFile.has_parent_path())
             {
@@ -229,7 +239,8 @@ int main(int argc, char *argv[])
         try
         {
             currencyBuilder.currency();
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             std::cout << "GENESIS_COINBASE_TX_HEX constant has an incorrect value. Please launch: "
                       << CryptoNote::CRYPTONOTE_NAME << "d --print-genesis-tx" << std::endl;
@@ -239,12 +250,8 @@ int main(int argc, char *argv[])
 
         DataBaseConfig dbConfig;
         dbConfig.init(
-                config.dataDirectory,
-                config.dbThreads,
-                config.dbMaxOpenFiles,
-                config.dbWriteBufferSizeMB,
-                config.dbReadCacheSizeMB,
-                config.enableDbCompression
+            config.dataDirectory, config.dbThreads, config.dbMaxOpenFiles, config.dbWriteBufferSizeMB, config
+            .dbReadCacheSizeMB, config.enableDbCompression
         );
 
         /* If we were told to rewind the blockchain to a certain height
@@ -257,10 +264,12 @@ int main(int argc, char *argv[])
             if (config.useSqliteForLocalCaches)
             {
                 mainChainStorage = createSwappedMainChainStorageSqlite(config.dataDirectory, currency);
-            } else if (config.useRocksdbForLocalCaches)
+            }
+            else if (config.useRocksdbForLocalCaches)
             {
                 mainChainStorage = createSwappedMainChainStorageRocksdb(config.dataDirectory, currency, dbConfig);
-            } else
+            }
+            else
             {
                 mainChainStorage = createSwappedMainChainStorage(config.dataDirectory, currency);
             }
@@ -283,7 +292,8 @@ int main(int argc, char *argv[])
                     checkpoints.addCheckpoint(cp.index, cp.blockId);
                 }
                 logger(INFO) << "Loaded " << CryptoNote::CHECKPOINTS.size() << " default checkpoints";
-            } else
+            }
+            else
             {
                 bool results = checkpoints.loadCheckpointsFromFile(config.checkPoints);
                 if (!results)
@@ -294,10 +304,11 @@ int main(int argc, char *argv[])
         }
 
         NetNodeConfig netNodeConfig;
-        netNodeConfig.init(config.p2pInterface, config.p2pPort, config.p2pExternalPort, config.localIp,
-                           config.hideMyPort, config.dataDirectory, config.peers,
-                           config.exclusiveNodes, config.priorityNodes,
-                           config.seedNodes, config.p2pResetPeerstate);
+        netNodeConfig.init(
+            config.p2pInterface, config.p2pPort, config.p2pExternalPort, config.localIp, config.hideMyPort, config
+            .dataDirectory, config.peers, config.exclusiveNodes, config.priorityNodes, config.seedNodes, config
+                .p2pResetPeerstate
+        );
 
         if (!Tools::create_directories_if_necessary(dbConfig.getDataDir()))
         {
@@ -306,8 +317,12 @@ int main(int argc, char *argv[])
 
         RocksDBWrapper database(logManager);
         database.init(dbConfig);
-        Tools::ScopeExit dbShutdownOnExit([&database]()
-                                          { database.shutdown(); });
+        Tools::ScopeExit dbShutdownOnExit(
+            [&database]()
+            {
+                database.shutdown();
+            }
+        );
 
         if (!DatabaseBlockchainCache::checkDBSchemeVersion(database, logManager))
         {
@@ -327,22 +342,20 @@ int main(int argc, char *argv[])
         if (config.useSqliteForLocalCaches)
         {
             tmainChainStorage = createSwappedMainChainStorageSqlite(config.dataDirectory, currency);
-        } else if (config.useRocksdbForLocalCaches)
+        }
+        else if (config.useRocksdbForLocalCaches)
         {
             tmainChainStorage = createSwappedMainChainStorageRocksdb(config.dataDirectory, currency, dbConfig);
-        } else
+        }
+        else
         {
             tmainChainStorage = createSwappedMainChainStorage(config.dataDirectory, currency);
         }
 
         CryptoNote::Core ccore(
-                currency,
-                logManager,
-                std::move(checkpoints),
-                dispatcher,
-                std::unique_ptr<IBlockchainCacheFactory>(new DatabaseBlockchainCacheFactory(database, logger.getLogger())),
-                std::move(tmainChainStorage)
-        );
+            currency, logManager, std::move(checkpoints), dispatcher, std::unique_ptr<IBlockchainCacheFactory>(
+            new DatabaseBlockchainCacheFactory(
+                database, logger.getLogger())), std::move(tmainChainStorage));
 
         ccore.load();
         logger(INFO) << "Core initialized OK";
@@ -375,11 +388,13 @@ int main(int argc, char *argv[])
         rpcServer.start(config.rpcInterface, config.rpcPort);
         logger(INFO) << "Core rpc server started ok";
 
-        Tools::SignalHandler::install([&dch]
-                                      {
-                                          dch.exit({});
-                                          dch.stop_handling();
-                                      });
+        Tools::SignalHandler::install(
+            [&dch]
+            {
+                dch.exit({});
+                dch.stop_handling();
+            }
+        );
 
         logger(INFO) << "Starting p2p net loop...";
         p2psrv.run();

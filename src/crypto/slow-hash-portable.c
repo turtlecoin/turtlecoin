@@ -9,9 +9,9 @@
    for the CryptoNight hashing algorithm */
 
 #if !(!defined NO_AES && (defined(__arm__) || defined(__aarch64__))) && !(!defined NO_AES && (defined(__x86_64__) || (defined(_MSC_VER) && defined(_WIN64))))
-#pragma message ("info: Using slow-hash-portable.c")
+    #pragma message ("info: Using slow-hash-portable.c")
 
-#include "slow-hash-common.h"
+    #include "slow-hash-common.h"
 
 void slow_hash_allocate_state(void)
 {
@@ -25,17 +25,17 @@ void slow_hash_free_state(void)
     return;
 }
 
-#if defined(__GNUC__)
-#define RDATA_ALIGN16 __attribute__ ((aligned(16)))
-#define STATIC static
-#define INLINE inline
-#else /* defined(__GNUC__) */
-#define RDATA_ALIGN16
-#define STATIC static
-#define INLINE
-#endif /* defined(__GNUC__) */
+    #if defined(__GNUC__)
+        #define RDATA_ALIGN16 __attribute__ ((aligned(16)))
+        #define STATIC static
+        #define INLINE inline
+    #else /* defined(__GNUC__) */
+        #define RDATA_ALIGN16
+        #define STATIC static
+        #define INLINE
+    #endif /* defined(__GNUC__) */
 
-#define U64(x) ((uint64_t *) (x))
+    #define U64(x) ((uint64_t *) (x))
 
 static void (*const extra_hashes[4])(const void *, size_t, char *) =
 {
@@ -130,12 +130,12 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
         hash_extra_blake, hash_extra_groestl, hash_extra_jh, hash_extra_skein
     };
 
-#ifndef FORCE_USE_HEAP
+        #ifndef FORCE_USE_HEAP
     uint8_t long_state[page_size];
-#else /* FORCE_USE_HEAP */
-#pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN slow-hash-portable.c")
+        #else /* FORCE_USE_HEAP */
+            #pragma message ("warning: ACTIVATING FORCE_USE_HEAP IN slow-hash-portable.c")
     uint8_t *long_state = (uint8_t *)malloc(page_size);
-#endif /* FORCE_USE_HEAP */
+        #endif /* FORCE_USE_HEAP */
 
     if (prehashed)
     {
@@ -169,8 +169,8 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
 
     for(i = 0; i < aes_rounds; i++)
     {
-#define MASK(div) ((uint32_t)(((page_size / AES_BLOCK_SIZE) / (div) - 1) << 4))
-#define state_index(x,div) ((*(uint32_t *) x) & MASK(div))
+        #define MASK(div) ((uint32_t)(((page_size / AES_BLOCK_SIZE) / (div) - 1) << 4))
+        #define state_index(x,div) ((*(uint32_t *) x) & MASK(div))
 
       // Iteration 1
       j = state_index(a,lightFlag);
@@ -223,9 +223,9 @@ void cn_slow_hash(const void *data, size_t length, char *hash, int light, int va
     extra_hashes[state.hs.b[0] & 3](&state, 200, hash);
     oaes_free((OAES_CTX **) &aes_ctx);
 
-#ifdef FORCE_USE_HEAP
+        #ifdef FORCE_USE_HEAP
     free(long_state);
-#endif /* FORCE_USE_HEAP */
+        #endif /* FORCE_USE_HEAP */
 }
 
 #endif

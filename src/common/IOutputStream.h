@@ -13,11 +13,15 @@ namespace Common
 
     class IOutputStream
     {
-    public:
-        virtual ~IOutputStream()
-        {}
+        public:
+            virtual ~IOutputStream()
+            {
+            }
 
-        virtual uint64_t writeSome(const void *data, uint64_t size) = 0;
+            virtual uint64_t writeSome(
+                const void *data,
+                uint64_t size
+            ) = 0;
     };
 
 }

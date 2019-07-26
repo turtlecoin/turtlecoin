@@ -23,8 +23,9 @@ namespace ZedUtilities
 {
 
     void confirmPassword(
-            const std::shared_ptr<WalletBackend> walletBackend,
-            const std::string msg)
+        const std::shared_ptr<WalletBackend> walletBackend,
+        const std::string msg
+    )
     {
         const std::string currentPassword = walletBackend->getWalletPassword();
 
@@ -48,14 +49,9 @@ namespace ZedUtilities
         {
             std::cout << InformationMsg("What height would you like to begin ")
                       << InformationMsg("scanning your wallet from?") << "\n\n"
-                      << "This can greatly speed up the initial wallet "
-                      << "scanning process."
-                      << "\n\n"
-                      << "If you do not know the exact height, "
-                      << "err on the side of caution so transactions do not "
-                      << "get missed."
-                      << "\n\n"
-                      << InformationMsg("Hit enter for the sub-optimal default ")
+                      << "This can greatly speed up the initial wallet " << "scanning process." << "\n\n"
+                      << "If you do not know the exact height, " << "err on the side of caution so transactions do not "
+                      << "get missed." << "\n\n" << InformationMsg("Hit enter for the sub-optimal default ")
                       << InformationMsg("of zero: ");
 
             std::string stringHeight;
@@ -80,8 +76,8 @@ namespace ZedUtilities
             }
             catch (const std::invalid_argument &)
             {
-                std::cout << WarningMsg("Failed to parse height - input is not ")
-                          << WarningMsg("a number!") << std::endl << std::endl;
+                std::cout << WarningMsg("Failed to parse height - input is not ") << WarningMsg("a number!")
+                          << std::endl << std::endl;
             }
         }
     }

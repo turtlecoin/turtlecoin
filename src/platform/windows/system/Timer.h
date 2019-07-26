@@ -14,26 +14,27 @@ namespace System
 
     class Timer
     {
-    public:
-        Timer();
+        public:
+            Timer();
 
-        explicit Timer(Dispatcher &dispatcher);
+            explicit Timer(Dispatcher &dispatcher);
 
-        Timer(const Timer &) = delete;
+            Timer(const Timer &) = delete;
 
-        Timer(Timer &&other);
+            Timer(Timer &&other);
 
-        ~Timer();
+            ~Timer();
 
-        Timer &operator=(const Timer &) = delete;
+            Timer &operator=(const Timer &) = delete;
 
-        Timer &operator=(Timer &&other);
+            Timer &operator=(Timer &&other);
 
-        void sleep(std::chrono::nanoseconds duration);
+            void sleep(std::chrono::nanoseconds duration);
 
-    private:
-        Dispatcher *dispatcher;
-        void *context;
+        private:
+            Dispatcher *dispatcher;
+
+            void *context;
     };
 
 }

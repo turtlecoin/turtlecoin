@@ -16,13 +16,16 @@ namespace CryptoNote
 
     class IKeyValueStorage
     {
-    public:
-        virtual ~IKeyValueStorage()
-        {
-        }
+        public:
+            virtual ~IKeyValueStorage()
+            {
+            }
 
-        virtual bool insert(const WriteBatch &batch, bool sync = false) = 0;
+            virtual bool insert(
+                const WriteBatch &batch,
+                bool sync = false
+            ) = 0;
 
-        virtual void read(const ReadBatch &batch) const = 0;
+            virtual void read(const ReadBatch &batch) const = 0;
     };
 }

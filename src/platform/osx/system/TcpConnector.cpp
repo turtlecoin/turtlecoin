@@ -37,7 +37,9 @@ namespace System
     {
     }
 
-    TcpConnector::TcpConnector(Dispatcher &dispatcher) : dispatcher(&dispatcher), context(nullptr)
+    TcpConnector::TcpConnector(Dispatcher &dispatcher)
+        : dispatcher(&dispatcher),
+          context(nullptr)
     {
     }
 
@@ -69,7 +71,10 @@ namespace System
         return *this;
     }
 
-    TcpConnection TcpConnector::connect(const Ipv4Address &address, uint16_t port)
+    TcpConnection TcpConnector::connect(
+        const Ipv4Address &address,
+        uint16_t port
+    )
     {
         assert(dispatcher != nullptr);
         assert(context == nullptr);
@@ -83,7 +88,8 @@ namespace System
         if (connection == -1)
         {
             message = "socket failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             sockaddr_in bindAddress;
             bindAddress.sin_family = AF_INET;
@@ -92,13 +98,15 @@ namespace System
             if (bind(connection, reinterpret_cast<sockaddr *>(&bindAddress), sizeof bindAddress) != 0)
             {
                 message = "bind failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 int flags = fcntl(connection, F_GETFL, 0);
                 if (flags == -1 || fcntl(connection, F_SETFL, flags | O_NONBLOCK) == -1)
                 {
                     message = "fcntl failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     sockaddr_in addressData;
                     addressData.sin_family = AF_INET;
@@ -119,7 +127,8 @@ namespace System
                             if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
                             {
                                 message = "kevent failed, " + lastErrorMessage();
-                            } else
+                            }
+                            else
                             {
                                 context = &connectorContext;
                                 dispatcher->getCurrentContext()->interruptProcedure = [&]
@@ -132,7 +141,7 @@ namespace System
                                         if (close(connectorContext->connection) == -1)
                                         {
                                             throw std::runtime_error(
-                                                    "TcpListener::stop, close failed, " + lastErrorMessage());
+                                                "TcpListener::stop, close failed, " + lastErrorMessage());
                                         }
 
                                         dispatcher->pushContext(connectorContext->context);
@@ -158,7 +167,8 @@ namespace System
                                 if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
                                 {
                                     message = "kevent failed, " + lastErrorMessage();
-                                } else
+                                }
+                                else
                                 {
                                     int retval = -1;
                                     socklen_t retValLen = sizeof(retval);
@@ -166,12 +176,14 @@ namespace System
                                     if (s == -1)
                                     {
                                         message = "getsockopt failed, " + lastErrorMessage();
-                                    } else
+                                    }
+                                    else
                                     {
                                         if (retval != 0)
                                         {
                                             message = "getsockopt failed, " + lastErrorMessage();
-                                        } else
+                                        }
+                                        else
                                         {
                                             return TcpConnection(*dispatcher, connection);
                                         }
@@ -179,7 +191,8 @@ namespace System
                                 }
                             }
                         }
-                    } else
+                    }
+                    else
                     {
                         return TcpConnection(*dispatcher, connection);
                     }
@@ -188,7 +201,8 @@ namespace System
 
             int result = close(connection);
             if (result)
-            {}
+            {
+            }
             assert(result != -1);;
         }
 

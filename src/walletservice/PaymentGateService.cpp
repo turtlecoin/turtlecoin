@@ -18,15 +18,15 @@
 #include "wallet/WalletGreen.h"
 
 #ifdef ERROR
-#undef ERROR
+    #undef ERROR
 #endif
 
 #ifdef _WIN32 //why is this still here?
 
-#include <direct.h>
+    #include <direct.h>
 
 #else
-#include <unistd.h>
+    #include <unistd.h>
 #endif
 
 using namespace PaymentService;
@@ -44,20 +44,23 @@ void stopSignalHandler(PaymentGateService *pg)
     pg->stop();
 }
 
-PaymentGateService::PaymentGateService() :
-        dispatcher(nullptr),
-        stopEvent(nullptr),
-        config(),
-        service(nullptr),
-        fileLogger(Logging::TRACE),
-        consoleLogger(Logging::INFO)
+PaymentGateService::PaymentGateService()
+    : dispatcher(nullptr),
+      stopEvent(nullptr),
+      config(),
+      service(nullptr),
+      fileLogger(Logging::TRACE),
+      consoleLogger(Logging::INFO)
 {
     currencyBuilder = std::make_shared<CryptoNote::CurrencyBuilder>(logger);
     consoleLogger.setPattern("%D %T %L ");
     fileLogger.setPattern("%D %T %L ");
 }
 
-bool PaymentGateService::init(int argc, char **argv)
+bool PaymentGateService::init(
+    int argc,
+    char **argv
+)
 {
     if (!config.init(argc, argv))
     {
@@ -91,13 +94,13 @@ bool PaymentGateService::init(int argc, char **argv)
 WalletConfiguration PaymentGateService::getWalletConfig() const
 {
     return WalletConfiguration{
-            config.serviceConfig.containerFile,
-            config.serviceConfig.containerPassword,
-            config.serviceConfig.syncFromZero,
-            config.serviceConfig.secretViewKey,
-            config.serviceConfig.secretSpendKey,
-            config.serviceConfig.mnemonicSeed,
-            config.serviceConfig.scanHeight,
+        config.serviceConfig.containerFile,
+        config.serviceConfig.containerPassword,
+        config.serviceConfig.syncFromZero,
+        config.serviceConfig.secretViewKey,
+        config.serviceConfig.secretSpendKey,
+        config.serviceConfig.mnemonicSeed,
+        config.serviceConfig.scanHeight,
     };
 }
 
@@ -133,13 +136,15 @@ void PaymentGateService::stop()
 
     if (dispatcher != nullptr)
     {
-        dispatcher->remoteSpawn([&]()
-                                {
-                                    if (stopEvent != nullptr)
-                                    {
-                                        stopEvent->set();
-                                    }
-                                });
+        dispatcher->remoteSpawn(
+            [&]()
+            {
+                if (stopEvent != nullptr)
+                {
+                    stopEvent->set();
+                }
+            }
+        );
     }
 }
 
@@ -149,34 +154,37 @@ void PaymentGateService::runRpcProxy(Logging::LoggerRef &log)
     CryptoNote::Currency currency = currencyBuilder->currency();
 
     std::unique_ptr<CryptoNote::INode> node(
-            PaymentService::NodeFactory::createNode(
-                    config.serviceConfig.daemonAddress,
-                    config.serviceConfig.daemonPort,
-                    config.serviceConfig.initTimeout,
-                    log.getLogger()));
+        PaymentService::NodeFactory::createNode(
+            config.serviceConfig.daemonAddress, config.serviceConfig.daemonPort, config.serviceConfig.initTimeout, log
+            .getLogger()));
 
     runWalletService(currency, *node);
 }
 
-void PaymentGateService::runWalletService(const CryptoNote::Currency &currency, CryptoNote::INode &node)
+void PaymentGateService::runWalletService(
+    const CryptoNote::Currency &currency,
+    CryptoNote::INode &node
+)
 {
     PaymentService::WalletConfiguration walletConfiguration{
-            config.serviceConfig.containerFile,
-            config.serviceConfig.containerPassword,
-            config.serviceConfig.syncFromZero
+        config.serviceConfig.containerFile,
+        config.serviceConfig.containerPassword,
+        config.serviceConfig.syncFromZero
     };
 
     std::unique_ptr<CryptoNote::WalletGreen> wallet(new CryptoNote::WalletGreen(*dispatcher, currency, node, logger));
 
-    service = new PaymentService::WalletService(currency, *dispatcher, node, *wallet, *wallet, walletConfiguration, logger);
+    service =
+        new PaymentService::WalletService(currency, *dispatcher, node, *wallet, *wallet, walletConfiguration, logger);
     std::unique_ptr<PaymentService::WalletService> serviceGuard(service);
     try
     {
         service->init();
-    } catch (std::exception &e)
+    }
+    catch (std::exception &e)
     {
         Logging::LoggerRef(logger, "run")(Logging::ERROR, Logging::BRIGHT_RED)
-                << "Failed to init walletService reason: " << e.what();
+            << "Failed to init walletService reason: " << e.what();
         return;
     }
 
@@ -198,12 +206,13 @@ void PaymentGateService::runWalletService(const CryptoNote::Currency &currency, 
     rpcServer.start(config.serviceConfig.bindAddress, config.serviceConfig.bindPort);
 
     Logging::LoggerRef(logger, "PaymentGateService")(Logging::INFO, Logging::BRIGHT_WHITE)
-            << "JSON-RPC server stopped, stopping wallet service...";
+        << "JSON-RPC server stopped, stopping wallet service...";
 
     try
     {
         service->saveWallet();
-    } catch (std::exception &ex)
+    }
+    catch (std::exception &ex)
     {
         Logging::LoggerRef(logger, "saveWallet")(Logging::WARNING, Logging::YELLOW) << "Couldn't save container: "
                                                                                     << ex.what();

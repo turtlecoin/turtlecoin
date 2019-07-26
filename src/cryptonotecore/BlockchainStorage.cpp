@@ -10,18 +10,19 @@
 
 using namespace CryptoNote;
 
-BlockchainStorage::BlockchainStorage(uint32_t reserveSize) :
-        internalStorage(new MemoryBlockchainStorage(reserveSize))
+BlockchainStorage::BlockchainStorage(uint32_t reserveSize) : internalStorage(new MemoryBlockchainStorage(reserveSize))
 {
 }
 
-BlockchainStorage::BlockchainStorage(const std::string &indexFileName, const std::string &dataFileName) :
-        internalStorage(new SwappedBlockchainStorage(indexFileName, dataFileName))
+BlockchainStorage::BlockchainStorage(
+    const std::string &indexFileName,
+    const std::string &dataFileName
+) : internalStorage(new SwappedBlockchainStorage(indexFileName, dataFileName))
 {
 }
 
-BlockchainStorage::BlockchainStorage(std::unique_ptr<IBlockchainStorageInternal> storage) :
-        internalStorage(std::move(storage))
+BlockchainStorage::BlockchainStorage(std::unique_ptr<IBlockchainStorageInternal> storage) : internalStorage(
+    std::move(storage))
 {
 }
 

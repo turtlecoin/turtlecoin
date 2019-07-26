@@ -17,8 +17,12 @@ namespace Logging
     {
     }
 
-    void LoggerManager::operator()(const std::string &category, Level level, boost::posix_time::ptime time,
-                                   const std::string &body)
+    void LoggerManager::operator()(
+        const std::string &category,
+        Level level,
+        boost::posix_time::ptime time,
+        const std::string &body
+    )
     {
         std::unique_lock<std::mutex> lock(reconfigureLock);
         LoggerGroup::operator()(category, level, time, body);
@@ -36,11 +40,13 @@ namespace Logging
             if (levelVal.isInteger())
             {
                 globalLevel = static_cast<Level>(levelVal.getInteger());
-            } else
+            }
+            else
             {
                 throw std::runtime_error("parameter globalLevel has wrong type");
             }
-        } else
+        }
+        else
         {
             globalLevel = TRACE;
         }
@@ -60,7 +66,8 @@ namespace Logging
                         globalDisabledCategories.push_back(categoryVal.getString());
                     }
                 }
-            } else
+            }
+            else
             {
                 throw std::runtime_error("parameter globalDisabledCategories has wrong type");
             }
@@ -92,13 +99,15 @@ namespace Logging
                     if (type == "console")
                     {
                         logger.reset(new ConsoleLogger(level));
-                    } else if (type == "file")
+                    }
+                    else if (type == "file")
                     {
                         std::string filename = loggerConfiguration("filename").getString();
                         auto fileLogger = new FileLogger(level);
                         fileLogger->init(filename);
                         logger.reset(fileLogger);
-                    } else
+                    }
+                    else
                     {
                         throw std::runtime_error("Unknown logger type: " + type);
                     }
@@ -126,11 +135,13 @@ namespace Logging
                     loggers.emplace_back(std::move(logger));
                     addLogger(*loggers.back());
                 }
-            } else
+            }
+            else
             {
                 throw std::runtime_error("loggers parameter has wrong type");
             }
-        } else
+        }
+        else
         {
             throw std::runtime_error("loggers parameter missing");
         }

@@ -13,13 +13,19 @@ namespace Random
     static thread_local std::mt19937 gen(device());
 
     /* The distribution to get numbers for - in this case, uint8_t */
-    static std::uniform_int_distribution<int> distribution{0, std::numeric_limits<uint8_t>::max()};
+    static std::uniform_int_distribution<int> distribution{
+        0,
+        std::numeric_limits<uint8_t>::max()
+    };
 
     /**
      * Generate n random bytes (uint8_t), and place them in *result. Result should be large
      * enough to contain the bytes.
      */
-    inline void randomBytes(size_t n, uint8_t *result)
+    inline void randomBytes(
+        size_t n,
+        uint8_t *result
+    )
     {
         for (size_t i = 0; i < n; i++)
         {
@@ -52,7 +58,8 @@ namespace Random
     T randomValue()
     {
         std::uniform_int_distribution<T> distribution{
-                std::numeric_limits<T>::min(), std::numeric_limits<T>::max()
+            std::numeric_limits<T>::min(),
+            std::numeric_limits<T>::max()
         };
 
         return distribution(gen);
@@ -66,9 +73,15 @@ namespace Random
      * Note that min must be <= max, or undefined behaviour will occur.
      */
     template<typename T>
-    T randomValue(T min, T max)
+    T randomValue(
+        T min,
+        T max
+    )
     {
-        std::uniform_int_distribution<T> distribution{min, max};
+        std::uniform_int_distribution<T> distribution{
+            min,
+            max
+        };
         return distribution(gen);
     }
 

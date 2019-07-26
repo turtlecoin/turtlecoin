@@ -14,32 +14,43 @@ namespace CryptoNote
 
     class DataBaseConfig
     {
-    public:
-        DataBaseConfig();
+        public:
+            DataBaseConfig();
 
-        bool init(
-                const std::string dataDirectory, const int backgroundThreads, const int maxOpenFiles,
-                const int writeBufferSizeMB, const int readCacheSizeMB, const bool enableDbCompression);
+            bool init(
+                const std::string dataDirectory,
+                const int backgroundThreads,
+                const int maxOpenFiles,
+                const int writeBufferSizeMB,
+                const int readCacheSizeMB,
+                const bool enableDbCompression
+            );
 
-        bool isConfigFolderDefaulted() const;
+            bool isConfigFolderDefaulted() const;
 
-        std::string getDataDir() const;
+            std::string getDataDir() const;
 
-        uint16_t getBackgroundThreadsCount() const;
+            uint16_t getBackgroundThreadsCount() const;
 
-        uint32_t getMaxOpenFiles() const;
+            uint32_t getMaxOpenFiles() const;
 
-        uint64_t getWriteBufferSize() const; //Bytes
-        uint64_t getReadCacheSize() const; //Bytes
-        bool getCompressionEnabled() const;
+            uint64_t getWriteBufferSize() const; //Bytes
+            uint64_t getReadCacheSize() const; //Bytes
+            bool getCompressionEnabled() const;
 
-    private:
-        bool configFolderDefaulted;
-        std::string dataDir;
-        uint16_t backgroundThreadsCount;
-        uint32_t maxOpenFiles;
-        uint64_t writeBufferSize;
-        uint64_t readCacheSize;
-        bool compressionEnabled;
+        private:
+            bool configFolderDefaulted;
+
+            std::string dataDir;
+
+            uint16_t backgroundThreadsCount;
+
+            uint32_t maxOpenFiles;
+
+            uint64_t writeBufferSize;
+
+            uint64_t readCacheSize;
+
+            bool compressionEnabled;
     };
 } //namespace CryptoNote

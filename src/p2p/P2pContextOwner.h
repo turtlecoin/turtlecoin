@@ -15,26 +15,30 @@ namespace CryptoNote
 
     class P2pContextOwner
     {
-    public:
+        public:
 
-        typedef std::list<std::unique_ptr<P2pContext>> ContextList;
+            typedef std::list<std::unique_ptr<P2pContext>> ContextList;
 
-        P2pContextOwner(P2pContext *ctx, ContextList &contextList);
+            P2pContextOwner(
+                P2pContext *ctx,
+                ContextList &contextList
+            );
 
-        P2pContextOwner(P2pContextOwner &&other);
+            P2pContextOwner(P2pContextOwner &&other);
 
-        P2pContextOwner(const P2pContextOwner &other) = delete;
+            P2pContextOwner(const P2pContextOwner &other) = delete;
 
-        ~P2pContextOwner();
+            ~P2pContextOwner();
 
-        P2pContext &get();
+            P2pContext &get();
 
-        P2pContext *operator->();
+            P2pContext *operator->();
 
-    private:
+        private:
 
-        ContextList &contextList;
-        ContextList::iterator contextIterator;
+            ContextList &contextList;
+
+            ContextList::iterator contextIterator;
     };
 
 }

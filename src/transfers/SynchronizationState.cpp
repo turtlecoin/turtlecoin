@@ -24,7 +24,9 @@ namespace CryptoNote
         uint32_t sz = std::min(static_cast<uint32_t>(m_blockchain.size()), localHeight + 1);
 
         if (!sz)
+        {
             return history;
+        }
 
         uint32_t current_back_offset = 1;
         bool genesis_included = false;
@@ -33,11 +35,14 @@ namespace CryptoNote
         {
             history.push_back(m_blockchain[sz - current_back_offset]);
             if (sz - current_back_offset == 0)
+            {
                 genesis_included = true;
+            }
             if (i < 10)
             {
                 ++current_back_offset;
-            } else
+            }
+            else
             {
                 current_back_offset += current_multiplier *= 2;
             }
@@ -56,7 +61,12 @@ namespace CryptoNote
     {
         assert(interval.startHeight <= m_blockchain.size());
 
-        CheckResult result = {false, 0, false, 0};
+        CheckResult result = {
+            false,
+            0,
+            false,
+            0
+        };
 
         uint32_t intervalEnd = interval.startHeight + static_cast<uint32_t>(interval.blocks.size());
         uint32_t iterationEnd = std::min(static_cast<uint32_t>(m_blockchain.size()), intervalEnd);
@@ -93,15 +103,22 @@ namespace CryptoNote
         m_blockchain.resize(height);
     }
 
-    void SynchronizationState::addBlocks(const Crypto::Hash *blockHashes, uint32_t height, uint32_t count)
+    void SynchronizationState::addBlocks(
+        const Crypto::Hash *blockHashes,
+        uint32_t height,
+        uint32_t count
+    )
     {
         assert(blockHashes);
         auto size = m_blockchain.size();
         if (size)
-        {}
+        {
+        }
         // Dummy fix for simplewallet or walletd when sync
         if (height == 0)
+        {
             height = 1;
+        }
         assert(size == height);
         m_blockchain.insert(m_blockchain.end(), blockHashes, blockHashes + count);
     }
@@ -130,7 +147,10 @@ namespace CryptoNote
         serialize(s, "state");
     }
 
-    CryptoNote::ISerializer &SynchronizationState::serialize(CryptoNote::ISerializer &s, const std::string &name)
+    CryptoNote::ISerializer &SynchronizationState::serialize(
+        CryptoNote::ISerializer &s,
+        const std::string &name
+    )
     {
         s.beginObject(name);
         s(m_blockchain, "blockchain");

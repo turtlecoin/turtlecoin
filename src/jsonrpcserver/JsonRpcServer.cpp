@@ -27,24 +27,33 @@
 namespace CryptoNote
 {
 
-    JsonRpcServer::JsonRpcServer(System::Dispatcher &sys, System::Event &stopEvent,
-                                 std::shared_ptr<Logging::ILogger> loggerGroup,
-                                 PaymentService::ConfigurationManager &config) :
-            HttpServer(sys, loggerGroup),
-            stopEvent(stopEvent),
-            logger(loggerGroup, "JsonRpcServer"),
-            config(config)
+    JsonRpcServer::JsonRpcServer(
+        System::Dispatcher &sys,
+        System::Event &stopEvent,
+        std::shared_ptr<Logging::ILogger> loggerGroup,
+        PaymentService::ConfigurationManager &config
+    )
+        : HttpServer(sys, loggerGroup),
+          stopEvent(stopEvent),
+          logger(loggerGroup, "JsonRpcServer"),
+          config(config)
     {
     }
 
-    void JsonRpcServer::start(const std::string &bindAddress, uint16_t bindPort)
+    void JsonRpcServer::start(
+        const std::string &bindAddress,
+        uint16_t bindPort
+    )
     {
         HttpServer::start(bindAddress, bindPort);
         stopEvent.wait();
         HttpServer::stop();
     }
 
-    void JsonRpcServer::processRequest(const CryptoNote::HttpRequest &req, CryptoNote::HttpResponse &resp)
+    void JsonRpcServer::processRequest(
+        const CryptoNote::HttpRequest &req,
+        CryptoNote::HttpResponse &resp
+    )
     {
         try
         {
@@ -59,7 +68,8 @@ namespace CryptoNote
                 try
                 {
                     jsonInputStream >> jsonRpcRequest;
-                } catch (std::runtime_error &)
+                }
+                catch (std::runtime_error &)
                 {
                     logger(Logging::DEBUGGING) << "Couldn't parse request: \"" << req.getBody() << "\"";
                     makeJsonParsingErrorResponse(jsonRpcResponse);
@@ -81,20 +91,25 @@ namespace CryptoNote
                 resp.setStatus(CryptoNote::HttpResponse::STATUS_200);
                 resp.setBody(jsonOutputStream.str());
 
-            } else
+            }
+            else
             {
                 logger(Logging::WARNING) << "Requested url \"" << req.getUrl() << "\" is not found";
                 resp.setStatus(CryptoNote::HttpResponse::STATUS_404);
                 return;
             }
-        } catch (std::exception &e)
+        }
+        catch (std::exception &e)
         {
             logger(Logging::WARNING) << "Error while processing http request: " << e.what();
             resp.setStatus(CryptoNote::HttpResponse::STATUS_500);
         }
     }
 
-    void JsonRpcServer::prepareJsonResponse(const Common::JsonValue &req, Common::JsonValue &resp)
+    void JsonRpcServer::prepareJsonResponse(
+        const Common::JsonValue &req,
+        Common::JsonValue &resp
+    )
     {
         using Common::JsonValue;
 
@@ -106,7 +121,10 @@ namespace CryptoNote
         resp.insert("jsonrpc", "2.0");
     }
 
-    void JsonRpcServer::makeErrorResponse(const std::error_code &ec, Common::JsonValue &resp)
+    void JsonRpcServer::makeErrorResponse(
+        const std::error_code &ec,
+        Common::JsonValue &resp
+    )
     {
         using Common::JsonValue;
 
@@ -130,7 +148,11 @@ namespace CryptoNote
         resp.insert("error", error);
     }
 
-    void JsonRpcServer::makeGenericErrorReponse(Common::JsonValue &resp, const char *what, int errorCode)
+    void JsonRpcServer::makeGenericErrorReponse(
+        Common::JsonValue &resp,
+        const char *what,
+        int errorCode
+    )
     {
         using Common::JsonValue;
 
@@ -143,7 +165,8 @@ namespace CryptoNote
         if (what)
         {
             msg = what;
-        } else
+        }
+        else
         {
             msg = "Unknown application error";
         }
@@ -165,7 +188,8 @@ namespace CryptoNote
         JsonValue error(JsonValue::OBJECT);
 
         JsonValue code;
-        code = static_cast<int64_t>(CryptoNote::JsonRpc::errMethodNotFound); //ambigous declaration of JsonValue::operator= (between int and JsonValue)
+        code =
+            static_cast<int64_t>(CryptoNote::JsonRpc::errMethodNotFound); //ambigous declaration of JsonValue::operator= (between int and JsonValue)
 
         JsonValue message;
         message = "Method not found";
@@ -194,7 +218,10 @@ namespace CryptoNote
         resp.insert("error", error);
     }
 
-    void JsonRpcServer::fillJsonResponse(const Common::JsonValue &v, Common::JsonValue &resp)
+    void JsonRpcServer::fillJsonResponse(
+        const Common::JsonValue &v,
+        Common::JsonValue &resp
+    )
     {
         resp.insert("result", v);
     }
@@ -209,7 +236,8 @@ namespace CryptoNote
 
         JsonValue error(JsonValue::OBJECT);
         JsonValue code;
-        code = static_cast<int64_t>(CryptoNote::JsonRpc::errParseError); //ambigous declaration of JsonValue::operator= (between int and JsonValue)
+        code =
+            static_cast<int64_t>(CryptoNote::JsonRpc::errParseError); //ambigous declaration of JsonValue::operator= (between int and JsonValue)
 
         JsonValue message = "Parse error";
 

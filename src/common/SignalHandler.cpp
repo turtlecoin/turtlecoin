@@ -9,18 +9,18 @@
 #include <iostream>
 
 #ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    #ifndef WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
+    #endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#include <Windows.h>
+    #include <Windows.h>
 
 #else
-#include <signal.h>
-#include <cstring>
+    #include <signal.h>
+    #include <cstring>
 #endif
 
 namespace
@@ -43,8 +43,7 @@ namespace
         }
     }
 
-
-#if defined(WIN32)
+    #if defined(WIN32)
 
     BOOL WINAPI winHandler(DWORD type)
     {
@@ -52,7 +51,8 @@ namespace
         {
             handleSignal();
             return TRUE;
-        } else
+        }
+        else
         {
             std::cerr << "Got control signal " << type << ". Exiting without saving...";
             return FALSE;
@@ -60,29 +60,28 @@ namespace
         return TRUE;
     }
 
-#else
+    #else
 
     void posixHandler(int /*type*/) {
       handleSignal();
     }
-#endif
+    #endif
 
 }
-
 
 namespace Tools
 {
 
     bool SignalHandler::install(std::function<void(void)> t)
     {
-#if defined(WIN32)
+        #if defined(WIN32)
         bool r = TRUE == ::SetConsoleCtrlHandler(&winHandler, TRUE);
         if (r)
         {
             m_handler = t;
         }
         return r;
-#else
+        #else
         struct sigaction newMask;
         std::memset(&newMask, 0, sizeof(struct sigaction));
         newMask.sa_handler = posixHandler;
@@ -102,6 +101,6 @@ namespace Tools
 
         m_handler = t;
         return true;
-#endif
+        #endif
     }
 }

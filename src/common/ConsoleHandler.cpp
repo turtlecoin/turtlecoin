@@ -9,15 +9,15 @@
 #include <sstream>
 
 #ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#include <Windows.h>
+    #include <Windows.h>
 
 #else
-#include <unistd.h>
-#include <stdio.h>
+    #include <unistd.h>
+    #include <stdio.h>
 #endif
 
 #include <boost/algorithm/string.hpp>
@@ -82,9 +82,9 @@ namespace Common
 
         m_stop = true;
         m_queue.close();
-#ifdef _WIN32
+        #ifdef _WIN32
         ::CloseHandle(::GetStdHandle(STD_INPUT_HANDLE));
-#endif
+        #endif
 
         if (m_thread.joinable())
         {
@@ -120,7 +120,7 @@ namespace Common
 
     bool AsyncConsoleReader::waitInput()
     {
-#ifndef _WIN32
+        #ifndef _WIN32
         int stdin_fileno = ::fileno(stdin);
 
         while (!m_stop) {
@@ -146,7 +146,7 @@ namespace Common
             return true;
           }
         }
-#endif
+        #endif
 
         return !m_stop;
     }
@@ -159,7 +159,11 @@ namespace Common
         stop();
     }
 
-    void ConsoleHandler::start(bool startThread, const std::string &prompt, Console::Color promptColor)
+    void ConsoleHandler::start(
+        bool startThread,
+        const std::string &prompt,
+        Console::Color promptColor
+    )
     {
         m_prompt = prompt;
         m_promptColor = promptColor;
@@ -168,7 +172,8 @@ namespace Common
         if (startThread)
         {
             m_thread = std::thread(std::bind(&ConsoleHandler::handlerThread, this));
-        } else
+        }
+        else
         {
             handlerThread();
         }
@@ -199,7 +204,8 @@ namespace Common
             {
                 m_thread.join();
             }
-        } catch (std::exception &e)
+        }
+        catch (std::exception &e)
         {
             std::cerr << "Exception in ConsoleHandler::wait - " << e.what() << std::endl;
         }
@@ -220,11 +226,15 @@ namespace Common
 
         std::stringstream ss;
 
-        uint64_t maxlen = std::max_element(m_handlers.begin(), m_handlers.end(), [](
-                CommandHandlersMap::const_reference &a, CommandHandlersMap::const_reference &b)
+        uint64_t maxlen = std::max_element(
+            m_handlers.begin(), m_handlers.end(), [](
+            CommandHandlersMap::const_reference &a,
+            CommandHandlersMap::const_reference &b
+        )
         {
             return a.first.size() < b.first.size();
-        })->first.size();
+        }
+        )->first.size();
 
         for (auto &x : m_handlers)
         {
@@ -234,8 +244,11 @@ namespace Common
         return ss.str();
     }
 
-    void ConsoleHandler::setHandler(const std::string &command, const ConsoleCommandHandler &handler,
-                                    const std::string &usage)
+    void ConsoleHandler::setHandler(
+        const std::string &command,
+        const ConsoleCommandHandler &handler,
+        const std::string &usage
+    )
     {
         m_handlers[command] = std::make_pair(handler, usage);
     }
@@ -303,7 +316,8 @@ namespace Common
                     handleCommand(line);
                 }
 
-            } catch (std::exception &)
+            }
+            catch (std::exception &)
             {
                 // ignore errors
             }

@@ -16,73 +16,99 @@ namespace CryptoNote
 {
     class Mixins
     {
-    public:
-        /* This method is commonly used by the node to determine if the transactions in the vector have
-           the correct mixin (anonymity) as defined by the current rules */
-        static std::tuple<bool, std::string> validate(std::vector<CachedTransaction> transactions, uint64_t height)
-        {
-            auto[minMixin, maxMixin, defaultMixin] = Utilities::getMixinAllowableRange(height);
-
-            for (const auto &transaction : transactions)
+        public:
+            /* This method is commonly used by the node to determine if the transactions in the vector have
+               the correct mixin (anonymity) as defined by the current rules */
+            static std::tuple<
+                bool, std::string
+            > validate(
+                std::vector<CachedTransaction> transactions,
+                uint64_t height
+            )
             {
-                auto[success, error] = validate(transaction, minMixin, maxMixin);
+                auto[minMixin, maxMixin, defaultMixin] = Utilities::getMixinAllowableRange(height);
 
-                if (!success)
+                for (const auto &transaction : transactions)
                 {
-                    return {false, error};
-                }
-            }
+                    auto[success, error] = validate(transaction, minMixin, maxMixin);
 
-            return {true, std::string()};
-        }
-
-        /* This method is commonly used by the node to determine if the transaction has
-           the correct mixin (anonymity) as defined by the current rules */
-        static std::tuple<bool, std::string>
-        validate(const CachedTransaction &transaction, uint64_t minMixin, uint64_t maxMixin)
-        {
-            uint64_t ringSize = 1;
-
-            const auto tx = createTransaction(transaction.getTransaction());
-
-            for (size_t i = 0; i < tx->getInputCount(); ++i)
-            {
-                if (tx->getInputType(i) != TransactionTypes::InputType::Key)
-                {
-                    continue;
+                    if (!success)
+                    {
+                        return {
+                            false,
+                            error
+                        };
+                    }
                 }
 
-                KeyInput input;
-                tx->getInput(i, input);
-                const uint64_t currentRingSize = input.outputIndexes.size();
-                if (currentRingSize > ringSize)
+                return {
+                    true,
+                    std::string()
+                };
+            }
+
+            /* This method is commonly used by the node to determine if the transaction has
+               the correct mixin (anonymity) as defined by the current rules */
+            static std::tuple<
+                bool, std::string
+            > validate(
+                const CachedTransaction &transaction,
+                uint64_t minMixin,
+                uint64_t maxMixin
+            )
+            {
+                uint64_t ringSize = 1;
+
+                const auto tx = createTransaction(transaction.getTransaction());
+
+                for (size_t i = 0; i < tx->getInputCount(); ++i)
                 {
-                    ringSize = currentRingSize;
+                    if (tx->getInputType(i) != TransactionTypes::InputType::Key)
+                    {
+                        continue;
+                    }
+
+                    KeyInput input;
+                    tx->getInput(i, input);
+                    const uint64_t currentRingSize = input.outputIndexes.size();
+                    if (currentRingSize > ringSize)
+                    {
+                        ringSize = currentRingSize;
+                    }
                 }
+
+                /* Ring size = mixin + 1 - your transaction plus the others you mix with */
+                const uint64_t mixin = ringSize - 1;
+
+                std::stringstream str;
+
+                if (mixin > maxMixin)
+                {
+                    str << "Transaction " << transaction.getTransactionHash()
+                        << " is not valid. Reason: transaction mixin is too large (" << mixin
+                        << "). Maximum mixin allowed is " << maxMixin;
+
+                    return {
+                        false,
+                        str.str()
+                    };
+                }
+                else if (mixin < minMixin)
+                {
+                    str << "Transaction " << transaction.getTransactionHash()
+                        << " is not valid. Reason: transaction mixin is too small (" << mixin
+                        << "). Minimum mixin allowed is " << minMixin;
+
+                    return {
+                        false,
+                        str.str()
+                    };
+                }
+
+                return {
+                    true,
+                    std::string()
+                };
             }
-
-            /* Ring size = mixin + 1 - your transaction plus the others you mix with */
-            const uint64_t mixin = ringSize - 1;
-
-            std::stringstream str;
-
-            if (mixin > maxMixin)
-            {
-                str << "Transaction " << transaction.getTransactionHash()
-                    << " is not valid. Reason: transaction mixin is too large (" << mixin
-                    << "). Maximum mixin allowed is " << maxMixin;
-
-                return {false, str.str()};
-            } else if (mixin < minMixin)
-            {
-                str << "Transaction " << transaction.getTransactionHash()
-                    << " is not valid. Reason: transaction mixin is too small (" << mixin
-                    << "). Minimum mixin allowed is " << minMixin;
-
-                return {false, str.str()};
-            }
-
-            return {true, std::string()};
-        }
     };
 }

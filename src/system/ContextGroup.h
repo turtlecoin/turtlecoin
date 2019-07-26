@@ -12,28 +12,29 @@ namespace System
 
     class ContextGroup
     {
-    public:
-        explicit ContextGroup(Dispatcher &dispatcher);
+        public:
+            explicit ContextGroup(Dispatcher &dispatcher);
 
-        ContextGroup(const ContextGroup &) = delete;
+            ContextGroup(const ContextGroup &) = delete;
 
-        ContextGroup(ContextGroup &&other);
+            ContextGroup(ContextGroup &&other);
 
-        ~ContextGroup();
+            ~ContextGroup();
 
-        ContextGroup &operator=(const ContextGroup &) = delete;
+            ContextGroup &operator=(const ContextGroup &) = delete;
 
-        ContextGroup &operator=(ContextGroup &&other);
+            ContextGroup &operator=(ContextGroup &&other);
 
-        void interrupt();
+            void interrupt();
 
-        void spawn(std::function<void()> &&procedure);
+            void spawn(std::function<void()> &&procedure);
 
-        void wait();
+            void wait();
 
-    private:
-        Dispatcher *dispatcher;
-        NativeContextGroup contextGroup;
+        private:
+            Dispatcher *dispatcher;
+
+            NativeContextGroup contextGroup;
     };
 
 }

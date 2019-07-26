@@ -12,18 +12,27 @@
 #include <serialization/CryptoNoteSerialization.h>
 #include <serialization/SerializationTools.h>
 
-std::vector<uint8_t> getParentBlockHashingBinaryArray(const CryptoNote::BlockTemplate &block, const bool headerOnly)
+std::vector<uint8_t> getParentBlockHashingBinaryArray(
+    const CryptoNote::BlockTemplate &block,
+    const bool headerOnly
+)
 {
     return getParentBinaryArray(block, true, headerOnly);
 }
 
-std::vector<uint8_t> getParentBlockBinaryArray(const CryptoNote::BlockTemplate &block, const bool headerOnly)
+std::vector<uint8_t> getParentBlockBinaryArray(
+    const CryptoNote::BlockTemplate &block,
+    const bool headerOnly
+)
 {
     return getParentBinaryArray(block, false, headerOnly);
 }
 
-std::vector<uint8_t>
-getParentBinaryArray(const CryptoNote::BlockTemplate &block, const bool hashTransaction, const bool headerOnly)
+std::vector<uint8_t> getParentBinaryArray(
+    const CryptoNote::BlockTemplate &block,
+    const bool hashTransaction,
+    const bool headerOnly
+)
 {
     std::vector<uint8_t> binaryArray;
 
@@ -92,8 +101,7 @@ Crypto::Hash getBlockLongHash(const CryptoNote::BlockTemplate &block)
 
     try
     {
-        const auto hashingAlgorithm
-                = CryptoNote::HASHING_ALGORITHMS_BY_BLOCK_VERSION.at(block.majorVersion);
+        const auto hashingAlgorithm = CryptoNote::HASHING_ALGORITHMS_BY_BLOCK_VERSION.at(block.majorVersion);
 
         hashingAlgorithm(rawHashingBlock.data(), rawHashingBlock.size(), hash);
 

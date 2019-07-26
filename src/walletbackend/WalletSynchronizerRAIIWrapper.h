@@ -8,40 +8,41 @@
 
 class WalletSynchronizerRAIIWrapper
 {
-public:
-    WalletSynchronizerRAIIWrapper(
-            const std::shared_ptr<WalletSynchronizer> walletSynchronizer) :
-            m_walletSynchronizer(walletSynchronizer)
-    {};
-
-    template<typename T>
-    auto pauseSynchronizerToRunFunction(T func)
-    {
-        /* Can only perform one operation with the synchronizer stopped at
-           once */
-        std::scoped_lock lock(m_mutex);
-
-        /* Stop the synchronizer */
-        if (m_walletSynchronizer != nullptr)
+    public:
+        WalletSynchronizerRAIIWrapper(
+            const std::shared_ptr<WalletSynchronizer> walletSynchronizer
+        ) : m_walletSynchronizer(walletSynchronizer)
         {
-            m_walletSynchronizer->stop();
+        };
+
+        template<typename T>
+        auto pauseSynchronizerToRunFunction(T func)
+        {
+            /* Can only perform one operation with the synchronizer stopped at
+               once */
+            std::scoped_lock lock(m_mutex);
+
+            /* Stop the synchronizer */
+            if (m_walletSynchronizer != nullptr)
+            {
+                m_walletSynchronizer->stop();
+            }
+
+            /* Run the function, now safe */
+            auto result = func();
+
+            /* Start the synchronizer again */
+            if (m_walletSynchronizer != nullptr)
+            {
+                m_walletSynchronizer->start();
+            }
+
+            /* Return the extracted value */
+            return result;
         }
 
-        /* Run the function, now safe */
-        auto result = func();
+    private:
+        std::shared_ptr<WalletSynchronizer> m_walletSynchronizer;
 
-        /* Start the synchronizer again */
-        if (m_walletSynchronizer != nullptr)
-        {
-            m_walletSynchronizer->start();
-        }
-
-        /* Return the extracted value */
-        return result;
-    }
-
-private:
-    std::shared_ptr<WalletSynchronizer> m_walletSynchronizer;
-
-    std::mutex m_mutex;
+        std::mutex m_mutex;
 };

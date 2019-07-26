@@ -15,10 +15,14 @@ namespace Common
     T medianValue(std::vector<T> &v)
     {
         if (v.empty())
+        {
             return T();
+        }
 
         if (v.size() == 1)
+        {
             return v[0];
+        }
 
         auto n = (v.size()) / 2;
         std::sort(v.begin(), v.end());
@@ -26,7 +30,8 @@ namespace Common
         if (v.size() % 2)
         { //1, 3, 5...
             return v[n];
-        } else
+        }
+        else
         { //2, 4, 6...
             return (v[n - 1] + v[n]) / 2;
         }

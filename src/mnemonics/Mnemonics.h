@@ -13,9 +13,13 @@
 
 namespace Mnemonics
 {
-    std::tuple<Error, Crypto::SecretKey> MnemonicToPrivateKey(const std::string words);
+    std::tuple<
+        Error, Crypto::SecretKey
+    > MnemonicToPrivateKey(const std::string words);
 
-    std::tuple<Error, Crypto::SecretKey> MnemonicToPrivateKey(const std::vector<std::string> words);
+    std::tuple<
+        Error, Crypto::SecretKey
+    > MnemonicToPrivateKey(const std::vector<std::string> words);
 
     std::string PrivateKeyToMnemonic(const Crypto::SecretKey privateKey);
 

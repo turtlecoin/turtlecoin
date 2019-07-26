@@ -23,26 +23,17 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> walletInfo)
 
     if (newTransactionCount != walletInfo->knownTransactionCount)
     {
-        for (size_t i = walletInfo->knownTransactionCount;
-             i < newTransactionCount; i++)
+        for (size_t i = walletInfo->knownTransactionCount; i < newTransactionCount; i++)
         {
-            const CryptoNote::WalletTransaction t
-                    = walletInfo->wallet.getTransaction(i);
+            const CryptoNote::WalletTransaction t = walletInfo->wallet.getTransaction(i);
 
             /* Don't print outgoing or fusion transfers */
             if (t.totalAmount > 0 && t.fee != 0)
             {
-                std::cout << std::endl
-                          << InformationMsg("New transaction found!")
-                          << std::endl
-                          << SuccessMsg("Incoming transfer:")
-                          << std::endl
-                          << SuccessMsg("Hash: " + Common::podToHex(t.hash))
-                          << std::endl
-                          << SuccessMsg("Amount: "
-                                        + formatAmount(t.totalAmount))
-                          << std::endl
-                          << InformationMsg(getPrompt(walletInfo))
+                std::cout << std::endl << InformationMsg("New transaction found!") << std::endl
+                          << SuccessMsg("Incoming transfer:") << std::endl
+                          << SuccessMsg("Hash: " + Common::podToHex(t.hash)) << std::endl << SuccessMsg(
+                    "Amount: " + formatAmount(t.totalAmount)) << std::endl << InformationMsg(getPrompt(walletInfo))
                           << std::flush;
             }
         }
@@ -51,8 +42,10 @@ void checkForNewTransactions(std::shared_ptr<WalletInfo> walletInfo)
     }
 }
 
-void syncWallet(CryptoNote::INode &node,
-                std::shared_ptr<WalletInfo> walletInfo)
+void syncWallet(
+    CryptoNote::INode &node,
+    std::shared_ptr<WalletInfo> walletInfo
+)
 {
     uint32_t localHeight = node.getLastLocalBlockHeight();
     uint32_t walletHeight = walletInfo->wallet.getBlockCount();
@@ -64,13 +57,9 @@ void syncWallet(CryptoNote::INode &node,
 
     if (localHeight != remoteHeight)
     {
-        std::cout << "Your " << WalletConfig::daemonName << " isn't fully "
-                  << "synced yet!" << std::endl
-                  << "Until you are fully synced, you won't be able to send "
-                  << "transactions,"
-                  << std::endl
-                  << "and your balance may be missing or "
-                  << "incorrect!" << std::endl << std::endl;
+        std::cout << "Your " << WalletConfig::daemonName << " isn't fully " << "synced yet!" << std::endl
+                  << "Until you are fully synced, you won't be able to send " << "transactions," << std::endl
+                  << "and your balance may be missing or " << "incorrect!" << std::endl << std::endl;
     }
 
     /* If we open a legacy wallet then it will load the transactions but not
@@ -78,10 +67,8 @@ void syncWallet(CryptoNote::INode &node,
        transactions and rescan. */
     if (walletHeight == 1 && transactionCount != 0)
     {
-        std::cout << "Upgrading your wallet from an older version of the "
-                  << "software..." << std::endl << "Unfortunately, we have "
-                  << "to rescan the chain to find your transactions."
-                  << std::endl;
+        std::cout << "Upgrading your wallet from an older version of the " << "software..." << std::endl
+                  << "Unfortunately, we have " << "to rescan the chain to find your transactions." << std::endl;
 
         transactionCount = 0;
 
@@ -90,18 +77,13 @@ void syncWallet(CryptoNote::INode &node,
 
     if (walletHeight == 1)
     {
-        std::cout << "Scanning through the blockchain to find transactions "
-                  << "that belong to you." << std::endl
-                  << "Please wait, this will take some time."
-                  << std::endl << std::endl;
-    } else
+        std::cout << "Scanning through the blockchain to find transactions " << "that belong to you." << std::endl
+                  << "Please wait, this will take some time." << std::endl << std::endl;
+    }
+    else
     {
-        std::cout << "Scanning through the blockchain to find any new "
-                  << "transactions you received"
-                  << std::endl
-                  << "whilst your wallet wasn't open."
-                  << std::endl
-                  << "Please wait, this may take some time."
+        std::cout << "Scanning through the blockchain to find any new " << "transactions you received" << std::endl
+                  << "whilst your wallet wasn't open." << std::endl << "Please wait, this may take some time."
                   << std::endl << std::endl;
     }
 
@@ -114,8 +96,7 @@ void syncWallet(CryptoNote::INode &node,
 
         localHeight = node.getLastLocalBlockHeight();
         remoteHeight = node.getLastKnownBlockHeight();
-        std::cout << SuccessMsg(std::to_string(walletHeight))
-                  << " of " << InformationMsg(std::to_string(localHeight))
+        std::cout << SuccessMsg(std::to_string(walletHeight)) << " of " << InformationMsg(std::to_string(localHeight))
                   << std::endl;
 
         const uint32_t tmpWalletHeight = walletInfo->wallet.getBlockCount();
@@ -127,9 +108,7 @@ void syncWallet(CryptoNote::INode &node,
            wallets so lets do it every 10 minutes */
         if (counter % 600 == 0)
         {
-            std::cout << std::endl
-                      << InformationMsg("Saving current progress...")
-                      << std::endl << std::endl;
+            std::cout << std::endl << InformationMsg("Saving current progress...") << std::endl << std::endl;
 
             walletInfo->wallet.save();
         }
@@ -141,15 +120,11 @@ void syncWallet(CryptoNote::INode &node,
 
             if (stuckCounter > 20)
             {
-                std::cout << WarningMsg("Syncing may be stuck. Try restarting ")
-                          << WarningMsg(WalletConfig::daemonName)
-                          << WarningMsg(".")
-                          << std::endl
-                          << WarningMsg("If this persists, visit ")
-                          << WarningMsg(WalletConfig::contactLink)
-                          << WarningMsg(" for support.")
-                          << std::endl;
-            } else if (stuckCounter > 19)
+                std::cout << WarningMsg("Syncing may be stuck. Try restarting ") << WarningMsg(WalletConfig::daemonName)
+                          << WarningMsg(".") << std::endl << WarningMsg("If this persists, visit ")
+                          << WarningMsg(WalletConfig::contactLink) << WarningMsg(" for support.") << std::endl;
+            }
+            else if (stuckCounter > 19)
             {
                 /*
                    Calling save has the side-effect of starting
@@ -160,32 +135,30 @@ void syncWallet(CryptoNote::INode &node,
                 walletInfo->wallet.save();
                 waitSeconds = 5;
             }
-        } else
+        }
+        else
         {
             stuckCounter = 0;
             walletHeight = tmpWalletHeight;
 
-            const size_t tmpTransactionCount = walletInfo
-                    ->wallet.getTransactionCount();
+            const size_t tmpTransactionCount = walletInfo->wallet.getTransactionCount();
 
             if (tmpTransactionCount != transactionCount)
             {
                 for (size_t i = transactionCount; i < tmpTransactionCount; i++)
                 {
-                    CryptoNote::WalletTransaction t
-                            = walletInfo->wallet.getTransaction(i);
+                    CryptoNote::WalletTransaction t = walletInfo->wallet.getTransaction(i);
 
                     /* Don't print out fusion transactions */
                     if (t.totalAmount != 0)
                     {
-                        std::cout << std::endl
-                                  << InformationMsg("New transaction found!")
-                                  << std::endl << std::endl;
+                        std::cout << std::endl << InformationMsg("New transaction found!") << std::endl << std::endl;
 
                         if (t.totalAmount < 0)
                         {
                             printOutgoingTransfer(t, node);
-                        } else
+                        }
+                        else
                         {
                             printIncomingTransfer(t, node);
                         }
@@ -201,8 +174,7 @@ void syncWallet(CryptoNote::INode &node,
         std::this_thread::sleep_for(std::chrono::seconds(waitSeconds));
     }
 
-    std::cout << std::endl
-              << SuccessMsg("Finished scanning blockchain!") << std::endl;
+    std::cout << std::endl << SuccessMsg("Finished scanning blockchain!") << std::endl;
 
     /* In case the user force closes, we don't want them to have to rescan
        the whole chain. */

@@ -15,8 +15,10 @@
 namespace CryptoNote
 {
 
-    SwappedBlockchainStorage::SwappedBlockchainStorage(const std::string &indexFileName,
-                                                       const std::string &dataFileName)
+    SwappedBlockchainStorage::SwappedBlockchainStorage(
+        const std::string &indexFileName,
+        const std::string &dataFileName
+    )
     {
         if (!blocks.open(dataFileName, indexFileName, 1024))
         {
@@ -45,14 +47,16 @@ namespace CryptoNote
         return static_cast<uint32_t>(blocks.size());
     }
 
-//Returns MemoryBlockchainStorage with elements from [splitIndex, blocks.size() - 1].
-//Original SwappedBlockchainStorage will contain elements from [0, splitIndex - 1].
-    std::unique_ptr<BlockchainStorage::IBlockchainStorageInternal>
-    SwappedBlockchainStorage::splitStorage(uint32_t splitIndex)
+    //Returns MemoryBlockchainStorage with elements from [splitIndex, blocks.size() - 1].
+    //Original SwappedBlockchainStorage will contain elements from [0, splitIndex - 1].
+    std::unique_ptr<
+        BlockchainStorage::IBlockchainStorageInternal
+    > SwappedBlockchainStorage::splitStorage(uint32_t splitIndex)
     {
         assert(splitIndex > 0);
         assert(splitIndex < blocks.size());
-        std::unique_ptr<MemoryBlockchainStorage> newStorage = std::unique_ptr<MemoryBlockchainStorage>(new MemoryBlockchainStorage(splitIndex));
+        std::unique_ptr<MemoryBlockchainStorage>
+            newStorage = std::unique_ptr<MemoryBlockchainStorage>(new MemoryBlockchainStorage(splitIndex));
 
         uint64_t blocksCount = blocks.size();
 

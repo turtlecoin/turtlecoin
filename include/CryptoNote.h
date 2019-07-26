@@ -39,7 +39,9 @@ namespace CryptoNote
         Crypto::PublicKey key;
     };
 
-    typedef boost::variant<BaseInput, KeyInput> TransactionInput;
+    typedef boost::variant<
+        BaseInput, KeyInput
+    > TransactionInput;
 
     typedef boost::variant<KeyOutput> TransactionOutputTarget;
 
@@ -146,16 +148,20 @@ namespace CryptoNote
         }
     };
 
-    inline void to_json(nlohmann::json &j, const CryptoNote::KeyInput &k)
+    inline void to_json(
+        nlohmann::json &j,
+        const CryptoNote::KeyInput &k
+    )
     {
-        j = {
-                {"amount",      k.amount},
-                {"key_offsets", k.outputIndexes},
-                {"k_image",     k.keyImage}
-        };
+        j = {{"amount",      k.amount},
+             {"key_offsets", k.outputIndexes},
+             {"k_image",     k.keyImage}};
     }
 
-    inline void from_json(const nlohmann::json &j, CryptoNote::KeyInput &k)
+    inline void from_json(
+        const nlohmann::json &j,
+        CryptoNote::KeyInput &k
+    )
     {
         k.amount = j.at("amount").get<uint64_t>();
         if (j.find("key_offsets") != j.end())
@@ -165,7 +171,10 @@ namespace CryptoNote
         k.keyImage = j.at("k_image").get<Crypto::KeyImage>();
     }
 
-    inline void to_json(nlohmann::json &j, const CryptoNote::RawBlock &block)
+    inline void to_json(
+        nlohmann::json &j,
+        const CryptoNote::RawBlock &block
+    )
     {
         std::vector<std::string> transactions;
 
@@ -174,13 +183,14 @@ namespace CryptoNote
             transactions.push_back(Common::toHex(transaction));
         }
 
-        j = {
-                {"block",        Common::toHex(block.block)},
-                {"transactions", transactions}
-        };
+        j = {{"block",        Common::toHex(block.block)},
+             {"transactions", transactions}};
     }
 
-    inline void from_json(const nlohmann::json &j, CryptoNote::RawBlock &block)
+    inline void from_json(
+        const nlohmann::json &j,
+        CryptoNote::RawBlock &block
+    )
     {
         block.transactions.clear();
 

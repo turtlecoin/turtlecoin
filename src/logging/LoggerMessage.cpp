@@ -8,10 +8,20 @@
 namespace Logging
 {
 
-    LoggerMessage::LoggerMessage(std::shared_ptr<ILogger> logger, const std::string &category, Level level,
-                                 const std::string &color)
-            : std::ostream(this), std::streambuf(), logger(logger), category(category), logLevel(level), message(color),
-              timestamp(boost::posix_time::microsec_clock::local_time()), gotText(false)
+    LoggerMessage::LoggerMessage(
+        std::shared_ptr<ILogger> logger,
+        const std::string &category,
+        Level level,
+        const std::string &color
+    )
+        : std::ostream(this),
+          std::streambuf(),
+          logger(logger),
+          category(category),
+          logLevel(level),
+          message(color),
+          timestamp(boost::posix_time::microsec_clock::local_time()),
+          gotText(false)
     {
     }
 
@@ -23,17 +33,22 @@ namespace Logging
         }
     }
 
-#ifndef __linux__
+    #ifndef __linux__
 
     LoggerMessage::LoggerMessage(LoggerMessage &&other)
-            : std::ostream(std::move(other)), std::streambuf(std::move(other)), category(other.category),
-              logLevel(other.logLevel), logger(other.logger), message(other.message),
-              timestamp(boost::posix_time::microsec_clock::local_time()), gotText(false)
+        : std::ostream(std::move(other)),
+          std::streambuf(std::move(other)),
+          category(other.category),
+          logLevel(other.logLevel),
+          logger(other.logger),
+          message(other.message),
+          timestamp(boost::posix_time::microsec_clock::local_time()),
+          gotText(false)
     {
         this->set_rdbuf(this);
     }
 
-#else
+    #else
     LoggerMessage::LoggerMessage(LoggerMessage&& other)
       : std::ostream(nullptr)
       , std::streambuf()
@@ -81,7 +96,7 @@ namespace Logging
       }
       _M_streambuf = this;
     }
-#endif
+    #endif
 
     int LoggerMessage::sync()
     {
@@ -91,7 +106,10 @@ namespace Logging
         return 0;
     }
 
-    std::streamsize LoggerMessage::xsputn(const char *s, std::streamsize n)
+    std::streamsize LoggerMessage::xsputn(
+        const char *s,
+        std::streamsize n
+    )
     {
         gotText = true;
         message.append(s, n);

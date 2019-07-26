@@ -5,7 +5,6 @@
 
 #pragma  once
 
-
 #define CORE_RPC_ERROR_CODE_WRONG_PARAM           -1
 #define CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT        -2
 #define CORE_RPC_ERROR_CODE_TOO_BIG_RESERVE_SIZE  -3

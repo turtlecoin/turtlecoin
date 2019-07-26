@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
 #endif
 
 #include <winsock2.h>
@@ -39,15 +39,21 @@ namespace System
     {
     }
 
-    TcpListener::TcpListener(Dispatcher &dispatcher, const Ipv4Address &address, uint16_t port)
-            : dispatcher(&dispatcher)
+    TcpListener::TcpListener(
+        Dispatcher &dispatcher,
+        const Ipv4Address &address,
+        uint16_t port
+    ) : dispatcher(
+        &dispatcher
+    )
     {
         std::string message;
         listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (listener == INVALID_SOCKET)
         {
             message = "socket failed, " + errorMessage(WSAGetLastError());
-        } else
+        }
+        else
         {
             sockaddr_in addressData;
             addressData.sin_family = AF_INET;
@@ -56,26 +62,31 @@ namespace System
             if (bind(listener, reinterpret_cast<sockaddr *>(&addressData), sizeof(addressData)) != 0)
             {
                 message = "bind failed, " + errorMessage(WSAGetLastError());
-            } else if (listen(listener, SOMAXCONN) != 0)
+            }
+            else if (listen(listener, SOMAXCONN) != 0)
             {
                 message = "listen failed, " + errorMessage(WSAGetLastError());
-            } else
+            }
+            else
             {
                 GUID guidAcceptEx = WSAID_ACCEPTEX;
                 DWORD read = sizeof acceptEx;
-                if (acceptEx == nullptr &&
-                    WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidAcceptEx, sizeof guidAcceptEx, &acceptEx, sizeof acceptEx, &read, NULL, NULL) !=
-                    0)
+                if (acceptEx == nullptr && WSAIoctl(
+                    listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidAcceptEx, sizeof guidAcceptEx, &acceptEx, sizeof acceptEx, &read, NULL, NULL
+                ) != 0)
                 {
                     message = "WSAIoctl failed, " + errorMessage(WSAGetLastError());
-                } else
+                }
+                else
                 {
                     assert(read == sizeof acceptEx);
-                    if (CreateIoCompletionPort(reinterpret_cast<HANDLE>(listener), dispatcher.getCompletionPort(), 0, 0) !=
-                        dispatcher.getCompletionPort())
+                    if (CreateIoCompletionPort(
+                        reinterpret_cast<HANDLE>(listener), dispatcher.getCompletionPort(), 0, 0
+                    ) != dispatcher.getCompletionPort())
                     {
                         message = "CreateIoCompletionPort failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         context = nullptr;
                         return;
@@ -119,7 +130,7 @@ namespace System
             if (closesocket(listener) != 0)
             {
                 throw std::runtime_error(
-                        "TcpListener::operator=, closesocket failed, " + errorMessage(WSAGetLastError()));
+                    "TcpListener::operator=, closesocket failed, " + errorMessage(WSAGetLastError()));
             }
         }
 
@@ -149,23 +160,28 @@ namespace System
         if (connection == INVALID_SOCKET)
         {
             message = "socket failed, " + errorMessage(WSAGetLastError());
-        } else
+        }
+        else
         {
             uint8_t addresses[sizeof sockaddr_in * 2 + 32];
             DWORD received;
             TcpListenerContext context2;
             context2.hEvent = NULL;
-            if (acceptEx(listener, connection, addresses, 0,
-                         sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &received, &context2) == TRUE)
+            if (acceptEx(
+                listener, connection, addresses, 0,
+                sizeof(sockaddr_in) + 16, sizeof(sockaddr_in) + 16, &received, &context2
+            ) == TRUE)
             {
                 message = "AcceptEx returned immediately, which is not supported.";
-            } else
+            }
+            else
             {
                 int lastError = WSAGetLastError();
                 if (lastError != WSA_IO_PENDING)
                 {
                     message = "AcceptEx failed, " + errorMessage(lastError);
-                } else
+                }
+                else
                 {
                     context2.context = dispatcher->getCurrentContext();
                     context2.interrupted = false;
@@ -183,7 +199,7 @@ namespace System
                                 if (lastError != ERROR_NOT_FOUND)
                                 {
                                     throw std::runtime_error(
-                                            "TcpListener::stop, CancelIoEx failed, " + lastErrorMessage());
+                                        "TcpListener::stop, CancelIoEx failed, " + lastErrorMessage());
                                 }
 
                                 context2->context->interrupted = true;
@@ -207,27 +223,31 @@ namespace System
                         if (lastError != ERROR_OPERATION_ABORTED)
                         {
                             message = "AcceptEx failed, " + errorMessage(lastError);
-                        } else
+                        }
+                        else
                         {
                             assert(context2.interrupted);
                             if (closesocket(connection) != 0)
                             {
                                 throw std::runtime_error(
-                                        "TcpListener::accept, closesocket failed, " + errorMessage(WSAGetLastError()));
-                            } else
+                                    "TcpListener::accept, closesocket failed, " + errorMessage(WSAGetLastError()));
+                            }
+                            else
                             {
                                 throw InterruptedException();
                             }
                         }
-                    } else
+                    }
+                    else
                     {
                         if (context2.interrupted)
                         {
                             if (closesocket(connection) != 0)
                             {
-                                throw std::runtime_error("TcpConnector::connect, closesocket failed, " +
-                                                         errorMessage(WSAGetLastError()));
-                            } else
+                                throw std::runtime_error(
+                                    "TcpConnector::connect, closesocket failed, " + errorMessage(WSAGetLastError()));
+                            }
+                            else
                             {
                                 throw InterruptedException();
                             }
@@ -235,17 +255,21 @@ namespace System
 
                         assert(transferred == 0);
                         assert(flags == 0);
-                        if (setsockopt(connection, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<char *>(&listener), sizeof listener) !=
-                            0)
+                        if (setsockopt(
+                            connection, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, reinterpret_cast<char *>(&listener), sizeof listener
+                        ) != 0)
                         {
                             message = "setsockopt failed, " + errorMessage(WSAGetLastError());
-                        } else
+                        }
+                        else
                         {
-                            if (CreateIoCompletionPort(reinterpret_cast<HANDLE>(connection), dispatcher->getCompletionPort(), 0, 0) !=
-                                dispatcher->getCompletionPort())
+                            if (CreateIoCompletionPort(
+                                reinterpret_cast<HANDLE>(connection), dispatcher->getCompletionPort(), 0, 0
+                            ) != dispatcher->getCompletionPort())
                             {
                                 message = "CreateIoCompletionPort failed, " + lastErrorMessage();
-                            } else
+                            }
+                            else
                             {
                                 return TcpConnection(*dispatcher, connection);
                             }

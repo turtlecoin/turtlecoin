@@ -14,11 +14,17 @@ namespace Common
 
     std::string GetPathDirectory(const std::string &path);
 
-    std::string CombinePath(const std::string &path1, const std::string &path2);
+    std::string CombinePath(
+        const std::string &path1,
+        const std::string &path2
+    );
 
     std::string RemoveExtension(const std::string &path);
 
-    std::string ReplaceExtenstion(const std::string &path, const std::string &extension);
+    std::string ReplaceExtenstion(
+        const std::string &path,
+        const std::string &extension
+    );
 
     bool HasParentPath(const std::string &path);
 

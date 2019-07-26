@@ -17,13 +17,27 @@
 const uint8_t shift_Values[2][8] = {{0, 1, 2, 3, 4, 5, 6, 7},
                                     {1, 3, 5, 7, 0, 2, 4, 6}};
 
-const uint8_t indices_cyclic[15] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6};
-
+const uint8_t indices_cyclic[15] = {
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+};
 
 #define ROTATE_COLUMN_DOWN(v1, v2, amount_bytes, temp_var) {temp_var = (v1<<(8*amount_bytes))|(v2>>(8*(4-amount_bytes))); \
                                                             v2 = (v2<<(8*amount_bytes))|(v1>>(8*(4-amount_bytes))); \
                                                             v1 = temp_var;}
-
 
 #define COLUMN(x, y, i, c0, c1, c2, c3, c4, c5, c6, c7, tv1, tv2, tu, tl, t)                \
    tu = T[2*(uint32_t)x[4*c0+0]];                \
@@ -63,9 +77,12 @@ const uint8_t indices_cyclic[15] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6}
    y[i] = tu;                        \
    y[i+1] = tl;
 
-
 /* compute one round of P (short variants) */
-static void RND512P(uint8_t *x, uint32_t *y, uint32_t r)
+static void RND512P(
+    uint8_t *x,
+    uint32_t *y,
+    uint32_t r
+)
 {
     uint32_t temp_v1, temp_v2, temp_upper_value, temp_lower_value, temp;
     uint32_t *x32 = (uint32_t *) x;
@@ -88,7 +105,11 @@ static void RND512P(uint8_t *x, uint32_t *y, uint32_t r)
 }
 
 /* compute one round of Q (short variants) */
-static void RND512Q(uint8_t *x, uint32_t *y, uint32_t r)
+static void RND512Q(
+    uint8_t *x,
+    uint32_t *y,
+    uint32_t r
+)
 {
     uint32_t temp_v1, temp_v2, temp_upper_value, temp_lower_value, temp;
     uint32_t *x32 = (uint32_t *) x;
@@ -119,7 +140,10 @@ static void RND512Q(uint8_t *x, uint32_t *y, uint32_t r)
 }
 
 /* compute compression function (short variants) */
-static void F512(uint32_t *h, const uint32_t *m)
+static void F512(
+    uint32_t *h,
+    const uint32_t *m
+)
 {
     int i;
     uint32_t Ptmp[2 * COLS512];
@@ -164,22 +188,25 @@ static void F512(uint32_t *h, const uint32_t *m)
     }
 }
 
-
 /* digest up to msglen bytes of input (full blocks only) */
-static void Transform(hashState *ctx,
-                      const uint8_t *input,
-                      int msglen)
+static void Transform(
+    hashState *ctx,
+    const uint8_t *input,
+    int msglen
+)
 {
 
     /* digest message, one block at a time */
-    for (; msglen >= SIZE512;
-           msglen -= SIZE512, input += SIZE512)
+    for (; msglen >= SIZE512; msglen -= SIZE512, input += SIZE512)
     {
         F512(ctx->chaining, (uint32_t *) input);
 
         /* increment block counter */
         ctx->block_counter1++;
-        if (ctx->block_counter1 == 0) ctx->block_counter2++;
+        if (ctx->block_counter1 == 0)
+        {
+            ctx->block_counter2++;
+        }
     }
 }
 
@@ -190,7 +217,6 @@ static void OutputTransformation(hashState *ctx)
     uint32_t temp[2 * COLS512];
     uint32_t y[2 * COLS512];
     uint32_t z[2 * COLS512];
-
 
     for (j = 0; j < 2 * COLS512; j++)
     {
@@ -234,9 +260,11 @@ static void Init(hashState *ctx)
 }
 
 /* update state with databitlen bits of input */
-static void Update(hashState *ctx,
-                   const BitSequence *input,
-                   DataLength databitlen)
+static void Update(
+    hashState *ctx,
+    const BitSequence *input,
+    DataLength databitlen
+)
 {
     int index = 0;
     int msglen = (int) (databitlen / 8);
@@ -290,8 +318,10 @@ static void Update(hashState *ctx,
 
 /* finalise: process remaining data (including padding), perform
    output transformation, and write hash result to 'output' */
-static void Final(hashState *ctx,
-                  BitSequence *output)
+static void Final(
+    hashState *ctx,
+    BitSequence *output
+)
 {
     int i, j = 0, hashbytelen = HASH_BIT_LEN / 8;
     uint8_t *s = (BitSequence *) ctx->chaining;
@@ -302,7 +332,11 @@ static void Final(hashState *ctx,
         ctx->buffer[(int) ctx->buf_ptr - 1] &= ((1 << BILB) - 1) << (8 - BILB);
         ctx->buffer[(int) ctx->buf_ptr - 1] ^= 0x1 << (7 - BILB);
         BILB = 0;
-    } else ctx->buffer[(int) ctx->buf_ptr++] = 0x80;
+    }
+    else
+    {
+        ctx->buffer[(int) ctx->buf_ptr++] = 0x80;
+    }
 
     /* pad with '0'-bits */
     if (ctx->buf_ptr > SIZE512 - LENGTHFIELDLEN)
@@ -323,7 +357,10 @@ static void Final(hashState *ctx,
 
     /* length padding */
     ctx->block_counter1++;
-    if (ctx->block_counter1 == 0) ctx->block_counter2++;
+    if (ctx->block_counter1 == 0)
+    {
+        ctx->block_counter2++;
+    }
     ctx->buf_ptr = SIZE512;
 
     while (ctx->buf_ptr > SIZE512 - (int) sizeof(uint32_t))
@@ -359,9 +396,11 @@ static void Final(hashState *ctx,
 }
 
 /* hash bit sequence */
-void groestl(const BitSequence *data,
-             DataLength databitlen,
-             BitSequence *hashval)
+void groestl(
+    const BitSequence *data,
+    DataLength databitlen,
+    BitSequence *hashval
+)
 {
 
     hashState context;

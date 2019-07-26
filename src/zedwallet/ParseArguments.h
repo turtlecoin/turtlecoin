@@ -6,4 +6,7 @@
 
 #include <zedwallet/Types.h>
 
-Config parseArguments(int argc, char **argv);
+Config parseArguments(
+    int argc,
+    char **argv
+);

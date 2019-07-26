@@ -6,8 +6,11 @@
 #include <string.h>
 #include "Context.h"
 
-void
-makecontext(uctx *ucp, void (*func)(void), intptr_t arg)
+void makecontext(
+    uctx *ucp,
+    void (*func)(void),
+    intptr_t arg
+)
 {
     long *sp;
 
@@ -21,8 +24,10 @@ makecontext(uctx *ucp, void (*func)(void), intptr_t arg)
     ucp->uc_mcontext.mc_rsp = (long) sp;
 }
 
-int
-swapcontext(uctx *oucp, const uctx *ucp)
+int swapcontext(
+    uctx *oucp,
+    const uctx *ucp
+)
 {
     if (getcontext(oucp) == 0)
         setcontext(ucp);

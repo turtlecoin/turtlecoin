@@ -39,17 +39,17 @@ extern "C" {
 #endif
 
 #ifdef _WIN32
-#	ifdef OAES_SHARED
-#		ifdef oaes_lib_EXPORTS
-#			define OAES_API __declspec(dllexport)
-#		else
-#			define OAES_API __declspec(dllimport)
-#		endif
-#	else
-#		define OAES_API
-#	endif
+    #	ifdef OAES_SHARED
+        #		ifdef oaes_lib_EXPORTS
+            #			define OAES_API __declspec(dllexport)
+        #		else
+            #			define OAES_API __declspec(dllimport)
+        #		endif
+    #	else
+        #		define OAES_API
+    #	endif
 #else
-#	define OAES_API
+    #	define OAES_API
 #endif // WIN32
 
 #define OAES_VERSION "0.8.1"
@@ -95,9 +95,9 @@ typedef int ( * oaes_step_cb ) (
         void * user_data );
 // enable state stepping mode
 // value is required, must pass oaes_step_cb to receive the state at each step
-#define OAES_OPTION_STEP_ON 4
+    #define OAES_OPTION_STEP_ON 4
 // disable state stepping mode
-#define OAES_OPTION_STEP_OFF 8
+    #define OAES_OPTION_STEP_OFF 8
 #endif // OAES_DEBUG
 
 typedef uint16_t OAES_OPTION;
@@ -114,13 +114,13 @@ typedef struct _oaes_key
 
 typedef struct _oaes_ctx
 {
-#ifdef OAES_HAVE_ISAAC
+    #ifdef OAES_HAVE_ISAAC
     randctx * rctx;
-#endif // OAES_HAVE_ISAAC
+    #endif // OAES_HAVE_ISAAC
 
-#ifdef OAES_DEBUG
+    #ifdef OAES_DEBUG
     oaes_step_cb step_cb;
-#endif // OAES_DEBUG
+    #endif // OAES_DEBUG
 
     oaes_key *key;
     OAES_OPTION options;
@@ -165,8 +165,11 @@ OAES_API OAES_CTX *oaes_alloc(void);
 
 OAES_API OAES_RET oaes_free(OAES_CTX **ctx);
 
-OAES_API OAES_RET oaes_set_option(OAES_CTX *ctx,
-                                  OAES_OPTION option, const void *value);
+OAES_API OAES_RET oaes_set_option(
+    OAES_CTX *ctx,
+    OAES_OPTION option,
+    const void *value
+);
 
 OAES_API OAES_RET oaes_key_gen_128(OAES_CTX *ctx);
 
@@ -176,37 +179,69 @@ OAES_API OAES_RET oaes_key_gen_256(OAES_CTX *ctx);
 
 // export key with header information
 // set data == NULL to get the required data_len
-OAES_API OAES_RET oaes_key_export(OAES_CTX *ctx,
-                                  uint8_t *data, size_t *data_len);
+OAES_API OAES_RET oaes_key_export(
+    OAES_CTX *ctx,
+    uint8_t *data,
+    size_t *data_len
+);
 
 // directly export the data from key
 // set data == NULL to get the required data_len
-OAES_API OAES_RET oaes_key_export_data(OAES_CTX *ctx,
-                                       uint8_t *data, size_t *data_len);
+OAES_API OAES_RET oaes_key_export_data(
+    OAES_CTX *ctx,
+    uint8_t *data,
+    size_t *data_len
+);
 
 // import key with header information
-OAES_API OAES_RET oaes_key_import(OAES_CTX *ctx,
-                                  const uint8_t *data, size_t data_len);
+OAES_API OAES_RET oaes_key_import(
+    OAES_CTX *ctx,
+    const uint8_t *data,
+    size_t data_len
+);
 
 // directly import data into key
-OAES_API OAES_RET oaes_key_import_data(OAES_CTX *ctx,
-                                       const uint8_t *data, size_t data_len);
+OAES_API OAES_RET oaes_key_import_data(
+    OAES_CTX *ctx,
+    const uint8_t *data,
+    size_t data_len
+);
 
 // set c == NULL to get the required c_len
-OAES_API OAES_RET oaes_encrypt(OAES_CTX *ctx,
-                               const uint8_t *m, size_t m_len, uint8_t *c, size_t *c_len);
+OAES_API OAES_RET oaes_encrypt(
+    OAES_CTX *ctx,
+    const uint8_t *m,
+    size_t m_len,
+    uint8_t *c,
+    size_t *c_len
+);
 
 // set m == NULL to get the required m_len
-OAES_API OAES_RET oaes_decrypt(OAES_CTX *ctx,
-                               const uint8_t *c, size_t c_len, uint8_t *m, size_t *m_len);
+OAES_API OAES_RET oaes_decrypt(
+    OAES_CTX *ctx,
+    const uint8_t *c,
+    size_t c_len,
+    uint8_t *m,
+    size_t *m_len
+);
 
 // set buf == NULL to get the required buf_len
 OAES_API OAES_RET oaes_sprintf(
-        char *buf, size_t *buf_len, const uint8_t *data, size_t data_len);
+    char *buf,
+    size_t *buf_len,
+    const uint8_t *data,
+    size_t data_len
+);
 
-OAES_API OAES_RET oaes_encryption_round(const uint8_t *key, uint8_t *c);
+OAES_API OAES_RET oaes_encryption_round(
+    const uint8_t *key,
+    uint8_t *c
+);
 
-OAES_API OAES_RET oaes_pseudo_encrypt_ecb(OAES_CTX *ctx, uint8_t *c);
+OAES_API OAES_RET oaes_pseudo_encrypt_ecb(
+    OAES_CTX *ctx,
+    uint8_t *c
+);
 
 #ifdef __cplusplus
 }

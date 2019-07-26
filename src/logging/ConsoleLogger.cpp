@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <common/ConsoleTools.h>
 
-
 namespace Logging
 {
 
@@ -25,25 +24,25 @@ namespace Logging
         bool changedColor = false;
         std::string color = "";
 
-        static std::unordered_map<std::string, Color> colorMapping = {
-                {BLUE,           Color::Blue},
-                {GREEN,          Color::Green},
-                {RED,            Color::Red},
-                {YELLOW,         Color::Yellow},
-                {WHITE,          Color::White},
-                {CYAN,           Color::Cyan},
-                {MAGENTA,        Color::Magenta},
+        static std::unordered_map<
+            std::string, Color
+        > colorMapping = {{BLUE,           Color::Blue},
+                          {GREEN,          Color::Green},
+                          {RED,            Color::Red},
+                          {YELLOW,         Color::Yellow},
+                          {WHITE,          Color::White},
+                          {CYAN,           Color::Cyan},
+                          {MAGENTA,        Color::Magenta},
 
-                {BRIGHT_BLUE,    Color::BrightBlue},
-                {BRIGHT_GREEN,   Color::BrightGreen},
-                {BRIGHT_RED,     Color::BrightRed},
-                {BRIGHT_YELLOW,  Color::BrightYellow},
-                {BRIGHT_WHITE,   Color::BrightWhite},
-                {BRIGHT_CYAN,    Color::BrightCyan},
-                {BRIGHT_MAGENTA, Color::BrightMagenta},
+                          {BRIGHT_BLUE,    Color::BrightBlue},
+                          {BRIGHT_GREEN,   Color::BrightGreen},
+                          {BRIGHT_RED,     Color::BrightRed},
+                          {BRIGHT_YELLOW,  Color::BrightYellow},
+                          {BRIGHT_WHITE,   Color::BrightWhite},
+                          {BRIGHT_CYAN,    Color::BrightCyan},
+                          {BRIGHT_MAGENTA, Color::BrightMagenta},
 
-                {DEFAULT,        Color::Default}
-        };
+                          {DEFAULT,        Color::Default}};
 
         for (size_t charPos = 0; charPos < message.size(); ++charPos)
         {
@@ -54,14 +53,20 @@ namespace Logging
                 if (readingText)
                 {
                     auto it = colorMapping.find(color);
-                    Common::Console::setTextColor(it == colorMapping.end() ? Color::Default : it->second);
+                    Common::Console::setTextColor(
+                        it == colorMapping.end()
+                        ? Color::Default
+                        : it->second
+                    );
                     changedColor = true;
                     color.clear();
                 }
-            } else if (readingText)
+            }
+            else if (readingText)
             {
                 std::cout << message[charPos];
-            } else
+            }
+            else
             {
                 color += message[charPos];
             }

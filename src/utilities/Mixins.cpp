@@ -16,7 +16,9 @@
 namespace Utilities
 {
     /* Returns {minMixin, maxMixin, defaultMixin} */
-    std::tuple<uint64_t, uint64_t, uint64_t> getMixinAllowableRange(const uint64_t height)
+    std::tuple<
+        uint64_t, uint64_t, uint64_t
+    > getMixinAllowableRange(const uint64_t height)
     {
         uint64_t minMixin = 0;
         uint64_t maxMixin = std::numeric_limits<uint64_t>::max();
@@ -35,18 +37,24 @@ namespace Utilities
             minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
             maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
             defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V3;
-        } else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
+        }
+        else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
         {
             minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
             maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
             defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V2;
-        } else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
+        }
+        else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
         {
             minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V1;
             maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;
             defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V1;
         }
 
-        return {minMixin, maxMixin, defaultMixin};
+        return {
+            minMixin,
+            maxMixin,
+            defaultMixin
+        };
     }
 }

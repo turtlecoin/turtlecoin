@@ -57,21 +57,42 @@ namespace
 
 }
 
-DaemonCommandsHandler::DaemonCommandsHandler(CryptoNote::Core &core, CryptoNote::NodeServer &srv,
-                                             std::shared_ptr<Logging::LoggerManager> log,
-                                             CryptoNote::RpcServer *prpc_server) :
-        m_core(core), m_srv(srv), logger(log, "daemon"), m_logManager(log), m_prpc_server(prpc_server)
+DaemonCommandsHandler::DaemonCommandsHandler(
+    CryptoNote::Core &core,
+    CryptoNote::NodeServer &srv,
+    std::shared_ptr<Logging::LoggerManager> log,
+    CryptoNote::RpcServer *prpc_server
+)
+    : m_core(core),
+      m_srv(srv),
+      logger(log, "daemon"),
+      m_logManager(log),
+      m_prpc_server(prpc_server)
 {
     m_consoleHandler.setHandler("exit", boost::bind(&DaemonCommandsHandler::exit, this, _1), "Shutdown the daemon");
     m_consoleHandler.setHandler("help", boost::bind(&DaemonCommandsHandler::help, this, _1), "Show this help");
     m_consoleHandler.setHandler("print_pl", boost::bind(&DaemonCommandsHandler::print_pl, this, _1), "Print peer list");
-    m_consoleHandler.setHandler("print_cn", boost::bind(&DaemonCommandsHandler::print_cn, this, _1), "Print connections");
-    m_consoleHandler.setHandler("print_bc", boost::bind(&DaemonCommandsHandler::print_bc, this, _1), "Print blockchain info in a given blocks range, print_bc <begin_height> [<end_height>]");
-    m_consoleHandler.setHandler("print_block", boost::bind(&DaemonCommandsHandler::print_block, this, _1), "Print block, print_block <block_hash> | <block_height>");
-    m_consoleHandler.setHandler("print_tx", boost::bind(&DaemonCommandsHandler::print_tx, this, _1), "Print transaction, print_tx <transaction_hash>");
-    m_consoleHandler.setHandler("print_pool", boost::bind(&DaemonCommandsHandler::print_pool, this, _1), "Print transaction pool (long format)");
-    m_consoleHandler.setHandler("print_pool_sh", boost::bind(&DaemonCommandsHandler::print_pool_sh, this, _1), "Print transaction pool (short format)");
-    m_consoleHandler.setHandler("set_log", boost::bind(&DaemonCommandsHandler::set_log, this, _1), "set_log <level> - Change current log level, <level> is a number 0-4");
+    m_consoleHandler.setHandler(
+        "print_cn", boost::bind(&DaemonCommandsHandler::print_cn, this, _1), "Print connections"
+    );
+    m_consoleHandler.setHandler(
+        "print_bc", boost::bind(&DaemonCommandsHandler::print_bc, this, _1), "Print blockchain info in a given blocks range, print_bc <begin_height> [<end_height>]"
+    );
+    m_consoleHandler.setHandler(
+        "print_block", boost::bind(&DaemonCommandsHandler::print_block, this, _1), "Print block, print_block <block_hash> | <block_height>"
+    );
+    m_consoleHandler.setHandler(
+        "print_tx", boost::bind(&DaemonCommandsHandler::print_tx, this, _1), "Print transaction, print_tx <transaction_hash>"
+    );
+    m_consoleHandler.setHandler(
+        "print_pool", boost::bind(&DaemonCommandsHandler::print_pool, this, _1), "Print transaction pool (long format)"
+    );
+    m_consoleHandler.setHandler(
+        "print_pool_sh", boost::bind(&DaemonCommandsHandler::print_pool_sh, this, _1), "Print transaction pool (short format)"
+    );
+    m_consoleHandler.setHandler(
+        "set_log", boost::bind(&DaemonCommandsHandler::set_log, this, _1), "set_log <level> - Change current log level, <level> is a number 0-4"
+    );
     m_consoleHandler.setHandler("status", boost::bind(&DaemonCommandsHandler::status, this, _1), "Show daemon status");
 }
 
@@ -91,9 +112,11 @@ std::string DaemonCommandsHandler::get_commands_str()
 //--------------------------------------------------------------------------------
 bool DaemonCommandsHandler::exit(const std::vector<std::string> &args)
 {
-    std::cout << InformationMsg("================= EXITING ==================\n"
-                                "== PLEASE WAIT, THIS MAY TAKE A LONG TIME ==\n"
-                                "============================================\n");
+    std::cout << InformationMsg(
+        "================= EXITING ==================\n"
+        "== PLEASE WAIT, THIS MAY TAKE A LONG TIME ==\n"
+        "============================================\n"
+    );
 
     /* Set log to max when exiting. Sometimes this takes a while, and it helps
        to let users know the daemon is still doing stuff */
@@ -150,7 +173,9 @@ bool DaemonCommandsHandler::print_bc(const std::vector<std::string> &args)
     }
 
     if (end_index == 0)
+    {
         end_index = start_index;
+    }
 
     if (end_index > end_block_parametr)
     {
@@ -190,15 +215,12 @@ bool DaemonCommandsHandler::print_bc(const std::vector<std::string> &args)
             first = false;
         }
 
-        std::cout
-                << "height: " << header.height << ", timestamp: " << header.timestamp << ", difficulty: "
-                << header.difficulty
-                << ", size: " << header.block_size << ", transactions: " << header.num_txes << ENDL
-                << "major version: " << unsigned(header.major_version) << ", minor version: "
-                << unsigned(header.minor_version) << ENDL
-                << "block id: " << header.hash << ", previous block id: " << header.prev_hash << ENDL
-                << "difficulty: " << header.difficulty << ", nonce: " << header.nonce << ", reward: "
-                << currency.formatAmount(header.reward) << ENDL;
+        std::cout << "height: " << header.height << ", timestamp: " << header.timestamp << ", difficulty: "
+                  << header.difficulty << ", size: " << header.block_size << ", transactions: " << header.num_txes
+                  << ENDL << "major version: " << unsigned(header.major_version) << ", minor version: "
+                  << unsigned(header.minor_version) << ENDL << "block id: " << header.hash << ", previous block id: "
+                  << header.prev_hash << ENDL << "difficulty: " << header.difficulty << ", nonce: " << header.nonce
+                  << ", reward: " << currency.formatAmount(header.reward) << ENDL;
     }
 
     return true;
@@ -261,7 +283,8 @@ bool DaemonCommandsHandler::print_block_by_hash(const std::string &arg)
     if (m_core.hasBlock(block_hash))
     {
         print_as_json(m_core.getBlockByHash(block_hash));
-    } else
+    }
+    else
     {
         std::cout << "block wasn't found: " << arg << std::endl;
         return false;
@@ -284,7 +307,8 @@ bool DaemonCommandsHandler::print_block(const std::vector<std::string> &args)
     {
         uint32_t height = boost::lexical_cast<uint32_t>(arg);
         print_block_by_height(height);
-    } catch (boost::bad_lexical_cast &)
+    }
+    catch (boost::bad_lexical_cast &)
     {
         print_block_by_hash(arg);
     }
@@ -318,7 +342,8 @@ bool DaemonCommandsHandler::print_tx(const std::vector<std::string> &args)
     {
         CryptoNote::CachedTransaction tx(txs.front());
         print_as_json(tx.getTransaction());
-    } else
+    }
+    else
     {
         std::cout << "transaction wasn't found: <" << str_hash << '>' << std::endl;
     }

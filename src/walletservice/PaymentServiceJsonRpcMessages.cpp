@@ -300,7 +300,10 @@ namespace PaymentService
         }
     }
 
-    void SendTransaction::Request::serialize(CryptoNote::ISerializer &serializer, const WalletService &service)
+    void SendTransaction::Request::serialize(
+        CryptoNote::ISerializer &serializer,
+        const WalletService &service
+    )
     {
         serializer(sourceAddresses, "addresses");
 
@@ -337,7 +340,10 @@ namespace PaymentService
         serializer(transactionHash, "transactionHash");
     }
 
-    void CreateDelayedTransaction::Request::serialize(CryptoNote::ISerializer &serializer, const WalletService &service)
+    void CreateDelayedTransaction::Request::serialize(
+        CryptoNote::ISerializer &serializer,
+        const WalletService &service
+    )
     {
         serializer(addresses, "addresses");
 
@@ -407,7 +413,10 @@ namespace PaymentService
     {
     }
 
-    void SendFusionTransaction::Request::serialize(CryptoNote::ISerializer &serializer, const WalletService &service)
+    void SendFusionTransaction::Request::serialize(
+        CryptoNote::ISerializer &serializer,
+        const WalletService &service
+    )
     {
         if (!serializer(threshold, "threshold"))
         {

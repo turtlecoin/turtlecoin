@@ -16,11 +16,11 @@
 namespace System
 {
 
-    MemoryMappedFile::MemoryMappedFile() :
-            m_fileHandle(INVALID_HANDLE_VALUE),
-            m_mappingHandle(INVALID_HANDLE_VALUE),
-            m_size(0),
-            m_data(nullptr)
+    MemoryMappedFile::MemoryMappedFile()
+        : m_fileHandle(INVALID_HANDLE_VALUE),
+          m_mappingHandle(INVALID_HANDLE_VALUE),
+          m_size(0),
+          m_data(nullptr)
     {
     }
 
@@ -63,7 +63,12 @@ namespace System
         return m_data != nullptr;
     }
 
-    void MemoryMappedFile::create(const std::string &path, uint64_t size, bool overwrite, std::error_code &ec)
+    void MemoryMappedFile::create(
+        const std::string &path,
+        uint64_t size,
+        bool overwrite,
+        std::error_code &ec
+    )
     {
         if (isOpened())
         {
@@ -74,29 +79,33 @@ namespace System
             }
         }
 
-        Tools::ScopeExit failExitHandler([this, &ec]
-                                         {
-                                             ec = std::error_code(::GetLastError(), std::system_category());
-                                             std::error_code ignore;
-                                             close(ignore);
-                                         });
+        Tools::ScopeExit failExitHandler(
+            [
+                this,
+                &ec
+            ]
+            {
+                ec = std::error_code(::GetLastError(), std::system_category());
+                std::error_code ignore;
+                close(ignore);
+            }
+        );
 
         m_fileHandle = ::CreateFile(
-                path.c_str(),
-                GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_DELETE | FILE_SHARE_READ,
-                NULL,
-                overwrite ? CREATE_ALWAYS : CREATE_NEW,
-                FILE_ATTRIBUTE_NORMAL,
-                NULL);
+            path.c_str(),
+            GENERIC_READ | GENERIC_WRITE, FILE_SHARE_DELETE | FILE_SHARE_READ, NULL, overwrite
+                                                                                     ? CREATE_ALWAYS
+                                                                                     : CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL
+        );
         if (m_fileHandle == INVALID_HANDLE_VALUE)
         {
             return;
         }
 
         LONG distanceToMoveHigh = static_cast<LONG>((size >> 32) & UINT64_C(0xffffffff));
-        DWORD filePointer = ::SetFilePointer(m_fileHandle, static_cast<LONG>(size &
-                                                                             UINT64_C(0xffffffff)), &distanceToMoveHigh, FILE_BEGIN);
+        DWORD filePointer = ::SetFilePointer(
+            m_fileHandle, static_cast<LONG>(size & UINT64_C(0xffffffff)), &distanceToMoveHigh, FILE_BEGIN
+        );
         if (filePointer == INVALID_SET_FILE_POINTER)
         {
             return;
@@ -127,7 +136,11 @@ namespace System
         failExitHandler.cancel();
     }
 
-    void MemoryMappedFile::create(const std::string &path, uint64_t size, bool overwrite)
+    void MemoryMappedFile::create(
+        const std::string &path,
+        uint64_t size,
+        bool overwrite
+    )
     {
         std::error_code ec;
         create(path, size, overwrite, ec);
@@ -137,7 +150,10 @@ namespace System
         }
     }
 
-    void MemoryMappedFile::open(const std::string &path, std::error_code &ec)
+    void MemoryMappedFile::open(
+        const std::string &path,
+        std::error_code &ec
+    )
     {
         if (isOpened())
         {
@@ -148,21 +164,23 @@ namespace System
             }
         }
 
-        Tools::ScopeExit failExitHandler([this, &ec]
-                                         {
-                                             ec = std::error_code(::GetLastError(), std::system_category());
-                                             std::error_code ignore;
-                                             close(ignore);
-                                         });
+        Tools::ScopeExit failExitHandler(
+            [
+                this,
+                &ec
+            ]
+            {
+                ec = std::error_code(::GetLastError(), std::system_category());
+                std::error_code ignore;
+                close(ignore);
+            }
+        );
 
         m_fileHandle = ::CreateFile(
-                path.c_str(),
-                GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_DELETE | FILE_SHARE_READ,
-                NULL,
-                OPEN_EXISTING,
-                FILE_ATTRIBUTE_NORMAL,
-                NULL);
+            path.c_str(),
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_DELETE | FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL
+        );
         if (m_fileHandle == INVALID_HANDLE_VALUE)
         {
             return;
@@ -205,7 +223,10 @@ namespace System
         }
     }
 
-    void MemoryMappedFile::rename(const std::string &newPath, std::error_code &ec)
+    void MemoryMappedFile::rename(
+        const std::string &newPath,
+        std::error_code &ec
+    )
     {
         assert(isOpened());
 
@@ -214,7 +235,8 @@ namespace System
         {
             m_path = newPath;
             ec = std::error_code();
-        } else
+        }
+        else
         {
             ec = std::error_code(::GetLastError(), std::system_category());
         }
@@ -247,7 +269,8 @@ namespace System
             if (result)
             {
                 m_data = nullptr;
-            } else
+            }
+            else
             {
                 ec = std::error_code(::GetLastError(), std::system_category());
                 return;
@@ -260,7 +283,8 @@ namespace System
             if (result)
             {
                 m_mappingHandle = INVALID_HANDLE_VALUE;
-            } else
+            }
+            else
             {
                 ec = std::error_code(::GetLastError(), std::system_category());
                 return;
@@ -274,7 +298,8 @@ namespace System
             {
                 m_fileHandle = INVALID_HANDLE_VALUE;
                 ec = std::error_code();
-            } else
+            }
+            else
             {
                 ec = std::error_code(::GetLastError(), std::system_category());
                 return;
@@ -294,7 +319,11 @@ namespace System
         }
     }
 
-    void MemoryMappedFile::flush(uint8_t *data, uint64_t size, std::error_code &ec)
+    void MemoryMappedFile::flush(
+        uint8_t *data,
+        uint64_t size,
+        std::error_code &ec
+    )
     {
         assert(isOpened());
 
@@ -312,7 +341,10 @@ namespace System
         ec = std::error_code(::GetLastError(), std::system_category());
     }
 
-    void MemoryMappedFile::flush(uint8_t *data, uint64_t size)
+    void MemoryMappedFile::flush(
+        uint8_t *data,
+        uint64_t size
+    )
     {
         assert(isOpened());
 

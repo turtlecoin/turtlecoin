@@ -8,5 +8,8 @@ namespace Utilities
 {
     bool confirm(const std::string &msg);
 
-    bool confirm(const std::string &msg, const bool defaultReturn);
+    bool confirm(
+        const std::string &msg,
+        const bool defaultReturn
+    );
 }

@@ -7,13 +7,9 @@
 //////////////////////////
 
 #include <algorithm>
-
 #include <ctime>
-
 #include <iomanip>
-
 #include <iostream>
-
 #include <sstream>
 
 namespace Logger
@@ -50,26 +46,27 @@ namespace Logger
     LogLevel stringToLogLevel(std::string level)
     {
         /* Convert to lower case */
-        std::transform(level.begin(), level.end(), level.begin(),
-                       ::tolower);
-
+        std::transform(level.begin(), level.end(), level.begin(), ::tolower);
         if (level == "disabled")
         {
             return DISABLED;
-        } else if (level == "debug")
+        }
+        else if (level == "debug")
         {
             return DEBUG;
-        } else if (level == "info")
+        }
+        else if (level == "info")
         {
             return INFO;
-        } else if (level == "warning")
+        }
+        else if (level == "warning")
         {
             return WARNING;
-        } else if (level == "fatal")
+        }
+        else if (level == "fatal")
         {
             return FATAL;
         }
-
         throw std::invalid_argument("Invalid log level given");
     }
 
@@ -101,36 +98,32 @@ namespace Logger
     }
 
     void Logger::log(
-            const std::string message,
-            const LogLevel level,
-            const std::vector<LogCategory> categories) const
+        const std::string message,
+        const LogLevel level,
+        const std::vector<LogCategory> categories
+    ) const
     {
         if (level == DISABLED)
         {
             return;
         }
-
         const std::time_t now = std::time(nullptr);
-
         std::stringstream output;
-
-        output << "[" << std::put_time(std::localtime(&now), "%H:%M:%S") << "] "
-               << "[" << logLevelToString(level) << "]";
-
+        output << "[" << std::put_time(std::localtime(&now), "%H:%M:%S") << "] " << "[" << logLevelToString(level)
+               << "]";
         for (const auto &category : categories)
         {
             output << " [" << logCategoryToString(category) << "]";
         }
-
         output << ": " << message;
-
         if (level <= m_logLevel)
         {
             /* If the user provides a callback, log to that instead */
             if (m_callback)
             {
                 m_callback(output.str(), message, level, categories);
-            } else
+            }
+            else
             {
                 std::cout << output.str() << std::endl;
             }
@@ -143,11 +136,15 @@ namespace Logger
     }
 
     void Logger::setLogCallback(
-            std::function<void(
-                    const std::string prettyMessage,
-                    const std::string message,
-                    const LogLevel level,
-                    const std::vector<LogCategory> categories)> callback)
+        std::function<
+            void(
+                const std::string prettyMessage,
+                const std::string message,
+                const LogLevel level,
+                const std::vector<LogCategory> categories
+            )
+        > callback
+    )
     {
         m_callback = callback;
     }

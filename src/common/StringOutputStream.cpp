@@ -12,7 +12,10 @@ namespace Common
     {
     }
 
-    uint64_t StringOutputStream::writeSome(const void *data, uint64_t size)
+    uint64_t StringOutputStream::writeSome(
+        const void *data,
+        uint64_t size
+    )
     {
         out.append(static_cast<const char *>(data), size);
         return size;

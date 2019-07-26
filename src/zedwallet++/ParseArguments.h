@@ -37,4 +37,7 @@ struct ZedConfig
     unsigned int threads;
 };
 
-ZedConfig parseArguments(int argc, char **argv);
+ZedConfig parseArguments(
+    int argc,
+    char **argv
+);

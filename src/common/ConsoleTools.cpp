@@ -8,16 +8,16 @@
 #include <stdio.h>
 
 #ifdef _WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#include <Windows.h>
-#include <io.h>
+    #include <Windows.h>
+    #include <io.h>
 
 #else
-#include <iostream>
-#include <unistd.h>
+    #include <iostream>
+    #include <unistd.h>
 #endif
 
 namespace Common
@@ -27,11 +27,11 @@ namespace Common
 
         bool isConsoleTty()
         {
-#if defined(WIN32)
+            #if defined(WIN32)
             static bool istty = 0 != _isatty(_fileno(stdout));
-#else
+            #else
             static bool istty = 0 != isatty(fileno(stdout));
-#endif
+            #endif
             return istty;
         }
 
@@ -47,32 +47,32 @@ namespace Common
                 color = Color::Default;
             }
 
-#ifdef _WIN32
+            #ifdef _WIN32
 
             static WORD winColors[] = {
-                    // default
-                    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-                    // main
-                    FOREGROUND_BLUE,
-                    FOREGROUND_GREEN,
-                    FOREGROUND_RED,
-                    FOREGROUND_RED | FOREGROUND_GREEN,
-                    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-                    FOREGROUND_GREEN | FOREGROUND_BLUE,
-                    FOREGROUND_RED | FOREGROUND_BLUE,
-                    // bright
-                    FOREGROUND_BLUE | FOREGROUND_INTENSITY,
-                    FOREGROUND_GREEN | FOREGROUND_INTENSITY,
-                    FOREGROUND_RED | FOREGROUND_INTENSITY,
-                    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
-                    FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
-                    FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
-                    FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY
+                // default
+                FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+                // main
+                FOREGROUND_BLUE,
+                FOREGROUND_GREEN,
+                FOREGROUND_RED,
+                FOREGROUND_RED | FOREGROUND_GREEN,
+                FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
+                FOREGROUND_GREEN | FOREGROUND_BLUE,
+                FOREGROUND_RED | FOREGROUND_BLUE,
+                // bright
+                FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+                FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+                FOREGROUND_RED | FOREGROUND_INTENSITY,
+                FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+                FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+                FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+                FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY
             };
 
             SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), winColors[static_cast<uint64_t>(color)]);
 
-#else
+            #else
 
             static const char* ansiColors[] = {
               // default
@@ -97,7 +97,7 @@ namespace Common
 
             std::cout << ansiColors[static_cast<uint64_t>(color)];
 
-#endif
+            #endif
 
         }
 

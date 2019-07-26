@@ -24,7 +24,10 @@ namespace PaymentService
         rpcSecret = Crypto::Hash();
     }
 
-    bool ConfigurationManager::init(int argc, char **argv)
+    bool ConfigurationManager::init(
+        int argc,
+        char **argv
+    )
     {
         // Load in the initial CLI options
         handleSettings(argc, argv, serviceConfig);
@@ -74,7 +77,8 @@ namespace PaymentService
         {
             std::cout << CryptoNote::getProjectCLIHeader() << asString(serviceConfig) << std::endl;
             exit(0);
-        } else if (!serviceConfig.outputFile.empty())
+        }
+        else if (!serviceConfig.outputFile.empty())
         {
             try
             {
@@ -86,21 +90,22 @@ namespace PaymentService
             catch (std::exception &e)
             {
                 std::cout << CryptoNote::getProjectCLIHeader() << "Could not save configuration to: "
-                          << serviceConfig.outputFile
-                          << std::endl << e.what() << std::endl;
+                          << serviceConfig.outputFile << std::endl << e.what() << std::endl;
                 exit(1);
             }
         }
 
         if (serviceConfig.registerService && serviceConfig.unregisterService)
         {
-            throw std::runtime_error("It's impossible to use both --register-service and --unregister-service at the same time");
+            throw std::runtime_error(
+                "It's impossible to use both --register-service and --unregister-service at the same time"
+            );
         }
 
         if (serviceConfig.logLevel > Logging::TRACE)
         {
-            throw std::runtime_error("log-level must be between " + std::to_string(Logging::FATAL) + ".." +
-                                     std::to_string(Logging::TRACE));
+            throw std::runtime_error(
+                "log-level must be between " + std::to_string(Logging::FATAL) + ".." + std::to_string(Logging::TRACE));
         }
 
         if (serviceConfig.containerFile.empty())
@@ -113,11 +118,15 @@ namespace PaymentService
             if (std::ifstream(serviceConfig.containerFile + ".wallet"))
             {
                 throw std::runtime_error(
-                        "The wallet file you specified does not exist. Did you mean: " + serviceConfig.containerFile +
-                        ".wallet?");
-            } else
+                    "The wallet file you specified does not exist. Did you mean: " + serviceConfig.containerFile +
+                    ".wallet?"
+                );
+            }
+            else
             {
-                throw std::runtime_error("The wallet file you specified does not exist; please check your spelling and try again.");
+                throw std::runtime_error(
+                    "The wallet file you specified does not exist; please check your spelling and try again."
+                );
             }
         }
 

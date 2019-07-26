@@ -12,7 +12,7 @@ namespace Tools
 
     class SignalHandler
     {
-    public:
-        static bool install(std::function<void(void)> t);
+        public:
+            static bool install(std::function<void(void)> t);
     };
 }

@@ -7,7 +7,7 @@
 
 namespace
 {
-#ifdef MSVC
+    #ifdef MSVC
     char suppressMSVCWarningLNK4221;
-#endif
+    #endif
 }

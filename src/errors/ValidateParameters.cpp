@@ -12,8 +12,7 @@
 
 #include <config/WalletConfig.h>
 
-extern "C"
-{
+extern "C" {
 #include <crypto/crypto-ops.h>
 }
 
@@ -30,11 +29,12 @@ extern "C"
 #include <utilities/Utilities.h>
 
 Error validateFusionTransaction(
-        const uint64_t mixin,
-        const std::vector<std::string> subWalletsToTakeFrom,
-        const std::string destinationAddress,
-        const std::shared_ptr<SubWallets> subWallets,
-        const uint64_t currentHeight)
+    const uint64_t mixin,
+    const std::vector<std::string> subWalletsToTakeFrom,
+    const std::string destinationAddress,
+    const std::shared_ptr<SubWallets> subWallets,
+    const uint64_t currentHeight
+)
 {
     /* Validate the mixin */
     if (Error error = validateMixin(mixin, currentHeight); error != SUCCESS)
@@ -58,14 +58,17 @@ Error validateFusionTransaction(
 }
 
 Error validateTransaction(
-        const std::vector<std::pair<std::string, uint64_t>> destinations,
-        const uint64_t mixin,
-        const uint64_t fee,
-        const std::string paymentID,
-        const std::vector<std::string> subWalletsToTakeFrom,
-        const std::string changeAddress,
-        const std::shared_ptr<SubWallets> subWallets,
-        const uint64_t currentHeight)
+    const std::vector<
+        std::pair<
+            std::string, uint64_t>> destinations,
+    const uint64_t mixin,
+    const uint64_t fee,
+    const std::string paymentID,
+    const std::vector<std::string> subWalletsToTakeFrom,
+    const std::string changeAddress,
+    const std::shared_ptr<SubWallets> subWallets,
+    const uint64_t currentHeight
+)
 {
     /* Validate the destinations */
     if (Error error = validateDestinations(destinations); error != SUCCESS)
@@ -88,8 +91,9 @@ Error validateTransaction(
     }
 
     /* Validate we have enough money for the transaction */
-    if (Error error = validateAmount(destinations, fee,
-                                     subWalletsToTakeFrom, subWallets, currentHeight); error != SUCCESS)
+    if (Error error = validateAmount(
+            destinations, fee, subWalletsToTakeFrom, subWallets, currentHeight
+        ); error != SUCCESS)
     {
         return error;
     }
@@ -116,8 +120,11 @@ Error validateTransaction(
 }
 
 Error validateIntegratedAddresses(
-        const std::vector<std::pair<std::string, uint64_t>> destinations,
-        std::string paymentID)
+    const std::vector<
+        std::pair<
+            std::string, uint64_t>> destinations,
+    std::string paymentID
+)
 {
     for (const auto[address, amount] : destinations)
     {
@@ -134,7 +141,8 @@ Error validateIntegratedAddresses(
         if (paymentID == "")
         {
             paymentID = extractedPaymentID;
-        } else if (paymentID != extractedPaymentID)
+        }
+        else if (paymentID != extractedPaymentID)
         {
             return CONFLICTING_PAYMENT_IDS;
         }
@@ -189,7 +197,8 @@ Error validatePrivateKey(const Crypto::SecretKey &privateViewKey)
     if (valid)
     {
         return SUCCESS;
-    } else
+    }
+    else
     {
         return INVALID_PRIVATE_KEY;
     }
@@ -202,33 +211,35 @@ Error validatePublicKey(const Crypto::PublicKey &publicKey)
     if (valid)
     {
         return SUCCESS;
-    } else
+    }
+    else
     {
         return INVALID_PUBLIC_KEY;
     }
 }
 
-Error validateMixin(const uint64_t mixin, const uint64_t height)
+Error validateMixin(
+    const uint64_t mixin,
+    const uint64_t height
+)
 {
     const auto[minMixin, maxMixin, defaultMixin] = Utilities::getMixinAllowableRange(height);
 
     if (mixin < minMixin)
     {
         return Error(
-                MIXIN_TOO_SMALL,
-                "The mixin value given (" + std::to_string(mixin) + ") is lower "
-                                                                    "than the minimum mixin allowed (" +
-                std::to_string(minMixin) + ")"
+            MIXIN_TOO_SMALL,
+            "The mixin value given (" + std::to_string(mixin) + ") is lower than the minimum mixin allowed (" +
+            std::to_string(minMixin) + ")"
         );
     }
 
     if (mixin > maxMixin)
     {
         return Error(
-                MIXIN_TOO_BIG,
-                "The mixin value given (" + std::to_string(mixin) + ") is greater "
-                                                                    "than the maximum mixin allowed (" +
-                std::to_string(maxMixin) + ")"
+            MIXIN_TOO_BIG,
+            "The mixin value given (" + std::to_string(mixin) + ") is greater than the maximum mixin allowed (" +
+            std::to_string(maxMixin) + ")"
         );
     }
 
@@ -236,11 +247,14 @@ Error validateMixin(const uint64_t mixin, const uint64_t height)
 }
 
 Error validateAmount(
-        const std::vector<std::pair<std::string, uint64_t>> destinations,
-        const uint64_t fee,
-        const std::vector<std::string> subWalletsToTakeFrom,
-        const std::shared_ptr<SubWallets> subWallets,
-        const uint64_t currentHeight)
+    const std::vector<
+        std::pair<
+            std::string, uint64_t>> destinations,
+    const uint64_t fee,
+    const std::vector<std::string> subWalletsToTakeFrom,
+    const std::shared_ptr<SubWallets> subWallets,
+    const uint64_t currentHeight
+)
 {
     /* Verify the fee is valid */
     if (fee < CryptoNote::parameters::MINIMUM_FEE)
@@ -250,10 +264,9 @@ Error validateAmount(
 
     /* Get the available balance, using the source addresses */
     const auto[availableBalance, lockedBalance] = subWallets->getBalance(
-            Utilities::addressesToSpendKeys(subWalletsToTakeFrom),
-            /* Take from all if no subwallets specified */
-            subWalletsToTakeFrom.empty(),
-            currentHeight
+        Utilities::addressesToSpendKeys(subWalletsToTakeFrom),
+        /* Take from all if no subwallets specified */
+        subWalletsToTakeFrom.empty(), currentHeight
     );
 
     /* Get the total amount of the transaction */
@@ -261,11 +274,12 @@ Error validateAmount(
 
     std::vector<uint64_t> amounts{fee};
 
-    std::transform(destinations.begin(), destinations.end(), std::back_inserter(amounts),
-                   [](const auto destination)
-                   {
-                       return destination.second;
-                   });
+    std::transform(
+        destinations.begin(), destinations.end(), std::back_inserter(amounts), [](const auto destination)
+    {
+        return destination.second;
+    }
+    );
 
     /* Check the total amount we're sending is not >= uint64_t */
     if (Utilities::sumWillOverflow(amounts))
@@ -282,7 +296,10 @@ Error validateAmount(
 }
 
 Error validateDestinations(
-        const std::vector<std::pair<std::string, uint64_t>> destinations)
+    const std::vector<
+        std::pair<
+            std::string, uint64_t>> destinations
+)
 {
     /* Make sure there is at least one destination */
     if (destinations.empty())
@@ -313,8 +330,9 @@ Error validateDestinations(
 }
 
 Error validateAddresses(
-        std::vector<std::string> addresses,
-        const bool integratedAddressesAllowed)
+    std::vector<std::string> addresses,
+    const bool integratedAddressesAllowed
+)
 {
     for (auto &address : addresses)
     {
@@ -324,17 +342,15 @@ Error validateAddresses(
         {
             std::stringstream stream;
 
-            stream << "The address given is the wrong length. It should be "
-                   << WalletConfig::standardAddressLength << " chars or "
-                   << WalletConfig::integratedAddressLength << " chars, but "
-                   << "it is " << address.length() << " chars.";
+            stream << "The address given is the wrong length. It should be " << WalletConfig::standardAddressLength
+                   << " chars or " << WalletConfig::integratedAddressLength << " chars, but " << "it is "
+                   << address.length() << " chars.";
 
             return Error(ADDRESS_WRONG_LENGTH, stream.str());
         }
 
         /* Address has the wrong prefix */
-        if (address.substr(0, WalletConfig::addressPrefix.length()) !=
-            WalletConfig::addressPrefix)
+        if (address.substr(0, WalletConfig::addressPrefix.length()) != WalletConfig::addressPrefix)
         {
             return ADDRESS_WRONG_PREFIX;
         }
@@ -344,10 +360,9 @@ Error validateAddresses(
             if (!integratedAddressesAllowed)
             {
                 return Error(
-                        ADDRESS_IS_INTEGRATED,
-                        "The address given (" + address + ") is an integrated "
-                                                          "address, but integrated addresses aren't valid for "
-                                                          "this parameter."
+                    ADDRESS_IS_INTEGRATED,
+                    "The address given (" + address + ") is an integrated address, but integrated addresses aren't " +
+                    "valid for this parameter."
                 );
             }
 
@@ -391,8 +406,7 @@ Error validateAddresses(
             /* Convert the set of extracted keys back into an address, then
                verify that as a normal address */
             address = Utilities::getAccountAddressAsStr(
-                    CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
-                    addr
+                CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX, addr
             );
         }
 
@@ -412,8 +426,9 @@ Error validateAddresses(
 }
 
 Error validateOurAddresses(
-        const std::vector<std::string> addresses,
-        const std::shared_ptr<SubWallets> subWallets)
+    const std::vector<std::string> addresses,
+    const std::shared_ptr<SubWallets> subWallets
+)
 {
     /* Validate the addresses are valid [Integrated addresses not allowed] */
     if (Error error = validateAddresses(addresses, false); error != SUCCESS)
@@ -430,9 +445,9 @@ Error validateOurAddresses(
         if (std::find(keys.begin(), keys.end(), spendKey) == keys.end())
         {
             return Error(
-                    ADDRESS_NOT_IN_WALLET,
-                    "The address given (" + address + ") does not exist in the "
-                                                      "wallet container, but it is required to exist for this operation."
+                ADDRESS_NOT_IN_WALLET,
+                "The address given (" + address + ") does not exist in the wallet container, but it is " +
+                "required to exist for this operation."
             );
         }
     }

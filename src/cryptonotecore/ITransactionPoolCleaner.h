@@ -19,11 +19,12 @@ namespace CryptoNote
 
     class ITransactionPoolCleanWrapper : public ITransactionPool
     {
-    public:
-        virtual ~ITransactionPoolCleanWrapper()
-        {}
+        public:
+            virtual ~ITransactionPoolCleanWrapper()
+            {
+            }
 
-        virtual std::vector<Crypto::Hash> clean(const uint32_t height) = 0;
+            virtual std::vector<Crypto::Hash> clean(const uint32_t height) = 0;
     };
 
 } //namespace CryptoNote

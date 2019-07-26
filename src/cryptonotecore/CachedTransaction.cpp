@@ -21,8 +21,9 @@ CachedTransaction::CachedTransaction(const Transaction &transaction) : transacti
 {
 }
 
-CachedTransaction::CachedTransaction(const BinaryArray &transactionBinaryArray)
-        : transactionBinaryArray(transactionBinaryArray)
+CachedTransaction::CachedTransaction(const BinaryArray &transactionBinaryArray) : transactionBinaryArray(
+    transactionBinaryArray
+)
 {
     if (!fromBinaryArray<Transaction>(transaction, this->transactionBinaryArray.get()))
     {
@@ -81,10 +82,12 @@ uint64_t CachedTransaction::getTransactionFee() const
             if (in.type() == typeid(KeyInput))
             {
                 summaryInputAmount += boost::get<KeyInput>(in).amount;
-            } else if (in.type() == typeid(BaseInput))
+            }
+            else if (in.type() == typeid(BaseInput))
             {
                 return 0;
-            } else
+            }
+            else
             {
                 assert(false && "Unknown out type");
             }

@@ -24,7 +24,10 @@ std::string getNewWalletFileName();
 
 std::string getExistingWalletFileName(const ZedConfig &config);
 
-std::string getWalletPassword(const bool verifyPwd, const std::string msg);
+std::string getWalletPassword(
+    const bool verifyPwd,
+    const std::string msg
+);
 
 void viewWalletMsg();
 

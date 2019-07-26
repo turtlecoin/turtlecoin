@@ -19,26 +19,30 @@ namespace System
 
     class TcpConnector
     {
-    public:
-        TcpConnector();
+        public:
+            TcpConnector();
 
-        TcpConnector(Dispatcher &dispatcher);
+            TcpConnector(Dispatcher &dispatcher);
 
-        TcpConnector(const TcpConnector &) = delete;
+            TcpConnector(const TcpConnector &) = delete;
 
-        TcpConnector(TcpConnector &&other);
+            TcpConnector(TcpConnector &&other);
 
-        ~TcpConnector();
+            ~TcpConnector();
 
-        TcpConnector &operator=(const TcpConnector &) = delete;
+            TcpConnector &operator=(const TcpConnector &) = delete;
 
-        TcpConnector &operator=(TcpConnector &&other);
+            TcpConnector &operator=(TcpConnector &&other);
 
-        TcpConnection connect(const Ipv4Address &address, uint16_t port);
+            TcpConnection connect(
+                const Ipv4Address &address,
+                uint16_t port
+            );
 
-    private:
-        void *context;
-        Dispatcher *dispatcher;
+        private:
+            void *context;
+
+            Dispatcher *dispatcher;
     };
 
 }

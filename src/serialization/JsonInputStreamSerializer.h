@@ -14,13 +14,13 @@
 namespace CryptoNote
 {
 
-//deserialization
+    //deserialization
     class JsonInputStreamSerializer : public JsonInputValueSerializer
     {
-    public:
-        JsonInputStreamSerializer(std::istream &stream);
+        public:
+            JsonInputStreamSerializer(std::istream &stream);
 
-        virtual ~JsonInputStreamSerializer();
+            virtual ~JsonInputStreamSerializer();
     };
 
 }

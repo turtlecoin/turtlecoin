@@ -13,15 +13,18 @@ namespace Common
 
     class StdInputStream : public IInputStream
     {
-    public:
-        StdInputStream(std::istream &in);
+        public:
+            StdInputStream(std::istream &in);
 
-        StdInputStream &operator=(const StdInputStream &) = delete;
+            StdInputStream &operator=(const StdInputStream &) = delete;
 
-        uint64_t readSome(void *data, uint64_t size) override;
+            uint64_t readSome(
+                void *data,
+                uint64_t size
+            ) override;
 
-    private:
-        std::istream &in;
+        private:
+            std::istream &in;
     };
 
 }

@@ -19,7 +19,11 @@
 
 namespace CryptoNote
 {
-    inline bool serialize(boost::uuids::uuid &v, Common::StringView name, ISerializer &s)
+    inline bool serialize(
+        boost::uuids::uuid &v,
+        Common::StringView name,
+        ISerializer &s
+    )
     {
         return s.binary(&v, sizeof(v), name);
     }
@@ -35,20 +39,30 @@ namespace CryptoNote
         }
 
         uint32_t connections_count;
+
         uint32_t connection_timeout;
+
         uint32_t ping_connection_timeout;
+
         uint32_t handshake_interval;
+
         uint32_t packet_max_size;
+
         uint32_t config_id;
+
         uint32_t send_peerlist_sz;
     };
 
     struct basic_node_data
     {
         boost::uuids::uuid network_id;
+
         uint8_t version;
+
         uint64_t local_time;
+
         uint32_t my_port;
+
         uint64_t peer_id;
 
         void serialize(ISerializer &s)
@@ -68,6 +82,7 @@ namespace CryptoNote
     struct CORE_SYNC_DATA
     {
         uint32_t current_height;
+
         Crypto::Hash top_id;
 
         void serialize(ISerializer &s)
@@ -77,7 +92,7 @@ namespace CryptoNote
         }
     };
 
-#define P2P_COMMANDS_POOL_BASE 1000
+    #define P2P_COMMANDS_POOL_BASE 1000
 
     /************************************************************************/
     /*                                                                      */
@@ -92,6 +107,7 @@ namespace CryptoNote
         struct request
         {
             basic_node_data node_data;
+
             CORE_SYNC_DATA payload_data;
 
             void serialize(ISerializer &s)
@@ -105,7 +121,9 @@ namespace CryptoNote
         struct response
         {
             basic_node_data node_data;
+
             CORE_SYNC_DATA payload_data;
+
             std::list<PeerlistEntry> local_peerlist;
 
             void serialize(ISerializer &s)
@@ -142,7 +160,9 @@ namespace CryptoNote
         struct response
         {
             uint64_t local_time;
+
             CORE_SYNC_DATA payload_data;
+
             std::list<PeerlistEntry> local_peerlist;
 
             void serialize(ISerializer &s)
@@ -170,18 +190,20 @@ namespace CryptoNote
             ID = P2P_COMMANDS_POOL_BASE + 3
         };
 
-#define PING_OK_RESPONSE_STATUS_TEXT "OK"
+        #define PING_OK_RESPONSE_STATUS_TEXT "OK"
 
         struct request
         {
             /*actually we don't need to send any real data*/
             void serialize(ISerializer &s)
-            {}
+            {
+            }
         };
 
         struct response
         {
             std::string status;
+
             uint64_t peer_id;
 
             void serialize(ISerializer &s)

@@ -17,13 +17,18 @@ namespace Utilities
         return confirm(msg, true);
     }
 
-/* defaultToYes = what value we return on hitting enter, i.e. the "expected"
-   workflow */
-    bool confirm(const std::string &msg, const bool defaultToYes)
+    /* defaultToYes = what value we return on hitting enter, i.e. the "expected"
+       workflow */
+    bool confirm(
+        const std::string &msg,
+        const bool defaultToYes
+    )
     {
         /* In unix programs, the upper case letter indicates the default, for
            example when you hit enter */
-        const std::string prompt = defaultToYes ? " (Y/n): " : " (y/N): ";
+        const std::string prompt = defaultToYes
+                                   ? " (Y/n): "
+                                   : " (y/N): ";
 
         while (true)
         {
@@ -46,8 +51,7 @@ namespace Utilities
             }
 
             std::cout << WarningMsg("Bad input: ") << InformationMsg(answer)
-                      << WarningMsg(" - please enter either Y or N.")
-                      << std::endl;
+                      << WarningMsg(" - please enter either Y or N.") << std::endl;
         }
     }
 } // namespace Utilities

@@ -12,5 +12,7 @@
 namespace Utilities
 {
     /* Returns {minMixin, maxMixin, defaultMixin} */
-    std::tuple<uint64_t, uint64_t, uint64_t> getMixinAllowableRange(const uint64_t height);
+    std::tuple<
+        uint64_t, uint64_t, uint64_t
+    > getMixinAllowableRange(const uint64_t height);
 }

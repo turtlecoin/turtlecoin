@@ -20,65 +20,85 @@ namespace Tools
         namespace
         {
             const char alphabet[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
             const uint64_t alphabet_size = sizeof(alphabet) - 1;
-            const uint64_t encoded_block_sizes[] = {0, 2, 3, 5, 6, 7, 9, 10, 11};
+
+            const uint64_t encoded_block_sizes[] = {
+                0,
+                2,
+                3,
+                5,
+                6,
+                7,
+                9,
+                10,
+                11
+            };
+
             const uint64_t full_block_size = sizeof(encoded_block_sizes) / sizeof(encoded_block_sizes[0]) - 1;
+
             const uint64_t full_encoded_block_size = encoded_block_sizes[full_block_size];
+
             const uint64_t addr_checksum_size = 4;
 
             struct reverse_alphabet
             {
-                reverse_alphabet()
-                {
-                    m_data.resize(alphabet[alphabet_size - 1] - alphabet[0] + 1, -1);
-
-                    for (uint64_t i = 0; i < alphabet_size; ++i)
+                    reverse_alphabet()
                     {
-                        uint64_t idx = static_cast<uint64_t>(alphabet[i] - alphabet[0]);
-                        m_data[idx] = static_cast<int8_t>(i);
+                        m_data.resize(alphabet[alphabet_size - 1] - alphabet[0] + 1, -1);
+
+                        for (uint64_t i = 0; i < alphabet_size; ++i)
+                        {
+                            uint64_t idx = static_cast<uint64_t>(alphabet[i] - alphabet[0]);
+                            m_data[idx] = static_cast<int8_t>(i);
+                        }
                     }
-                }
 
-                int operator()(char letter) const
-                {
-                    uint64_t idx = static_cast<uint64_t>(letter - alphabet[0]);
-                    return idx < m_data.size() ? m_data[idx] : -1;
-                }
+                    int operator()(char letter) const
+                    {
+                        uint64_t idx = static_cast<uint64_t>(letter - alphabet[0]);
+                        return idx < m_data.size()
+                               ? m_data[idx]
+                               : -1;
+                    }
 
-                static reverse_alphabet instance;
+                    static reverse_alphabet instance;
 
-            private:
-                std::vector<int8_t> m_data;
+                private:
+                    std::vector<int8_t> m_data;
             };
 
             reverse_alphabet reverse_alphabet::instance;
 
             struct decoded_block_sizes
             {
-                decoded_block_sizes()
-                {
-                    m_data.resize(encoded_block_sizes[full_block_size] + 1, -1);
-                    for (uint64_t i = 0; i <= full_block_size; ++i)
+                    decoded_block_sizes()
                     {
-                        m_data[encoded_block_sizes[i]] = static_cast<int>(i);
+                        m_data.resize(encoded_block_sizes[full_block_size] + 1, -1);
+                        for (uint64_t i = 0; i <= full_block_size; ++i)
+                        {
+                            m_data[encoded_block_sizes[i]] = static_cast<int>(i);
+                        }
                     }
-                }
 
-                int operator()(uint64_t encoded_block_size) const
-                {
-                    assert(encoded_block_size <= full_encoded_block_size);
-                    return m_data[encoded_block_size];
-                }
+                    int operator()(uint64_t encoded_block_size) const
+                    {
+                        assert(encoded_block_size <= full_encoded_block_size);
+                        return m_data[encoded_block_size];
+                    }
 
-                static decoded_block_sizes instance;
+                    static decoded_block_sizes instance;
 
-            private:
-                std::vector<int> m_data;
+                private:
+                    std::vector<int> m_data;
             };
 
             decoded_block_sizes decoded_block_sizes::instance;
 
-            uint64_t uint_8be_to_64(const uint8_t *data, uint64_t size)
+            uint64_t uint_8be_to_64(
+                const uint8_t *data,
+                uint64_t size
+            )
             {
                 assert(1 <= size && size <= sizeof(uint64_t));
 
@@ -116,7 +136,11 @@ namespace Tools
                 return res;
             }
 
-            void uint_64_to_8be(uint64_t num, uint64_t size, uint8_t *data)
+            void uint_64_to_8be(
+                uint64_t num,
+                uint64_t size,
+                uint8_t *data
+            )
             {
                 assert(1 <= size && size <= sizeof(uint64_t));
 
@@ -124,7 +148,11 @@ namespace Tools
                 memcpy(data, reinterpret_cast<uint8_t *>(&num_be) + sizeof(uint64_t) - size, size);
             }
 
-            void encode_block(const char *block, uint64_t size, char *res)
+            void encode_block(
+                const char *block,
+                uint64_t size,
+                char *res
+            )
             {
                 assert(1 <= size && size <= full_block_size);
 
@@ -139,13 +167,19 @@ namespace Tools
                 }
             }
 
-            bool decode_block(const char *block, uint64_t size, char *res)
+            bool decode_block(
+                const char *block,
+                uint64_t size,
+                char *res
+            )
             {
                 assert(1 <= size && size <= full_encoded_block_size);
 
                 int res_size = decoded_block_sizes::instance(size);
                 if (res_size <= 0)
-                    return false; // Invalid block size
+                {
+                    return false;
+                } // Invalid block size
 
                 uint64_t res_num = 0;
                 uint64_t order = 1;
@@ -153,19 +187,25 @@ namespace Tools
                 {
                     int digit = reverse_alphabet::instance(block[i]);
                     if (digit < 0)
-                        return false; // Invalid symbol
+                    {
+                        return false;
+                    } // Invalid symbol
 
                     uint64_t product_hi;
                     uint64_t tmp = res_num + mul128(order, digit, &product_hi);
                     if (tmp < res_num || 0 != product_hi)
-                        return false; // Overflow
+                    {
+                        return false;
+                    } // Overflow
 
                     res_num = tmp;
                     order *= alphabet_size; // Never overflows, 58^10 < 2^64
                 }
 
                 if (static_cast<uint64_t>(res_size) < full_block_size && (UINT64_C(1) << (8 * res_size)) <= res_num)
-                    return false; // Overflow
+                {
+                    return false;
+                } // Overflow
 
                 uint_64_to_8be(res_num, res_size, reinterpret_cast<uint8_t *>(res));
 
@@ -176,7 +216,9 @@ namespace Tools
         std::string encode(const std::string &data)
         {
             if (data.empty())
+            {
                 return std::string();
+            }
 
             uint64_t full_block_count = data.size() / full_block_size;
             uint64_t last_block_size = data.size() % full_block_size;
@@ -190,14 +232,19 @@ namespace Tools
 
             if (0 < last_block_size)
             {
-                encode_block(data.data() + full_block_count * full_block_size, last_block_size, &res[full_block_count *
-                                                                                                     full_encoded_block_size]);
+                encode_block(
+                    data.data() + full_block_count * full_block_size, last_block_size, &res[full_block_count *
+                                                                                            full_encoded_block_size]
+                );
             }
 
             return res;
         }
 
-        bool decode(const std::string &enc, std::string &data)
+        bool decode(
+            const std::string &enc,
+            std::string &data
+        )
         {
             if (enc.empty())
             {
@@ -209,28 +256,40 @@ namespace Tools
             uint64_t last_block_size = enc.size() % full_encoded_block_size;
             int last_block_decoded_size = decoded_block_sizes::instance(last_block_size);
             if (last_block_decoded_size < 0)
-                return false; // Invalid enc length
+            {
+                return false;
+            } // Invalid enc length
             uint64_t data_size = full_block_count * full_block_size + last_block_decoded_size;
 
             data.resize(data_size, 0);
             for (uint64_t i = 0; i < full_block_count; ++i)
             {
                 if (!decode_block(
-                        enc.data() + i * full_encoded_block_size, full_encoded_block_size, &data[i * full_block_size]))
+                    enc.data() + i * full_encoded_block_size, full_encoded_block_size, &data[i * full_block_size]
+                ))
+                {
                     return false;
+                }
             }
 
             if (0 < last_block_size)
             {
-                if (!decode_block(enc.data() + full_block_count * full_encoded_block_size, last_block_size,
-                                  &data[full_block_count * full_block_size]))
+                if (!decode_block(
+                    enc.data() + full_block_count * full_encoded_block_size, last_block_size, &data[full_block_count *
+                                                                                                    full_block_size]
+                ))
+                {
                     return false;
+                }
             }
 
             return true;
         }
 
-        std::string encode_addr(uint64_t tag, const std::string &data)
+        std::string encode_addr(
+            uint64_t tag,
+            const std::string &data
+        )
         {
             std::string buf = get_varint_data(tag);
             buf += data;
@@ -240,12 +299,22 @@ namespace Tools
             return encode(buf);
         }
 
-        bool decode_addr(std::string addr, uint64_t &tag, std::string &data)
+        bool decode_addr(
+            std::string addr,
+            uint64_t &tag,
+            std::string &data
+        )
         {
             std::string addr_data;
             bool r = decode(addr, addr_data);
-            if (!r) return false;
-            if (addr_data.size() <= addr_checksum_size) return false;
+            if (!r)
+            {
+                return false;
+            }
+            if (addr_data.size() <= addr_checksum_size)
+            {
+                return false;
+            }
 
             std::string checksum(addr_checksum_size, '\0');
             checksum = addr_data.substr(addr_data.size() - addr_checksum_size);
@@ -253,10 +322,16 @@ namespace Tools
             addr_data.resize(addr_data.size() - addr_checksum_size);
             Crypto::Hash hash = Crypto::cn_fast_hash(addr_data.data(), addr_data.size());
             std::string expected_checksum(reinterpret_cast<const char *>(&hash), addr_checksum_size);
-            if (expected_checksum != checksum) return false;
+            if (expected_checksum != checksum)
+            {
+                return false;
+            }
 
             int read = Tools::read_varint(addr_data.begin(), addr_data.end(), tag);
-            if (read <= 0) return false;
+            if (read <= 0)
+            {
+                return false;
+            }
 
             data = addr_data.substr(read);
             return true;

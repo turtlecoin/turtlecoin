@@ -21,7 +21,8 @@ namespace
 }
 
 RocksDBWrapper::RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger)
-        : logger(logger, "RocksDBWrapper"), state(NOT_INITIALIZED)
+    : logger(logger, "RocksDBWrapper"),
+      state(NOT_INITIALIZED)
 {
 
 }
@@ -49,7 +50,8 @@ void RocksDBWrapper::init(const DataBaseConfig &config)
     if (status.ok())
     {
         logger(INFO) << "DB opened in " << dataDir;
-    } else if (!status.ok() && status.IsInvalidArgument())
+    }
+    else if (!status.ok() && status.IsInvalidArgument())
     {
         logger(INFO) << "DB not found in " << dataDir << ". Creating new DB...";
         dbOptions.create_if_missing = true;
@@ -59,11 +61,13 @@ void RocksDBWrapper::init(const DataBaseConfig &config)
             logger(ERROR) << "DB Error. DB can't be created in " << dataDir << ". Error: " << status.ToString();
             throw std::system_error(make_error_code(CryptoNote::error::DataBaseErrorCodes::INTERNAL_ERROR));
         }
-    } else if (status.IsIOError())
+    }
+    else if (status.IsIOError())
     {
         logger(ERROR) << "DB Error. DB can't be opened in " << dataDir << ". Error: " << status.ToString();
         throw std::system_error(make_error_code(CryptoNote::error::DataBaseErrorCodes::IO_ERROR));
-    } else
+    }
+    else
     {
         logger(ERROR) << "DB Error. DB can't be opened in " << dataDir << ". Error: " << status.ToString();
         throw std::system_error(make_error_code(CryptoNote::error::DataBaseErrorCodes::INTERNAL_ERROR));
@@ -104,7 +108,8 @@ void RocksDBWrapper::destroy(const DataBaseConfig &config)
     if (status.ok())
     {
         logger(WARNING) << "DB destroyed in " << dataDir;
-    } else
+    }
+    else
     {
         logger(ERROR) << "DB Error. DB can't be destroyed in " << dataDir << ". Error: " << status.ToString();
         throw std::system_error(make_error_code(CryptoNote::error::DataBaseErrorCodes::INTERNAL_ERROR));
@@ -121,14 +126,21 @@ std::error_code RocksDBWrapper::write(IWriteBatch &batch)
     return write(batch, false);
 }
 
-std::error_code RocksDBWrapper::write(IWriteBatch &batch, bool sync)
+std::error_code RocksDBWrapper::write(
+    IWriteBatch &batch,
+    bool sync
+)
 {
     rocksdb::WriteOptions writeOptions;
     writeOptions.sync = sync;
 
     rocksdb::WriteBatch rocksdbBatch;
-    std::vector<std::pair<std::string, std::string>> rawData(batch.extractRawDataToInsert());
-    for (const std::pair<std::string, std::string> &kvPair : rawData)
+    std::vector<
+        std::pair<
+            std::string, std::string>> rawData(batch.extractRawDataToInsert());
+    for (const std::pair<
+            std::string, std::string
+        > &kvPair : rawData)
     {
         rocksdbBatch.Put(rocksdb::Slice(kvPair.first), rocksdb::Slice(kvPair.second));
     }
@@ -145,7 +157,8 @@ std::error_code RocksDBWrapper::write(IWriteBatch &batch, bool sync)
     {
         logger(ERROR) << "Can't write to DB. " << status.ToString();
         return make_error_code(CryptoNote::error::DataBaseErrorCodes::INTERNAL_ERROR);
-    } else
+    }
+    else
     {
         return std::error_code();
     }
@@ -220,15 +233,22 @@ rocksdb::Options RocksDBWrapper::getDBOptions(const DataBaseConfig &config)
 
     fOptions.compression_per_level.resize(fOptions.num_levels);
 
-    const auto compressionLevel = config.getCompressionEnabled() ? rocksdb::kLZ4Compression : rocksdb::kNoCompression;
+    const auto compressionLevel = config.getCompressionEnabled()
+                                  ? rocksdb::kLZ4Compression
+                                  : rocksdb::kNoCompression;
     for (int i = 0; i < fOptions.num_levels; ++i)
     {
         // don't compress l0 & l1
-        fOptions.compression_per_level[i] = (i < 2 ? rocksdb::kNoCompression : compressionLevel);
+        fOptions.compression_per_level[i] = (
+            i < 2
+            ? rocksdb::kNoCompression
+            : compressionLevel
+        );
     }
     // bottom most use lz4hc
-    fOptions.bottommost_compression = config.getCompressionEnabled() ? rocksdb::kLZ4HCCompression
-                                                                     : rocksdb::kNoCompression;
+    fOptions.bottommost_compression = config.getCompressionEnabled()
+                                      ? rocksdb::kLZ4HCCompression
+                                      : rocksdb::kNoCompression;
 
     rocksdb::BlockBasedTableOptions tableOptions;
     tableOptions.block_cache = rocksdb::NewLRUCache(config.getReadCacheSize());

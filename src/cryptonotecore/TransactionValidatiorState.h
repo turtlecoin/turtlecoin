@@ -20,10 +20,19 @@ namespace CryptoNote
         std::unordered_set<Crypto::KeyImage> spentKeyImages;
     };
 
-    void mergeStates(TransactionValidatorState &destination, const TransactionValidatorState &source);
+    void mergeStates(
+        TransactionValidatorState &destination,
+        const TransactionValidatorState &source
+    );
 
-    bool hasIntersections(const TransactionValidatorState &destination, const TransactionValidatorState &source);
+    bool hasIntersections(
+        const TransactionValidatorState &destination,
+        const TransactionValidatorState &source
+    );
 
-    void excludeFromState(TransactionValidatorState &state, const CachedTransaction &transaction);
+    void excludeFromState(
+        TransactionValidatorState &state,
+        const CachedTransaction &transaction
+    );
 
 }

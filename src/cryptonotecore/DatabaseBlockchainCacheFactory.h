@@ -15,19 +15,26 @@ namespace CryptoNote
 
     class DatabaseBlockchainCacheFactory : public IBlockchainCacheFactory
     {
-    public:
-        explicit DatabaseBlockchainCacheFactory(IDataBase &database, std::shared_ptr<Logging::ILogger> logger);
+        public:
+            explicit DatabaseBlockchainCacheFactory(
+                IDataBase &database,
+                std::shared_ptr<Logging::ILogger> logger
+            );
 
-        virtual ~DatabaseBlockchainCacheFactory();
+            virtual ~DatabaseBlockchainCacheFactory();
 
-        virtual std::unique_ptr<IBlockchainCache> createRootBlockchainCache(const Currency &currency) override;
+            virtual std::unique_ptr<IBlockchainCache> createRootBlockchainCache(const Currency &currency) override;
 
-        virtual std::unique_ptr<IBlockchainCache>
-        createBlockchainCache(const Currency &currency, IBlockchainCache *parent, uint32_t startIndex = 0) override;
+            virtual std::unique_ptr<IBlockchainCache> createBlockchainCache(
+                const Currency &currency,
+                IBlockchainCache *parent,
+                uint32_t startIndex = 0
+            ) override;
 
-    private:
-        IDataBase &database;
-        std::shared_ptr<Logging::ILogger> logger;
+        private:
+            IDataBase &database;
+
+            std::shared_ptr<Logging::ILogger> logger;
     };
 
 } //namespace CryptoNote

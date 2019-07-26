@@ -8,19 +8,25 @@
 namespace CryptoNote
 {
 
-    TransactionPoolMessage::TransactionPoolMessage(const AddTransaction &at)
-            : type(TransactionMessageType::AddTransactionType), addTransaction(at)
+    TransactionPoolMessage::TransactionPoolMessage(const AddTransaction &at) : type(
+        TransactionMessageType::AddTransactionType
+    ),
+                                                                               addTransaction(at)
     {
     }
 
-    TransactionPoolMessage::TransactionPoolMessage(const DeleteTransaction &dt)
-            : type(TransactionMessageType::DeleteTransactionType), deleteTransaction(dt)
+    TransactionPoolMessage::TransactionPoolMessage(const DeleteTransaction &dt) : type(
+        TransactionMessageType::DeleteTransactionType
+    ),
+                                                                                  deleteTransaction(dt)
     {
     }
 
-// pattern match
-    void TransactionPoolMessage::match(std::function<void(const AddTransaction &)> &&addTxVisitor,
-                                       std::function<void(const DeleteTransaction &)> &&delTxVisitor)
+    // pattern match
+    void TransactionPoolMessage::match(
+        std::function<void(const AddTransaction &)> &&addTxVisitor,
+        std::function<void(const DeleteTransaction &)> &&delTxVisitor
+    )
     {
         switch (getType())
         {
@@ -33,7 +39,7 @@ namespace CryptoNote
         }
     }
 
-// API with explicit type handling
+    // API with explicit type handling
     TransactionMessageType TransactionPoolMessage::getType() const
     {
         return type;

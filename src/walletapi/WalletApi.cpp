@@ -19,7 +19,10 @@
 #include <walletapi/ApiDispatcher.h>
 #include <walletapi/ParseArguments.h>
 
-int main(int argc, char **argv)
+int main(
+    int argc,
+    char **argv
+)
 {
     ApiConfig config = parseArguments(argc, argv);
 
@@ -36,13 +39,16 @@ int main(int argc, char **argv)
     try
     {
         /* Trigger the shutdown signal if ctrl+c is used */
-        Tools::SignalHandler::install([&ctrl_c]
-                                      { ctrl_c = true; });
+        Tools::SignalHandler::install(
+            [&ctrl_c]
+            {
+                ctrl_c = true;
+            }
+        );
 
         /* Init the API */
         api = std::make_shared<ApiDispatcher>(
-                config.port, config.rpcBindIp, config.rpcPassword,
-                config.corsHeader, config.threads
+            config.port, config.rpcBindIp, config.rpcPassword, config.corsHeader, config.threads
         );
 
         /* Launch the API */
@@ -57,8 +63,7 @@ int main(int argc, char **argv)
 
         std::string address = "http://" + config.rpcBindIp + ":" + std::to_string(config.port);
 
-        std::cout << "The api has been launched on " << address
-                  << ".\nType exit to save and shutdown." << std::endl;
+        std::cout << "The api has been launched on " << address << ".\nType exit to save and shutdown." << std::endl;
 
         while (!ctrl_c)
         {
@@ -77,9 +82,8 @@ int main(int argc, char **argv)
     }
     catch (const std::exception &e)
     {
-        std::cout << "Unexpected error: " << e.what()
-                  << "\nPlease report this error, and what you were doing to "
-                     "cause it.\n";
+        std::cout << "Unexpected error: " << e.what() << "\nPlease report this error, and what you were doing to "
+                                                         "cause it.\n";
     }
 
     std::cout << ("\nSaving and shutting down...\n");

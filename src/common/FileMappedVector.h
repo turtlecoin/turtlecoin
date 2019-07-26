@@ -21,420 +21,495 @@ namespace Common
     template<class T>
     struct EnableIfPod
     {
-        typedef typename std::enable_if<std::is_pod<T>::value, EnableIfPod>::type type;
+        typedef typename std::enable_if<
+            std::is_pod<T>::value, EnableIfPod
+        >::type type;
     };
 
     enum class FileMappedVectorOpenMode
     {
-        OPEN,
-        CREATE,
-        OPEN_OR_CREATE
+            OPEN,
+            CREATE,
+            OPEN_OR_CREATE
     };
 
     template<class T>
     class FileMappedVector : public EnableIfPod<T>::type
     {
-    public:
-        typedef T value_type;
-
-        const static uint64_t metadataSize = static_cast<uint64_t>(2 * sizeof(uint64_t));
-        const static uint64_t valueSize = static_cast<uint64_t>(sizeof(T));
-
-        class const_iterator
-        {
         public:
-            typedef std::random_access_iterator_tag iterator_category;
             typedef T value_type;
-            typedef ptrdiff_t difference_type;
-            typedef const T *pointer;
-            typedef const T &reference;
 
-            const_iterator() : m_fileMappedVector(nullptr)
+            const static uint64_t metadataSize = static_cast<uint64_t>(2 * sizeof(uint64_t));
+
+            const static uint64_t valueSize = static_cast<uint64_t>(sizeof(T));
+
+            class const_iterator
             {
-            }
+                public:
+                    typedef std::random_access_iterator_tag iterator_category;
 
-            const_iterator(const FileMappedVector *fileMappedVector, uint64_t index) :
-                    m_fileMappedVector(fileMappedVector),
-                    m_index(index)
+                    typedef T value_type;
+
+                    typedef ptrdiff_t difference_type;
+
+                    typedef const T *pointer;
+
+                    typedef const T &reference;
+
+                    const_iterator() : m_fileMappedVector(nullptr)
+                    {
+                    }
+
+                    const_iterator(
+                        const FileMappedVector *fileMappedVector,
+                        uint64_t index
+                    ) : m_fileMappedVector(
+                        fileMappedVector
+                    ),
+                        m_index(index)
+                    {
+                    }
+
+                    const T &operator*() const
+                    {
+                        return (*m_fileMappedVector)[m_index];
+                    }
+
+                    const T *operator->() const
+                    {
+                        return &(*m_fileMappedVector)[m_index];
+                    }
+
+                    const_iterator &operator++()
+                    {
+                        ++m_index;
+                        return *this;
+                    }
+
+                    const_iterator operator++(int)
+                    {
+                        const_iterator tmp = *this;
+                        ++m_index;
+                        return tmp;
+                    }
+
+                    const_iterator &operator--()
+                    {
+                        --m_index;
+                        return *this;
+                    }
+
+                    const_iterator operator--(int)
+                    {
+                        const_iterator tmp = *this;
+                        --m_index;
+                        return tmp;
+                    }
+
+                    const_iterator &operator+=(difference_type n)
+                    {
+                        m_index += n;
+                        return *this;
+                    }
+
+                    const_iterator operator+(difference_type n) const
+                    {
+                        return const_iterator(m_fileMappedVector, m_index + n);
+                    }
+
+                    friend const_iterator operator+(
+                        difference_type n,
+                        const const_iterator &i
+                    )
+                    {
+                        return const_iterator(i.m_fileMappedVector, n + i.m_index);
+                    }
+
+                    const_iterator &operator-=(difference_type n)
+                    {
+                        m_index -= n;
+                        return *this;
+                    }
+
+                    const_iterator operator-(difference_type n) const
+                    {
+                        return const_iterator(m_fileMappedVector, m_index - n);
+                    }
+
+                    difference_type operator-(const const_iterator &other) const
+                    {
+                        return m_index - other.m_index;
+                    }
+
+                    const T &operator[](difference_type offset) const
+                    {
+                        return (*m_fileMappedVector)[m_index + offset];
+                    }
+
+                    bool operator==(const const_iterator &other) const
+                    {
+                        return m_index == other.m_index;
+                    }
+
+                    bool operator!=(const const_iterator &other) const
+                    {
+                        return m_index != other.m_index;
+                    }
+
+                    bool operator<(const const_iterator &other) const
+                    {
+                        return m_index < other.m_index;
+                    }
+
+                    bool operator>(const const_iterator &other) const
+                    {
+                        return m_index > other.m_index;
+                    }
+
+                    bool operator<=(const const_iterator &other) const
+                    {
+                        return m_index <= other.m_index;
+                    }
+
+                    bool operator>=(const const_iterator &other) const
+                    {
+                        return m_index >= other.m_index;
+                    }
+
+                    uint64_t index() const
+                    {
+                        return m_index;
+                    }
+
+                protected:
+                    const FileMappedVector *m_fileMappedVector;
+
+                    uint64_t m_index;
+            };
+
+            class iterator : public const_iterator
             {
-            }
-
-            const T &operator*() const
-            {
-                return (*m_fileMappedVector)[m_index];
-            }
-
-            const T *operator->() const
-            {
-                return &(*m_fileMappedVector)[m_index];
-            }
-
-            const_iterator &operator++()
-            {
-                ++m_index;
-                return *this;
-            }
-
-            const_iterator operator++(int)
-            {
-                const_iterator tmp = *this;
-                ++m_index;
-                return tmp;
-            }
-
-            const_iterator &operator--()
-            {
-                --m_index;
-                return *this;
-            }
-
-            const_iterator operator--(int)
-            {
-                const_iterator tmp = *this;
-                --m_index;
-                return tmp;
-            }
-
-            const_iterator &operator+=(difference_type n)
-            {
-                m_index += n;
-                return *this;
-            }
-
-            const_iterator operator+(difference_type n) const
-            {
-                return const_iterator(m_fileMappedVector, m_index + n);
-            }
-
-            friend const_iterator operator+(difference_type n, const const_iterator &i)
-            {
-                return const_iterator(i.m_fileMappedVector, n + i.m_index);
-            }
-
-            const_iterator &operator-=(difference_type n)
-            {
-                m_index -= n;
-                return *this;
-            }
-
-            const_iterator operator-(difference_type n) const
-            {
-                return const_iterator(m_fileMappedVector, m_index - n);
-            }
-
-            difference_type operator-(const const_iterator &other) const
-            {
-                return m_index - other.m_index;
-            }
-
-            const T &operator[](difference_type offset) const
-            {
-                return (*m_fileMappedVector)[m_index + offset];
-            }
-
-            bool operator==(const const_iterator &other) const
-            {
-                return m_index == other.m_index;
-            }
-
-            bool operator!=(const const_iterator &other) const
-            {
-                return m_index != other.m_index;
-            }
-
-            bool operator<(const const_iterator &other) const
-            {
-                return m_index < other.m_index;
-            }
-
-            bool operator>(const const_iterator &other) const
-            {
-                return m_index > other.m_index;
-            }
-
-            bool operator<=(const const_iterator &other) const
-            {
-                return m_index <= other.m_index;
-            }
-
-            bool operator>=(const const_iterator &other) const
-            {
-                return m_index >= other.m_index;
-            }
-
-            uint64_t index() const
-            {
-                return m_index;
-            }
-
-        protected:
-            const FileMappedVector *m_fileMappedVector;
-            uint64_t m_index;
-        };
-
-        class iterator : public const_iterator
-        {
-        public:
-            typedef std::random_access_iterator_tag iterator_category;
-            typedef T value_type;
-            typedef ptrdiff_t difference_type;
-            typedef T *pointer;
-            typedef T &reference;
-
-            iterator() : const_iterator()
-            {
-            }
-
-            iterator(const FileMappedVector *fileMappedVector, uint64_t index) : const_iterator(fileMappedVector, index)
-            {
-            }
-
-            T &operator*() const
-            {
-                return const_cast<T &>((*const_iterator::m_fileMappedVector)[const_iterator::m_index]);
-            }
-
-            T *operator->() const
-            {
-                return const_cast<T *>(&(*const_iterator::m_fileMappedVector)[const_iterator::m_index]);
-            }
-
-            iterator &operator++()
-            {
-                ++const_iterator::m_index;
-                return *this;
-            }
+                public:
+                    typedef std::random_access_iterator_tag iterator_category;
+
+                    typedef T value_type;
+
+                    typedef ptrdiff_t difference_type;
+
+                    typedef T *pointer;
+
+                    typedef T &reference;
+
+                    iterator() : const_iterator()
+                    {
+                    }
+
+                    iterator(
+                        const FileMappedVector *fileMappedVector,
+                        uint64_t index
+                    ) : const_iterator(
+                        fileMappedVector, index
+                    )
+                    {
+                    }
+
+                    T &operator*() const
+                    {
+                        return const_cast<T &>((*const_iterator::m_fileMappedVector)[const_iterator::m_index]);
+                    }
+
+                    T *operator->() const
+                    {
+                        return const_cast<T *>(&(*const_iterator::m_fileMappedVector)[const_iterator::m_index]);
+                    }
+
+                    iterator &operator++()
+                    {
+                        ++const_iterator::m_index;
+                        return *this;
+                    }
 
-            iterator operator++(int)
-            {
-                iterator tmp = *this;
-                ++const_iterator::m_index;
-                return tmp;
-            }
+                    iterator operator++(int)
+                    {
+                        iterator tmp = *this;
+                        ++const_iterator::m_index;
+                        return tmp;
+                    }
 
-            iterator &operator--()
-            {
-                --const_iterator::m_index;
-                return *this;
-            }
+                    iterator &operator--()
+                    {
+                        --const_iterator::m_index;
+                        return *this;
+                    }
 
-            iterator operator--(int)
-            {
-                iterator tmp = *this;
-                --const_iterator::m_index;
-                return tmp;
-            }
+                    iterator operator--(int)
+                    {
+                        iterator tmp = *this;
+                        --const_iterator::m_index;
+                        return tmp;
+                    }
 
-            iterator &operator+=(difference_type n)
-            {
-                const_iterator::m_index += n;
-                return *this;
-            }
+                    iterator &operator+=(difference_type n)
+                    {
+                        const_iterator::m_index += n;
+                        return *this;
+                    }
 
-            iterator operator+(difference_type n) const
-            {
-                return iterator(const_iterator::m_fileMappedVector, const_iterator::m_index + n);
-            }
+                    iterator operator+(difference_type n) const
+                    {
+                        return iterator(const_iterator::m_fileMappedVector, const_iterator::m_index + n);
+                    }
 
-            friend iterator operator+(difference_type n, const iterator &i)
-            {
-                return iterator(i.m_fileMappedVector, n + i.m_index);
-            }
+                    friend iterator operator+(
+                        difference_type n,
+                        const iterator &i
+                    )
+                    {
+                        return iterator(i.m_fileMappedVector, n + i.m_index);
+                    }
 
-            iterator &operator-=(difference_type n)
-            {
-                const_iterator::m_index -= n;
-                return *this;
-            }
+                    iterator &operator-=(difference_type n)
+                    {
+                        const_iterator::m_index -= n;
+                        return *this;
+                    }
 
-            iterator operator-(difference_type n) const
-            {
-                return iterator(const_iterator::m_fileMappedVector, const_iterator::m_index - n);
-            }
+                    iterator operator-(difference_type n) const
+                    {
+                        return iterator(const_iterator::m_fileMappedVector, const_iterator::m_index - n);
+                    }
 
-            difference_type operator-(const iterator &other) const
-            {
-                return const_iterator::m_index - other.m_index;
-            }
+                    difference_type operator-(const iterator &other) const
+                    {
+                        return const_iterator::m_index - other.m_index;
+                    }
 
-            T &operator[](difference_type offset) const
-            {
-                return (*const_iterator::m_fileMappedVector)[const_iterator::m_index + offset];
-            }
-        };
+                    T &operator[](difference_type offset) const
+                    {
+                        return (*const_iterator::m_fileMappedVector)[const_iterator::m_index + offset];
+                    }
+            };
 
-        FileMappedVector();
+            FileMappedVector();
 
-        FileMappedVector(const std::string &path,
-                         FileMappedVectorOpenMode mode = FileMappedVectorOpenMode::OPEN_OR_CREATE,
-                         uint64_t prefixSize = 0);
+            FileMappedVector(
+                const std::string &path,
+                FileMappedVectorOpenMode mode = FileMappedVectorOpenMode::OPEN_OR_CREATE,
+                uint64_t prefixSize = 0
+            );
 
-        FileMappedVector(const FileMappedVector &) = delete;
+            FileMappedVector(const FileMappedVector &) = delete;
 
-        FileMappedVector &operator=(const FileMappedVector &) = delete;
+            FileMappedVector &operator=(const FileMappedVector &) = delete;
 
-        void open(const std::string &path, FileMappedVectorOpenMode mode = FileMappedVectorOpenMode::OPEN_OR_CREATE,
-                  uint64_t prefixSize = 0);
+            void open(
+                const std::string &path,
+                FileMappedVectorOpenMode mode = FileMappedVectorOpenMode::OPEN_OR_CREATE,
+                uint64_t prefixSize = 0
+            );
 
-        void close();
+            void close();
 
-        void close(std::error_code &ec);
+            void close(std::error_code &ec);
 
-        bool isOpened() const;
+            bool isOpened() const;
 
-        bool empty() const;
+            bool empty() const;
 
-        uint64_t capacity() const;
+            uint64_t capacity() const;
 
-        uint64_t size() const;
+            uint64_t size() const;
 
-        void reserve(uint64_t n);
+            void reserve(uint64_t n);
 
-        void shrink_to_fit();
+            void shrink_to_fit();
 
-        const_iterator begin() const;
+            const_iterator begin() const;
 
-        iterator begin();
+            iterator begin();
 
-        const_iterator cbegin() const;
+            const_iterator cbegin() const;
 
-        const_iterator end() const;
+            const_iterator end() const;
 
-        iterator end();
+            iterator end();
 
-        const_iterator cend() const;
+            const_iterator cend() const;
 
-        const T &operator[](uint64_t index) const;
+            const T &operator[](uint64_t index) const;
 
-        T &operator[](uint64_t index);
+            T &operator[](uint64_t index);
 
-        const T &at(uint64_t index) const;
+            const T &at(uint64_t index) const;
 
-        T &at(uint64_t index);
+            T &at(uint64_t index);
 
-        const T &front() const;
+            const T &front() const;
 
-        T &front();
+            T &front();
 
-        const T &back() const;
+            const T &back() const;
 
-        T &back();
+            T &back();
 
-        const T *data() const;
+            const T *data() const;
 
-        T *data();
+            T *data();
 
-        void clear();
+            void clear();
 
-        iterator erase(const_iterator position);
+            iterator erase(const_iterator position);
 
-        iterator erase(const_iterator first, const_iterator last);
+            iterator erase(
+                const_iterator first,
+                const_iterator last
+            );
 
-        iterator insert(const_iterator position, const T &val);
+            iterator insert(
+                const_iterator position,
+                const T &val
+            );
 
-        template<class InputIterator>
-        iterator insert(const_iterator position, InputIterator first, InputIterator last);
+            template<class InputIterator>
+            iterator insert(
+                const_iterator position,
+                InputIterator first,
+                InputIterator last
+            );
 
-        void pop_back();
+            void pop_back();
 
-        void push_back(const T &val);
+            void push_back(const T &val);
 
-        void swap(FileMappedVector &other);
+            void swap(FileMappedVector &other);
 
-        bool getAutoFlush() const;
+            bool getAutoFlush() const;
 
-        void setAutoFlush(bool autoFlush);
+            void setAutoFlush(bool autoFlush);
 
-        void flush();
+            void flush();
 
-        const uint8_t *prefix() const;
+            const uint8_t *prefix() const;
 
-        uint8_t *prefix();
+            uint8_t *prefix();
 
-        uint64_t prefixSize() const;
+            uint64_t prefixSize() const;
 
-        void resizePrefix(uint64_t newPrefixSize);
+            void resizePrefix(uint64_t newPrefixSize);
 
-        const uint8_t *suffix() const;
+            const uint8_t *suffix() const;
 
-        uint8_t *suffix();
+            uint8_t *suffix();
 
-        uint64_t suffixSize() const;
+            uint64_t suffixSize() const;
 
-        void resizeSuffix(uint64_t newSuffixSize);
+            void resizeSuffix(uint64_t newSuffixSize);
 
-        void rename(const std::string &newPath, std::error_code &ec);
+            void rename(
+                const std::string &newPath,
+                std::error_code &ec
+            );
 
-        void rename(const std::string &newPath);
+            void rename(const std::string &newPath);
 
-        std::string getPath() const;
+            std::string getPath() const;
 
-        template<class F>
-        void atomicUpdate(F &&func);
+            template<class F>
+            void atomicUpdate(F &&func);
 
-    private:
-        std::string m_path;
-        System::MemoryMappedFile m_file;
-        uint64_t m_prefixSize;
-        uint64_t m_suffixSize;
-        bool m_autoFlush;
+        private:
+            std::string m_path;
 
-    private:
-        template<class F>
-        void
-        atomicUpdate(uint64_t newSize, uint64_t newCapacity, uint64_t newPrefixSize, uint64_t newSuffixSize, F &&func);
+            System::MemoryMappedFile m_file;
 
-        template<class F>
-        void atomicUpdate0(uint64_t newCapacity, uint64_t newPrefixSize, uint64_t newSuffixSize, F &&func);
+            uint64_t m_prefixSize;
 
-        void open(const std::string &path, uint64_t prefixSize);
+            uint64_t m_suffixSize;
 
-        void create(const std::string &path, uint64_t initialCapacity, uint64_t prefixSize, uint64_t suffixSize);
+            bool m_autoFlush;
 
-        uint8_t *prefixPtr();
+        private:
+            template<class F>
+            void atomicUpdate(
+                uint64_t newSize,
+                uint64_t newCapacity,
+                uint64_t newPrefixSize,
+                uint64_t newSuffixSize,
+                F &&func
+            );
 
-        const uint8_t *prefixPtr() const;
+            template<class F>
+            void atomicUpdate0(
+                uint64_t newCapacity,
+                uint64_t newPrefixSize,
+                uint64_t newSuffixSize,
+                F &&func
+            );
 
-        uint64_t *capacityPtr();
+            void open(
+                const std::string &path,
+                uint64_t prefixSize
+            );
 
-        const uint64_t *capacityPtr() const;
+            void create(
+                const std::string &path,
+                uint64_t initialCapacity,
+                uint64_t prefixSize,
+                uint64_t suffixSize
+            );
 
-        const uint64_t *sizePtr() const;
+            uint8_t *prefixPtr();
 
-        uint64_t *sizePtr();
+            const uint8_t *prefixPtr() const;
 
-        T *vectorDataPtr();
+            uint64_t *capacityPtr();
 
-        const T *vectorDataPtr() const;
+            const uint64_t *capacityPtr() const;
 
-        uint8_t *suffixPtr();
+            const uint64_t *sizePtr() const;
 
-        const uint8_t *suffixPtr() const;
+            uint64_t *sizePtr();
 
-        uint64_t vectorDataSize();
+            T *vectorDataPtr();
 
-        uint64_t nextCapacity();
+            const T *vectorDataPtr() const;
 
-        void flushElement(uint64_t index);
+            uint8_t *suffixPtr();
 
-        void flushSize();
+            const uint8_t *suffixPtr() const;
+
+            uint64_t vectorDataSize();
+
+            uint64_t nextCapacity();
+
+            void flushElement(uint64_t index);
+
+            void flushSize();
     };
 
     template<class T>
     FileMappedVector<T>::FileMappedVector() :
-            m_autoFlush(true)
+        m_autoFlush(true)
     {
     }
 
     template<class T>
-    FileMappedVector<T>::FileMappedVector(const std::string &path, FileMappedVectorOpenMode mode, uint64_t prefixSize) :
-            m_autoFlush(true)
+    FileMappedVector<T>::FileMappedVector(
+        const std::string &path,
+        FileMappedVectorOpenMode mode,
+        uint64_t prefixSize
+    ) :
+        m_autoFlush(true)
     {
         open(path, mode, prefixSize);
     }
 
     template<class T>
-    void FileMappedVector<T>::open(const std::string &path, FileMappedVectorOpenMode mode, uint64_t prefixSize)
+    void FileMappedVector<T>::open(
+        const std::string &path,
+        FileMappedVectorOpenMode mode,
+        uint64_t prefixSize
+    )
     {
         assert(!isOpened());
 
@@ -451,11 +526,13 @@ namespace Common
             }
 
             fileExists = true;
-        } else if (boost::filesystem::exists(bakPath))
+        }
+        else if (boost::filesystem::exists(bakPath))
         {
             boost::filesystem::rename(bakPath, filePath);
             fileExists = true;
-        } else
+        }
+        else
         {
             fileExists = false;
         }
@@ -463,22 +540,26 @@ namespace Common
         if (mode == FileMappedVectorOpenMode::OPEN)
         {
             open(path, prefixSize);
-        } else if (mode == FileMappedVectorOpenMode::CREATE)
+        }
+        else if (mode == FileMappedVectorOpenMode::CREATE)
         {
             create(path, initialCapacity, prefixSize, 0);
-        } else if (mode == FileMappedVectorOpenMode::OPEN_OR_CREATE)
+        }
+        else if (mode == FileMappedVectorOpenMode::OPEN_OR_CREATE)
         {
             if (fileExists)
             {
                 open(path, prefixSize);
-            } else
+            }
+            else
             {
                 create(path, initialCapacity, prefixSize, 0);
             }
-        } else
+        }
+        else
         {
             throw std::runtime_error(
-                    "FileMappedVector: Unsupported open mode: " + std::to_string(static_cast<int>(mode)));
+                "FileMappedVector: Unsupported open mode: " + std::to_string(static_cast<int>(mode)));
         }
     }
 
@@ -542,10 +623,12 @@ namespace Common
 
         if (n > capacity())
         {
-            atomicUpdate(size(), n, prefixSize(), suffixSize(), [this](value_type *target)
+            atomicUpdate(
+                size(), n, prefixSize(), suffixSize(), [this](value_type *target)
             {
                 std::copy(cbegin(), cend(), target);
-            });
+            }
+            );
         }
     }
 
@@ -556,10 +639,12 @@ namespace Common
 
         if (size() < capacity())
         {
-            atomicUpdate(size(), size(), prefixSize(), suffixSize(), [this](value_type *target)
+            atomicUpdate(
+                size(), size(), prefixSize(), suffixSize(), [this](value_type *target)
             {
                 std::copy(cbegin(), cend(), target);
-            });
+            }
+            );
         }
     }
 
@@ -719,23 +804,35 @@ namespace Common
     }
 
     template<class T>
-    typename FileMappedVector<T>::iterator FileMappedVector<T>::erase(const_iterator first, const_iterator last)
+    typename FileMappedVector<T>::iterator FileMappedVector<T>::erase(
+        const_iterator first,
+        const_iterator last
+    )
     {
         assert(isOpened());
 
         uint64_t newSize = size() - std::distance(first, last);
 
-        atomicUpdate(newSize, capacity(), prefixSize(), suffixSize(), [this, first, last](value_type *target)
+        atomicUpdate(
+            newSize, capacity(), prefixSize(), suffixSize(), [
+            this,
+            first,
+            last
+        ](value_type *target)
         {
             std::copy(cbegin(), first, target);
             std::copy(last, cend(), target + std::distance(cbegin(), first));
-        });
+        }
+        );
 
         return iterator(this, first.index());
     }
 
     template<class T>
-    typename FileMappedVector<T>::iterator FileMappedVector<T>::insert(const_iterator position, const T &val)
+    typename FileMappedVector<T>::iterator FileMappedVector<T>::insert(
+        const_iterator position,
+        const T &val
+    )
     {
         assert(isOpened());
 
@@ -744,8 +841,11 @@ namespace Common
 
     template<class T>
     template<class InputIterator>
-    typename FileMappedVector<T>::iterator
-    FileMappedVector<T>::insert(const_iterator position, InputIterator first, InputIterator last)
+    typename FileMappedVector<T>::iterator FileMappedVector<T>::insert(
+        const_iterator position,
+        InputIterator first,
+        InputIterator last
+    )
     {
         assert(isOpened());
 
@@ -758,17 +858,25 @@ namespace Common
             {
                 newCapacity = newSize;
             }
-        } else
+        }
+        else
         {
             newCapacity = capacity();
         }
 
-        atomicUpdate(newSize, newCapacity, prefixSize(), suffixSize(), [this, position, first, last](value_type *target)
+        atomicUpdate(
+            newSize, newCapacity, prefixSize(), suffixSize(), [
+            this,
+            position,
+            first,
+            last
+        ](value_type *target)
         {
             std::copy(cbegin(), position, target);
             std::copy(first, last, target + position.index());
             std::copy(position, cend(), target + position.index() + std::distance(first, last));
-        });
+        }
+        );
 
         return iterator(this, position.index());
     }
@@ -859,10 +967,12 @@ namespace Common
 
         if (prefixSize() != newPrefixSize)
         {
-            atomicUpdate(size(), capacity(), newPrefixSize, suffixSize(), [this](value_type *target)
+            atomicUpdate(
+                size(), capacity(), newPrefixSize, suffixSize(), [this](value_type *target)
             {
                 std::copy(cbegin(), cend(), target);
-            });
+            }
+            );
         }
     }
 
@@ -897,15 +1007,20 @@ namespace Common
 
         if (suffixSize() != newSuffixSize)
         {
-            atomicUpdate(size(), capacity(), prefixSize(), newSuffixSize, [this](value_type *target)
+            atomicUpdate(
+                size(), capacity(), prefixSize(), newSuffixSize, [this](value_type *target)
             {
                 std::copy(cbegin(), cend(), target);
-            });
+            }
+            );
         }
     }
 
     template<class T>
-    void FileMappedVector<T>::rename(const std::string &newPath, std::error_code &ec)
+    void FileMappedVector<T>::rename(
+        const std::string &newPath,
+        std::error_code &ec
+    )
     {
         m_file.rename(newPath, ec);
         if (!ec)
@@ -936,17 +1051,27 @@ namespace Common
 
     template<class T>
     template<class F>
-    void FileMappedVector<T>::atomicUpdate(uint64_t newSize, uint64_t newCapacity, uint64_t newPrefixSize,
-                                           uint64_t newSuffixSize, F &&func)
+    void FileMappedVector<T>::atomicUpdate(
+        uint64_t newSize,
+        uint64_t newCapacity,
+        uint64_t newPrefixSize,
+        uint64_t newSuffixSize,
+        F &&func
+    )
     {
         assert(newSize <= newCapacity);
 
-        atomicUpdate0(newCapacity, newPrefixSize, newSuffixSize, [this, newSize, &func](FileMappedVector<T> &newVector)
+        atomicUpdate0(
+            newCapacity, newPrefixSize, newSuffixSize, [
+            this,
+            newSize,
+            &func
+        ](FileMappedVector<T> &newVector)
         {
             if (prefixSize() != 0 && newVector.prefixSize() != 0)
             {
-                std::copy(prefixPtr(),
-                          prefixPtr() + std::min(prefixSize(), newVector.prefixSize()), newVector.prefix());
+                std::copy(
+                    prefixPtr(), prefixPtr() + std::min(prefixSize(), newVector.prefixSize()), newVector.prefix());
             }
 
             *newVector.sizePtr() = newSize;
@@ -954,16 +1079,21 @@ namespace Common
 
             if (suffixSize() != 0 && newVector.suffixSize() != 0)
             {
-                std::copy(suffixPtr(),
-                          suffixPtr() + std::min(suffixSize(), newVector.suffixSize()), newVector.suffix());
+                std::copy(
+                    suffixPtr(), suffixPtr() + std::min(suffixSize(), newVector.suffixSize()), newVector.suffix());
             }
-        });
+        }
+        );
     }
 
     template<class T>
     template<class F>
-    void
-    FileMappedVector<T>::atomicUpdate0(uint64_t newCapacity, uint64_t newPrefixSize, uint64_t newSuffixSize, F &&func)
+    void FileMappedVector<T>::atomicUpdate0(
+        uint64_t newCapacity,
+        uint64_t newPrefixSize,
+        uint64_t newSuffixSize,
+        F &&func
+    )
     {
         if (m_file.path() != m_path)
         {
@@ -978,11 +1108,13 @@ namespace Common
             boost::filesystem::remove(bakPath);
         }
 
-        Tools::ScopeExit tmpFileDeleter([&tmpPath]
-                                        {
-                                            boost::system::error_code ignore;
-                                            boost::filesystem::remove(tmpPath, ignore);
-                                        });
+        Tools::ScopeExit tmpFileDeleter(
+            [&tmpPath]
+            {
+                boost::system::error_code ignore;
+                boost::filesystem::remove(tmpPath, ignore);
+            }
+        );
 
         // Copy file. It is slow but atomic operation
         FileMappedVector<T> tmpVector;
@@ -1013,7 +1145,10 @@ namespace Common
     }
 
     template<class T>
-    void FileMappedVector<T>::open(const std::string &path, uint64_t prefixSize)
+    void FileMappedVector<T>::open(
+        const std::string &path,
+        uint64_t prefixSize
+    )
     {
         m_prefixSize = prefixSize;
         m_file.open(path);
@@ -1039,8 +1174,12 @@ namespace Common
     }
 
     template<class T>
-    void FileMappedVector<T>::create(const std::string &path, uint64_t initialCapacity, uint64_t prefixSize,
-                                     uint64_t suffixSize)
+    void FileMappedVector<T>::create(
+        const std::string &path,
+        uint64_t initialCapacity,
+        uint64_t prefixSize,
+        uint64_t suffixSize
+    )
     {
         m_file.create(path, prefixSize + metadataSize + initialCapacity * valueSize + suffixSize, false);
         m_path = path;

@@ -13,29 +13,33 @@ namespace CryptoNote
 
     class CachedTransaction
     {
-    public:
-        explicit CachedTransaction(Transaction &&transaction);
+        public:
+            explicit CachedTransaction(Transaction &&transaction);
 
-        explicit CachedTransaction(const Transaction &transaction);
+            explicit CachedTransaction(const Transaction &transaction);
 
-        explicit CachedTransaction(const BinaryArray &transactionBinaryArray);
+            explicit CachedTransaction(const BinaryArray &transactionBinaryArray);
 
-        const Transaction &getTransaction() const;
+            const Transaction &getTransaction() const;
 
-        const Crypto::Hash &getTransactionHash() const;
+            const Crypto::Hash &getTransactionHash() const;
 
-        const Crypto::Hash &getTransactionPrefixHash() const;
+            const Crypto::Hash &getTransactionPrefixHash() const;
 
-        const BinaryArray &getTransactionBinaryArray() const;
+            const BinaryArray &getTransactionBinaryArray() const;
 
-        uint64_t getTransactionFee() const;
+            uint64_t getTransactionFee() const;
 
-    private:
-        Transaction transaction;
-        mutable boost::optional<BinaryArray> transactionBinaryArray;
-        mutable boost::optional<Crypto::Hash> transactionHash;
-        mutable boost::optional<Crypto::Hash> transactionPrefixHash;
-        mutable boost::optional<uint64_t> transactionFee;
+        private:
+            Transaction transaction;
+
+            mutable boost::optional<BinaryArray> transactionBinaryArray;
+
+            mutable boost::optional<Crypto::Hash> transactionHash;
+
+            mutable boost::optional<Crypto::Hash> transactionPrefixHash;
+
+            mutable boost::optional<uint64_t> transactionFee;
     };
 
 }

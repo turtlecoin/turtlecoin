@@ -56,7 +56,8 @@ namespace Crypto
     struct PublicKey
     {
         PublicKey()
-        {}
+        {
+        }
 
         PublicKey(std::initializer_list<uint8_t> input)
         {
@@ -99,7 +100,8 @@ namespace Crypto
     struct SecretKey
     {
         SecretKey()
-        {}
+        {
+        }
 
         SecretKey(std::initializer_list<uint8_t> input)
         {
@@ -142,7 +144,8 @@ namespace Crypto
     struct KeyDerivation
     {
         KeyDerivation()
-        {}
+        {
+        }
 
         KeyDerivation(std::initializer_list<uint8_t> input)
         {
@@ -186,7 +189,8 @@ namespace Crypto
     struct KeyImage
     {
         KeyImage()
-        {}
+        {
+        }
 
         KeyImage(std::initializer_list<uint8_t> input)
         {
@@ -229,7 +233,8 @@ namespace Crypto
     struct Signature
     {
         Signature()
-        {}
+        {
+        }
 
         Signature(std::initializer_list<uint8_t> input)
         {
@@ -280,85 +285,115 @@ namespace Crypto
         return reinterpret_cast<const size_t &>(keyImage);
     }
 
-    inline void to_json(nlohmann::json &j, const Hash &h)
+    inline void to_json(
+        nlohmann::json &j,
+        const Hash &h
+    )
     {
         j = Common::podToHex(h);
     }
 
-    inline void from_json(const nlohmann::json &j, Hash &h)
+    inline void from_json(
+        const nlohmann::json &j,
+        Hash &h
+    )
     {
         if (!Common::podFromHex(j.get<std::string>(), h.data))
         {
             const auto err = nlohmann::detail::parse_error::create(
-                    100, 0, "Wrong length or not hex!"
+                100, 0, "Wrong length or not hex!"
             );
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(nlohmann::json &j, const PublicKey &p)
+    inline void to_json(
+        nlohmann::json &j,
+        const PublicKey &p
+    )
     {
         j = Common::podToHex(p);
     }
 
-    inline void from_json(const nlohmann::json &j, PublicKey &p)
+    inline void from_json(
+        const nlohmann::json &j,
+        PublicKey &p
+    )
     {
         if (!Common::podFromHex(j.get<std::string>(), p.data))
         {
             const auto err = nlohmann::detail::parse_error::create(
-                    100, 0, "Wrong length or not hex!"
+                100, 0, "Wrong length or not hex!"
             );
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(nlohmann::json &j, const SecretKey &s)
+    inline void to_json(
+        nlohmann::json &j,
+        const SecretKey &s
+    )
     {
         j = Common::podToHex(s);
     }
 
-    inline void from_json(const nlohmann::json &j, SecretKey &s)
+    inline void from_json(
+        const nlohmann::json &j,
+        SecretKey &s
+    )
     {
         if (!Common::podFromHex(j.get<std::string>(), s.data))
         {
             const auto err = nlohmann::detail::parse_error::create(
-                    100, 0, "Wrong length or not hex!"
+                100, 0, "Wrong length or not hex!"
             );
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(nlohmann::json &j, const KeyDerivation &k)
+    inline void to_json(
+        nlohmann::json &j,
+        const KeyDerivation &k
+    )
     {
         j = Common::podToHex(k);
     }
 
-    inline void from_json(const nlohmann::json &j, KeyDerivation &k)
+    inline void from_json(
+        const nlohmann::json &j,
+        KeyDerivation &k
+    )
     {
         if (!Common::podFromHex(j.get<std::string>(), k.data))
         {
             const auto err = nlohmann::detail::parse_error::create(
-                    100, 0, "Wrong length or not hex!"
+                100, 0, "Wrong length or not hex!"
             );
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(nlohmann::json &j, const KeyImage &k)
+    inline void to_json(
+        nlohmann::json &j,
+        const KeyImage &k
+    )
     {
         j = Common::podToHex(k);
     }
 
-    inline void from_json(const nlohmann::json &j, KeyImage &k)
+    inline void from_json(
+        const nlohmann::json &j,
+        KeyImage &k
+    )
     {
         if (!Common::podFromHex(j.get<std::string>(), k.data))
         {
             const auto err = nlohmann::detail::parse_error::create(
-                    100, 0, "Wrong length or not hex!"
+                100, 0, "Wrong length or not hex!"
             );
 
             throw nlohmann::json::parse_error(err);
@@ -424,37 +459,55 @@ namespace std
     };
 
     /* Overloading the << operator */
-    inline ostream &operator<<(ostream &os, const Crypto::Hash &hash)
+    inline ostream &operator<<(
+        ostream &os,
+        const Crypto::Hash &hash
+    )
     {
         os << Common::podToHex(hash);
         return os;
     }
 
-    inline ostream &operator<<(ostream &os, const Crypto::PublicKey &publicKey)
+    inline ostream &operator<<(
+        ostream &os,
+        const Crypto::PublicKey &publicKey
+    )
     {
         os << Common::podToHex(publicKey);
         return os;
     }
 
-    inline ostream &operator<<(ostream &os, const Crypto::SecretKey &secretKey)
+    inline ostream &operator<<(
+        ostream &os,
+        const Crypto::SecretKey &secretKey
+    )
     {
         os << Common::podToHex(secretKey);
         return os;
     }
 
-    inline ostream &operator<<(ostream &os, const Crypto::KeyDerivation &keyDerivation)
+    inline ostream &operator<<(
+        ostream &os,
+        const Crypto::KeyDerivation &keyDerivation
+    )
     {
         os << Common::podToHex(keyDerivation);
         return os;
     }
 
-    inline ostream &operator<<(ostream &os, const Crypto::KeyImage &keyImage)
+    inline ostream &operator<<(
+        ostream &os,
+        const Crypto::KeyImage &keyImage
+    )
     {
         os << Common::podToHex(keyImage);
         return os;
     }
 
-    inline ostream &operator<<(ostream &os, const Crypto::Signature &signature)
+    inline ostream &operator<<(
+        ostream &os,
+        const Crypto::Signature &signature
+    )
     {
         os << Common::podToHex(signature);
         return os;

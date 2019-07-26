@@ -12,13 +12,16 @@
 
 namespace Utilities
 {
-/* Erases all instances of c from the string. E.g. 2,000,000 becomes 2000000 */
-    void removeCharFromString(std::string &str, const char c)
+    /* Erases all instances of c from the string. E.g. 2,000,000 becomes 2000000 */
+    void removeCharFromString(
+        std::string &str,
+        const char c
+    )
     {
         str.erase(std::remove(str.begin(), str.end(), c), str.end());
     }
 
-/* Trims any whitespace from left and right */
+    /* Trims any whitespace from left and right */
     void trim(std::string &str)
     {
         rightTrim(str);
@@ -39,13 +42,19 @@ namespace Utilities
         str.erase(str.find_last_not_of(whitespace) + 1);
     }
 
-/* Checks if str begins with substring */
-    bool startsWith(const std::string &str, const std::string &substring)
+    /* Checks if str begins with substring */
+    bool startsWith(
+        const std::string &str,
+        const std::string &substring
+    )
     {
         return str.rfind(substring, 0) == 0;
     }
 
-    std::vector<std::string> split(const std::string &str, char delimiter = ' ')
+    std::vector<std::string> split(
+        const std::string &str,
+        char delimiter = ' '
+    )
     {
         std::vector<std::string> cont;
         std::stringstream ss(str);
@@ -59,7 +68,10 @@ namespace Utilities
         return cont;
     }
 
-    std::string removePrefix(const std::string &str, const std::string &prefix)
+    std::string removePrefix(
+        const std::string &str,
+        const std::string &prefix
+    )
     {
         const size_t removePos = str.rfind(prefix, 0);
 

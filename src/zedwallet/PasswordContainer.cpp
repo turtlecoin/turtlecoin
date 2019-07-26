@@ -13,16 +13,16 @@
 #include <stdio.h>
 
 #if defined(_WIN32)
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#include <io.h>
-#include <windows.h>
+    #include <io.h>
+    #include <windows.h>
 
 #else
-#include <termios.h>
-#include <unistd.h>
+    #include <termios.h>
+    #include <unistd.h>
 #endif
 
 #include <utilities/ColouredMsg.h>
@@ -34,18 +34,19 @@ namespace Tools
         bool is_cin_tty();
     }
 
-    PasswordContainer::PasswordContainer()
-            : m_empty(true)
+    PasswordContainer::PasswordContainer() : m_empty(true)
     {
     }
 
     PasswordContainer::PasswordContainer(std::string &&password)
-            : m_empty(false), m_password(std::move(password))
+        : m_empty(false),
+          m_password(std::move(password))
     {
     }
 
     PasswordContainer::PasswordContainer(PasswordContainer &&rhs)
-            : m_empty(std::move(rhs.m_empty)), m_password(std::move(rhs.m_password))
+        : m_empty(std::move(rhs.m_empty)),
+          m_password(std::move(rhs.m_password))
     {
     }
 
@@ -80,7 +81,8 @@ namespace Tools
                 std::cout << WarningMsg("Failed to read password!") << std::endl;
                 return false;
             }
-        } else
+        }
+        else
         {
             if (!read_password(false, msg))
             {
@@ -96,7 +98,10 @@ namespace Tools
         return validPass;
     }
 
-    bool PasswordContainer::read_password(bool verify, std::string msg)
+    bool PasswordContainer::read_password(
+        bool verify,
+        std::string msg
+    )
     {
         clear();
 
@@ -121,20 +126,22 @@ namespace Tools
                             m_password = std::move(password2);
                             m_empty = false;
                             return true;
-                        } else
+                        }
+                        else
                         {
-                            std::cout << WarningMsg("Passwords do not match, try again.")
-                                      << std::endl;
+                            std::cout << WarningMsg("Passwords do not match, try again.") << std::endl;
                             clear();
                             return read_password(true, msg);
                         }
                     }
                 }
-            } else
+            }
+            else
             {
                 r = read_from_tty(m_password);
             }
-        } else
+        }
+        else
         {
             r = read_from_file();
         }
@@ -142,7 +149,8 @@ namespace Tools
         if (r)
         {
             m_empty = false;
-        } else
+        }
+        else
         {
             clear();
         }
@@ -159,10 +167,12 @@ namespace Tools
             if (std::cin.eof() || ch == '\n' || ch == '\r')
             {
                 break;
-            } else if (std::cin.fail())
+            }
+            else if (std::cin.fail())
             {
                 return false;
-            } else
+            }
+            else
             {
                 m_password.push_back(ch);
             }
@@ -171,7 +181,7 @@ namespace Tools
         return true;
     }
 
-#if defined(_WIN32)
+    #if defined(_WIN32)
 
     namespace
     {
@@ -203,11 +213,13 @@ namespace Tools
             if (!r)
             {
                 break;
-            } else if (ch == '\n' || ch == '\r')
+            }
+            else if (ch == '\n' || ch == '\r')
             {
                 std::cout << std::endl;
                 break;
-            } else if (ch == BACKSPACE)
+            }
+            else if (ch == BACKSPACE)
             {
                 if (!password.empty())
                 {
@@ -215,7 +227,8 @@ namespace Tools
                     password.resize(password.size() - 1);
                     std::cout << "\b \b";
                 }
-            } else
+            }
+            else
             {
                 password.push_back(ch);
                 std::cout << '*';
@@ -227,7 +240,7 @@ namespace Tools
         return r;
     }
 
-#else
+    #else
 
     namespace
     {
@@ -290,5 +303,5 @@ namespace Tools
       return true;
     }
 
-#endif
+    #endif
 }

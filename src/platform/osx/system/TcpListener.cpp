@@ -28,26 +28,33 @@ namespace System
     {
     }
 
-    TcpListener::TcpListener(Dispatcher &dispatcher, const Ipv4Address &addr, uint16_t port) : dispatcher(&dispatcher)
+    TcpListener::TcpListener(
+        Dispatcher &dispatcher,
+        const Ipv4Address &addr,
+        uint16_t port
+    ) : dispatcher(&dispatcher)
     {
         std::string message;
         listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (listener == -1)
         {
             message = "socket failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             int flags = fcntl(listener, F_GETFL, 0);
             if (flags == -1 || (fcntl(listener, F_SETFL, flags | O_NONBLOCK) == -1))
             {
                 message = "fcntl failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 int on = 1;
                 if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on) == -1)
                 {
                     message = "setsockopt failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     sockaddr_in address;
                     address.sin_family = AF_INET;
@@ -56,10 +63,12 @@ namespace System
                     if (bind(listener, reinterpret_cast<sockaddr *>(&address), sizeof address) != 0)
                     {
                         message = "bind failed, " + lastErrorMessage();
-                    } else if (listen(listener, SOMAXCONN) != 0)
+                    }
+                    else if (listen(listener, SOMAXCONN) != 0)
                     {
                         message = "listen failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         struct kevent event;
                         EV_SET(&event, listener, EVFILT_READ, EV_ADD | EV_DISABLE | EV_CLEAR, 0, SOMAXCONN, NULL);
@@ -67,7 +76,8 @@ namespace System
                         if (kevent(dispatcher.getKqueue(), &event, 1, NULL, 0, NULL) == -1)
                         {
                             message = "kevent failed, " + lastErrorMessage();
-                        } else
+                        }
+                        else
                         {
                             context = nullptr;
                             return;
@@ -103,7 +113,8 @@ namespace System
             assert(context == nullptr);
             int result = close(listener);
             if (result)
-            {}
+            {
+            }
             assert(result != -1);
         }
     }
@@ -149,7 +160,8 @@ namespace System
         if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
         {
             message = "kevent failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             context = &listenerContext;
             dispatcher->getCurrentContext()->interruptProcedure = [&]
@@ -191,13 +203,15 @@ namespace System
             if (connection == -1)
             {
                 message = "accept failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 int flags = fcntl(connection, F_GETFL, 0);
                 if (flags == -1 || fcntl(connection, F_SETFL, flags | O_NONBLOCK) == -1)
                 {
                     message = "fcntl failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     return TcpConnection(*dispatcher, connection);
                 }

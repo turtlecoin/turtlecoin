@@ -17,35 +17,46 @@ namespace System
 
     class TcpConnection
     {
-    public:
-        TcpConnection();
+        public:
+            TcpConnection();
 
-        TcpConnection(const TcpConnection &) = delete;
+            TcpConnection(const TcpConnection &) = delete;
 
-        TcpConnection(TcpConnection &&other);
+            TcpConnection(TcpConnection &&other);
 
-        ~TcpConnection();
+            ~TcpConnection();
 
-        TcpConnection &operator=(const TcpConnection &) = delete;
+            TcpConnection &operator=(const TcpConnection &) = delete;
 
-        TcpConnection &operator=(TcpConnection &&other);
+            TcpConnection &operator=(TcpConnection &&other);
 
-        std::size_t read(uint8_t *data, std::size_t size);
+            std::size_t read(
+                uint8_t *data,
+                std::size_t size
+            );
 
-        std::size_t write(const uint8_t *data, std::size_t size);
+            std::size_t write(
+                const uint8_t *data,
+                std::size_t size
+            );
 
-        std::pair<Ipv4Address, uint16_t> getPeerAddressAndPort() const;
+            std::pair<Ipv4Address, uint16_t> getPeerAddressAndPort() const;
 
-    private:
-        friend class TcpConnector;
+        private:
+            friend class TcpConnector;
 
-        friend class TcpListener;
+            friend class TcpListener;
 
-        Dispatcher *dispatcher;
-        int connection;
-        ContextPair contextPair;
+            Dispatcher *dispatcher;
 
-        TcpConnection(Dispatcher &dispatcher, int socket);
+            int connection;
+
+            ContextPair contextPair;
+
+            TcpConnection(
+                Dispatcher &dispatcher,
+                int socket
+            );
     };
 
 }

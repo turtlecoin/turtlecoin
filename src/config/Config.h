@@ -8,39 +8,40 @@ namespace Config
 {
     class WalletConfig
     {
-    public:
-        /* Pretty self explanatory, this configures whether we process
-           coinbase transactions in the wallet. Most wallets have not received
-           coinbase transactions. */
-        bool skipCoinbaseTransactions = true;
+        public:
+            /* Pretty self explanatory, this configures whether we process
+               coinbase transactions in the wallet. Most wallets have not received
+               coinbase transactions. */
+            bool skipCoinbaseTransactions = true;
     };
 
     class DaemonConfig
     {
-    public:
+        public:
     };
 
     class GlobalConfig
     {
-    public:
+        public:
     };
 
     /* Global config, exposed as `config`.
        Example: `if (Config::config.wallet.scanCoinbaseTransactions)` */
     class Config
     {
-    public:
-        Config()
-        {};
+        public:
+            Config()
+            {
+            };
 
-        /* Configuration for wallets */
-        WalletConfig wallet;
+            /* Configuration for wallets */
+            WalletConfig wallet;
 
-        /* Configuration for the daemon */
-        DaemonConfig daemon;
+            /* Configuration for the daemon */
+            DaemonConfig daemon;
 
-        /* Configuration for throughout the codebase */
-        GlobalConfig global;
+            /* Configuration for throughout the codebase */
+            GlobalConfig global;
     };
 
     extern Config config;

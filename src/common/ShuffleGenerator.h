@@ -14,65 +14,75 @@
 
 class SequenceEnded : public std::runtime_error
 {
-public:
-    SequenceEnded() : std::runtime_error("shuffle sequence ended")
-    {
-    }
+    public:
+        SequenceEnded() : std::runtime_error("shuffle sequence ended")
+        {
+        }
 
-    ~SequenceEnded()
-    {}
+        ~SequenceEnded()
+        {
+        }
 };
 
 template<typename T>
 class ShuffleGenerator
 {
-public:
+    public:
 
-    ShuffleGenerator(T n) :
-            N(n), count(n)
-    {}
-
-    T operator()()
-    {
-
-        if (count == 0)
+        ShuffleGenerator(T n)
+            : N(n),
+              count(n)
         {
-            throw SequenceEnded();
         }
 
-        T value = Random::randomValue<T>(0, --count);
-
-        auto rvalIt = selected.find(count);
-        auto rval = rvalIt != selected.end() ? rvalIt->second : count;
-
-        auto lvalIt = selected.find(value);
-
-        if (lvalIt != selected.end())
+        T operator()()
         {
-            value = lvalIt->second;
-            lvalIt->second = rval;
-        } else
-        {
-            selected[value] = rval;
+
+            if (count == 0)
+            {
+                throw SequenceEnded();
+            }
+
+            T value = Random::randomValue<T>(0, --count);
+
+            auto rvalIt = selected.find(count);
+            auto rval = rvalIt != selected.end()
+                        ? rvalIt->second
+                        : count;
+
+            auto lvalIt = selected.find(value);
+
+            if (lvalIt != selected.end())
+            {
+                value = lvalIt->second;
+                lvalIt->second = rval;
+            }
+            else
+            {
+                selected[value] = rval;
+            }
+
+            return value;
         }
 
-        return value;
-    }
+        bool empty() const
+        {
+            return count == 0;
+        }
 
-    bool empty() const
-    {
-        return count == 0;
-    }
+        void reset()
+        {
+            count = N;
+            selected.clear();
+        }
 
-    void reset()
-    {
-        count = N;
-        selected.clear();
-    }
+    private:
 
-private:
+        std::unordered_map<
+            T, T
+        > selected;
 
-    std::unordered_map<T, T> selected;
-    T count;
-    const T N;
+        T count;
+
+        const T N;
 };

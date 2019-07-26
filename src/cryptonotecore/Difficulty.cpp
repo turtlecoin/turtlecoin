@@ -11,7 +11,10 @@
 // LWMA-2 difficulty algorithm 
 // Copyright (c) 2017-2018 Zawy, MIT License
 // https://github.com/zawy12/difficulty-algorithms/issues/3
-uint64_t nextDifficultyV5(std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties)
+uint64_t nextDifficultyV5(
+    std::vector<uint64_t> timestamps,
+    std::vector<uint64_t> cumulativeDifficulties
+)
 {
     int64_t T = CryptoNote::parameters::DIFFICULTY_TARGET;
     int64_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
@@ -57,7 +60,10 @@ uint64_t nextDifficultyV5(std::vector<uint64_t> timestamps, std::vector<uint64_t
 // LWMA-2 difficulty algorithm 
 // Copyright (c) 2017-2018 Zawy, MIT License
 // https://github.com/zawy12/difficulty-algorithms/issues/3
-uint64_t nextDifficultyV4(std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties)
+uint64_t nextDifficultyV4(
+    std::vector<uint64_t> timestamps,
+    std::vector<uint64_t> cumulativeDifficulties
+)
 {
     int64_t T = CryptoNote::parameters::DIFFICULTY_TARGET;
     int64_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
@@ -98,7 +104,10 @@ uint64_t nextDifficultyV4(std::vector<uint64_t> timestamps, std::vector<uint64_t
 // LWMA-2 difficulty algorithm 
 // Copyright (c) 2017-2018 Zawy, MIT License
 // https://github.com/zawy12/difficulty-algorithms/issues/3
-uint64_t nextDifficultyV3(std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties)
+uint64_t nextDifficultyV3(
+    std::vector<uint64_t> timestamps,
+    std::vector<uint64_t> cumulativeDifficulties
+)
 {
     int64_t T = CryptoNote::parameters::DIFFICULTY_TARGET;
     int64_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
@@ -112,8 +121,10 @@ uint64_t nextDifficultyV3(std::vector<uint64_t> timestamps, std::vector<uint64_t
 
     for (int64_t i = 1; i <= N; i++)
     {
-        ST = std::max(-FTL, std::min(
-                static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]), 6 * T));
+        ST = std::max(
+            -FTL, std::min(
+            static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i - 1]), 6 * T
+        ));
 
         L += ST * i;
 

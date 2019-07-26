@@ -24,7 +24,8 @@ namespace CryptoNote
         virtual void relayTransactions(const std::vector<BinaryArray> &transactions) = 0;
     };
 
-    struct ICryptoNoteProtocolHandler : ICryptoNoteProtocol, public ICryptoNoteProtocolQuery
+    struct ICryptoNoteProtocolHandler : ICryptoNoteProtocol,
+                                        public ICryptoNoteProtocolQuery
     {
     };
 }

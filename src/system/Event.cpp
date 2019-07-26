@@ -28,7 +28,10 @@ namespace System
     {
     }
 
-    Event::Event(Dispatcher &dispatcher) : dispatcher(&dispatcher), state(false), first(nullptr)
+    Event::Event(Dispatcher &dispatcher)
+        : dispatcher(&dispatcher),
+          state(false),
+          first(nullptr)
     {
     }
 
@@ -111,14 +114,20 @@ namespace System
 
         if (!state)
         {
-            EventWaiter waiter = {false, nullptr, nullptr, dispatcher->getCurrentContext()};
+            EventWaiter waiter = {
+                false,
+                nullptr,
+                nullptr,
+                dispatcher->getCurrentContext()
+            };
             waiter.context->interruptProcedure = [&]
             {
                 if (waiter.next != nullptr)
                 {
                     assert(waiter.next->prev == &waiter);
                     waiter.next->prev = waiter.prev;
-                } else
+                }
+                else
                 {
                     assert(last == &waiter);
                     last = waiter.prev;
@@ -128,7 +137,8 @@ namespace System
                 {
                     assert(waiter.prev->next == &waiter);
                     waiter.prev->next = waiter.next;
-                } else
+                }
+                else
                 {
                     assert(first == &waiter);
                     first = waiter.next;
@@ -143,7 +153,8 @@ namespace System
             {
                 static_cast<EventWaiter *>(last)->next = &waiter;
                 waiter.prev = static_cast<EventWaiter *>(last);
-            } else
+            }
+            else
             {
                 first = &waiter;
             }

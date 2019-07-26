@@ -18,38 +18,38 @@ namespace CryptoNote
 {
     class MainChainStorageRocksdb : public IMainChainStorage
     {
-    public:
-        MainChainStorageRocksdb(
+        public:
+            MainChainStorageRocksdb(
                 const std::string &blocksFilename,
                 const std::string &indexesFilename,
                 const DataBaseConfig &config
-        );
+            );
 
-        virtual ~MainChainStorageRocksdb();
+            virtual ~MainChainStorageRocksdb();
 
-        virtual void pushBlock(const RawBlock &rawBlock) override;
+            virtual void pushBlock(const RawBlock &rawBlock) override;
 
-        virtual void popBlock() override;
+            virtual void popBlock() override;
 
-        virtual void rewindTo(const uint32_t index) const override;
+            virtual void rewindTo(const uint32_t index) const override;
 
-        virtual RawBlock getBlockByIndex(const uint32_t index) const override;
+            virtual RawBlock getBlockByIndex(const uint32_t index) const override;
 
-        virtual uint32_t getBlockCount() const override;
+            virtual uint32_t getBlockCount() const override;
 
-        virtual void clear() override;
+            virtual void clear() override;
 
+        private:
+            void initializeBlockCount();
 
-    private:
-        void initializeBlockCount();
+            std::unique_ptr<rocksdb::DB> m_db;
 
-        std::unique_ptr<rocksdb::DB> m_db;
-        mutable std::atomic_uint m_blockcount;
+            mutable std::atomic_uint m_blockcount;
     };
 
     std::unique_ptr<IMainChainStorage> createSwappedMainChainStorageRocksdb(
-            const std::string &dataDir,
-            const Currency &currency,
-            const DataBaseConfig &config
+        const std::string &dataDir,
+        const Currency &currency,
+        const DataBaseConfig &config
     );
 }

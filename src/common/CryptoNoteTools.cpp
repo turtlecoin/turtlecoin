@@ -7,7 +7,10 @@
 
 using namespace CryptoNote;
 
-void CryptoNote::getBinaryArrayHash(const BinaryArray &binaryArray, Crypto::Hash &hash)
+void CryptoNote::getBinaryArrayHash(
+    const BinaryArray &binaryArray,
+    Crypto::Hash &hash
+)
 {
     cn_fast_hash(binaryArray.data(), binaryArray.size(), hash);
 }

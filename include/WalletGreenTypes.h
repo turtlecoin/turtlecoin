@@ -14,16 +14,18 @@ namespace CryptoNote
 {
 
     const size_t WALLET_INVALID_TRANSACTION_ID = std::numeric_limits<size_t>::max();
+
     const size_t WALLET_INVALID_TRANSFER_ID = std::numeric_limits<size_t>::max();
+
     const uint32_t WALLET_UNCONFIRMED_TRANSACTION_HEIGHT = std::numeric_limits<uint32_t>::max();
 
     enum class WalletTransactionState : uint8_t
     {
-        SUCCEEDED = 0,
-        FAILED,
-        CANCELLED,
-        CREATED,
-        DELETED
+            SUCCEEDED = 0,
+            FAILED,
+            CANCELLED,
+            CREATED,
+            DELETED
     };
 
     enum WalletEventType
@@ -37,9 +39,9 @@ namespace CryptoNote
 
     enum class WalletSaveLevel : uint8_t
     {
-        SAVE_KEYS_ONLY,
-        SAVE_KEYS_AND_TRANSACTIONS,
-        SAVE_ALL
+            SAVE_KEYS_ONLY,
+            SAVE_KEYS_AND_TRANSACTIONS,
+            SAVE_ALL
     };
 
     struct WalletTransactionCreatedData
@@ -85,9 +87,9 @@ namespace CryptoNote
 
     enum class WalletTransferType : uint8_t
     {
-        USUAL = 0,
-        DONATION,
-        CHANGE
+            USUAL = 0,
+            DONATION,
+            CHANGE
     };
 
     struct WalletOrder

@@ -9,10 +9,10 @@
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
-#define NOMINMAX
+    #define NOMINMAX
 #endif
 
 #include <winsock2.h>
@@ -30,33 +30,40 @@ namespace System
         };
 
         const size_t STACK_SIZE = 16384;
+
         const size_t RESERVE_STACK_SIZE = 2097152;
     }
 
     Dispatcher::Dispatcher()
     {
-        static_assert(sizeof(CRITICAL_SECTION) ==
-                      sizeof(Dispatcher::criticalSection), "CRITICAL_SECTION size doesn't fit sizeof(Dispatcher::criticalSection)");
-        BOOL result = InitializeCriticalSectionAndSpinCount(reinterpret_cast<LPCRITICAL_SECTION>(criticalSection), 4000);
+        static_assert(
+            sizeof(CRITICAL_SECTION) ==
+            sizeof(Dispatcher::criticalSection), "CRITICAL_SECTION size doesn't fit sizeof(Dispatcher::criticalSection)"
+        );
+        BOOL
+            result = InitializeCriticalSectionAndSpinCount(reinterpret_cast<LPCRITICAL_SECTION>(criticalSection), 4000);
         assert(result != FALSE);
         std::string message;
         if (ConvertThreadToFiberEx(NULL, 0) == NULL)
         {
             message = "ConvertThreadToFiberEx failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
             if (completionPort == NULL)
             {
                 message = "CreateIoCompletionPort failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 WSADATA wsaData;
                 int wsaResult = WSAStartup(0x0202, &wsaData);
                 if (wsaResult != 0)
                 {
                     message = "WSAStartup failed, " + errorMessage(wsaResult);
-                } else
+                }
+                else
                 {
                     remoteNotificationSent = false;
                     reinterpret_cast<LPOVERLAPPED>(remoteSpawnOverlapped)->hEvent = NULL;
@@ -173,7 +180,9 @@ namespace System
                 break;
             }
 
-            DWORD timeout = timers.empty() ? INFINITE : static_cast<DWORD>(std::min(
+            DWORD timeout = timers.empty()
+                            ? INFINITE
+                            : static_cast<DWORD>(std::min(
                     timers.begin()->first - currentTime, static_cast<uint64_t>(INFINITE - 1)));
             OVERLAPPED_ENTRY entry;
             ULONG actual = 0;
@@ -208,7 +217,7 @@ namespace System
             if (lastError != WAIT_IO_COMPLETION)
             {
                 throw std::runtime_error(
-                        "Dispatcher::dispatch, GetQueuedCompletionStatusEx failed, " + errorMessage(lastError));
+                    "Dispatcher::dispatch, GetQueuedCompletionStatusEx failed, " + errorMessage(lastError));
             }
         }
 
@@ -240,7 +249,8 @@ namespace System
             {
                 context->interruptProcedure();
                 context->interruptProcedure = nullptr;
-            } else
+            }
+            else
             {
                 context->interrupted = true;
             }
@@ -274,7 +284,8 @@ namespace System
         {
             assert(lastResumingContext->next == nullptr);
             lastResumingContext->next = context;
-        } else
+        }
+        else
         {
             firstResumingContext = context;
         }
@@ -289,12 +300,12 @@ namespace System
         if (!remoteNotificationSent)
         {
             remoteNotificationSent = true;
-            if (PostQueuedCompletionStatus(completionPort, 0, 0, reinterpret_cast<LPOVERLAPPED>(remoteSpawnOverlapped)) ==
-                NULL)
+            if (PostQueuedCompletionStatus(
+                completionPort, 0, 0, reinterpret_cast<LPOVERLAPPED>(remoteSpawnOverlapped)) == NULL)
             {
                 LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(criticalSection));
                 throw std::runtime_error(
-                        "Dispatcher::remoteSpawn, PostQueuedCompletionStatus failed, " + lastErrorMessage());
+                    "Dispatcher::remoteSpawn, PostQueuedCompletionStatus failed, " + lastErrorMessage());
             };
         }
 
@@ -310,7 +321,8 @@ namespace System
             context->groupPrev = contextGroup.lastContext;
             assert(contextGroup.lastContext->groupNext == nullptr);
             contextGroup.lastContext->groupNext = context;
-        } else
+        }
+        else
         {
             context->groupPrev = nullptr;
             contextGroup.firstContext = context;
@@ -371,16 +383,18 @@ namespace System
                     context->interruptProcedure = nullptr;
                     pushContext(context);
                 }
-            } else
+            }
+            else
             {
                 DWORD lastError = GetLastError();
                 if (lastError == WAIT_TIMEOUT)
                 {
                     break;
-                } else if (lastError != WAIT_IO_COMPLETION)
+                }
+                else if (lastError != WAIT_IO_COMPLETION)
                 {
                     throw std::runtime_error(
-                            "Dispatcher::yield, GetQueuedCompletionStatusEx failed, " + errorMessage(lastError));
+                        "Dispatcher::yield, GetQueuedCompletionStatusEx failed, " + errorMessage(lastError));
                 }
             }
         }
@@ -392,7 +406,10 @@ namespace System
         }
     }
 
-    void Dispatcher::addTimer(uint64_t time, NativeContext *context)
+    void Dispatcher::addTimer(
+        uint64_t time,
+        NativeContext *context
+    )
     {
         assert(GetCurrentThreadId() == threadId);
         timers.insert(std::make_pair(time, context));
@@ -430,7 +447,10 @@ namespace System
         --runningContextCount;
     }
 
-    void Dispatcher::interruptTimer(uint64_t time, NativeContext *context)
+    void Dispatcher::interruptTimer(
+        uint64_t time,
+        NativeContext *context
+    )
     {
         assert(GetCurrentThreadId() == threadId);
 
@@ -468,7 +488,8 @@ namespace System
             try
             {
                 context.procedure();
-            } catch (...)
+            }
+            catch (...)
             {
             }
 
@@ -482,12 +503,14 @@ namespace System
                     {
                         assert(context.groupNext->groupPrev == &context);
                         context.groupNext->groupPrev = context.groupPrev;
-                    } else
+                    }
+                    else
                     {
                         assert(context.group->lastContext == &context);
                         context.group->lastContext = context.groupPrev;
                     }
-                } else
+                }
+                else
                 {
                     assert(context.group->firstContext == &context);
                     context.group->firstContext = context.groupNext;
@@ -495,7 +518,8 @@ namespace System
                     {
                         assert(context.groupNext->groupPrev == &context);
                         context.groupNext->groupPrev = nullptr;
-                    } else
+                    }
+                    else
                     {
                         assert(context.group->lastContext == &context);
                         if (context.group->firstWaiter != nullptr)
@@ -504,7 +528,8 @@ namespace System
                             {
                                 assert(lastResumingContext->next == nullptr);
                                 lastResumingContext->next = context.group->firstWaiter;
-                            } else
+                            }
+                            else
                             {
                                 firstResumingContext = context.group->firstWaiter;
                             }

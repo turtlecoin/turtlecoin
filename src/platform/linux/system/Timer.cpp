@@ -22,7 +22,10 @@ namespace System
     {
     }
 
-    Timer::Timer(Dispatcher &dispatcher) : dispatcher(&dispatcher), context(nullptr), timer(-1)
+    Timer::Timer(Dispatcher &dispatcher)
+        : dispatcher(&dispatcher),
+          context(nullptr),
+          timer(-1)
     {
     }
 
@@ -70,7 +73,8 @@ namespace System
         if (duration.count() == 0)
         {
             dispatcher->yield();
-        } else
+        }
+        else
         {
             timer = dispatcher->getTimer();
 
@@ -106,19 +110,21 @@ namespace System
                     uint64_t value = 0;
                     if (::read(timer, &value, sizeof value) == -1)
                     {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wlogical-op"
+                        #pragma GCC diagnostic push
+                        #pragma GCC diagnostic ignored "-Wlogical-op"
                         if (errno == EAGAIN || errno == EWOULDBLOCK)
                         {
-#pragma GCC diagnostic pop
+                            #pragma GCC diagnostic pop
                             timerContext->interrupted = true;
                             dispatcher->pushContext(timerContext->context);
-                        } else
+                        }
+                        else
                         {
                             throw std::runtime_error(
-                                    "Timer::sleep, interrupt procedure, read failed, " + lastErrorMessage());
+                                "Timer::sleep, interrupt procedure, read failed, " + lastErrorMessage());
                         }
-                    } else
+                    }
+                    else
                     {
                         assert(value > 0);
                         dispatcher->pushContext(timerContext->context);
@@ -131,7 +137,7 @@ namespace System
                     if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, timer, &timerEvent) == -1)
                     {
                         throw std::runtime_error(
-                                "Timer::sleep, interrupt procedure, epoll_ctl failed, " + lastErrorMessage());
+                            "Timer::sleep, interrupt procedure, epoll_ctl failed, " + lastErrorMessage());
                     }
                 }
             };

@@ -18,8 +18,12 @@ namespace Logging
         loggers.push_back(&logger);
     }
 
-    void LoggerGroup::operator()(const std::string &category, Level level, boost::posix_time::ptime time,
-                                 const std::string &body)
+    void LoggerGroup::operator()(
+        const std::string &category,
+        Level level,
+        boost::posix_time::ptime time,
+        const std::string &body
+    )
     {
         if (level <= logLevel && disabledCategories.count(category) == 0)
         {

@@ -32,7 +32,6 @@ namespace CryptoNote
         Crypto::Hash paymentId;
     };
 
-
     struct TransactionOutputInformation
     {
         // output info
@@ -61,52 +60,62 @@ namespace CryptoNote
 
     class ITransfersContainer : public IStreamSerializable
     {
-    public:
-        enum Flags : uint32_t
-        {
-            // state
+        public:
+            enum Flags : uint32_t
+            {
+                // state
                     IncludeStateUnlocked = 0x01,
-            IncludeStateLocked = 0x02,
-            IncludeStateSoftLocked = 0x04,
-            IncludeStateSpent = 0x08,
-            // output type
+                IncludeStateLocked = 0x02,
+                IncludeStateSoftLocked = 0x04,
+                IncludeStateSpent = 0x08,
+                // output type
                     IncludeTypeKey = 0x100,
-            // combinations
+                // combinations
                     IncludeStateAll = 0xff,
-            IncludeTypeAll = 0xff00,
+                IncludeTypeAll = 0xff00,
 
-            IncludeKeyUnlocked = IncludeTypeKey | IncludeStateUnlocked,
-            IncludeKeyNotUnlocked = IncludeTypeKey | IncludeStateLocked | IncludeStateSoftLocked,
+                IncludeKeyUnlocked = IncludeTypeKey | IncludeStateUnlocked,
+                IncludeKeyNotUnlocked = IncludeTypeKey | IncludeStateLocked | IncludeStateSoftLocked,
 
-            IncludeAllLocked = IncludeTypeAll | IncludeStateLocked | IncludeStateSoftLocked,
-            IncludeAllUnlocked = IncludeTypeAll | IncludeStateUnlocked,
-            IncludeAll = IncludeTypeAll | IncludeStateAll,
+                IncludeAllLocked = IncludeTypeAll | IncludeStateLocked | IncludeStateSoftLocked,
+                IncludeAllUnlocked = IncludeTypeAll | IncludeStateUnlocked,
+                IncludeAll = IncludeTypeAll | IncludeStateAll,
 
-            IncludeDefault = IncludeKeyUnlocked
-        };
+                IncludeDefault = IncludeKeyUnlocked
+            };
 
-        virtual size_t transactionsCount() const = 0;
+            virtual size_t transactionsCount() const = 0;
 
-        virtual uint64_t balance(uint32_t flags = IncludeDefault) const = 0;
+            virtual uint64_t balance(uint32_t flags = IncludeDefault) const = 0;
 
-        virtual void
-        getOutputs(std::vector<TransactionOutputInformation> &transfers, uint32_t flags = IncludeDefault) const = 0;
+            virtual void getOutputs(
+                std::vector<TransactionOutputInformation> &transfers,
+                uint32_t flags = IncludeDefault
+            ) const = 0;
 
-        virtual bool getTransactionInformation(const Crypto::Hash &transactionHash, TransactionInformation &info,
-                                               uint64_t *amountIn = nullptr, uint64_t *amountOut = nullptr) const = 0;
+            virtual bool getTransactionInformation(
+                const Crypto::Hash &transactionHash,
+                TransactionInformation &info,
+                uint64_t *amountIn = nullptr,
+                uint64_t *amountOut = nullptr
+            ) const = 0;
 
-        virtual std::vector<TransactionOutputInformation>
-        getTransactionOutputs(const Crypto::Hash &transactionHash, uint32_t flags = IncludeDefault) const = 0;
+            virtual std::vector<TransactionOutputInformation> getTransactionOutputs(
+                const Crypto::Hash &transactionHash,
+                uint32_t flags = IncludeDefault
+            ) const = 0;
 
-        //only type flags are feasible for this function
-        virtual std::vector<TransactionOutputInformation>
-        getTransactionInputs(const Crypto::Hash &transactionHash, uint32_t flags) const = 0;
+            //only type flags are feasible for this function
+            virtual std::vector<TransactionOutputInformation> getTransactionInputs(
+                const Crypto::Hash &transactionHash,
+                uint32_t flags
+            ) const = 0;
 
-        virtual void getUnconfirmedTransactions(std::vector<Crypto::Hash> &transactions) const = 0;
+            virtual void getUnconfirmedTransactions(std::vector<Crypto::Hash> &transactions) const = 0;
 
-        virtual std::vector<SpentTransactionOutput> getUnspentInputs() const = 0;
+            virtual std::vector<SpentTransactionOutput> getUnspentInputs() const = 0;
 
-        virtual std::vector<SpentTransactionOutput> getSpentInputs() const = 0;
+            virtual std::vector<SpentTransactionOutput> getSpentInputs() const = 0;
     };
 
 }

@@ -10,19 +10,19 @@
 
 namespace CryptoNote
 {
-//-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     AccountBase::AccountBase()
     {
         setNull();
     }
 
-//-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     void AccountBase::setNull()
     {
         m_keys = AccountKeys();
     }
 
-//-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     void AccountBase::generate()
     {
 
@@ -32,17 +32,19 @@ namespace CryptoNote
            with keccak-256, and then using this as the seed to generate a new set
            of keys - the public and private view keys. See generate_deterministic_keys */
 
-        Crypto::crypto_ops::generateViewFromSpend(m_keys.spendSecretKey, m_keys.viewSecretKey, m_keys.address.viewPublicKey);
+        Crypto::crypto_ops::generateViewFromSpend(
+            m_keys.spendSecretKey, m_keys.viewSecretKey, m_keys.address.viewPublicKey
+        );
         m_creation_timestamp = time(NULL);
 
     }
 
-//-----------------------------------------------------------------
+    //-----------------------------------------------------------------
     const AccountKeys &AccountBase::getAccountKeys() const
     {
         return m_keys;
     }
-//-----------------------------------------------------------------
+    //-----------------------------------------------------------------
 
     void AccountBase::serialize(ISerializer &s)
     {

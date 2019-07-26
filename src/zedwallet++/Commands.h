@@ -9,27 +9,39 @@
 
 class Command
 {
-public:
-    Command(std::string commandName, std::string description) :
-            commandName(commandName), description(description)
-    {}
+    public:
+        Command(
+            std::string commandName,
+            std::string description
+        )
+            : commandName(commandName),
+              description(description)
+        {
+        }
 
-    const std::string commandName;
-    const std::string description;
+        const std::string commandName;
+
+        const std::string description;
 };
 
 class AdvancedCommand : public Command
 {
-public:
-    AdvancedCommand(std::string commandName, std::string description,
-                    bool viewWalletSupport, bool advanced) :
-            Command(commandName, description),
-            viewWalletSupport(viewWalletSupport),
-            advanced(advanced)
-    {}
+    public:
+        AdvancedCommand(
+            std::string commandName,
+            std::string description,
+            bool viewWalletSupport,
+            bool advanced
+        )
+            : Command(commandName, description),
+              viewWalletSupport(viewWalletSupport),
+              advanced(advanced)
+        {
+        }
 
-    const bool viewWalletSupport;
-    const bool advanced;
+        const bool viewWalletSupport;
+
+        const bool advanced;
 };
 
 std::vector<Command> startupCommands();

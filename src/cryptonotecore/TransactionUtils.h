@@ -11,27 +11,44 @@ namespace CryptoNote
 
     bool checkInputsKeyimagesDiff(const CryptoNote::TransactionPrefix &tx);
 
-// TransactionInput helper functions
+    // TransactionInput helper functions
     size_t getRequiredSignaturesCount(const TransactionInput &in);
 
     uint64_t getTransactionInputAmount(const TransactionInput &in);
 
     TransactionTypes::InputType getTransactionInputType(const TransactionInput &in);
 
-    const TransactionInput &getInputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index);
+    const TransactionInput &getInputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index
+    );
 
-    const TransactionInput &
-    getInputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index, TransactionTypes::InputType type);
+    const TransactionInput &getInputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index,
+        TransactionTypes::InputType type
+    );
 
-// TransactionOutput helper functions
+    // TransactionOutput helper functions
     TransactionTypes::OutputType getTransactionOutputType(const TransactionOutputTarget &out);
 
-    const TransactionOutput &getOutputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index);
+    const TransactionOutput &getOutputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index
+    );
 
-    const TransactionOutput &
-    getOutputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index, TransactionTypes::OutputType type);
+    const TransactionOutput &getOutputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index,
+        TransactionTypes::OutputType type
+    );
 
-    bool findOutputsToAccount(const CryptoNote::TransactionPrefix &transaction, const AccountPublicAddress &addr,
-                              const Crypto::SecretKey &viewSecretKey, std::vector<uint32_t> &out, uint64_t &amount);
+    bool findOutputsToAccount(
+        const CryptoNote::TransactionPrefix &transaction,
+        const AccountPublicAddress &addr,
+        const Crypto::SecretKey &viewSecretKey,
+        std::vector<uint32_t> &out,
+        uint64_t &amount
+    );
 
 } //namespace CryptoNote

@@ -41,7 +41,8 @@ namespace System
             assert(contextPair.writeContext == nullptr);
             int result = close(connection);
             if (result)
-            {}
+            {
+            }
             assert(result != -1);
         }
     }
@@ -71,7 +72,10 @@ namespace System
         return *this;
     }
 
-    size_t TcpConnection::read(uint8_t *data, size_t size)
+    size_t TcpConnection::read(
+        uint8_t *data,
+        size_t size
+    )
     {
         assert(dispatcher != nullptr);
         assert(contextPair.readContext == nullptr);
@@ -84,13 +88,14 @@ namespace System
         ssize_t transferred = ::recv(connection, (void *) data, size, 0);
         if (transferred == -1)
         {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wlogical-op"
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wlogical-op"
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
-#pragma GCC diagnostic pop
+                #pragma GCC diagnostic pop
                 message = "recv failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 epoll_event connectionEvent;
                 OperationContext operationContext;
@@ -102,7 +107,8 @@ namespace System
                 if (contextPair.writeContext != nullptr)
                 {
                     connectionEvent.events = EPOLLIN | EPOLLOUT | EPOLLONESHOT;
-                } else
+                }
+                else
                 {
                     connectionEvent.events = EPOLLIN | EPOLLONESHOT;
                 }
@@ -110,7 +116,8 @@ namespace System
                 if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, connection, &connectionEvent) == -1)
                 {
                     message = "epoll_ctl failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     dispatcher->getCurrentContext()->interruptProcedure = [&]()
                     {
@@ -122,8 +129,8 @@ namespace System
 
                         if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, connection, &connectionEvent) == -1)
                         {
-                            throw std::runtime_error("TcpConnection::read, interrupt procedure, epoll_ctl failed, " +
-                                                     lastErrorMessage());
+                            throw std::runtime_error(
+                                "TcpConnection::read, interrupt procedure, epoll_ctl failed, " + lastErrorMessage());
                         }
 
                         contextPair.readContext->interrupted = true;
@@ -165,7 +172,8 @@ namespace System
                     if (transferred == -1)
                     {
                         message = "recv failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         assert(transferred <= static_cast<ssize_t>(size));
                         return transferred;
@@ -180,7 +188,10 @@ namespace System
         return transferred;
     }
 
-    std::size_t TcpConnection::write(const uint8_t *data, size_t size)
+    std::size_t TcpConnection::write(
+        const uint8_t *data,
+        size_t size
+    )
     {
         assert(dispatcher != nullptr);
         assert(contextPair.writeContext == nullptr);
@@ -203,13 +214,14 @@ namespace System
         ssize_t transferred = ::send(connection, (void *) data, size, MSG_NOSIGNAL);
         if (transferred == -1)
         {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wlogical-op"
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wlogical-op"
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
-#pragma GCC diagnostic pop
+                #pragma GCC diagnostic pop
                 message = "send failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 epoll_event connectionEvent;
                 OperationContext operationContext;
@@ -221,7 +233,8 @@ namespace System
                 if (contextPair.readContext != nullptr)
                 {
                     connectionEvent.events = EPOLLIN | EPOLLOUT | EPOLLONESHOT;
-                } else
+                }
+                else
                 {
                     connectionEvent.events = EPOLLOUT | EPOLLONESHOT;
                 }
@@ -229,7 +242,8 @@ namespace System
                 if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, connection, &connectionEvent) == -1)
                 {
                     message = "epoll_ctl failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     dispatcher->getCurrentContext()->interruptProcedure = [&]()
                     {
@@ -241,8 +255,8 @@ namespace System
 
                         if (epoll_ctl(dispatcher->getEpoll(), EPOLL_CTL_MOD, connection, &connectionEvent) == -1)
                         {
-                            throw std::runtime_error("TcpConnection::write, interrupt procedure, epoll_ctl failed, " +
-                                                     lastErrorMessage());
+                            throw std::runtime_error(
+                                "TcpConnection::write, interrupt procedure, epoll_ctl failed, " + lastErrorMessage());
                         }
 
                         contextPair.writeContext->interrupted = true;
@@ -284,7 +298,8 @@ namespace System
                     if (transferred == -1)
                     {
                         message = "send failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         assert(transferred <= static_cast<ssize_t>(size));
                         return transferred;
@@ -299,7 +314,9 @@ namespace System
         return transferred;
     }
 
-    std::pair<Ipv4Address, uint16_t> TcpConnection::getPeerAddressAndPort() const
+    std::pair<
+        Ipv4Address, uint16_t
+    > TcpConnection::getPeerAddressAndPort() const
     {
         sockaddr_in addr;
         socklen_t size = sizeof(addr);
@@ -312,7 +329,12 @@ namespace System
         return std::make_pair(Ipv4Address(htonl(addr.sin_addr.s_addr)), htons(addr.sin_port));
     }
 
-    TcpConnection::TcpConnection(Dispatcher &dispatcher, int socket) : dispatcher(&dispatcher), connection(socket)
+    TcpConnection::TcpConnection(
+        Dispatcher &dispatcher,
+        int socket
+    )
+        : dispatcher(&dispatcher),
+          connection(socket)
     {
         contextPair.readContext = nullptr;
         contextPair.writeContext = nullptr;

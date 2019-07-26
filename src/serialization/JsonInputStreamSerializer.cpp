@@ -23,8 +23,8 @@ namespace CryptoNote
 
     }
 
-    JsonInputStreamSerializer::JsonInputStreamSerializer(std::istream &stream)
-            : JsonInputValueSerializer(getJsonValueFromStreamHelper(stream))
+    JsonInputStreamSerializer::JsonInputStreamSerializer(std::istream &stream) : JsonInputValueSerializer(
+        getJsonValueFromStreamHelper(stream))
     {
     }
 

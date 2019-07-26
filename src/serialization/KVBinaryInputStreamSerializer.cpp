@@ -26,7 +26,10 @@ namespace
         return v;
     }
 
-    template<typename T, typename JsonT = T>
+    template<
+        typename T,
+        typename JsonT = T
+    >
     JsonValue readPodJson(Common::IInputStream &s)
     {
         JsonValue jv;
@@ -37,7 +40,9 @@ namespace
     template<typename T>
     JsonValue readIntegerJson(Common::IInputStream &s)
     {
-        return readPodJson<T, int64_t>(s);
+        return readPodJson<
+            T, int64_t
+        >(s);
     }
 
     uint64_t readVarint(Common::IInputStream &s)
@@ -91,7 +96,10 @@ namespace
         return JsonValue(readString(s));
     }
 
-    void readName(Common::IInputStream &s, std::string &name)
+    void readName(
+        Common::IInputStream &s,
+        std::string &name
+    )
     {
         uint8_t len = readPod<uint8_t>(s);
         if (len)
@@ -101,14 +109,19 @@ namespace
         }
     }
 
-    JsonValue loadValue(Common::IInputStream &stream, uint8_t type);
+    JsonValue loadValue(
+        Common::IInputStream &stream,
+        uint8_t type
+    );
 
     JsonValue loadSection(Common::IInputStream &stream);
 
     JsonValue loadEntry(Common::IInputStream &stream);
 
-    JsonValue loadArray(Common::IInputStream &stream, uint8_t itemType);
-
+    JsonValue loadArray(
+        Common::IInputStream &stream,
+        uint8_t itemType
+    );
 
     JsonValue loadSection(Common::IInputStream &stream)
     {
@@ -125,7 +138,10 @@ namespace
         return sec;
     }
 
-    JsonValue loadValue(Common::IInputStream &stream, uint8_t type)
+    JsonValue loadValue(
+        Common::IInputStream &stream,
+        uint8_t type
+    )
     {
         switch (type)
         {
@@ -174,7 +190,10 @@ namespace
         return loadValue(stream, type);
     }
 
-    JsonValue loadArray(Common::IInputStream &stream, uint8_t itemType)
+    JsonValue loadArray(
+        Common::IInputStream &stream,
+        uint8_t itemType
+    )
     {
         JsonValue arr(JsonValue::ARRAY);
         uint64_t count = readVarint(stream);
@@ -187,14 +206,11 @@ namespace
         return arr;
     }
 
-
     JsonValue parseBinary(Common::IInputStream &stream)
     {
         auto hdr = readPod<KVBinaryStorageBlockHeader>(stream);
 
-        if (
-                hdr.m_signature_a != PORTABLE_STORAGE_SIGNATUREA ||
-                hdr.m_signature_b != PORTABLE_STORAGE_SIGNATUREB)
+        if (hdr.m_signature_a != PORTABLE_STORAGE_SIGNATUREA || hdr.m_signature_b != PORTABLE_STORAGE_SIGNATUREB)
         {
             throw std::runtime_error("Invalid binary storage signature");
         }
@@ -209,12 +225,16 @@ namespace
 
 }
 
-KVBinaryInputStreamSerializer::KVBinaryInputStreamSerializer(Common::IInputStream &strm)
-        : JsonInputValueSerializer(parseBinary(strm))
+KVBinaryInputStreamSerializer::KVBinaryInputStreamSerializer(Common::IInputStream &strm) : JsonInputValueSerializer(
+    parseBinary(strm))
 {
 }
 
-bool KVBinaryInputStreamSerializer::binary(void *value, uint64_t size, Common::StringView name)
+bool KVBinaryInputStreamSerializer::binary(
+    void *value,
+    uint64_t size,
+    Common::StringView name
+)
 {
     std::string str;
 
@@ -232,7 +252,10 @@ bool KVBinaryInputStreamSerializer::binary(void *value, uint64_t size, Common::S
     return true;
 }
 
-bool KVBinaryInputStreamSerializer::binary(std::string &value, Common::StringView name)
+bool KVBinaryInputStreamSerializer::binary(
+    std::string &value,
+    Common::StringView name
+)
 {
     return (*this)(value, name); // load as string
 }

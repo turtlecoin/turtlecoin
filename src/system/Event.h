@@ -12,34 +12,37 @@ namespace System
 
     class Event
     {
-    public:
-        Event();
+        public:
+            Event();
 
-        explicit Event(Dispatcher &dispatcher);
+            explicit Event(Dispatcher &dispatcher);
 
-        Event(const Event &) = delete;
+            Event(const Event &) = delete;
 
-        Event(Event &&other);
+            Event(Event &&other);
 
-        ~Event();
+            ~Event();
 
-        Event &operator=(const Event &) = delete;
+            Event &operator=(const Event &) = delete;
 
-        Event &operator=(Event &&other);
+            Event &operator=(Event &&other);
 
-        bool get() const;
+            bool get() const;
 
-        void clear();
+            void clear();
 
-        void set();
+            void set();
 
-        void wait();
+            void wait();
 
-    private:
-        Dispatcher *dispatcher;
-        bool state;
-        void *first;
-        void *last;
+        private:
+            Dispatcher *dispatcher;
+
+            bool state;
+
+            void *first;
+
+            void *last;
     };
 
 }

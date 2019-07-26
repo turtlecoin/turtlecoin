@@ -33,561 +33,844 @@ namespace CryptoNote
                         ITransfersSynchronizerObserver,
                         public IFusionManager
     {
-    public:
-        WalletGreen(System::Dispatcher &dispatcher, const Currency &currency, INode &node,
-                    std::shared_ptr<Logging::ILogger> logger, uint32_t transactionSoftLockTime = 1);
+        public:
+            WalletGreen(
+                System::Dispatcher &dispatcher,
+                const Currency &currency,
+                INode &node,
+                std::shared_ptr<Logging::ILogger> logger,
+                uint32_t transactionSoftLockTime = 1
+            );
 
-        virtual ~WalletGreen();
+            virtual ~WalletGreen();
 
-        virtual void initializeWithViewKey(const std::string &path, const std::string &password,
-                                           const Crypto::SecretKey &viewSecretKey, const uint64_t scanHeight,
-                                           const bool newAddress);
+            virtual void initializeWithViewKey(
+                const std::string &path,
+                const std::string &password,
+                const Crypto::SecretKey &viewSecretKey,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
 
-        virtual void load(const std::string &path, const std::string &password, std::string &extra);
+            virtual void load(
+                const std::string &path,
+                const std::string &password,
+                std::string &extra
+            );
 
-        virtual void load(const std::string &path, const std::string &password);
+            virtual void load(
+                const std::string &path,
+                const std::string &password
+            );
 
-        virtual void shutdown();
+            virtual void shutdown();
 
-        virtual void changePassword(const std::string &oldPassword, const std::string &newPassword);
+            virtual void changePassword(
+                const std::string &oldPassword,
+                const std::string &newPassword
+            );
 
-        virtual void save(WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string &extra = "");
+            virtual void save(
+                WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL,
+                const std::string &extra = ""
+            );
 
-        virtual void reset(const uint64_t scanHeight);
+            virtual void reset(const uint64_t scanHeight);
 
-        virtual void exportWallet(const std::string &path, bool encrypt = true,
-                                  WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL, const std::string &extra = "");
+            virtual void exportWallet(
+                const std::string &path,
+                bool encrypt = true,
+                WalletSaveLevel saveLevel = WalletSaveLevel::SAVE_ALL,
+                const std::string &extra = ""
+            );
 
-        virtual size_t getAddressCount() const;
+            virtual size_t getAddressCount() const;
 
-        virtual std::string getAddress(size_t index) const;
+            virtual std::string getAddress(size_t index) const;
 
-        virtual KeyPair getAddressSpendKey(size_t index) const;
+            virtual KeyPair getAddressSpendKey(size_t index) const;
 
-        virtual KeyPair getAddressSpendKey(const std::string &address) const;
+            virtual KeyPair getAddressSpendKey(const std::string &address) const;
 
-        virtual KeyPair getViewKey() const;
+            virtual KeyPair getViewKey() const;
 
-        virtual std::string createAddress();
+            virtual std::string createAddress();
 
-        virtual std::string
-        createAddress(const Crypto::SecretKey &spendSecretKey, const uint64_t scanHeight, const bool newAddress);
+            virtual std::string createAddress(
+                const Crypto::SecretKey &spendSecretKey,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
 
-        virtual std::string
-        createAddress(const Crypto::PublicKey &spendPublicKey, const uint64_t scanHeight, const bool newAddress);
+            virtual std::string createAddress(
+                const Crypto::PublicKey &spendPublicKey,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
 
-        virtual std::vector<std::string>
-        createAddressList(const std::vector<Crypto::SecretKey> &spendSecretKeys, const uint64_t scanHeight,
-                          const bool newAddress);
+            virtual std::vector<std::string> createAddressList(
+                const std::vector<Crypto::SecretKey> &spendSecretKeys,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
 
-        virtual void deleteAddress(const std::string &address);
+            virtual void deleteAddress(const std::string &address);
 
-        virtual uint64_t getActualBalance() const;
+            virtual uint64_t getActualBalance() const;
 
-        virtual uint64_t getActualBalance(const std::string &address) const;
+            virtual uint64_t getActualBalance(const std::string &address) const;
 
-        virtual uint64_t getPendingBalance() const;
+            virtual uint64_t getPendingBalance() const;
 
-        virtual uint64_t getPendingBalance(const std::string &address) const;
+            virtual uint64_t getPendingBalance(const std::string &address) const;
 
-        virtual size_t getTransactionCount() const;
+            virtual size_t getTransactionCount() const;
 
-        virtual WalletTransaction getTransaction(size_t transactionIndex) const;
+            virtual WalletTransaction getTransaction(size_t transactionIndex) const;
 
-        virtual WalletTransactionWithTransfers getTransaction(const Crypto::Hash &transactionHash) const;
+            virtual WalletTransactionWithTransfers getTransaction(const Crypto::Hash &transactionHash) const;
 
-        virtual std::vector<TransactionsInBlockInfo> getTransactions(const Crypto::Hash &blockHash, size_t count) const;
+            virtual std::vector<TransactionsInBlockInfo> getTransactions(
+                const Crypto::Hash &blockHash,
+                size_t count
+            ) const;
 
-        virtual std::vector<TransactionsInBlockInfo> getTransactions(uint32_t blockIndex, size_t count) const;
+            virtual std::vector<TransactionsInBlockInfo> getTransactions(
+                uint32_t blockIndex,
+                size_t count
+            ) const;
 
-        virtual std::vector<Crypto::Hash> getBlockHashes(uint32_t blockIndex, size_t count) const;
+            virtual std::vector<Crypto::Hash> getBlockHashes(
+                uint32_t blockIndex,
+                size_t count
+            ) const;
 
-        virtual uint32_t getBlockCount() const;
+            virtual uint32_t getBlockCount() const;
 
-        virtual std::vector<WalletTransactionWithTransfers> getUnconfirmedTransactions() const;
+            virtual std::vector<WalletTransactionWithTransfers> getUnconfirmedTransactions() const;
 
-        virtual std::vector<size_t> getDelayedTransactionIds() const;
+            virtual std::vector<size_t> getDelayedTransactionIds() const;
 
-        virtual size_t transfer(const TransactionParameters &transactionParameters);
+            virtual size_t transfer(const TransactionParameters &transactionParameters);
 
-        virtual size_t makeTransaction(const TransactionParameters &sendingTransaction);
+            virtual size_t makeTransaction(const TransactionParameters &sendingTransaction);
 
-        virtual void commitTransaction(size_t);
+            virtual void commitTransaction(size_t);
 
-        virtual void rollbackUncommitedTransaction(size_t);
+            virtual void rollbackUncommitedTransaction(size_t);
 
-        size_t transfer(const PreparedTransaction &preparedTransaction);
+            size_t transfer(const PreparedTransaction &preparedTransaction);
 
-        bool txIsTooLarge(const PreparedTransaction &p);
+            bool txIsTooLarge(const PreparedTransaction &p);
 
-        size_t getTxSize(const PreparedTransaction &p);
+            size_t getTxSize(const PreparedTransaction &p);
 
-        size_t getMaxTxSize();
+            size_t getMaxTxSize();
 
-        PreparedTransaction formTransaction(const TransactionParameters &sendingTransaction);
+            PreparedTransaction formTransaction(const TransactionParameters &sendingTransaction);
 
-        void updateInternalCache();
+            void updateInternalCache();
 
-        void clearCaches(bool clearTransactions, bool clearCachedData);
+            void clearCaches(
+                bool clearTransactions,
+                bool clearCachedData
+            );
 
-        void createViewWallet(const std::string &path, const std::string &password,
-                              const std::string address,
-                              const Crypto::SecretKey &viewSecretKey,
-                              const uint64_t scanHeight,
-                              const bool newAddress);
+            void createViewWallet(
+                const std::string &path,
+                const std::string &password,
+                const std::string address,
+                const Crypto::SecretKey &viewSecretKey,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
 
-        uint64_t getBalanceMinusDust(const std::vector<std::string> &addresses);
+            uint64_t getBalanceMinusDust(const std::vector<std::string> &addresses);
 
-        virtual void start();
+            virtual void start();
 
-        virtual void stop();
+            virtual void stop();
 
-        virtual WalletEvent getEvent();
+            virtual WalletEvent getEvent();
 
-        virtual size_t createFusionTransaction(uint64_t threshold, uint16_t mixin,
-                                               const std::vector<std::string> &sourceAddresses = {},
-                                               const std::string &destinationAddress = "") override;
+            virtual size_t createFusionTransaction(
+                uint64_t threshold,
+                uint16_t mixin,
+                const std::vector<std::string> &sourceAddresses = {},
+                const std::string &destinationAddress = ""
+            ) override;
 
-        virtual bool isFusionTransaction(size_t transactionId) const override;
+            virtual bool isFusionTransaction(size_t transactionId) const override;
 
-        virtual IFusionManager::EstimateResult
-        estimate(uint64_t threshold, const std::vector<std::string> &sourceAddresses = {}) const override;
+            virtual IFusionManager::EstimateResult estimate(
+                uint64_t threshold,
+                const std::vector<std::string> &sourceAddresses = {}
+            ) const override;
 
-        std::string toNewFormatJSON() const;
+            std::string toNewFormatJSON() const;
 
-    protected:
-        struct NewAddressData
-        {
-            Crypto::PublicKey spendPublicKey;
-            Crypto::SecretKey spendSecretKey;
-        };
+        protected:
+            struct NewAddressData
+            {
+                Crypto::PublicKey spendPublicKey;
+                Crypto::SecretKey spendSecretKey;
+            };
 
-        void throwIfNotInitialized() const;
+            void throwIfNotInitialized() const;
 
-        void throwIfStopped() const;
+            void throwIfStopped() const;
 
-        void throwIfTrackingMode() const;
+            void throwIfTrackingMode() const;
 
-        void doShutdown();
+            void doShutdown();
 
-        void convertAndLoadWalletFile(const std::string &path, std::ifstream &&walletFileStream);
+            void convertAndLoadWalletFile(
+                const std::string &path,
+                std::ifstream &&walletFileStream
+            );
 
-        static void
-        decryptKeyPair(const EncryptedWalletRecord &cipher, Crypto::PublicKey &publicKey, Crypto::SecretKey &secretKey,
-                       uint64_t &creationTimestamp, const Crypto::chacha8_key &key);
+            static void decryptKeyPair(
+                const EncryptedWalletRecord &cipher,
+                Crypto::PublicKey &publicKey,
+                Crypto::SecretKey &secretKey,
+                uint64_t &creationTimestamp,
+                const Crypto::chacha8_key &key
+            );
 
-        void
-        decryptKeyPair(const EncryptedWalletRecord &cipher, Crypto::PublicKey &publicKey, Crypto::SecretKey &secretKey,
-                       uint64_t &creationTimestamp) const;
+            void decryptKeyPair(
+                const EncryptedWalletRecord &cipher,
+                Crypto::PublicKey &publicKey,
+                Crypto::SecretKey &secretKey,
+                uint64_t &creationTimestamp
+            ) const;
 
-        static EncryptedWalletRecord
-        encryptKeyPair(const Crypto::PublicKey &publicKey, const Crypto::SecretKey &secretKey,
-                       uint64_t creationTimestamp,
-                       const Crypto::chacha8_key &key, const Crypto::chacha8_iv &iv);
+            static EncryptedWalletRecord encryptKeyPair(
+                const Crypto::PublicKey &publicKey,
+                const Crypto::SecretKey &secretKey,
+                uint64_t creationTimestamp,
+                const Crypto::chacha8_key &key,
+                const Crypto::chacha8_iv &iv
+            );
+
+            EncryptedWalletRecord encryptKeyPair(
+                const Crypto::PublicKey &publicKey,
+                const Crypto::SecretKey &secretKey,
+                uint64_t creationTimestamp
+            ) const;
 
-        EncryptedWalletRecord encryptKeyPair(const Crypto::PublicKey &publicKey, const Crypto::SecretKey &secretKey,
-                                             uint64_t creationTimestamp) const;
+            Crypto::chacha8_iv getNextIv() const;
+
+            static void incIv(Crypto::chacha8_iv &iv);
+
+            void incNextIv();
+
+            void initWithKeys(
+                const std::string &path,
+                const std::string &password,
+                const Crypto::PublicKey &viewPublicKey,
+                const Crypto::SecretKey &viewSecretKey,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
+
+            std::string doCreateAddress(
+                const Crypto::PublicKey &spendPublicKey,
+                const Crypto::SecretKey &spendSecretKey,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
+
+            std::vector<std::string> doCreateAddressList(
+                const std::vector<NewAddressData> &addressDataList,
+                const uint64_t scanHeight,
+                const bool newAddress
+            );
+
+            CryptoNote::BlockDetails getBlock(const uint64_t blockHeight);
+
+            uint64_t scanHeightToTimestamp(const uint64_t scanHeight);
+
+            uint64_t getCurrentTimestampAdjusted();
+
+            struct InputInfo
+            {
+                TransactionTypes::InputKeyInfo keyInfo;
+                WalletRecord *walletRecord = nullptr;
+                KeyPair ephKeys;
+            };
+
+            struct OutputToTransfer
+            {
+                TransactionOutputInformation out;
+                WalletRecord *wallet;
+            };
+
+            struct ReceiverAmounts
+            {
+                CryptoNote::AccountPublicAddress receiver;
+                std::vector<uint64_t> amounts;
+            };
+
+            struct WalletOuts
+            {
+                WalletRecord *wallet;
+                std::vector<TransactionOutputInformation> outs;
+            };
+
+            typedef std::pair<
+                WalletTransfers::const_iterator, WalletTransfers::const_iterator
+            > TransfersRange;
 
-        Crypto::chacha8_iv getNextIv() const;
+            struct AddressAmounts
+            {
+                int64_t input = 0;
+                int64_t output = 0;
+            };
 
-        static void incIv(Crypto::chacha8_iv &iv);
+            struct ContainerAmounts
+            {
+                ITransfersContainer *container;
+                AddressAmounts amounts;
+            };
 
-        void incNextIv();
+            #pragma pack(push, 1)
+            struct ContainerStoragePrefix
+            {
+                uint8_t version;
+                Crypto::chacha8_iv nextIv;
+                EncryptedWalletRecord encryptedViewKeys;
+            };
+            #pragma pack(pop)
 
-        void initWithKeys(const std::string &path, const std::string &password, const Crypto::PublicKey &viewPublicKey,
-                          const Crypto::SecretKey &viewSecretKey, const uint64_t scanHeight, const bool newAddress);
+            typedef std::unordered_map<
+                std::string, AddressAmounts
+            > TransfersMap;
 
-        std::string doCreateAddress(const Crypto::PublicKey &spendPublicKey, const Crypto::SecretKey &spendSecretKey,
-                                    const uint64_t scanHeight, const bool newAddress);
+            virtual void onError(
+                ITransfersSubscription *object,
+                uint32_t height,
+                std::error_code ec
+            ) override;
 
-        std::vector<std::string>
-        doCreateAddressList(const std::vector<NewAddressData> &addressDataList, const uint64_t scanHeight,
-                            const bool newAddress);
+            virtual void onTransactionUpdated(
+                ITransfersSubscription *object,
+                const Crypto::Hash &transactionHash
+            ) override;
 
-        CryptoNote::BlockDetails getBlock(const uint64_t blockHeight);
+            virtual void onTransactionUpdated(
+                const Crypto::PublicKey &viewPublicKey,
+                const Crypto::Hash &transactionHash,
+                const std::vector<ITransfersContainer *> &containers
+            ) override;
 
-        uint64_t scanHeightToTimestamp(const uint64_t scanHeight);
+            void transactionUpdated(
+                const TransactionInformation &transactionInfo,
+                const std::vector<ContainerAmounts> &containerAmountsList
+            );
 
-        uint64_t getCurrentTimestampAdjusted();
+            virtual void onTransactionDeleted(
+                ITransfersSubscription *object,
+                const Crypto::Hash &transactionHash
+            ) override;
 
-        struct InputInfo
-        {
-            TransactionTypes::InputKeyInfo keyInfo;
-            WalletRecord *walletRecord = nullptr;
-            KeyPair ephKeys;
-        };
+            void transactionDeleted(
+                ITransfersSubscription *object,
+                const Crypto::Hash &transactionHash
+            );
 
-        struct OutputToTransfer
-        {
-            TransactionOutputInformation out;
-            WalletRecord *wallet;
-        };
+            virtual void synchronizationProgressUpdated(
+                uint32_t processedBlockCount,
+                uint32_t totalBlockCount
+            ) override;
 
-        struct ReceiverAmounts
-        {
-            CryptoNote::AccountPublicAddress receiver;
-            std::vector<uint64_t> amounts;
-        };
+            virtual void synchronizationCompleted(std::error_code result) override;
 
-        struct WalletOuts
-        {
-            WalletRecord *wallet;
-            std::vector<TransactionOutputInformation> outs;
-        };
+            void onSynchronizationProgressUpdated(
+                uint32_t processedBlockCount,
+                uint32_t totalBlockCount
+            );
 
-        typedef std::pair<WalletTransfers::const_iterator, WalletTransfers::const_iterator> TransfersRange;
+            void onSynchronizationCompleted();
 
-        struct AddressAmounts
-        {
-            int64_t input = 0;
-            int64_t output = 0;
-        };
+            virtual void onBlocksAdded(
+                const Crypto::PublicKey &viewPublicKey,
+                const std::vector<Crypto::Hash> &blockHashes
+            ) override;
 
-        struct ContainerAmounts
-        {
-            ITransfersContainer *container;
-            AddressAmounts amounts;
-        };
+            void blocksAdded(const std::vector<Crypto::Hash> &blockHashes);
 
-#pragma pack(push, 1)
-        struct ContainerStoragePrefix
-        {
-            uint8_t version;
-            Crypto::chacha8_iv nextIv;
-            EncryptedWalletRecord encryptedViewKeys;
-        };
-#pragma pack(pop)
+            virtual void onBlockchainDetach(
+                const Crypto::PublicKey &viewPublicKey,
+                uint32_t blockIndex
+            ) override;
 
-        typedef std::unordered_map<std::string, AddressAmounts> TransfersMap;
+            void blocksRollback(uint32_t blockIndex);
 
-        virtual void onError(ITransfersSubscription *object, uint32_t height, std::error_code ec) override;
+            virtual void onTransactionDeleteBegin(
+                const Crypto::PublicKey &viewPublicKey,
+                Crypto::Hash transactionHash
+            ) override;
 
-        virtual void onTransactionUpdated(ITransfersSubscription *object, const Crypto::Hash &transactionHash) override;
+            void transactionDeleteBegin(Crypto::Hash transactionHash);
 
-        virtual void onTransactionUpdated(const Crypto::PublicKey &viewPublicKey, const Crypto::Hash &transactionHash,
-                                          const std::vector<ITransfersContainer *> &containers) override;
+            virtual void onTransactionDeleteEnd(
+                const Crypto::PublicKey &viewPublicKey,
+                Crypto::Hash transactionHash
+            ) override;
 
-        void transactionUpdated(const TransactionInformation &transactionInfo,
-                                const std::vector<ContainerAmounts> &containerAmountsList);
+            void transactionDeleteEnd(Crypto::Hash transactionHash);
 
-        virtual void onTransactionDeleted(ITransfersSubscription *object, const Crypto::Hash &transactionHash) override;
+            std::vector<WalletOuts> pickWalletsWithMoney() const;
 
-        void transactionDeleted(ITransfersSubscription *object, const Crypto::Hash &transactionHash);
+            WalletOuts pickWallet(const std::string &address) const;
 
-        virtual void synchronizationProgressUpdated(uint32_t processedBlockCount, uint32_t totalBlockCount) override;
+            std::vector<WalletOuts> pickWallets(const std::vector<std::string> &addresses) const;
 
-        virtual void synchronizationCompleted(std::error_code result) override;
+            void updateBalance(CryptoNote::ITransfersContainer *container);
 
-        void onSynchronizationProgressUpdated(uint32_t processedBlockCount, uint32_t totalBlockCount);
+            void unlockBalances(uint32_t height);
 
-        void onSynchronizationCompleted();
+            const WalletRecord &getWalletRecord(const Crypto::PublicKey &key) const;
 
-        virtual void
-        onBlocksAdded(const Crypto::PublicKey &viewPublicKey, const std::vector<Crypto::Hash> &blockHashes) override;
+            const WalletRecord &getWalletRecord(const std::string &address) const;
 
-        void blocksAdded(const std::vector<Crypto::Hash> &blockHashes);
+            const WalletRecord &getWalletRecord(CryptoNote::ITransfersContainer *container) const;
 
-        virtual void onBlockchainDetach(const Crypto::PublicKey &viewPublicKey, uint32_t blockIndex) override;
+            CryptoNote::AccountPublicAddress parseAddress(const std::string &address) const;
 
-        void blocksRollback(uint32_t blockIndex);
+            std::string addWallet(
+                const NewAddressData &addressData,
+                uint64_t scanHeight,
+                bool newAddress
+            );
 
-        virtual void
-        onTransactionDeleteBegin(const Crypto::PublicKey &viewPublicKey, Crypto::Hash transactionHash) override;
+            AccountKeys makeAccountKeys(const WalletRecord &wallet) const;
 
-        void transactionDeleteBegin(Crypto::Hash transactionHash);
+            size_t getTransactionId(const Crypto::Hash &transactionHash) const;
 
-        virtual void
-        onTransactionDeleteEnd(const Crypto::PublicKey &viewPublicKey, Crypto::Hash transactionHash) override;
+            void pushEvent(const WalletEvent &event);
 
-        void transactionDeleteEnd(Crypto::Hash transactionHash);
+            bool isFusionTransaction(const WalletTransaction &walletTx) const;
 
-        std::vector<WalletOuts> pickWalletsWithMoney() const;
+            void prepareTransaction(
+                std::vector<WalletOuts> &&wallets,
+                const std::vector<WalletOrder> &orders,
+                uint64_t fee,
+                uint16_t mixIn,
+                const std::string &extra,
+                uint64_t unlockTimestamp,
+                const DonationSettings &donation,
+                const CryptoNote::AccountPublicAddress &changeDestinationAddress,
+                PreparedTransaction &preparedTransaction
+            );
 
-        WalletOuts pickWallet(const std::string &address) const;
+            size_t doTransfer(const TransactionParameters &transactionParameters);
 
-        std::vector<WalletOuts> pickWallets(const std::vector<std::string> &addresses) const;
-
-        void updateBalance(CryptoNote::ITransfersContainer *container);
-
-        void unlockBalances(uint32_t height);
-
-        const WalletRecord &getWalletRecord(const Crypto::PublicKey &key) const;
-
-        const WalletRecord &getWalletRecord(const std::string &address) const;
-
-        const WalletRecord &getWalletRecord(CryptoNote::ITransfersContainer *container) const;
-
-        CryptoNote::AccountPublicAddress parseAddress(const std::string &address) const;
-
-        std::string addWallet(const NewAddressData &addressData, uint64_t scanHeight, bool newAddress);
-
-        AccountKeys makeAccountKeys(const WalletRecord &wallet) const;
-
-        size_t getTransactionId(const Crypto::Hash &transactionHash) const;
-
-        void pushEvent(const WalletEvent &event);
-
-        bool isFusionTransaction(const WalletTransaction &walletTx) const;
-
-
-        void prepareTransaction(std::vector<WalletOuts> &&wallets,
-                                const std::vector<WalletOrder> &orders,
-                                uint64_t fee,
-                                uint16_t mixIn,
-                                const std::string &extra,
-                                uint64_t unlockTimestamp,
-                                const DonationSettings &donation,
-                                const CryptoNote::AccountPublicAddress &changeDestinationAddress,
-                                PreparedTransaction &preparedTransaction);
-
-        size_t doTransfer(const TransactionParameters &transactionParameters);
-
-        void checkIfEnoughMixins(std::vector<CryptoNote::RandomOuts> &mixinResult, uint16_t mixIn) const;
-
-        std::vector<WalletTransfer> convertOrdersToTransfers(const std::vector<WalletOrder> &orders) const;
-
-        uint64_t countNeededMoney(const std::vector<CryptoNote::WalletTransfer> &destinations, uint64_t fee) const;
-
-        CryptoNote::AccountPublicAddress parseAccountAddressString(const std::string &addressString) const;
-
-        uint64_t
-        pushDonationTransferIfPossible(const DonationSettings &donation, uint64_t freeAmount, uint64_t dustThreshold,
-                                       std::vector<WalletTransfer> &destinations) const;
-
-        void validateAddresses(const std::vector<std::string> &addresses) const;
-
-        void validateOrders(const std::vector<WalletOrder> &orders) const;
-
-        void
-        validateChangeDestination(const std::vector<std::string> &sourceAddresses, const std::string &changeDestination,
-                                  bool isFusion) const;
-
-        void validateSourceAddresses(const std::vector<std::string> &sourceAddresses) const;
-
-        void validateTransactionParameters(const TransactionParameters &transactionParameters) const;
-
-        void requestMixinOuts(const std::vector<OutputToTransfer> &selectedTransfers,
-                              uint16_t mixIn,
-                              std::vector<CryptoNote::RandomOuts> &mixinResult);
-
-        void prepareInputs(const std::vector<OutputToTransfer> &selectedTransfers,
-                           std::vector<CryptoNote::RandomOuts> &mixinResult,
-                           uint16_t mixIn,
-                           std::vector<InputInfo> &keysInfo);
-
-        uint64_t selectTransfers(uint64_t needeMoney,
-                                 bool dust,
-                                 uint64_t dustThreshold,
-                                 std::vector<WalletOuts> &&wallets,
-                                 std::vector<OutputToTransfer> &selectedTransfers);
-
-        std::vector<ReceiverAmounts> splitDestinations(const std::vector<WalletTransfer> &destinations,
-                                                       uint64_t dustThreshold, const Currency &currency);
-
-        ReceiverAmounts splitAmount(uint64_t amount, const AccountPublicAddress &destination, uint64_t dustThreshold);
-
-        std::unique_ptr<CryptoNote::ITransaction> makeTransaction(const std::vector<ReceiverAmounts> &decomposedOutputs,
-                                                                  std::vector<InputInfo> &keysInfo,
-                                                                  const std::string &extra, uint64_t unlockTimestamp);
-
-        void sendTransaction(const CryptoNote::Transaction &cryptoNoteTransaction);
-
-        size_t validateSaveAndSendTransaction(const ITransactionReader &transaction,
-                                              const std::vector<WalletTransfer> &destinations, bool isFusion,
-                                              bool send);
-
-        size_t insertBlockchainTransaction(const TransactionInformation &info, int64_t txBalance);
-
-        size_t insertOutgoingTransactionAndPushEvent(const Crypto::Hash &transactionHash, uint64_t fee,
-                                                     const BinaryArray &extra, uint64_t unlockTimestamp);
-
-        void updateTransactionStateAndPushEvent(size_t transactionId, WalletTransactionState state);
-
-        bool updateWalletTransactionInfo(size_t transactionId, const CryptoNote::TransactionInformation &info,
-                                         int64_t totalAmount);
-
-        bool updateTransactionTransfers(size_t transactionId, const std::vector<ContainerAmounts> &containerAmountsList,
-                                        int64_t allInputsAmount, int64_t allOutputsAmount);
-
-        TransfersMap getKnownTransfersMap(size_t transactionId, size_t firstTransferIdx) const;
-
-        bool updateAddressTransfers(size_t transactionId, size_t firstTransferIdx, const std::string &address,
-                                    int64_t knownAmount, int64_t targetAmount);
-
-        bool updateUnknownTransfers(size_t transactionId, size_t firstTransferIdx,
-                                    const std::unordered_set<std::string> &myAddresses,
-                                    int64_t knownAmount, int64_t myAmount, int64_t totalAmount, bool isOutput);
-
-        void appendTransfer(size_t transactionId, size_t firstTransferIdx, const std::string &address, int64_t amount);
-
-        bool adjustTransfer(size_t transactionId, size_t firstTransferIdx, const std::string &address, int64_t amount);
-
-        bool eraseTransfers(size_t transactionId, size_t firstTransferIdx,
-                            std::function<bool(bool, const std::string &)> &&predicate);
-
-        bool eraseTransfersByAddress(size_t transactionId, size_t firstTransferIdx, const std::string &address,
-                                     bool eraseOutputTransfers);
-
-        bool eraseForeignTransfers(size_t transactionId, size_t firstTransferIdx,
-                                   const std::unordered_set<std::string> &knownAddresses, bool eraseOutputTransfers);
-
-        void pushBackOutgoingTransfers(size_t txId, const std::vector<WalletTransfer> &destinations);
-
-        void insertUnlockTransactionJob(const Crypto::Hash &transactionHash, uint32_t blockHeight,
-                                        CryptoNote::ITransfersContainer *container);
-
-        void deleteUnlockTransactionJob(const Crypto::Hash &transactionHash);
-
-        void startBlockchainSynchronizer();
-
-        void stopBlockchainSynchronizer();
-
-        void addUnconfirmedTransaction(const ITransactionReader &transaction);
-
-        void removeUnconfirmedTransaction(const Crypto::Hash &transactionHash);
-
-        void copyContainerStorageKeys(ContainerStorage &src, const Crypto::chacha8_key &srcKey, ContainerStorage &dst,
-                                      const Crypto::chacha8_key &dstKey);
-
-        static void
-        copyContainerStoragePrefix(ContainerStorage &src, const Crypto::chacha8_key &srcKey, ContainerStorage &dst,
-                                   const Crypto::chacha8_key &dstKey);
-
-        void deleteOrphanTransactions(const std::unordered_set<Crypto::PublicKey> &deletedKeys);
-
-        static void encryptAndSaveContainerData(ContainerStorage &storage, const Crypto::chacha8_key &key,
-                                                const void *containerData, size_t containerDataSize);
-
-        static void loadAndDecryptContainerData(ContainerStorage &storage, const Crypto::chacha8_key &key,
-                                                BinaryArray &containerData);
-
-        void initTransactionPool();
-
-        void loadSpendKeys();
-
-        void loadContainerStorage(const std::string &path);
-
-        void loadWalletCache(std::unordered_set<Crypto::PublicKey> &addedKeys,
-                             std::unordered_set<Crypto::PublicKey> &deletedKeys, std::string &extra);
-
-        void saveWalletCache(ContainerStorage &storage, const Crypto::chacha8_key &key, WalletSaveLevel saveLevel,
-                             const std::string &extra);
-
-        void subscribeWallets();
-
-        std::vector<OutputToTransfer> pickRandomFusionInputs(const std::vector<std::string> &addresses,
-                                                             uint64_t threshold, size_t minInputCount,
-                                                             size_t maxInputCount);
-
-        static ReceiverAmounts decomposeFusionOutputs(const AccountPublicAddress &address, uint64_t inputsAmount);
-
-        enum class WalletState
-        {
-            INITIALIZED,
-            NOT_INITIALIZED
-        };
-
-        enum class WalletTrackingMode
-        {
-            TRACKING,
-            NOT_TRACKING,
-            NO_ADDRESSES
-        };
-
-        WalletTrackingMode getTrackingMode() const;
-
-        TransfersRange getTransactionTransfersRange(size_t transactionIndex) const;
-
-        std::vector<TransactionsInBlockInfo> getTransactionsInBlocks(uint32_t blockIndex, size_t count) const;
-
-        Crypto::Hash getBlockHashByIndex(uint32_t blockIndex) const;
-
-        std::vector<WalletTransfer> getTransactionTransfers(const WalletTransaction &transaction) const;
-
-        void filterOutTransactions(WalletTransactions &transactions, WalletTransfers &transfers,
-                                   std::function<bool(const WalletTransaction &)> &&pred) const;
-
-        void initBlockchain(const Crypto::PublicKey &viewPublicKey);
-
-        CryptoNote::AccountPublicAddress getChangeDestination(const std::string &changeDestinationAddress,
-                                                              const std::vector<std::string> &sourceAddresses) const;
-
-        bool isMyAddress(const std::string &address) const;
-
-        void deleteContainerFromUnlockTransactionJobs(const ITransfersContainer *container);
-
-        std::vector<size_t>
-        deleteTransfersForAddress(const std::string &address, std::vector<size_t> &deletedTransactions);
-
-        void deleteFromUncommitedTransactions(const std::vector<size_t> &deletedTransactions);
-
-        /****************************************************************************/
-        /* These set of functions are used to assist in upgrading the wallet format */
-
-        uint64_t getMinTimestamp() const;
-
-        std::vector<Crypto::PublicKey> getPublicSpendKeys() const;
-
-        std::string getPrimaryAddress() const;
-
-        std::vector<std::tuple<WalletTypes::TransactionInput, Crypto::Hash>> getInputs(
+            void checkIfEnoughMixins(
+                std::vector<CryptoNote::RandomOuts> &mixinResult,
+                uint16_t mixIn
+            ) const;
+
+            std::vector<WalletTransfer> convertOrdersToTransfers(const std::vector<WalletOrder> &orders) const;
+
+            uint64_t countNeededMoney(
+                const std::vector<CryptoNote::WalletTransfer> &destinations,
+                uint64_t fee
+            ) const;
+
+            CryptoNote::AccountPublicAddress parseAccountAddressString(const std::string &addressString) const;
+
+            uint64_t pushDonationTransferIfPossible(
+                const DonationSettings &donation,
+                uint64_t freeAmount,
+                uint64_t dustThreshold,
+                std::vector<WalletTransfer> &destinations
+            ) const;
+
+            void validateAddresses(const std::vector<std::string> &addresses) const;
+
+            void validateOrders(const std::vector<WalletOrder> &orders) const;
+
+            void validateChangeDestination(
+                const std::vector<std::string> &sourceAddresses,
+                const std::string &changeDestination,
+                bool isFusion
+            ) const;
+
+            void validateSourceAddresses(const std::vector<std::string> &sourceAddresses) const;
+
+            void validateTransactionParameters(const TransactionParameters &transactionParameters) const;
+
+            void requestMixinOuts(
+                const std::vector<OutputToTransfer> &selectedTransfers,
+                uint16_t mixIn,
+                std::vector<CryptoNote::RandomOuts> &mixinResult
+            );
+
+            void prepareInputs(
+                const std::vector<OutputToTransfer> &selectedTransfers,
+                std::vector<CryptoNote::RandomOuts> &mixinResult,
+                uint16_t mixIn,
+                std::vector<InputInfo> &keysInfo
+            );
+
+            uint64_t selectTransfers(
+                uint64_t needeMoney,
+                bool dust,
+                uint64_t dustThreshold,
+                std::vector<WalletOuts> &&wallets,
+                std::vector<OutputToTransfer> &selectedTransfers
+            );
+
+            std::vector<ReceiverAmounts> splitDestinations(
+                const std::vector<WalletTransfer> &destinations,
+                uint64_t dustThreshold,
+                const Currency &currency
+            );
+
+            ReceiverAmounts splitAmount(
+                uint64_t amount,
+                const AccountPublicAddress &destination,
+                uint64_t dustThreshold
+            );
+
+            std::unique_ptr<CryptoNote::ITransaction> makeTransaction(
+                const std::vector<ReceiverAmounts> &decomposedOutputs,
+                std::vector<InputInfo> &keysInfo,
+                const std::string &extra,
+                uint64_t unlockTimestamp
+            );
+
+            void sendTransaction(const CryptoNote::Transaction &cryptoNoteTransaction);
+
+            size_t validateSaveAndSendTransaction(
+                const ITransactionReader &transaction,
+                const std::vector<WalletTransfer> &destinations,
+                bool isFusion,
+                bool send
+            );
+
+            size_t insertBlockchainTransaction(
+                const TransactionInformation &info,
+                int64_t txBalance
+            );
+
+            size_t insertOutgoingTransactionAndPushEvent(
+                const Crypto::Hash &transactionHash,
+                uint64_t fee,
+                const BinaryArray &extra,
+                uint64_t unlockTimestamp
+            );
+
+            void updateTransactionStateAndPushEvent(
+                size_t transactionId,
+                WalletTransactionState state
+            );
+
+            bool updateWalletTransactionInfo(
+                size_t transactionId,
+                const CryptoNote::TransactionInformation &info,
+                int64_t totalAmount
+            );
+
+            bool updateTransactionTransfers(
+                size_t transactionId,
+                const std::vector<ContainerAmounts> &containerAmountsList,
+                int64_t allInputsAmount,
+                int64_t allOutputsAmount
+            );
+
+            TransfersMap getKnownTransfersMap(
+                size_t transactionId,
+                size_t firstTransferIdx
+            ) const;
+
+            bool updateAddressTransfers(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                const std::string &address,
+                int64_t knownAmount,
+                int64_t targetAmount
+            );
+
+            bool updateUnknownTransfers(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                const std::unordered_set<std::string> &myAddresses,
+                int64_t knownAmount,
+                int64_t myAmount,
+                int64_t totalAmount,
+                bool isOutput
+            );
+
+            void appendTransfer(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                const std::string &address,
+                int64_t amount
+            );
+
+            bool adjustTransfer(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                const std::string &address,
+                int64_t amount
+            );
+
+            bool eraseTransfers(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                std::function<
+                    bool(
+                        bool,
+                        const std::string &
+                    )
+                > &&predicate
+            );
+
+            bool eraseTransfersByAddress(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                const std::string &address,
+                bool eraseOutputTransfers
+            );
+
+            bool eraseForeignTransfers(
+                size_t transactionId,
+                size_t firstTransferIdx,
+                const std::unordered_set<std::string> &knownAddresses,
+                bool eraseOutputTransfers
+            );
+
+            void pushBackOutgoingTransfers(
+                size_t txId,
+                const std::vector<WalletTransfer> &destinations
+            );
+
+            void insertUnlockTransactionJob(
+                const Crypto::Hash &transactionHash,
+                uint32_t blockHeight,
+                CryptoNote::ITransfersContainer *container
+            );
+
+            void deleteUnlockTransactionJob(const Crypto::Hash &transactionHash);
+
+            void startBlockchainSynchronizer();
+
+            void stopBlockchainSynchronizer();
+
+            void addUnconfirmedTransaction(const ITransactionReader &transaction);
+
+            void removeUnconfirmedTransaction(const Crypto::Hash &transactionHash);
+
+            void copyContainerStorageKeys(
+                ContainerStorage &src,
+                const Crypto::chacha8_key &srcKey,
+                ContainerStorage &dst,
+                const Crypto::chacha8_key &dstKey
+            );
+
+            static void copyContainerStoragePrefix(
+                ContainerStorage &src,
+                const Crypto::chacha8_key &srcKey,
+                ContainerStorage &dst,
+                const Crypto::chacha8_key &dstKey
+            );
+
+            void deleteOrphanTransactions(const std::unordered_set<Crypto::PublicKey> &deletedKeys);
+
+            static void encryptAndSaveContainerData(
+                ContainerStorage &storage,
+                const Crypto::chacha8_key &key,
+                const void *containerData,
+                size_t containerDataSize
+            );
+
+            static void loadAndDecryptContainerData(
+                ContainerStorage &storage,
+                const Crypto::chacha8_key &key,
+                BinaryArray &containerData
+            );
+
+            void initTransactionPool();
+
+            void loadSpendKeys();
+
+            void loadContainerStorage(const std::string &path);
+
+            void loadWalletCache(
+                std::unordered_set<Crypto::PublicKey> &addedKeys,
+                std::unordered_set<Crypto::PublicKey> &deletedKeys,
+                std::string &extra
+            );
+
+            void saveWalletCache(
+                ContainerStorage &storage,
+                const Crypto::chacha8_key &key,
+                WalletSaveLevel saveLevel,
+                const std::string &extra
+            );
+
+            void subscribeWallets();
+
+            std::vector<OutputToTransfer> pickRandomFusionInputs(
+                const std::vector<std::string> &addresses,
+                uint64_t threshold,
+                size_t minInputCount,
+                size_t maxInputCount
+            );
+
+            static ReceiverAmounts decomposeFusionOutputs(
+                const AccountPublicAddress &address,
+                uint64_t inputsAmount
+            );
+
+            enum class WalletState
+            {
+                    INITIALIZED,
+                    NOT_INITIALIZED
+            };
+
+            enum class WalletTrackingMode
+            {
+                    TRACKING,
+                    NOT_TRACKING,
+                    NO_ADDRESSES
+            };
+
+            WalletTrackingMode getTrackingMode() const;
+
+            TransfersRange getTransactionTransfersRange(size_t transactionIndex) const;
+
+            std::vector<TransactionsInBlockInfo> getTransactionsInBlocks(
+                uint32_t blockIndex,
+                size_t count
+            ) const;
+
+            Crypto::Hash getBlockHashByIndex(uint32_t blockIndex) const;
+
+            std::vector<WalletTransfer> getTransactionTransfers(const WalletTransaction &transaction) const;
+
+            void filterOutTransactions(
+                WalletTransactions &transactions,
+                WalletTransfers &transfers,
+                std::function<bool(const WalletTransaction &)> &&pred
+            ) const;
+
+            void initBlockchain(const Crypto::PublicKey &viewPublicKey);
+
+            CryptoNote::AccountPublicAddress getChangeDestination(
+                const std::string &changeDestinationAddress,
+                const std::vector<std::string> &sourceAddresses
+            ) const;
+
+            bool isMyAddress(const std::string &address) const;
+
+            void deleteContainerFromUnlockTransactionJobs(const ITransfersContainer *container);
+
+            std::vector<size_t> deleteTransfersForAddress(
+                const std::string &address,
+                std::vector<size_t> &deletedTransactions
+            );
+
+            void deleteFromUncommitedTransactions(const std::vector<size_t> &deletedTransactions);
+
+            /****************************************************************************/
+            /* These set of functions are used to assist in upgrading the wallet format */
+
+            uint64_t getMinTimestamp() const;
+
+            std::vector<Crypto::PublicKey> getPublicSpendKeys() const;
+
+            std::string getPrimaryAddress() const;
+
+            std::vector<
+                std::tuple<
+                    WalletTypes::TransactionInput, Crypto::Hash>> getInputs(
                 const WalletRecord subWallet,
                 const bool isViewWallet,
-                const bool unspent) const;
+                const bool unspent
+            ) const;
 
-        Crypto::KeyImage getKeyImage(
+            Crypto::KeyImage getKeyImage(
                 const Crypto::PublicKey transactionPublicKey,
                 const uint64_t outputIndex,
                 const Crypto::PublicKey key,
                 const Crypto::SecretKey privateSpendKey,
-                const Crypto::PublicKey publicSpendKey) const;
+                const Crypto::PublicKey publicSpendKey
+            ) const;
 
-        /****************************************************************************/
+            /****************************************************************************/
 
-        System::Dispatcher &m_dispatcher;
-        const Currency &m_currency;
-        INode &m_node;
-        mutable Logging::LoggerRef m_logger;
-        bool m_stopped;
+            System::Dispatcher &m_dispatcher;
 
-        WalletsContainer m_walletsContainer;
-        ContainerStorage m_containerStorage;
-        UnlockTransactionJobs m_unlockTransactionsJob;
-        WalletTransactions m_transactions;
-        WalletTransfers m_transfers; //sorted
-        mutable std::unordered_map<size_t, bool> m_fusionTxsCache; // txIndex -> isFusion
-        UncommitedTransactions m_uncommitedTransactions;
+            const Currency &m_currency;
 
-        bool m_blockchainSynchronizerStarted;
-        BlockchainSynchronizer m_blockchainSynchronizer;
-        TransfersSyncronizer m_synchronizer;
+            INode &m_node;
 
-        System::Event m_eventOccurred;
-        std::queue<WalletEvent> m_events;
-        mutable System::Event m_readyEvent;
+            mutable Logging::LoggerRef m_logger;
 
-        WalletState m_state;
+            bool m_stopped;
 
-        std::string m_password;
-        Crypto::chacha8_key m_key;
-        std::string m_path;
-        std::string m_extra; // workaround for wallet reset
+            WalletsContainer m_walletsContainer;
 
-        Crypto::PublicKey m_viewPublicKey;
-        Crypto::SecretKey m_viewSecretKey;
+            ContainerStorage m_containerStorage;
 
-        uint64_t m_actualBalance;
-        uint64_t m_pendingBalance;
+            UnlockTransactionJobs m_unlockTransactionsJob;
 
-        uint32_t m_transactionSoftLockTime;
+            WalletTransactions m_transactions;
 
-        BlockHashesContainer m_blockchain;
+            WalletTransfers m_transfers; //sorted
+            mutable std::unordered_map<
+                size_t, bool
+            > m_fusionTxsCache; // txIndex -> isFusion
+            UncommitedTransactions m_uncommitedTransactions;
 
-        friend std::ostream &operator<<(std::ostream &os, CryptoNote::WalletGreen::WalletState state);
+            bool m_blockchainSynchronizerStarted;
 
-        friend std::ostream &operator<<(std::ostream &os, CryptoNote::WalletGreen::WalletTrackingMode mode);
+            BlockchainSynchronizer m_blockchainSynchronizer;
 
-        friend class TransferListFormatter;
+            TransfersSyncronizer m_synchronizer;
+
+            System::Event m_eventOccurred;
+
+            std::queue<WalletEvent> m_events;
+
+            mutable System::Event m_readyEvent;
+
+            WalletState m_state;
+
+            std::string m_password;
+
+            Crypto::chacha8_key m_key;
+
+            std::string m_path;
+
+            std::string m_extra; // workaround for wallet reset
+
+            Crypto::PublicKey m_viewPublicKey;
+
+            Crypto::SecretKey m_viewSecretKey;
+
+            uint64_t m_actualBalance;
+
+            uint64_t m_pendingBalance;
+
+            uint32_t m_transactionSoftLockTime;
+
+            BlockHashesContainer m_blockchain;
+
+            friend std::ostream &operator<<(
+                std::ostream &os,
+                CryptoNote::WalletGreen::WalletState state
+            );
+
+            friend std::ostream &operator<<(
+                std::ostream &os,
+                CryptoNote::WalletGreen::WalletTrackingMode mode
+            );
+
+            friend class TransferListFormatter;
     };
 
 } //namespace CryptoNote

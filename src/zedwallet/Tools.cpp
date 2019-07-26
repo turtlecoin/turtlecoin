@@ -24,7 +24,10 @@
 #include <zedwallet/PasswordContainer.h>
 #include <config/WalletConfig.h>
 
-void confirmPassword(const std::string &walletPass, const std::string &msg)
+void confirmPassword(
+    const std::string &walletPass,
+    const std::string &msg
+)
 {
     /* Password container requires an rvalue, we don't want to wipe our current
        pass so copy it into a tmp string and std::move that instead */
@@ -50,8 +53,7 @@ std::string formatAmount(const uint64_t amount)
     const uint64_t dollars = amount / divisor;
     const uint64_t cents = amount % divisor;
 
-    return formatDollars(dollars) + "." + formatCents(cents) + " "
-           + WalletConfig::ticker;
+    return formatDollars(dollars) + "." + formatCents(cents) + " " + WalletConfig::ticker;
 }
 
 std::string formatAmountBasic(const uint64_t amount)
@@ -92,16 +94,16 @@ std::string formatDollars(const uint64_t amount)
        workaround */
     class comma_numpunct : public std::numpunct<char>
     {
-    protected:
-        virtual char do_thousands_sep() const
-        {
-            return ',';
-        }
+        protected:
+            virtual char do_thousands_sep() const
+            {
+                return ',';
+            }
 
-        virtual std::string do_grouping() const
-        {
-            return "\03";
-        }
+            virtual std::string do_grouping() const
+            {
+                return "\03";
+            }
     };
 
     std::locale comma_locale(std::locale(), new comma_numpunct());
@@ -116,8 +118,7 @@ std::string formatDollars(const uint64_t amount)
 std::string formatCents(const uint64_t amount)
 {
     std::stringstream stream;
-    stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces)
-           << amount;
+    stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces) << amount;
     return stream.str();
 }
 
@@ -128,7 +129,10 @@ bool confirm(const std::string &msg)
 
 /* defaultReturn = what value we return on hitting enter, i.e. the "expected"
    workflow */
-bool confirm(const std::string &msg, const bool defaultReturn)
+bool confirm(
+    const std::string &msg,
+    const bool defaultReturn
+)
 {
     /* In unix programs, the upper case letter indicates the default, for
        example when you hit enter */
@@ -162,8 +166,7 @@ bool confirm(const std::string &msg, const bool defaultReturn)
                 return false;
         }
 
-        std::cout << WarningMsg("Bad input: ") << InformationMsg(answer)
-                  << WarningMsg(" - please enter either Y or N.")
+        std::cout << WarningMsg("Bad input: ") << InformationMsg(answer) << WarningMsg(" - please enter either Y or N.")
                   << std::endl;
     }
 }
@@ -176,8 +179,10 @@ std::string unixTimeToDate(const uint64_t timestamp)
     return std::string(buffer);
 }
 
-std::string createIntegratedAddress(const std::string &address,
-                                    const std::string &paymentID)
+std::string createIntegratedAddress(
+    const std::string &address,
+    const std::string &paymentID
+)
 {
     uint64_t prefix;
 
@@ -192,11 +197,9 @@ std::string createIntegratedAddress(const std::string &address,
     std::string keys = Common::asString(ba);
 
     /* Encode prefix + paymentID + keys as an address */
-    return Tools::Base58::encode_addr
-            (
-                    CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX,
-                    paymentID + keys
-            );
+    return Tools::Base58::encode_addr(
+        CryptoNote::parameters::CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX, paymentID + keys
+    );
 }
 
 uint64_t getScanHeight()
@@ -204,19 +207,10 @@ uint64_t getScanHeight()
     while (true)
     {
         std::cout << InformationMsg("What height would you like to begin ")
-                  << InformationMsg("scanning your wallet from?")
-                  << std::endl
-                  << std::endl
-                  << "This can greatly speed up the initial wallet "
-                  << "scanning process."
-                  << std::endl
-                  << std::endl
-                  << "If you do not know the exact height, "
-                  << "err on the side of caution so transactions do not "
-                  << "get missed."
-                  << std::endl
-                  << std::endl
-                  << InformationMsg("Hit enter for the sub-optimal default ")
+                  << InformationMsg("scanning your wallet from?") << std::endl << std::endl
+                  << "This can greatly speed up the initial wallet " << "scanning process." << std::endl << std::endl
+                  << "If you do not know the exact height, " << "err on the side of caution so transactions do not "
+                  << "get missed." << std::endl << std::endl << InformationMsg("Hit enter for the sub-optimal default ")
                   << InformationMsg("of zero: ");
 
         std::string stringHeight;
@@ -241,14 +235,17 @@ uint64_t getScanHeight()
         }
         catch (const std::invalid_argument &)
         {
-            std::cout << WarningMsg("Failed to parse height - input is not ")
-                      << WarningMsg("a number!") << std::endl << std::endl;
+            std::cout << WarningMsg("Failed to parse height - input is not ") << WarningMsg("a number!") << std::endl
+                      << std::endl;
         }
     }
 }
 
 /* Erases all instances of c from the string. E.g. 2,000,000 becomes 2000000 */
-void removeCharFromString(std::string &str, const char c)
+void removeCharFromString(
+    std::string &str,
+    const char c
+)
 {
     str.erase(std::remove(str.begin(), str.end(), c), str.end());
 }
@@ -275,7 +272,10 @@ void rightTrim(std::string &str)
 }
 
 /* Checks if str begins with substring */
-bool startsWith(const std::string &str, const std::string &substring)
+bool startsWith(
+    const std::string &str,
+    const std::string &substring
+)
 {
     return str.rfind(substring, 0) == 0;
 }
@@ -287,13 +287,15 @@ bool fileExists(const std::string &filename)
     return static_cast<bool>(std::ifstream(filename));
 }
 
-bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
-              bool &alreadyShuttingDown)
+bool shutdown(
+    std::shared_ptr<WalletInfo> walletInfo,
+    CryptoNote::INode &node,
+    bool &alreadyShuttingDown
+)
 {
     if (alreadyShuttingDown)
     {
-        std::cout << "Patience little turtle, we're already shutting down!"
-                  << std::endl;
+        std::cout << "Patience little turtle, we're already shutting down!" << std::endl;
 
         return false;
     }
@@ -304,27 +306,30 @@ bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
 
     bool finishedShutdown = false;
 
-    std::thread timelyShutdown([&finishedShutdown]
-                               {
-                                   const auto startTime = std::chrono::system_clock::now();
+    std::thread timelyShutdown(
+        [&finishedShutdown]
+        {
+            const auto startTime = std::chrono::system_clock::now();
 
-                                   /* Has shutdown finished? */
-                                   while (!finishedShutdown)
-                                   {
-                                       const auto currentTime = std::chrono::system_clock::now();
+            /* Has shutdown finished? */
+            while (!finishedShutdown)
+            {
+                const auto currentTime = std::chrono::system_clock::now();
 
-                                       /* If not, wait for a max of 20 seconds then force exit. */
-                                       if ((currentTime - startTime) > std::chrono::seconds(20))
-                                       {
-                                           std::cout << WarningMsg("Wallet took too long to save! "
-                                                                   "Force closing.") << std::endl
-                                                     << "Bye." << std::endl;
-                                           exit(0);
-                                       }
+                /* If not, wait for a max of 20 seconds then force exit. */
+                if ((currentTime - startTime) > std::chrono::seconds(20))
+                {
+                    std::cout << WarningMsg(
+                        "Wallet took too long to save! "
+                        "Force closing."
+                    ) << std::endl << "Bye." << std::endl;
+                    exit(0);
+                }
 
-                                       std::this_thread::sleep_for(std::chrono::seconds(1));
-                                   }
-                               });
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        }
+    );
 
     if (walletInfo != nullptr)
     {
@@ -332,14 +337,12 @@ bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
 
         walletInfo->wallet.save();
 
-        std::cout << InformationMsg("Shutting down wallet interface...")
-                  << std::endl;
+        std::cout << InformationMsg("Shutting down wallet interface...") << std::endl;
 
         walletInfo->wallet.shutdown();
     }
 
-    std::cout << InformationMsg("Shutting down node connection...")
-              << std::endl;
+    std::cout << InformationMsg("Shutting down node connection...") << std::endl;
 
     node.shutdown();
 
@@ -353,7 +356,10 @@ bool shutdown(std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node,
     return true;
 }
 
-std::vector<std::string> split(const std::string &str, char delim = ' ')
+std::vector<std::string> split(
+    const std::string &str,
+    char delim = ' '
+)
 {
     std::vector<std::string> cont;
     std::stringstream ss(str);
@@ -365,14 +371,19 @@ std::vector<std::string> split(const std::string &str, char delim = ' ')
     return cont;
 }
 
-bool parseDaemonAddressFromString(std::string &host, int &port, const std::string &address)
+bool parseDaemonAddressFromString(
+    std::string &host,
+    int &port,
+    const std::string &address
+)
 {
     std::vector<std::string> parts = split(address, ':');
 
     if (parts.empty())
     {
         return false;
-    } else if (parts.size() >= 2)
+    }
+    else if (parts.size() >= 2)
     {
         try
         {

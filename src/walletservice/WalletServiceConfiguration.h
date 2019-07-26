@@ -16,7 +16,8 @@ namespace PaymentService
     struct WalletServiceConfiguration
     {
         WalletServiceConfiguration()
-        {};
+        {
+        };
 
         /* Address for the daemon RPC */
         std::string daemonAddress = "127.0.0.1";
@@ -84,7 +85,9 @@ namespace PaymentService
         bool generateNewContainer = false;
 
         bool daemonize = false;
+
         bool registerService = false;
+
         bool unregisterService = false;
 
         /* Print all the addresses and exit (Why is this a thing?) */
@@ -97,23 +100,27 @@ namespace PaymentService
     };
 
     bool updateConfigFormat(
-            const std::string configFile,
-            WalletServiceConfiguration &config);
+        const std::string configFile,
+        WalletServiceConfiguration &config
+    );
 
     void handleSettings(
-            int argc,
-            char *argv[],
-            WalletServiceConfiguration &config);
+        int argc,
+        char *argv[],
+        WalletServiceConfiguration &config
+    );
 
     void handleSettings(
-            const std::string configFile,
-            WalletServiceConfiguration &config);
+        const std::string configFile,
+        WalletServiceConfiguration &config
+    );
 
     Document asJSON(const WalletServiceConfiguration &config);
 
     std::string asString(const WalletServiceConfiguration &config);
 
     void asFile(
-            const WalletServiceConfiguration &config,
-            const std::string &filename);
+        const WalletServiceConfiguration &config,
+        const std::string &filename
+    );
 }

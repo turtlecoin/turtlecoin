@@ -27,11 +27,14 @@ namespace
 }
 
 void transfer(
-        const std::shared_ptr<WalletBackend> walletBackend,
-        const bool sendAll)
+    const std::shared_ptr<WalletBackend> walletBackend,
+    const bool sendAll
+)
 {
-    std::cout << InformationMsg("Note: You can type cancel at any time to "
-                                "cancel the transaction\n\n");
+    std::cout << InformationMsg(
+        "Note: You can type cancel at any time to "
+        "cancel the transaction\n\n"
+    );
 
     const bool integratedAddressesAllowed(true), cancelAllowed(true);
 
@@ -41,10 +44,8 @@ void transfer(
     {
         std::stringstream stream;
 
-        stream << "The minimum send allowed is "
-               << Utilities::formatAmount(WalletConfig::minimumSend)
-               << ", but you have "
-               << Utilities::formatAmount(unlockedBalance) << "!\n";
+        stream << "The minimum send allowed is " << Utilities::formatAmount(WalletConfig::minimumSend)
+               << ", but you have " << Utilities::formatAmount(unlockedBalance) << "!\n";
 
         std::cout << WarningMsg(stream.str());
 
@@ -52,8 +53,7 @@ void transfer(
     }
 
     std::string address = getAddress(
-            "What address do you want to transfer to?: ",
-            integratedAddressesAllowed, cancelAllowed
+        "What address do you want to transfer to?: ", integratedAddressesAllowed, cancelAllowed
     );
 
     if (address == "cancel")
@@ -68,9 +68,8 @@ void transfer(
     if (address.length() == WalletConfig::standardAddressLength)
     {
         paymentID = getPaymentID(
-                "What payment ID do you want to use?\n"
-                "These are usually used for sending to exchanges.",
-                cancelAllowed
+            "What payment ID do you want to use?\n"
+            "These are usually used for sending to exchanges.", cancelAllowed
         );
 
         if (paymentID == "cancel")
@@ -95,8 +94,7 @@ void transfer(
         bool success;
 
         std::tie(success, amount) = getAmountToAtomic(
-                "How much " + WalletConfig::ticker + " do you want to send?: ",
-                cancelAllowed
+            "How much " + WalletConfig::ticker + " do you want to send?: ", cancelAllowed
         );
 
         std::cout << "\n";
@@ -111,10 +109,11 @@ void transfer(
 }
 
 void sendTransaction(
-        const std::shared_ptr<WalletBackend> walletBackend,
-        const std::string address,
-        const uint64_t amount,
-        const std::string paymentID)
+    const std::shared_ptr<WalletBackend> walletBackend,
+    const std::string address,
+    const uint64_t amount,
+    const std::string paymentID
+)
 {
     const auto unlockedBalance = walletBackend->getTotalUnlockedBalance();
 
@@ -129,15 +128,12 @@ void sendTransaction(
 
     if (total > unlockedBalance)
     {
-        std::cout << WarningMsg("\nYou don't have enough funds to cover "
-                                "this transaction!\n\n")
-                  << "Funds needed: "
-                  << InformationMsg(Utilities::formatAmount(amount + fee + nodeFee))
-                  << " (Includes a network fee of "
-                  << InformationMsg(Utilities::formatAmount(fee))
-                  << " and a node fee of "
-                  << InformationMsg(Utilities::formatAmount(nodeFee))
-                  << ")\nFunds available: "
+        std::cout << WarningMsg(
+            "\nYou don't have enough funds to cover "
+            "this transaction!\n\n"
+        ) << "Funds needed: " << InformationMsg(Utilities::formatAmount(amount + fee + nodeFee))
+                  << " (Includes a network fee of " << InformationMsg(Utilities::formatAmount(fee))
+                  << " and a node fee of " << InformationMsg(Utilities::formatAmount(nodeFee)) << ")\nFunds available: "
                   << SuccessMsg(Utilities::formatAmount(unlockedBalance)) << "\n\n";
 
         return cancel();
@@ -153,24 +149,27 @@ void sendTransaction(
     Crypto::Hash hash;
 
     std::tie(error, hash) = walletBackend->sendTransactionBasic(
-            address, amount, paymentID
+        address, amount, paymentID
     );
 
     if (error == TOO_MANY_INPUTS_TO_FIT_IN_BLOCK)
     {
-        std::cout << WarningMsg("Your transaction is too large to be accepted "
-                                "by the network!\n")
-                  << InformationMsg("We're attempting to optimize your wallet,\n"
-                                    "which hopefully make the transaction small "
-                                    "enough to fit in a block.\n"
-                                    "Please wait, this will take some time...\n\n");
+        std::cout << WarningMsg(
+            "Your transaction is too large to be accepted "
+            "by the network!\n"
+        ) << InformationMsg(
+            "We're attempting to optimize your wallet,\n"
+            "which hopefully make the transaction small "
+            "enough to fit in a block.\n"
+            "Please wait, this will take some time...\n\n"
+        );
 
         /* Try and perform some fusion transactions to make our inputs bigger */
         optimize(walletBackend);
 
         /* Resend the transaction */
         std::tie(error, hash) = walletBackend->sendTransactionBasic(
-                address, amount, paymentID
+            address, amount, paymentID
         );
 
         /* Still too big, split it up (with users approval) */
@@ -183,28 +182,31 @@ void sendTransaction(
 
     if (error)
     {
-        std::cout << WarningMsg("Failed to send transaction: ")
-                  << WarningMsg(error) << std::endl;
-    } else
+        std::cout << WarningMsg("Failed to send transaction: ") << WarningMsg(error) << std::endl;
+    }
+    else
     {
-        std::cout << SuccessMsg("Transaction has been sent!\nHash: ")
-                  << SuccessMsg(hash) << "\n";
+        std::cout << SuccessMsg("Transaction has been sent!\nHash: ") << SuccessMsg(hash) << "\n";
     }
 }
 
 void splitTX(
-        const std::shared_ptr<WalletBackend> walletBackend,
-        const std::string address,
-        const uint64_t amount,
-        const std::string paymentID)
+    const std::shared_ptr<WalletBackend> walletBackend,
+    const std::string address,
+    const uint64_t amount,
+    const std::string paymentID
+)
 {
-    std::cout << InformationMsg("Transaction is still too large to send, splitting into "
-                                "multiple chunks.\n\n")
-              << WarningMsg("It will slightly raise the fee you have to pay,\n"
-                            "and hence reduce the total amount you can send if\n"
-                            "your balance cannot cover it.\n\n"
-                            "If the node you are using charges a fee,\nyou will "
-                            "have to pay this fee for each transction.\n");
+    std::cout << InformationMsg(
+        "Transaction is still too large to send, splitting into "
+        "multiple chunks.\n\n"
+    ) << WarningMsg(
+        "It will slightly raise the fee you have to pay,\n"
+        "and hence reduce the total amount you can send if\n"
+        "your balance cannot cover it.\n\n"
+        "If the node you are using charges a fee,\nyou will "
+        "have to pay this fee for each transction.\n"
+    );
 
     if (!Utilities::confirm("Is this OK?"))
     {
@@ -262,15 +264,17 @@ void splitTX(
            and then send */
         while (walletBackend->getTotalUnlockedBalance() < totalNeeded)
         {
-            std::cout << WarningMsg("Waiting for balance to unlock to send "
-                                    "next transaction.\n"
-                                    "Will try again in 15 seconds...\n\n");
+            std::cout << WarningMsg(
+                "Waiting for balance to unlock to send "
+                "next transaction.\n"
+                "Will try again in 15 seconds...\n\n"
+            );
 
             std::this_thread::sleep_for(std::chrono::seconds(15));
         }
 
         const auto[error, hash] = walletBackend->sendTransactionBasic(
-                address, splitAmount, paymentID
+            address, splitAmount, paymentID
         );
 
         /* Still too big, reduce amount */
@@ -283,18 +287,17 @@ void splitTX(
             std::cout << InformationMsg("Working...\n");
 
             continue;
-        } else if (error)
+        }
+        else if (error)
         {
-            std::cout << WarningMsg("Failed to send transaction: ")
-                      << error << "\nAborting, sorry...";
+            std::cout << WarningMsg("Failed to send transaction: ") << error << "\nAborting, sorry...";
             return;
         }
 
         std::stringstream stream;
 
-        stream << "Transaction number " << txNumber << " has been sent!\nHash: "
-               << hash << "\nAmount: " << Utilities::formatAmount(splitAmount)
-               << "\n\n";
+        stream << "Transaction number " << txNumber << " has been sent!\nHash: " << hash << "\nAmount: "
+               << Utilities::formatAmount(splitAmount) << "\n\n";
 
         std::cout << SuccessMsg(stream.str()) << std::endl;
 
@@ -320,31 +323,30 @@ void splitTX(
 }
 
 bool confirmTransaction(
-        const std::shared_ptr<WalletBackend> walletBackend,
-        const std::string address,
-        const uint64_t amount,
-        const std::string paymentID,
-        const uint64_t nodeFee)
+    const std::shared_ptr<WalletBackend> walletBackend,
+    const std::string address,
+    const uint64_t amount,
+    const std::string paymentID,
+    const uint64_t nodeFee
+)
 {
     std::cout << InformationMsg("\nConfirm Transaction?\n");
 
-    std::cout << "You are sending "
-              << SuccessMsg(Utilities::formatAmount(amount))
-              << ", with a network fee of "
-              << SuccessMsg(Utilities::formatAmount(WalletConfig::defaultFee))
-              << ",\nand a node fee of "
+    std::cout << "You are sending " << SuccessMsg(Utilities::formatAmount(amount)) << ", with a network fee of "
+              << SuccessMsg(Utilities::formatAmount(WalletConfig::defaultFee)) << ",\nand a node fee of "
               << SuccessMsg(Utilities::formatAmount(nodeFee));
 
     if (paymentID != "")
     {
         std::cout << ",\nand a Payment ID of " << SuccessMsg(paymentID);
-    } else
+    }
+    else
     {
         std::cout << ".";
     }
 
-    std::cout << "\n\nFROM: " << SuccessMsg(walletBackend->getWalletLocation())
-              << "\nTO: " << SuccessMsg(address) << "\n\n";
+    std::cout << "\n\nFROM: " << SuccessMsg(walletBackend->getWalletLocation()) << "\nTO: " << SuccessMsg(address)
+              << "\n\n";
 
     if (Utilities::confirm("Is this correct?"))
     {

@@ -28,4 +28,7 @@ struct ApiConfig
     unsigned int threads;
 };
 
-ApiConfig parseArguments(int argc, char **argv);
+ApiConfig parseArguments(
+    int argc,
+    char **argv
+);

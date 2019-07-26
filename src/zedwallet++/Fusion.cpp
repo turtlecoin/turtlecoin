@@ -56,7 +56,8 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
         if (error == FULLY_OPTIMIZED)
         {
             failCount++;
-        } else if (error)
+        }
+        else if (error)
         {
             failCount++;
 
@@ -65,14 +66,14 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
             stream << "Failed to send fusion transaction: " << error << "\n";
 
             std::cout << WarningMsg(stream.str());
-        } else
+        }
+        else
         {
             failCount = 0;
 
             sentTransactions++;
 
-            std::cout << InformationMsg("Sent fusion transaction #")
-                      << InformationMsg(sentTransactions)
+            std::cout << InformationMsg("Sent fusion transaction #") << InformationMsg(sentTransactions)
                       << SuccessMsg("\nHash: ") << SuccessMsg(hash) << "\n\n";
         }
     }
@@ -82,15 +83,15 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
     /* Wait for balance to unlock, so sending transactions can proceed */
     while (currentBalance < initialBalance)
     {
-        std::cout << InformationMsg("Waiting for balance to return and unlock:\n"
-                                    "\nTotal balance: ")
-                  << InformationMsg(Utilities::formatAmount(initialBalance))
+        std::cout << InformationMsg(
+            "Waiting for balance to return and unlock:\n"
+            "\nTotal balance: "
+        ) << InformationMsg(Utilities::formatAmount(initialBalance))
 
                   << WarningMsg("\nLocked balance: ")
                   << WarningMsg(Utilities::formatAmount(initialBalance - currentBalance))
 
-                  << SuccessMsg("\nUnlocked balance: ")
-                  << SuccessMsg(Utilities::formatAmount(currentBalance))
+                  << SuccessMsg("\nUnlocked balance: ") << SuccessMsg(Utilities::formatAmount(currentBalance))
 
                   << InformationMsg("\nWill check again in 15 seconds...\n\n");
 

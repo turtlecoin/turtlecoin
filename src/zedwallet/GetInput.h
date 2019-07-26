@@ -16,13 +16,15 @@ std::string yellowANSIMsg(std::string msg);
 std::string getPrompt(std::shared_ptr<WalletInfo> walletInfo);
 
 template<typename T>
-std::string getInputAndWorkInBackground(const std::vector<T>
-                                        &availableCommands,
-                                        std::string prompt,
-                                        bool backgroundRefresh,
-                                        std::shared_ptr<WalletInfo>
-                                        walletInfo);
+std::string getInputAndWorkInBackground(
+    const std::vector<T> &availableCommands,
+    std::string prompt,
+    bool backgroundRefresh,
+    std::shared_ptr<WalletInfo> walletInfo
+);
 
 template<typename T>
-std::string getInput(const std::vector<T> &availableCommands,
-                     std::string prompt);
+std::string getInput(
+    const std::vector<T> &availableCommands,
+    std::string prompt
+);

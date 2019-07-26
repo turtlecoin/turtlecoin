@@ -31,24 +31,24 @@ namespace System
 
         class MutextGuard
         {
-        public:
-            MutextGuard(pthread_mutex_t &_mutex) : mutex(_mutex)
-            {
-                auto ret = pthread_mutex_lock(&mutex);
-                if (ret != 0)
+            public:
+                MutextGuard(pthread_mutex_t &_mutex) : mutex(_mutex)
                 {
-                    throw std::runtime_error(
+                    auto ret = pthread_mutex_lock(&mutex);
+                    if (ret != 0)
+                    {
+                        throw std::runtime_error(
                             "MutextGuard::MutextGuard, pthread_mutex_lock failed, " + errorMessage(ret));
+                    }
                 }
-            }
 
-            ~MutextGuard()
-            {
-                pthread_mutex_unlock(&mutex);
-            }
+                ~MutextGuard()
+                {
+                    pthread_mutex_unlock(&mutex);
+                }
 
-        private:
-            pthread_mutex_t &mutex;
+            private:
+                pthread_mutex_t &mutex;
         };
 
         const size_t STACK_SIZE = 64 * 1024;
@@ -64,25 +64,29 @@ namespace System
         if (kqueue == -1)
         {
             message = "kqueue failed, " + lastErrorMessage();
-        } else
+        }
+        else
         {
             mainContext.uctx = new uctx;
             if (getcontext(static_cast<uctx *>(mainContext.uctx)) == -1)
             {
                 message = "getcontext failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 struct kevent event;
                 EV_SET(&event, 0, EVFILT_USER, EV_ADD, NOTE_FFNOP, 0, NULL);
                 if (kevent(kqueue, &event, 1, NULL, 0, NULL) == -1)
                 {
                     message = "kevent failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     if (pthread_mutex_init(reinterpret_cast<pthread_mutex_t *>(this->mutex), NULL) == -1)
                     {
                         message = "pthread_mutex_init failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         remoteSpawned = false;
 
@@ -106,7 +110,8 @@ namespace System
 
             auto result = close(kqueue);
             if (result)
-            {}
+            {
+            }
             assert(result == 0);
         }
 
@@ -136,7 +141,8 @@ namespace System
 
         auto result = close(kqueue);
         if (result)
-        {}
+        {
+        }
         assert(result != -1);
         result = pthread_mutex_destroy(reinterpret_cast<pthread_mutex_t *>(this->mutex));
         assert(result != -1);
@@ -217,7 +223,8 @@ namespace System
             if (errno != EINTR)
             {
                 throw std::runtime_error("Dispatcher::dispatch, kqueue failed, " + lastErrorMessage());
-            } else
+            }
+            else
             {
                 MutextGuard guard(*reinterpret_cast<pthread_mutex_t *>(this->mutex));
                 while (!remoteSpawningProcedures.empty())
@@ -259,7 +266,8 @@ namespace System
             {
                 context->interruptProcedure();
                 context->interruptProcedure = nullptr;
-            } else
+            }
+            else
             {
                 context->interrupted = true;
             }
@@ -282,7 +290,9 @@ namespace System
         assert(context != nullptr);
 
         if (context->inExecutionQueue)
+        {
             return;
+        }
 
         context->next = nullptr;
         context->inExecutionQueue = true;
@@ -290,7 +300,8 @@ namespace System
         {
             assert(lastResumingContext != nullptr);
             lastResumingContext->next = context;
-        } else
+        }
+        else
         {
             firstResumingContext = context;
         }
@@ -322,7 +333,8 @@ namespace System
             context->groupPrev = contextGroup.lastContext;
             assert(contextGroup.lastContext->groupNext == nullptr);
             contextGroup.lastContext->groupNext = context;
-        } else
+        }
+        else
         {
             context->groupPrev = nullptr;
             contextGroup.firstContext = context;
@@ -339,7 +351,10 @@ namespace System
 
     void Dispatcher::yield()
     {
-        struct timespec zeroTimeout = {0, 0};
+        struct timespec zeroTimeout = {
+            0,
+            0
+        };
         int updatesCounter = 0;
         for (;;)
         {
@@ -380,11 +395,14 @@ namespace System
                     pushContext(static_cast<OperationContext *>(events[i].udata)->context);
                     if (events[i].filter == EVFILT_WRITE)
                     {
-                        EV_SET(&updates[updatesCounter++], events[i].ident, EVFILT_WRITE,
-                               EV_DELETE | EV_DISABLE, 0, 0, NULL);
+                        EV_SET(
+                            &updates[updatesCounter++], events[i].ident, EVFILT_WRITE,
+                            EV_DELETE | EV_DISABLE, 0, 0, NULL
+                        );
                     }
                 }
-            } else
+            }
+            else
             {
                 if (errno != EINTR)
                 {
@@ -414,8 +432,12 @@ namespace System
             static_cast<uctx *>(newlyCreatedContext)->uc_stack.ss_sp = stackPointer;
             static_cast<uctx *>(newlyCreatedContext)->uc_stack.ss_size = STACK_SIZE;
 
-            ContextMakingData makingData{newlyCreatedContext, this};
-            makecontext(static_cast<uctx *>(newlyCreatedContext), reinterpret_cast<void (*)()>(contextProcedureStatic), reinterpret_cast<intptr_t>(&makingData));
+            ContextMakingData makingData{
+                newlyCreatedContext,
+                this
+            };
+            makecontext(
+                static_cast<uctx *>(newlyCreatedContext), reinterpret_cast<void (*)()>(contextProcedureStatic), reinterpret_cast<intptr_t>(&makingData));
 
             uctx *oldContext = static_cast<uctx *>(currentContext->uctx);
             if (swapcontext(oldContext, newlyCreatedContext) == -1)
@@ -446,7 +468,8 @@ namespace System
         if (timers.empty())
         {
             timer = ++lastCreatedTimer;
-        } else
+        }
+        else
         {
             timer = timers.top();
             timers.pop();
@@ -481,7 +504,8 @@ namespace System
             try
             {
                 context.procedure();
-            } catch (...)
+            }
+            catch (...)
             {
             }
 
@@ -495,12 +519,14 @@ namespace System
                     {
                         assert(context.groupNext->groupPrev == &context);
                         context.groupNext->groupPrev = context.groupPrev;
-                    } else
+                    }
+                    else
                     {
                         assert(context.group->lastContext == &context);
                         context.group->lastContext = context.groupPrev;
                     }
-                } else
+                }
+                else
                 {
                     assert(context.group->firstContext == &context);
                     context.group->firstContext = context.groupNext;
@@ -508,7 +534,8 @@ namespace System
                     {
                         assert(context.groupNext->groupPrev == &context);
                         context.groupNext->groupPrev = nullptr;
-                    } else
+                    }
+                    else
                     {
                         assert(context.group->lastContext == &context);
                         if (context.group->firstWaiter != nullptr)
@@ -517,7 +544,8 @@ namespace System
                             {
                                 assert(lastResumingContext->next == nullptr);
                                 lastResumingContext->next = context.group->firstWaiter;
-                            } else
+                            }
+                            else
                             {
                                 firstResumingContext = context.group->firstWaiter;
                             }

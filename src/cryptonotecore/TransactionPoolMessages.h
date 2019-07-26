@@ -13,11 +13,11 @@ namespace CryptoNote
 
     enum class TransactionMessageType
     {
-        AddTransactionType,
-        DeleteTransactionType
+            AddTransactionType,
+            DeleteTransactionType
     };
 
-// immutable messages
+    // immutable messages
     struct AddTransaction
     {
         Crypto::Hash hash;
@@ -30,28 +30,32 @@ namespace CryptoNote
 
     class TransactionPoolMessage
     {
-    public:
-        TransactionPoolMessage(const AddTransaction &at);
+        public:
+            TransactionPoolMessage(const AddTransaction &at);
 
-        TransactionPoolMessage(const DeleteTransaction &at);
+            TransactionPoolMessage(const DeleteTransaction &at);
 
-        // pattern matchin API
-        void match(std::function<void(const AddTransaction &)> &&, std::function<void(const DeleteTransaction &)> &&);
+            // pattern matchin API
+            void match(
+                std::function<void(const AddTransaction &)> &&,
+                std::function<void(const DeleteTransaction &)> &&
+            );
 
-        // API with explicit type handling
-        TransactionMessageType getType() const;
+            // API with explicit type handling
+            TransactionMessageType getType() const;
 
-        AddTransaction getAddTransaction() const;
+            AddTransaction getAddTransaction() const;
 
-        DeleteTransaction getDeleteTransaction() const;
+            DeleteTransaction getDeleteTransaction() const;
 
-    private:
-        const TransactionMessageType type;
-        union
-        {
-            const AddTransaction addTransaction;
-            const DeleteTransaction deleteTransaction;
-        };
+        private:
+            const TransactionMessageType type;
+
+            union
+            {
+                const AddTransaction addTransaction;
+                const DeleteTransaction deleteTransaction;
+            };
     };
 
 }

@@ -12,8 +12,9 @@ namespace System
     TcpStreambuf::TcpStreambuf(TcpConnection &connection) : connection(connection)
     {
         setg(&readBuf.front(), &readBuf.front(), &readBuf.front());
-        setp(reinterpret_cast<char *>(&writeBuf.front()), reinterpret_cast<char *>(&writeBuf.front() +
-                                                                                   writeBuf.max_size()));
+        setp(
+            reinterpret_cast<char *>(&writeBuf.front()), reinterpret_cast<char *>(&writeBuf.front() +
+                                                                                  writeBuf.max_size()));
     }
 
     TcpStreambuf::~TcpStreambuf()
@@ -41,7 +42,9 @@ namespace System
 
     int TcpStreambuf::sync()
     {
-        return dumpBuffer(true) ? 0 : -1;
+        return dumpBuffer(true)
+               ? 0
+               : -1;
     }
 
     std::streambuf::int_type TcpStreambuf::underflow()
@@ -54,7 +57,8 @@ namespace System
         try
         {
             bytesRead = connection.read(reinterpret_cast<uint8_t *>(&readBuf.front()), readBuf.max_size());
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return traits_type::eof();
         }
@@ -80,7 +84,8 @@ namespace System
             if (transferred == count)
             {
                 pbump(-static_cast<int>(count));
-            } else
+            }
+            else
             {
                 if (!finalize)
                 {
@@ -91,7 +96,8 @@ namespace System
                     }
 
                     pbump(-static_cast<int>(transferred));
-                } else
+                }
+                else
                 {
                     size_t offset = transferred;
                     while (offset != count)
@@ -102,7 +108,8 @@ namespace System
                     pbump(-static_cast<int>(count));
                 }
             }
-        } catch (...)
+        }
+        catch (...)
         {
             return false;
         }

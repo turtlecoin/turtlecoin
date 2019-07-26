@@ -15,45 +15,45 @@ namespace CryptoNote
 
         enum class CoreErrorCode
         {
-            NOT_INITIALIZED,
-            CORRUPTED_BLOCKCHAIN
+                NOT_INITIALIZED,
+                CORRUPTED_BLOCKCHAIN
         };
 
-// custom category:
+        // custom category:
         class CoreErrorCategory : public std::error_category
         {
-        public:
-            static CoreErrorCategory INSTANCE;
+            public:
+                static CoreErrorCategory INSTANCE;
 
-            virtual const char *name() const throw()
-            {
-                return "CoreErrorCategory";
-            }
-
-            virtual std::error_condition default_error_condition(int ev) const throw()
-            {
-                return std::error_condition(ev, *this);
-            }
-
-            virtual std::string message(int ev) const
-            {
-                CoreErrorCode code = static_cast<CoreErrorCode>(ev);
-
-                switch (code)
+                virtual const char *name() const throw()
                 {
-                    case CoreErrorCode::NOT_INITIALIZED:
-                        return "Core is not initialized";
-                    case CoreErrorCode::CORRUPTED_BLOCKCHAIN:
-                        return "Blockchain storage is corrupted";
-                    default:
-                        return "Unknown error";
+                    return "CoreErrorCategory";
                 }
-            }
 
-        private:
-            CoreErrorCategory()
-            {
-            }
+                virtual std::error_condition default_error_condition(int ev) const throw()
+                {
+                    return std::error_condition(ev, *this);
+                }
+
+                virtual std::string message(int ev) const
+                {
+                    CoreErrorCode code = static_cast<CoreErrorCode>(ev);
+
+                    switch (code)
+                    {
+                        case CoreErrorCode::NOT_INITIALIZED:
+                            return "Core is not initialized";
+                        case CoreErrorCode::CORRUPTED_BLOCKCHAIN:
+                            return "Blockchain storage is corrupted";
+                        default:
+                            return "Unknown error";
+                    }
+                }
+
+            private:
+                CoreErrorCategory()
+                {
+                }
         };
 
         inline std::error_code make_error_code(CryptoNote::error::CoreErrorCode e)

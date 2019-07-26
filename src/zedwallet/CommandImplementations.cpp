@@ -17,7 +17,7 @@
 
 #ifndef MSVC
 
-#include <fstream>
+    #include <fstream>
 
 #endif
 
@@ -43,8 +43,7 @@ void changePassword(std::shared_ptr<WalletInfo> walletInfo)
     confirmPassword(walletInfo->walletPass, "Confirm your current password: ");
 
     /* Get a new password for the wallet */
-    const std::string newPassword
-            = getWalletPassword(true, "Enter your new password: ");
+    const std::string newPassword = getWalletPassword(true, "Enter your new password: ");
 
     /* Change the wallet password */
     walletInfo->wallet.changePassword(walletInfo->walletPass, newPassword);
@@ -64,15 +63,16 @@ void exportKeys(std::shared_ptr<WalletInfo> walletInfo)
     printPrivateKeys(walletInfo->wallet, walletInfo->viewWallet);
 }
 
-void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
+void printPrivateKeys(
+    CryptoNote::WalletGreen &wallet,
+    bool viewWallet
+)
 {
     const Crypto::SecretKey privateViewKey = wallet.getViewKey().secretKey;
 
     if (viewWallet)
     {
-        std::cout << SuccessMsg("Private view key:")
-                  << std::endl
-                  << SuccessMsg(Common::podToHex(privateViewKey))
+        std::cout << SuccessMsg("Private view key:") << std::endl << SuccessMsg(Common::podToHex(privateViewKey))
                   << std::endl;
         return;
     }
@@ -81,34 +81,28 @@ void printPrivateKeys(CryptoNote::WalletGreen &wallet, bool viewWallet)
 
     Crypto::SecretKey derivedPrivateViewKey;
 
-    Crypto::crypto_ops::generateViewFromSpend(privateSpendKey,
-                                              derivedPrivateViewKey);
+    Crypto::crypto_ops::generateViewFromSpend(
+        privateSpendKey, derivedPrivateViewKey
+    );
 
-    const bool deterministicPrivateKeys
-            = derivedPrivateViewKey == privateViewKey;
+    const bool deterministicPrivateKeys = derivedPrivateViewKey == privateViewKey;
 
-    std::cout << SuccessMsg("Private spend key:")
-              << std::endl
-              << SuccessMsg(Common::podToHex(privateSpendKey))
-              << std::endl
-              << std::endl
-              << SuccessMsg("Private view key:")
-              << std::endl
-              << SuccessMsg(Common::podToHex(privateViewKey))
-              << std::endl;
+    std::cout << SuccessMsg("Private spend key:") << std::endl << SuccessMsg(Common::podToHex(privateSpendKey))
+              << std::endl << std::endl << SuccessMsg("Private view key:") << std::endl
+              << SuccessMsg(Common::podToHex(privateViewKey)) << std::endl;
 
     if (deterministicPrivateKeys)
     {
-        std::cout << std::endl
-                  << SuccessMsg("Mnemonic seed:")
-                  << std::endl
-                  << SuccessMsg(Mnemonics::PrivateKeyToMnemonic(privateSpendKey))
-                  << std::endl;
+        std::cout << std::endl << SuccessMsg("Mnemonic seed:") << std::endl
+                  << SuccessMsg(Mnemonics::PrivateKeyToMnemonic(privateSpendKey)) << std::endl;
     }
 }
 
-void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
-             bool viewWallet)
+void balance(
+    CryptoNote::INode &node,
+    CryptoNote::WalletGreen &wallet,
+    bool viewWallet
+)
 {
     const uint64_t unconfirmedBalance = wallet.getPendingBalance();
     uint64_t confirmedBalance = wallet.getActualBalance();
@@ -144,47 +138,44 @@ void balance(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet,
 
     const uint64_t totalBalance = unconfirmedBalance + confirmedBalance;
 
-    std::cout << "Available balance: "
-              << SuccessMsg(formatAmount(confirmedBalance)) << std::endl
-              << "Locked (unconfirmed) balance: "
-              << WarningMsg(formatAmount(unconfirmedBalance))
-              << std::endl << "Total balance: "
-              << InformationMsg(formatAmount(totalBalance)) << std::endl;
+    std::cout << "Available balance: " << SuccessMsg(formatAmount(confirmedBalance)) << std::endl
+              << "Locked (unconfirmed) balance: " << WarningMsg(formatAmount(unconfirmedBalance)) << std::endl
+              << "Total balance: " << InformationMsg(formatAmount(totalBalance)) << std::endl;
 
     if (viewWallet)
     {
-        std::cout << std::endl
-                  << InformationMsg("Please note that view only wallets "
-                                    "can only track incoming transactions,")
-                  << std::endl
-                  << InformationMsg("and so your wallet balance may appear "
-                                    "inflated.") << std::endl;
+        std::cout << std::endl << InformationMsg(
+            "Please note that view only wallets "
+            "can only track incoming transactions,"
+        ) << std::endl << InformationMsg(
+            "and so your wallet balance may appear "
+            "inflated."
+        ) << std::endl;
     }
 
     if (localHeight < remoteHeight)
     {
-        std::cout << std::endl
-                  << InformationMsg("Your daemon is not fully synced with "
-                                    "the network!")
-                  << std::endl
-                  << "Your balance may be incorrect until you are fully "
-                  << "synced!" << std::endl;
+        std::cout << std::endl << InformationMsg(
+            "Your daemon is not fully synced with "
+            "the network!"
+        ) << std::endl << "Your balance may be incorrect until you are fully " << "synced!" << std::endl;
     }
         /* Small buffer because wallet height doesn't update instantly like node
            height does */
     else if (walletHeight + 1000 < remoteHeight)
     {
-        std::cout << std::endl
-                  << InformationMsg("The blockchain is still being scanned for "
-                                    "your transactions.")
-                  << std::endl
-                  << "Balances might be incorrect whilst this is ongoing."
-                  << std::endl;
+        std::cout << std::endl << InformationMsg(
+            "The blockchain is still being scanned for "
+            "your transactions."
+        ) << std::endl << "Balances might be incorrect whilst this is ongoing." << std::endl;
     }
 }
 
-void printHeights(uint32_t localHeight, uint32_t remoteHeight,
-                  uint32_t walletHeight)
+void printHeights(
+    uint32_t localHeight,
+    uint32_t remoteHeight,
+    uint32_t walletHeight
+)
 {
     /* This is the height that the wallet has been scanned to. The blockchain
        can be fully updated, but we have to walk the chain to find our
@@ -196,7 +187,8 @@ void printHeights(uint32_t localHeight, uint32_t remoteHeight,
     if (walletHeight + 1000 > remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(walletHeight));
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(std::to_string(walletHeight));
     }
@@ -206,30 +198,32 @@ void printHeights(uint32_t localHeight, uint32_t remoteHeight,
     if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg(std::to_string(localHeight));
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(std::to_string(localHeight));
     }
 
-    std::cout << std::endl << "Network blockchain height: "
-              << SuccessMsg(std::to_string(remoteHeight)) << std::endl;
+    std::cout << std::endl << "Network blockchain height: " << SuccessMsg(std::to_string(remoteHeight)) << std::endl;
 }
 
-void printSyncStatus(uint32_t localHeight, uint32_t remoteHeight,
-                     uint32_t walletHeight)
+void printSyncStatus(
+    uint32_t localHeight,
+    uint32_t remoteHeight,
+    uint32_t walletHeight
+)
 {
-    std::string networkSyncPercentage
-            = Utilities::get_sync_percentage(localHeight, remoteHeight) + "%";
+    std::string networkSyncPercentage = Utilities::get_sync_percentage(localHeight, remoteHeight) + "%";
 
-    std::string walletSyncPercentage
-            = Utilities::get_sync_percentage(walletHeight, remoteHeight) + "%";
+    std::string walletSyncPercentage = Utilities::get_sync_percentage(walletHeight, remoteHeight) + "%";
 
     std::cout << "Network sync status: ";
 
     if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg(networkSyncPercentage) << std::endl;
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(networkSyncPercentage) << std::endl;
     }
@@ -240,43 +234,48 @@ void printSyncStatus(uint32_t localHeight, uint32_t remoteHeight,
     if (walletHeight + 1000 > remoteHeight)
     {
         std::cout << SuccessMsg(walletSyncPercentage) << std::endl;
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(walletSyncPercentage) << std::endl;
     }
 }
 
-void printSyncSummary(uint32_t localHeight, uint32_t remoteHeight,
-                      uint32_t walletHeight)
+void printSyncSummary(
+    uint32_t localHeight,
+    uint32_t remoteHeight,
+    uint32_t walletHeight
+)
 {
     if (localHeight == 0 && remoteHeight == 0)
     {
-        std::cout << WarningMsg("Uh oh, it looks like you don't have ")
-                  << WarningMsg(WalletConfig::daemonName)
-                  << WarningMsg(" open!")
-                  << std::endl;
-    } else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
+        std::cout << WarningMsg("Uh oh, it looks like you don't have ") << WarningMsg(WalletConfig::daemonName)
+                  << WarningMsg(" open!") << std::endl;
+    }
+    else if (walletHeight + 1000 < remoteHeight && localHeight == remoteHeight)
     {
-        std::cout << InformationMsg("You are synced with the network, but the "
-                                    "blockchain is still being scanned for "
-                                    "your transactions.")
-                  << std::endl
-                  << "Balances might be incorrect whilst this is ongoing."
-                  << std::endl;
-    } else if (localHeight == remoteHeight)
+        std::cout << InformationMsg(
+            "You are synced with the network, but the "
+            "blockchain is still being scanned for "
+            "your transactions."
+        ) << std::endl << "Balances might be incorrect whilst this is ongoing." << std::endl;
+    }
+    else if (localHeight == remoteHeight)
     {
         std::cout << SuccessMsg("Yay! You are synced!") << std::endl;
-    } else
+    }
+    else
     {
-        std::cout << WarningMsg("Be patient, you are still syncing with the "
-                                "network!") << std::endl;
+        std::cout << WarningMsg(
+            "Be patient, you are still syncing with the "
+            "network!"
+        ) << std::endl;
     }
 }
 
 void printPeerCount(size_t peerCount)
 {
-    std::cout << "Peers: " << SuccessMsg(std::to_string(peerCount))
-              << std::endl;
+    std::cout << "Peers: " << SuccessMsg(std::to_string(peerCount)) << std::endl;
 }
 
 void printHashrate(uint64_t difficulty)
@@ -289,18 +288,19 @@ void printHashrate(uint64_t difficulty)
 
     /* Hashrate is difficulty divided by block target time */
     uint32_t hashrate = static_cast<uint32_t>(
-            round(difficulty / CryptoNote::parameters::DIFFICULTY_TARGET)
-    );
+        round(difficulty / CryptoNote::parameters::DIFFICULTY_TARGET));
 
-    std::cout << "Network hashrate: "
-              << SuccessMsg(Utilities::get_mining_speed(hashrate))
+    std::cout << "Network hashrate: " << SuccessMsg(Utilities::get_mining_speed(hashrate))
               << " (Based on the last local block)" << std::endl;
 }
 
 /* This makes sure to call functions on the node which only return cached
    data. This ensures it returns promptly, and doesn't hang waiting for a
    response when the node is having issues. */
-void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
+void status(
+    CryptoNote::INode &node,
+    CryptoNote::WalletGreen &wallet
+)
 {
     uint32_t localHeight = node.getLastLocalBlockHeight();
     uint32_t remoteHeight = node.getLastKnownBlockHeight();
@@ -328,15 +328,15 @@ void status(CryptoNote::INode &node, CryptoNote::WalletGreen &wallet)
     printSyncSummary(localHeight, remoteHeight, walletHeight);
 }
 
-void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> walletInfo)
+void reset(
+    CryptoNote::INode &node,
+    std::shared_ptr<WalletInfo> walletInfo
+)
 {
     uint64_t scanHeight = getScanHeight();
 
-    std::cout << std::endl
-              << InformationMsg("This process may take some time to complete.")
-              << std::endl
-              << InformationMsg("You can't make any transactions during the ")
-              << InformationMsg("process.")
+    std::cout << std::endl << InformationMsg("This process may take some time to complete.") << std::endl
+              << InformationMsg("You can't make any transactions during the ") << InformationMsg("process.")
               << std::endl << std::endl;
 
     if (!confirm("Are you sure?"))
@@ -351,7 +351,10 @@ void reset(CryptoNote::INode &node, std::shared_ptr<WalletInfo> walletInfo)
     syncWallet(node, walletInfo);
 }
 
-void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
+void saveCSV(
+    CryptoNote::WalletGreen &wallet,
+    CryptoNote::INode &node
+)
 {
     const size_t numTransactions = wallet.getTransactionCount();
 
@@ -360,20 +363,20 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 
     if (!csv)
     {
-        std::cout << WarningMsg("Couldn't open transactions.csv file for "
-                                "saving!")
-                  << std::endl
-                  << WarningMsg("Ensure it is not open in any other "
-                                "application.")
-                  << std::endl;
+        std::cout << WarningMsg(
+            "Couldn't open transactions.csv file for "
+            "saving!"
+        ) << std::endl << WarningMsg(
+            "Ensure it is not open in any other "
+            "application."
+        ) << std::endl;
         return;
     }
 
     std::cout << InformationMsg("Saving CSV file...") << std::endl;
 
     /* Create CSV header */
-    csv << "Timestamp,Block Height,Hash,Amount,In/Out"
-        << std::endl;
+    csv << "Timestamp,Block Height,Hash,Amount,In/Out" << std::endl;
 
     /* Loop through transactions */
     for (size_t i = 0; i < numTransactions; i++)
@@ -388,7 +391,9 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 
         const std::string amount = formatAmountBasic(std::abs(t.totalAmount));
 
-        const std::string direction = t.totalAmount > 0 ? "IN" : "OUT";
+        const std::string direction = t.totalAmount > 0
+                                      ? "IN"
+                                      : "OUT";
 
         csv << unixTimeToDate(t.timestamp) << ","       /* Timestamp */
             << t.blockHeight << ","                     /* Block Height */
@@ -400,36 +405,27 @@ void saveCSV(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
 
     csv.close();
 
-    std::cout << SuccessMsg("CSV successfully written to ")
-              << SuccessMsg(WalletConfig::csvFilename)
-              << SuccessMsg("!")
+    std::cout << SuccessMsg("CSV successfully written to ") << SuccessMsg(WalletConfig::csvFilename) << SuccessMsg("!")
               << std::endl;
 }
 
-void printOutgoingTransfer(CryptoNote::WalletTransaction t,
-                           CryptoNote::INode &node)
+void printOutgoingTransfer(
+    CryptoNote::WalletTransaction t,
+    CryptoNote::INode &node
+)
 {
-    std::cout << WarningMsg("Outgoing transfer:")
-              << std::endl
-              << WarningMsg("Hash: " + Common::podToHex(t.hash))
+    std::cout << WarningMsg("Outgoing transfer:") << std::endl << WarningMsg("Hash: " + Common::podToHex(t.hash))
               << std::endl;
 
     if (t.timestamp != 0)
     {
-        std::cout << WarningMsg("Block height: ")
-                  << WarningMsg(std::to_string(t.blockHeight))
-                  << std::endl
-                  << WarningMsg("Timestamp: ")
-                  << WarningMsg(unixTimeToDate(t.timestamp))
-                  << std::endl;
+        std::cout << WarningMsg("Block height: ") << WarningMsg(std::to_string(t.blockHeight)) << std::endl
+                  << WarningMsg("Timestamp: ") << WarningMsg(unixTimeToDate(t.timestamp)) << std::endl;
     }
 
-    std::cout << WarningMsg("Spent: " + formatAmount(-t.totalAmount - t.fee))
-              << std::endl
-              << WarningMsg("Fee: " + formatAmount(t.fee))
-              << std::endl
-              << WarningMsg("Total Spent: " + formatAmount(-t.totalAmount))
-              << std::endl;
+    std::cout << WarningMsg("Spent: " + formatAmount(-t.totalAmount - t.fee)) << std::endl
+              << WarningMsg("Fee: " + formatAmount(t.fee)) << std::endl
+              << WarningMsg("Total Spent: " + formatAmount(-t.totalAmount)) << std::endl;
 
     const std::string paymentID = Utilities::getPaymentIDFromExtra(Common::asBinaryArray(t.extra));
 
@@ -441,27 +437,21 @@ void printOutgoingTransfer(CryptoNote::WalletTransaction t,
     std::cout << std::endl;
 }
 
-void printIncomingTransfer(CryptoNote::WalletTransaction t,
-                           CryptoNote::INode &node)
+void printIncomingTransfer(
+    CryptoNote::WalletTransaction t,
+    CryptoNote::INode &node
+)
 {
-    std::cout << SuccessMsg("Incoming transfer:")
-              << std::endl
-              << SuccessMsg("Hash: " + Common::podToHex(t.hash))
+    std::cout << SuccessMsg("Incoming transfer:") << std::endl << SuccessMsg("Hash: " + Common::podToHex(t.hash))
               << std::endl;
 
     if (t.timestamp != 0)
     {
-        std::cout << SuccessMsg("Block height: ")
-                  << SuccessMsg(std::to_string(t.blockHeight))
-                  << std::endl
-                  << SuccessMsg("Timestamp: ")
-                  << SuccessMsg(unixTimeToDate(t.timestamp))
-                  << std::endl;
+        std::cout << SuccessMsg("Block height: ") << SuccessMsg(std::to_string(t.blockHeight)) << std::endl
+                  << SuccessMsg("Timestamp: ") << SuccessMsg(unixTimeToDate(t.timestamp)) << std::endl;
     }
 
-
-    std::cout << SuccessMsg("Amount: " + formatAmount(t.totalAmount))
-              << std::endl;
+    std::cout << SuccessMsg("Amount: " + formatAmount(t.totalAmount)) << std::endl;
 
     const std::string paymentID = Utilities::getPaymentIDFromExtra(Common::asBinaryArray(t.extra));
 
@@ -473,8 +463,12 @@ void printIncomingTransfer(CryptoNote::WalletTransaction t,
     std::cout << std::endl;
 }
 
-void listTransfers(bool incoming, bool outgoing,
-                   CryptoNote::WalletGreen &wallet, CryptoNote::INode &node)
+void listTransfers(
+    bool incoming,
+    bool outgoing,
+    CryptoNote::WalletGreen &wallet,
+    CryptoNote::INode &node
+)
 {
     const size_t numTransactions = wallet.getTransactionCount();
 
@@ -497,7 +491,8 @@ void listTransfers(bool incoming, bool outgoing,
         {
             printOutgoingTransfer(t, node);
             totalSpent += -t.totalAmount;
-        } else if (t.totalAmount > 0 && incoming)
+        }
+        else if (t.totalAmount > 0 && incoming)
         {
             printIncomingTransfer(t, node);
             totalReceived += t.totalAmount;
@@ -506,15 +501,13 @@ void listTransfers(bool incoming, bool outgoing,
 
     if (incoming)
     {
-        std::cout << SuccessMsg("Total received: "
-                                + formatAmount(totalReceived))
-                  << std::endl;
+        std::cout << SuccessMsg(
+            "Total received: " + formatAmount(totalReceived)) << std::endl;
     }
 
     if (outgoing)
     {
-        std::cout << WarningMsg("Total spent: " + formatAmount(totalSpent))
-                  << std::endl;
+        std::cout << WarningMsg("Total spent: " + formatAmount(totalSpent)) << std::endl;
     }
 }
 
@@ -528,8 +521,7 @@ void save(CryptoNote::WalletGreen &wallet)
 void createIntegratedAddress()
 {
     std::cout << InformationMsg("Creating an integrated address from an ")
-              << InformationMsg("address and payment ID pair...")
-              << std::endl << std::endl;
+              << InformationMsg("address and payment ID pair...") << std::endl << std::endl;
 
     std::string address;
     std::string paymentID;
@@ -562,9 +554,10 @@ void createIntegratedAddress()
 
         if (!CryptoNote::createTxExtraWithPaymentId(paymentID, extra))
         {
-            std::cout << WarningMsg("Failed to parse! Payment ID's are 64 "
-                                    "character hexadecimal strings.")
-                      << std::endl << std::endl;
+            std::cout << WarningMsg(
+                "Failed to parse! Payment ID's are 64 "
+                "character hexadecimal strings."
+            ) << std::endl << std::endl;
 
             continue;
         }
@@ -572,8 +565,7 @@ void createIntegratedAddress()
         break;
     }
 
-    std::cout << InformationMsg(createIntegratedAddress(address, paymentID))
-              << std::endl;
+    std::cout << InformationMsg(createIntegratedAddress(address, paymentID)) << std::endl;
 }
 
 void help(std::shared_ptr<WalletInfo> wallet)
@@ -581,7 +573,8 @@ void help(std::shared_ptr<WalletInfo> wallet)
     if (wallet->viewWallet)
     {
         printCommands(basicViewWalletCommands());
-    } else
+    }
+    else
     {
         printCommands(basicCommands());
     }
@@ -593,11 +586,12 @@ void advanced(std::shared_ptr<WalletInfo> wallet)
        command numbers */
     if (wallet->viewWallet)
     {
-        printCommands(advancedViewWalletCommands(),
-                      basicViewWalletCommands().size());
-    } else
+        printCommands(
+            advancedViewWalletCommands(), basicViewWalletCommands().size());
+    }
+    else
     {
-        printCommands(advancedCommands(),
-                      basicCommands().size());
+        printCommands(
+            advancedCommands(), basicCommands().size());
     }
 }

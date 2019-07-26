@@ -32,13 +32,16 @@ namespace Utilities
         if (hashrate > 1e9)
         {
             stream << hashrate / 1e9 << " GH/s";
-        } else if (hashrate > 1e6)
+        }
+        else if (hashrate > 1e6)
         {
             stream << hashrate / 1e6 << " MH/s";
-        } else if (hashrate > 1e3)
+        }
+        else if (hashrate > 1e3)
         {
             stream << hashrate / 1e3 << " KH/s";
-        } else
+        }
+        else
         {
             stream << hashrate << " H/s";
         }
@@ -47,8 +50,9 @@ namespace Utilities
     }
 
     std::string get_sync_percentage(
-            uint64_t height,
-            const uint64_t target_height)
+        uint64_t height,
+        const uint64_t target_height
+    )
     {
         /* Don't divide by zero */
         if (height == 0 || target_height == 0)
@@ -78,13 +82,18 @@ namespace Utilities
 
     enum ForkStatus
     {
-        UpToDate, ForkLater, ForkSoonReady, ForkSoonNotReady, OutOfDate
+        UpToDate,
+        ForkLater,
+        ForkSoonReady,
+        ForkSoonNotReady,
+        OutOfDate
     };
 
     ForkStatus get_fork_status(
-            const uint64_t height,
-            const std::vector<uint64_t> upgrade_heights,
-            const uint64_t supported_height)
+        const uint64_t height,
+        const std::vector<uint64_t> upgrade_heights,
+        const uint64_t supported_height
+    )
     {
         /* Allow fork heights to be empty */
         if (upgrade_heights.empty())
@@ -119,7 +128,8 @@ namespace Utilities
             if (supported_height < next_fork)
             {
                 return ForkSoonNotReady;
-            } else
+            }
+            else
             {
                 return ForkSoonReady;
             }
@@ -134,8 +144,9 @@ namespace Utilities
     }
 
     std::string get_fork_time(
-            const uint64_t height,
-            const std::vector<uint64_t> upgrade_heights)
+        const uint64_t height,
+        const std::vector<uint64_t> upgrade_heights
+    )
     {
         uint64_t next_fork = 0;
 
@@ -149,8 +160,9 @@ namespace Utilities
             }
         }
 
-        const float days = (static_cast<float>(next_fork - height) /
-                            CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY);
+        const float days = (
+            static_cast<float>(next_fork - height) / CryptoNote::parameters::EXPECTED_NUMBER_OF_BLOCKS_PER_DAY
+        );
 
         std::stringstream stream;
 
@@ -159,10 +171,12 @@ namespace Utilities
         if (height == next_fork)
         {
             stream << " (forking now),";
-        } else if (days < 1)
+        }
+        else if (days < 1)
         {
             stream << " (next fork in " << days * 24 << " hours),";
-        } else
+        }
+        else
         {
             stream << " (next fork in " << days << " days),";
         }
@@ -171,9 +185,10 @@ namespace Utilities
     }
 
     std::string get_update_status(
-            const ForkStatus forkStatus,
-            const uint64_t height,
-            const std::vector<uint64_t> upgrade_heights)
+        const ForkStatus forkStatus,
+        const uint64_t height,
+        const std::vector<uint64_t> upgrade_heights
+    )
     {
         switch (forkStatus)
         {
@@ -202,8 +217,9 @@ namespace Utilities
     }
 
     std::string get_upgrade_info(
-            const uint64_t supported_height,
-            const std::vector<uint64_t> upgrade_heights)
+        const uint64_t supported_height,
+        const std::vector<uint64_t> upgrade_heights
+    )
     {
         for (auto upgrade : upgrade_heights)
         {
@@ -224,19 +240,17 @@ namespace Utilities
         std::time_t uptime = std::time(nullptr) - iresp.start_time;
         auto forkStatus = get_fork_status(iresp.network_height, iresp.upgrade_heights, iresp.supported_height);
 
-        ss << "Height: " << iresp.height << "/" << iresp.network_height
-           << " (" << get_sync_percentage(iresp.height, iresp.network_height) << "%) "
-           << "on mainnet"
-           << (iresp.synced ? "synced, " : "syncing, ")
-           << "net hash " << get_mining_speed(iresp.hashrate) << ", "
-           << "v" << +iresp.major_version << ","
-           << get_update_status(forkStatus, iresp.network_height, iresp.upgrade_heights)
-           << ", " << iresp.outgoing_connections_count << "(out)+" << iresp.incoming_connections_count
-           << "(in) connections, "
-           << "uptime " << (unsigned int) floor(uptime / 60.0 / 60.0 / 24.0)
-           << "d " << (unsigned int) floor(fmod((uptime / 60.0 / 60.0), 24.0))
-           << "h " << (unsigned int) floor(fmod((uptime / 60.0), 60.0))
-           << "m " << (unsigned int) fmod(uptime, 60.0) << "s";
+        ss << "Height: " << iresp.height << "/" << iresp.network_height << " ("
+           << get_sync_percentage(iresp.height, iresp.network_height) << "%) " << "on mainnet" << (
+               iresp.synced
+               ? "synced, "
+               : "syncing, "
+           ) << "net hash " << get_mining_speed(iresp.hashrate) << ", " << "v" << +iresp.major_version << ","
+           << get_update_status(forkStatus, iresp.network_height, iresp.upgrade_heights) << ", "
+           << iresp.outgoing_connections_count << "(out)+" << iresp.incoming_connections_count << "(in) connections, "
+           << "uptime " << (unsigned int) floor(uptime / 60.0 / 60.0 / 24.0) << "d "
+           << (unsigned int) floor(fmod((uptime / 60.0 / 60.0), 24.0)) << "h "
+           << (unsigned int) floor(fmod((uptime / 60.0), 60.0)) << "m " << (unsigned int) fmod(uptime, 60.0) << "s";
 
         if (forkStatus == OutOfDate)
         {
@@ -246,8 +260,8 @@ namespace Utilities
         return ss.str();
     }
 
-/* Get the amount we need to divide to convert from atomic to pretty print,
-   e.g. 100 for 2 decimal places */
+    /* Get the amount we need to divide to convert from atomic to pretty print,
+       e.g. 100 for 2 decimal places */
     uint64_t getDivisor()
     {
         return static_cast<uint64_t>(pow(10, WalletConfig::numDecimalPlaces));
@@ -282,16 +296,16 @@ namespace Utilities
            workaround */
         class comma_numpunct : public std::numpunct<char>
         {
-        protected:
-            virtual char do_thousands_sep() const
-            {
-                return ',';
-            }
+            protected:
+                virtual char do_thousands_sep() const
+                {
+                    return ',';
+                }
 
-            virtual std::string do_grouping() const
-            {
-                return "\03";
-            }
+                virtual std::string do_grouping() const
+                {
+                    return "\03";
+                }
         };
 
         std::locale comma_locale(std::locale(), new comma_numpunct());
@@ -301,13 +315,12 @@ namespace Utilities
         return stream.str();
     }
 
-/* Pad to the amount of decimal spaces, e.g. with 2 decimal spaces 5 becomes
-   05, 50 remains 50 */
+    /* Pad to the amount of decimal spaces, e.g. with 2 decimal spaces 5 becomes
+       05, 50 remains 50 */
     std::string formatCents(const uint64_t amount)
     {
         std::stringstream stream;
-        stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces)
-               << amount;
+        stream << std::setfill('0') << std::setw(WalletConfig::numDecimalPlaces) << amount;
         return stream.str();
     }
 
@@ -317,8 +330,7 @@ namespace Utilities
         const uint64_t dollars = amount / divisor;
         const uint64_t cents = amount % divisor;
 
-        return formatDollars(dollars) + "." + formatCents(cents) + " "
-               + WalletConfig::ticker;
+        return formatDollars(dollars) + "." + formatCents(cents) + " " + WalletConfig::ticker;
     }
 
     std::string formatAmountBasic(const uint64_t amount)
@@ -335,7 +347,13 @@ namespace Utilities
         /* Store as a double so we can have 12.34 kb for example */
         double numBytes = static_cast<double>(input);
 
-        std::vector<std::string> suffixes = {"B", "KB", "MB", "GB", "TB"};
+        std::vector<std::string> suffixes = {
+            "B",
+            "KB",
+            "MB",
+            "GB",
+            "TB"
+        };
 
         uint64_t selectedSuffix = 0;
 
@@ -348,8 +366,7 @@ namespace Utilities
 
         std::stringstream msg;
 
-        msg << std::fixed << std::setprecision(2) << numBytes << " "
-            << suffixes[selectedSuffix];
+        msg << std::fixed << std::setprecision(2) << numBytes << " " << suffixes[selectedSuffix];
 
         return msg.str();
     }

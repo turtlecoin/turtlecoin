@@ -10,11 +10,18 @@
 namespace Logging
 {
 
-    StreamLogger::StreamLogger(Level level) : CommonLogger(level), stream(nullptr)
+    StreamLogger::StreamLogger(Level level)
+        : CommonLogger(level),
+          stream(nullptr)
     {
     }
 
-    StreamLogger::StreamLogger(std::ostream &stream, Level level) : CommonLogger(level), stream(&stream)
+    StreamLogger::StreamLogger(
+        std::ostream &stream,
+        Level level
+    )
+        : CommonLogger(level),
+          stream(&stream)
     {
     }
 
@@ -34,7 +41,8 @@ namespace Logging
                 if (message[charPos] == ILogger::COLOR_DELIMETER)
                 {
                     readingText = !readingText;
-                } else if (readingText)
+                }
+                else if (readingText)
                 {
                     *stream << message[charPos];
                 }

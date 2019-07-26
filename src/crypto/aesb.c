@@ -32,11 +32,11 @@ extern "C"
 #define RC_LENGTH       (5 * (AES_BLOCK_SIZE / 4 - 2))
 
 #if defined(_MSC_VER)
-#define ALIGN __declspec(align(TABLE_ALIGN))
+    #define ALIGN __declspec(align(TABLE_ALIGN))
 #elif defined(__GNUC__)
-#define ALIGN __attribute__ ((aligned(16)))
+    #define ALIGN __attribute__ ((aligned(16)))
 #else
-#define ALIGN
+    #define ALIGN
 #endif
 
 #define rf1(r, c) (r)
@@ -141,14 +141,18 @@ extern "C"
 d_4(uint32_t, t_dec(f, n), sb_data, u0, u1, u2, u3);
 
 #if !defined(STATIC)
-#define STATIC
+    #define STATIC
 #endif
 
 #if !defined(INLINE)
-#define INLINE
+    #define INLINE
 #endif
 
-STATIC INLINE void aesb_single_round(const uint8_t *in, uint8_t *out, uint8_t *expandedKey)
+STATIC INLINE void aesb_single_round(
+    const uint8_t *in,
+    uint8_t *out,
+    uint8_t *expandedKey
+)
 {
     uint32_t b0[4], b1[4];
     const uint32_t *kp = (uint32_t *) expandedKey;
@@ -159,7 +163,11 @@ STATIC INLINE void aesb_single_round(const uint8_t *in, uint8_t *out, uint8_t *e
     state_out(out, b1);
 }
 
-STATIC INLINE void aesb_pseudo_round(const uint8_t *in, uint8_t *out, uint8_t *expandedKey)
+STATIC INLINE void aesb_pseudo_round(
+    const uint8_t *in,
+    uint8_t *out,
+    uint8_t *expandedKey
+)
 {
     uint32_t b0[4], b1[4];
     const uint32_t *kp = (uint32_t *) expandedKey;
@@ -178,7 +186,6 @@ STATIC INLINE void aesb_pseudo_round(const uint8_t *in, uint8_t *out, uint8_t *e
 
     state_out(out, b0);
 }
-
 
 #if defined(__cplusplus)
 }

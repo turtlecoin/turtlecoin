@@ -65,7 +65,8 @@ namespace System
             context.groupPrev = contextGroup.lastContext;
             assert(contextGroup.lastContext->groupNext == nullptr);
             contextGroup.lastContext->groupNext = &context;
-        } else
+        }
+        else
         {
             context.groupPrev = nullptr;
             contextGroup.firstContext = &context;
@@ -94,7 +95,8 @@ namespace System
             {
                 assert(contextGroup.lastWaiter->next == nullptr);
                 contextGroup.lastWaiter->next = context;
-            } else
+            }
+            else
             {
                 contextGroup.firstWaiter = context;
             }

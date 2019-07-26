@@ -16,189 +16,220 @@ namespace Common
 
     class JsonValue
     {
-    public:
-        typedef std::string Key;
+        public:
+            typedef std::string Key;
 
-        typedef std::vector<JsonValue> Array;
-        typedef bool Bool;
-        typedef int64_t Integer;
-        typedef std::nullptr_t Nil;
-        typedef std::map<Key, JsonValue> Object;
-        typedef double Real;
-        typedef std::string String;
+            typedef std::vector<JsonValue> Array;
 
-        enum Type
-        {
-            ARRAY,
-            BOOL,
-            INTEGER,
-            NIL,
-            OBJECT,
-            REAL,
-            STRING
-        };
+            typedef bool Bool;
 
-        JsonValue();
+            typedef int64_t Integer;
 
-        JsonValue(const JsonValue &other);
+            typedef std::nullptr_t Nil;
 
-        JsonValue(JsonValue &&other);
+            typedef std::map<
+                Key, JsonValue
+            > Object;
 
-        JsonValue(Type valueType);
+            typedef double Real;
 
-        JsonValue(const Array &value);
+            typedef std::string String;
 
-        JsonValue(Array &&value);
-
-        explicit JsonValue(Bool value);
-
-        JsonValue(Integer value);
-
-        JsonValue(Nil value);
-
-        JsonValue(const Object &value);
-
-        JsonValue(Object &&value);
-
-        JsonValue(Real value);
-
-        JsonValue(const String &value);
-
-        JsonValue(String &&value);
-
-        template<uint64_t size>
-        JsonValue(const char(&value)[size])
-        {
-            new(valueString)String(value, size - 1);
-            type = STRING;
-        }
-
-        ~JsonValue();
-
-        JsonValue &operator=(const JsonValue &other);
-
-        JsonValue &operator=(JsonValue &&other);
-
-        JsonValue &operator=(const Array &value);
-
-        JsonValue &operator=(Array &&value);
-
-        //JsonValue& operator=(Bool value);
-        JsonValue &operator=(Integer value);
-
-        JsonValue &operator=(Nil value);
-
-        JsonValue &operator=(const Object &value);
-
-        JsonValue &operator=(Object &&value);
-
-        JsonValue &operator=(Real value);
-
-        JsonValue &operator=(const String &value);
-
-        JsonValue &operator=(String &&value);
-
-        template<uint64_t size>
-        JsonValue &operator=(const char(&value)[size])
-        {
-            if (type != STRING)
+            enum Type
             {
-                destructValue();
-                type = NIL;
+                ARRAY,
+                BOOL,
+                INTEGER,
+                NIL,
+                OBJECT,
+                REAL,
+                STRING
+            };
+
+            JsonValue();
+
+            JsonValue(const JsonValue &other);
+
+            JsonValue(JsonValue &&other);
+
+            JsonValue(Type valueType);
+
+            JsonValue(const Array &value);
+
+            JsonValue(Array &&value);
+
+            explicit JsonValue(Bool value);
+
+            JsonValue(Integer value);
+
+            JsonValue(Nil value);
+
+            JsonValue(const Object &value);
+
+            JsonValue(Object &&value);
+
+            JsonValue(Real value);
+
+            JsonValue(const String &value);
+
+            JsonValue(String &&value);
+
+            template<uint64_t size>
+            JsonValue(const char(&value)[size])
+            {
                 new(valueString)String(value, size - 1);
                 type = STRING;
-            } else
-            {
-                reinterpret_cast<String *>(valueString)->assign(value, size - 1);
             }
 
-            return *this;
-        }
+            ~JsonValue();
 
-        bool isArray() const;
+            JsonValue &operator=(const JsonValue &other);
 
-        bool isInteger() const;
+            JsonValue &operator=(JsonValue &&other);
 
-        bool isObject() const;
+            JsonValue &operator=(const Array &value);
 
-        bool isString() const;
+            JsonValue &operator=(Array &&value);
 
-        Type getType() const;
+            //JsonValue& operator=(Bool value);
+            JsonValue &operator=(Integer value);
 
-        Bool getBool() const;
+            JsonValue &operator=(Nil value);
 
-        Integer getInteger() const;
+            JsonValue &operator=(const Object &value);
 
-        Object &getObject();
+            JsonValue &operator=(Object &&value);
 
-        const Object &getObject() const;
+            JsonValue &operator=(Real value);
 
-        String &getString();
+            JsonValue &operator=(const String &value);
 
-        const String &getString() const;
+            JsonValue &operator=(String &&value);
 
-        uint64_t size() const;
+            template<uint64_t size>
+            JsonValue &operator=(const char(&value)[size])
+            {
+                if (type != STRING)
+                {
+                    destructValue();
+                    type = NIL;
+                    new(valueString)String(value, size - 1);
+                    type = STRING;
+                }
+                else
+                {
+                    reinterpret_cast<String *>(valueString)->assign(value, size - 1);
+                }
 
-        JsonValue &operator[](uint64_t index);
+                return *this;
+            }
 
-        const JsonValue &operator[](uint64_t index) const;
+            bool isArray() const;
 
-        JsonValue &pushBack(const JsonValue &value);
+            bool isInteger() const;
 
-        JsonValue &pushBack(JsonValue &&value);
+            bool isObject() const;
 
-        JsonValue &operator()(const Key &key);
+            bool isString() const;
 
-        const JsonValue &operator()(const Key &key) const;
+            Type getType() const;
 
-        bool contains(const Key &key) const;
+            Bool getBool() const;
 
-        JsonValue &insert(const Key &key, const JsonValue &value);
+            Integer getInteger() const;
 
-        JsonValue &insert(const Key &key, JsonValue &&value);
+            Object &getObject();
 
-        // sets or creates value, returns reference to self
-        JsonValue &set(const Key &key, const JsonValue &value);
+            const Object &getObject() const;
 
-        JsonValue &set(const Key &key, JsonValue &&value);
+            String &getString();
 
-        uint64_t erase(const Key &key);
+            const String &getString() const;
 
-        static JsonValue fromString(const std::string &source);
+            uint64_t size() const;
 
-        std::string toString() const;
+            JsonValue &operator[](uint64_t index);
 
-        friend std::ostream &operator<<(std::ostream &out, const JsonValue &jsonValue);
+            const JsonValue &operator[](uint64_t index) const;
 
-        friend std::istream &operator>>(std::istream &in, JsonValue &jsonValue);
+            JsonValue &pushBack(const JsonValue &value);
 
-    private:
-        Type type;
-        union
-        {
-            uint8_t valueArray[sizeof(Array)];
-            Bool valueBool;
-            Integer valueInteger;
-            uint8_t valueObject[sizeof(Object)];
-            Real valueReal;
-            uint8_t valueString[sizeof(std::string)];
-        };
+            JsonValue &pushBack(JsonValue &&value);
 
-        void destructValue();
+            JsonValue &operator()(const Key &key);
 
-        void readArray(std::istream &in);
+            const JsonValue &operator()(const Key &key) const;
 
-        void readTrue(std::istream &in);
+            bool contains(const Key &key) const;
 
-        void readFalse(std::istream &in);
+            JsonValue &insert(
+                const Key &key,
+                const JsonValue &value
+            );
 
-        void readNull(std::istream &in);
+            JsonValue &insert(
+                const Key &key,
+                JsonValue &&value
+            );
 
-        void readNumber(std::istream &in, char c);
+            // sets or creates value, returns reference to self
+            JsonValue &set(
+                const Key &key,
+                const JsonValue &value
+            );
 
-        void readObject(std::istream &in);
+            JsonValue &set(
+                const Key &key,
+                JsonValue &&value
+            );
 
-        void readString(std::istream &in);
+            uint64_t erase(const Key &key);
+
+            static JsonValue fromString(const std::string &source);
+
+            std::string toString() const;
+
+            friend std::ostream &operator<<(
+                std::ostream &out,
+                const JsonValue &jsonValue
+            );
+
+            friend std::istream &operator>>(
+                std::istream &in,
+                JsonValue &jsonValue
+            );
+
+        private:
+            Type type;
+
+            union
+            {
+                uint8_t valueArray[sizeof(Array)];
+                Bool valueBool;
+                Integer valueInteger;
+                uint8_t valueObject[sizeof(Object)];
+                Real valueReal;
+                uint8_t valueString[sizeof(std::string)];
+            };
+
+            void destructValue();
+
+            void readArray(std::istream &in);
+
+            void readTrue(std::istream &in);
+
+            void readFalse(std::istream &in);
+
+            void readNull(std::istream &in);
+
+            void readNumber(
+                std::istream &in,
+                char c
+            );
+
+            void readObject(std::istream &in);
+
+            void readString(std::istream &in);
     };
 
 }

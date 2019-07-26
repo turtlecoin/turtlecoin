@@ -52,25 +52,66 @@ enum
     SLOW_HASH_CONTEXT_LITE_SIZE = 1048976  // Suml: Unused for now but this is the right size for 1MB scratchpads.
 };
 
-void cn_fast_hash(const void *data, size_t length, char *hash);
+void cn_fast_hash(
+    const void *data,
+    size_t length,
+    char *hash
+);
 
-void
-cn_slow_hash(const void *data, size_t length, char *hash, int light, int variant, int prehashed, uint32_t page_size,
-             uint32_t scratchpad, uint32_t iterations);
+void cn_slow_hash(
+    const void *data,
+    size_t length,
+    char *hash,
+    int light,
+    int variant,
+    int prehashed,
+    uint32_t page_size,
+    uint32_t scratchpad,
+    uint32_t iterations
+);
 
-void hash_extra_blake(const void *data, size_t length, char *hash);
+void hash_extra_blake(
+    const void *data,
+    size_t length,
+    char *hash
+);
 
-void hash_extra_groestl(const void *data, size_t length, char *hash);
+void hash_extra_groestl(
+    const void *data,
+    size_t length,
+    char *hash
+);
 
-void hash_extra_jh(const void *data, size_t length, char *hash);
+void hash_extra_jh(
+    const void *data,
+    size_t length,
+    char *hash
+);
 
-void hash_extra_skein(const void *data, size_t length, char *hash);
+void hash_extra_skein(
+    const void *data,
+    size_t length,
+    char *hash
+);
 
-void tree_hash(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash);
+void tree_hash(
+    const char (*hashes)[HASH_SIZE],
+    size_t count,
+    char *root_hash
+);
 
 size_t tree_depth(size_t count);
 
-void tree_branch(const char (*hashes)[HASH_SIZE], size_t count, char (*branch)[HASH_SIZE]);
+void tree_branch(
+    const char (*hashes)[HASH_SIZE],
+    size_t count,
+    char (*branch)[HASH_SIZE]
+);
 
-void tree_hash_from_branch(const char (*branch)[HASH_SIZE], size_t depth, const char *leaf, const void *path,
-                           char *root_hash);
+void tree_hash_from_branch(
+    const char (*branch)[HASH_SIZE],
+    size_t depth,
+    const char *leaf,
+    const void *path,
+    char *root_hash
+);

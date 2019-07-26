@@ -13,7 +13,8 @@ namespace CryptoNote
     {
 
         JsonRpcError::JsonRpcError() : code(0)
-        {}
+        {
+        }
 
         JsonRpcError::JsonRpcError(int c) : code(c)
         {
@@ -43,11 +44,20 @@ namespace CryptoNote
             }
         }
 
-        JsonRpcError::JsonRpcError(int c, const std::string &msg) : code(c), message(msg)
+        JsonRpcError::JsonRpcError(
+            int c,
+            const std::string &msg
+        )
+            : code(c),
+              message(msg)
         {
         }
 
-        void invokeJsonRpcCommand(HttpClient &httpClient, JsonRpcRequest &jsReq, JsonRpcResponse &jsRes)
+        void invokeJsonRpcCommand(
+            HttpClient &httpClient,
+            JsonRpcRequest &jsReq,
+            JsonRpcResponse &jsRes
+        )
         {
             HttpRequest httpReq;
             HttpResponse httpRes;
@@ -71,7 +81,6 @@ namespace CryptoNote
                 throw err;
             }
         }
-
 
     }
 }

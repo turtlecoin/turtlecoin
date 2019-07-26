@@ -19,7 +19,10 @@
 
 #include <zedwallet++/Utilities.h>
 
-ZedConfig parseArguments(int argc, char **argv)
+ZedConfig parseArguments(
+    int argc,
+    char **argv
+)
 {
     ZedConfig config;
 
@@ -35,38 +38,51 @@ ZedConfig parseArguments(int argc, char **argv)
 
     unsigned int threads;
 
-    options.add_options("Core")
-            ("h,help", "Display this help message",
-             cxxopts::value<bool>(help)->implicit_value("true"))
+    options.add_options("Core")(
+        "h,help", "Display this help message", cxxopts::value<bool>(help)->implicit_value("true"))
 
-            ("v,version", "Output software version information",
-             cxxopts::value<bool>(version)->default_value("false")->implicit_value("true"));
+               (
+                   "v,version", "Output software version information", cxxopts::value<bool>(version)
+                   ->default_value("false")->implicit_value("true"));
 
-    options.add_options("Daemon")
-            ("r,remote-daemon", "The daemon <host:port> combination to use for node operations.",
-             cxxopts::value<std::string>(remoteDaemon)->default_value(defaultRemoteDaemon), "<host:port>")
+    options.add_options("Daemon")(
+        "r,remote-daemon", "The daemon <host:port> combination to use for node operations.", cxxopts::value<
+        std::string
+    >(remoteDaemon)->default_value(defaultRemoteDaemon), "<host:port>"
+    )
 
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-            ("ssl", "Use SSL when connecting to the daemon.",
-             cxxopts::value<bool>(config.ssl)->default_value("false")->implicit_value("true"))
-#endif
-            ;
+           #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+               (
+                   "ssl", "Use SSL when connecting to the daemon.", cxxopts::value<bool>(config.ssl)
+                   ->default_value("false")->implicit_value("true"))
+        #endif
+        ;
 
-    options.add_options("Wallet")
-            ("w,wallet-file", "Open the wallet <file>",
-             cxxopts::value<std::string>(config.walletFile), "<file>")
+    options.add_options("Wallet")(
+        "w,wallet-file", "Open the wallet <file>", cxxopts::value<std::string>(config.walletFile), "<file>"
+    )
 
-            ("p,password", "Use the password <pass> to open the wallet",
-             cxxopts::value<std::string>(config.walletPass), "<pass>")
+               (
+                   "p,password", "Use the password <pass> to open the wallet", cxxopts::value<std::string>(
+                   config.walletPass
+               ), "<pass>"
+               )
 
-            ("log-level", "Specify log level",
-             cxxopts::value<int>(logLevel)->default_value(std::to_string(config.logLevel)), "#")
+               (
+                   "log-level", "Specify log level", cxxopts::value<int>(logLevel)
+                   ->default_value(std::to_string(config.logLevel)), "#"
+               )
 
-            ("threads", "Specify number of wallet sync threads",
-             cxxopts::value<unsigned int>(threads)->default_value(std::to_string(std::max(1u, std::thread::hardware_concurrency()))), "#")
+               (
+                   "threads", "Specify number of wallet sync threads", cxxopts::value<unsigned int>(threads)
+                   ->default_value(
+                       std::to_string(std::max(1u, std::thread::hardware_concurrency()))), "#"
+               )
 
-            ("scan-coinbase-transactions", "Scan miner/coinbase transactions",
-             cxxopts::value<bool>(scanCoinbaseTransactions)->default_value("false")->implicit_value("true"));
+               (
+                   "scan-coinbase-transactions", "Scan miner/coinbase transactions", cxxopts::value<
+                   bool
+               >(scanCoinbaseTransactions)->default_value("false")->implicit_value("true"));
 
     try
     {
@@ -88,7 +104,8 @@ ZedConfig parseArguments(int argc, char **argv)
     {
         std::cout << options.help({}) << std::endl;
         exit(0);
-    } else if (version) // Do we want to display the software version?
+    }
+    else if (version) // Do we want to display the software version?
     {
         std::cout << CryptoNote::getProjectCLIHeader() << std::endl;
         exit(0);
@@ -98,7 +115,8 @@ ZedConfig parseArguments(int argc, char **argv)
     {
         std::cout << "Log level must be between " << Logger::DISABLED << " and " << Logger::DEBUG << "!" << std::endl;
         exit(1);
-    } else
+    }
+    else
     {
         config.logLevel = static_cast<Logger::LogLevel>(logLevel);
     }
@@ -107,7 +125,8 @@ ZedConfig parseArguments(int argc, char **argv)
     {
         std::cout << "Thread count must be at least 1" << std::endl;
         exit(1);
-    } else
+    }
+    else
     {
         config.threads = threads;
     }

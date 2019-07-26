@@ -28,7 +28,8 @@ const Crypto::Hash &CachedBlock::getTransactionTreeHash() const
         std::vector<Crypto::Hash> transactionHashes;
         transactionHashes.reserve(block.transactionHashes.size() + 1);
         transactionHashes.push_back(getObjectHash(block.baseTransaction));
-        transactionHashes.insert(transactionHashes.end(), block.transactionHashes.begin(), block.transactionHashes.end());
+        transactionHashes.insert(
+            transactionHashes.end(), block.transactionHashes.begin(), block.transactionHashes.end());
         transactionTreeHash = Crypto::Hash();
         Crypto::tree_hash(transactionHashes.data(), transactionHashes.size(), transactionTreeHash.get());
     }
@@ -68,8 +69,7 @@ const Crypto::Hash &CachedBlock::getBlockLongHash() const
 
     try
     {
-        const auto hashingAlgorithm
-                = CryptoNote::HASHING_ALGORITHMS_BY_BLOCK_VERSION.at(block.majorVersion);
+        const auto hashingAlgorithm = CryptoNote::HASHING_ALGORITHMS_BY_BLOCK_VERSION.at(block.majorVersion);
 
         hashingAlgorithm(rawHashingBlock.data(), rawHashingBlock.size(), blockLongHash.get());
 
@@ -128,7 +128,8 @@ const BinaryArray &CachedBlock::getParentBlockBinaryArray(bool headerOnly) const
         }
 
         return parentBlockBinaryArrayHeaderOnly.get();
-    } else
+    }
+    else
     {
         if (!parentBlockBinaryArray.is_initialized())
         {
@@ -161,7 +162,8 @@ const BinaryArray &CachedBlock::getParentBlockHashingBinaryArray(bool headerOnly
         }
 
         return parentBlockHashingBinaryArrayHeaderOnly.get();
-    } else
+    }
+    else
     {
         if (!parentBlockHashingBinaryArray.is_initialized())
         {
@@ -185,13 +187,15 @@ uint32_t CachedBlock::getBlockIndex() const
         if (block.baseTransaction.inputs.size() != 1)
         {
             blockIndex = 0;
-        } else
+        }
+        else
         {
             const auto &in = block.baseTransaction.inputs[0];
             if (in.type() != typeid(BaseInput))
             {
                 blockIndex = 0;
-            } else
+            }
+            else
             {
                 blockIndex = boost::get<BaseInput>(in).blockIndex;
             }

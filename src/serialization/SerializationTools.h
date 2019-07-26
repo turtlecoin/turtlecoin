@@ -32,11 +32,15 @@ namespace Common
 
     template<>
     inline std::string getValueAs<std::string>(const JsonValue &js)
-    { return js.getString(); }
+    {
+        return js.getString();
+    }
 
     template<>
     inline uint64_t getValueAs<uint64_t>(const JsonValue &js)
-    { return static_cast<uint64_t>(js.getInteger()); }
+    {
+        return static_cast<uint64_t>(js.getInteger());
+    }
 
 }
 
@@ -75,25 +79,37 @@ namespace CryptoNote
 
     template<typename T>
     Common::JsonValue storeToJsonValue(const std::vector<T> &v)
-    { return storeContainerToJsonValue(v); }
+    {
+        return storeContainerToJsonValue(v);
+    }
 
     template<typename T>
     Common::JsonValue storeToJsonValue(const std::list<T> &v)
-    { return storeContainerToJsonValue(v); }
+    {
+        return storeContainerToJsonValue(v);
+    }
 
     template<>
     inline Common::JsonValue storeToJsonValue(const std::string &v)
-    { return Common::JsonValue(v); }
+    {
+        return Common::JsonValue(v);
+    }
 
     template<typename T>
-    void loadFromJsonValue(T &v, const Common::JsonValue &js)
+    void loadFromJsonValue(
+        T &v,
+        const Common::JsonValue &js
+    )
     {
         JsonInputValueSerializer s(js);
         serialize(v, s);
     }
 
     template<typename T>
-    void loadFromJsonValue(std::vector<T> &v, const Common::JsonValue &js)
+    void loadFromJsonValue(
+        std::vector<T> &v,
+        const Common::JsonValue &js
+    )
     {
         for (uint64_t i = 0; i < js.size(); ++i)
         {
@@ -102,7 +118,10 @@ namespace CryptoNote
     }
 
     template<>
-    inline void loadFromJsonValue(AddressBook &v, const Common::JsonValue &js)
+    inline void loadFromJsonValue(
+        AddressBook &v,
+        const Common::JsonValue &js
+    )
     {
         for (uint64_t i = 0; i < js.size(); ++i)
         {
@@ -113,7 +132,10 @@ namespace CryptoNote
     }
 
     template<typename T>
-    void loadFromJsonValue(std::list<T> &v, const Common::JsonValue &js)
+    void loadFromJsonValue(
+        std::list<T> &v,
+        const Common::JsonValue &js
+    )
     {
         for (uint64_t i = 0; i < js.size(); ++i)
         {
@@ -128,7 +150,10 @@ namespace CryptoNote
     }
 
     template<typename T>
-    bool loadFromJson(T &v, const std::string &buf)
+    bool loadFromJson(
+        T &v,
+        const std::string &buf
+    )
     {
         try
         {
@@ -138,7 +163,8 @@ namespace CryptoNote
             }
             auto js = Common::JsonValue::fromString(buf);
             loadFromJsonValue(v, js);
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }
@@ -158,7 +184,10 @@ namespace CryptoNote
     }
 
     template<typename T>
-    bool loadFromBinaryKeyValue(T &v, const std::string &buf)
+    bool loadFromBinaryKeyValue(
+        T &v,
+        const std::string &buf
+    )
     {
         try
         {
@@ -166,13 +195,14 @@ namespace CryptoNote
             KVBinaryInputStreamSerializer s(stream);
             serialize(v, s);
             return true;
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }
     }
 
-// throws exception if serialization failed
+    // throws exception if serialization failed
     template<class T>
     std::vector<uint8_t> toBinaryArray(const T &object)
     {
@@ -183,14 +213,18 @@ namespace CryptoNote
         return ba;
     }
 
-// noexcept
+    // noexcept
     template<class T>
-    bool toBinaryArray(const T &object, std::vector<uint8_t> &binaryArray)
+    bool toBinaryArray(
+        const T &object,
+        std::vector<uint8_t> &binaryArray
+    )
     {
         try
         {
             binaryArray = toBinaryArray(object);
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }
@@ -199,7 +233,10 @@ namespace CryptoNote
     }
 
     template<>
-    inline bool toBinaryArray(const std::vector<uint8_t> &object, std::vector<uint8_t> &binaryArray)
+    inline bool toBinaryArray(
+        const std::vector<uint8_t> &object,
+        std::vector<uint8_t> &binaryArray
+    )
     {
         try
         {
@@ -207,7 +244,8 @@ namespace CryptoNote
             BinaryOutputStreamSerializer serializer(stream);
             std::string oldBlob = Common::asString(object);
             serializer(oldBlob, "");
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }
@@ -231,12 +269,16 @@ namespace CryptoNote
     }
 
     template<class T>
-    bool fromBinaryArray(T &object, const std::vector<uint8_t> &binaryArray)
+    bool fromBinaryArray(
+        T &object,
+        const std::vector<uint8_t> &binaryArray
+    )
     {
         try
         {
             object = fromBinaryArray<T>(binaryArray);
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }

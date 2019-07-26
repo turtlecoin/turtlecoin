@@ -15,7 +15,8 @@ namespace CryptoNote
         virtual time_t now() = 0;
 
         virtual ~ITimeProvider()
-        {}
+        {
+        }
     };
 
     struct RealTimeProvider : public ITimeProvider

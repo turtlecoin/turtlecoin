@@ -110,11 +110,15 @@ namespace Common
         type = ARRAY;
     }
 
-    JsonValue::JsonValue(Bool value) : type(BOOL), valueBool(value)
+    JsonValue::JsonValue(Bool value)
+        : type(BOOL),
+          valueBool(value)
     {
     }
 
-    JsonValue::JsonValue(Integer value) : type(INTEGER), valueInteger(value)
+    JsonValue::JsonValue(Integer value)
+        : type(INTEGER),
+          valueInteger(value)
     {
     }
 
@@ -134,7 +138,9 @@ namespace Common
         type = OBJECT;
     }
 
-    JsonValue::JsonValue(Real value) : type(REAL), valueReal(value)
+    JsonValue::JsonValue(Real value)
+        : type(REAL),
+          valueReal(value)
     {
     }
 
@@ -188,7 +194,8 @@ namespace Common
             }
 
             type = other.type;
-        } else
+        }
+        else
         {
             switch (type)
             {
@@ -254,12 +261,14 @@ namespace Common
             }
 
             type = other.type;
-        } else
+        }
+        else
         {
             switch (type)
             {
                 case ARRAY:
-                    *reinterpret_cast<Array *>(valueArray) = std::move(*reinterpret_cast<const Array *>(other.valueArray));
+                    *reinterpret_cast<Array *>(valueArray) =
+                        std::move(*reinterpret_cast<const Array *>(other.valueArray));
                     reinterpret_cast<Array *>(other.valueArray)->~Array();
                     break;
                 case BOOL:
@@ -271,14 +280,16 @@ namespace Common
                 case NIL:
                     break;
                 case OBJECT:
-                    *reinterpret_cast<Object *>(valueObject) = std::move(*reinterpret_cast<const Object *>(other.valueObject));
+                    *reinterpret_cast<Object *>(valueObject) =
+                        std::move(*reinterpret_cast<const Object *>(other.valueObject));
                     reinterpret_cast<Object *>(other.valueObject)->~Object();
                     break;
                 case REAL:
                     valueReal = other.valueReal;
                     break;
                 case STRING:
-                    *reinterpret_cast<String *>(valueString) = std::move(*reinterpret_cast<const String *>(other.valueString));
+                    *reinterpret_cast<String *>(valueString) =
+                        std::move(*reinterpret_cast<const String *>(other.valueString));
                     reinterpret_cast<String *>(other.valueString)->~String();
                     break;
             }
@@ -296,7 +307,8 @@ namespace Common
             type = NIL;
             new(valueArray)Array(value);
             type = ARRAY;
-        } else
+        }
+        else
         {
             *reinterpret_cast<Array *>(valueArray) = value;
         }
@@ -312,7 +324,8 @@ namespace Common
             type = NIL;
             new(valueArray)Array(std::move(value));
             type = ARRAY;
-        } else
+        }
+        else
         {
             *reinterpret_cast<Array *>(valueArray) = std::move(value);
         }
@@ -320,15 +333,15 @@ namespace Common
         return *this;
     }
 
-//JsonValue& JsonValue::operator=(Bool value) {
-//  if (type != BOOL) {
-//    destructValue();
-//    type = BOOL;
-//  }
-//
-//  valueBool = value;
-//  return *this;
-//}
+    //JsonValue& JsonValue::operator=(Bool value) {
+    //  if (type != BOOL) {
+    //    destructValue();
+    //    type = BOOL;
+    //  }
+    //
+    //  valueBool = value;
+    //  return *this;
+    //}
 
     JsonValue &JsonValue::operator=(Integer value)
     {
@@ -361,7 +374,8 @@ namespace Common
             type = NIL;
             new(valueObject)Object(value);
             type = OBJECT;
-        } else
+        }
+        else
         {
             *reinterpret_cast<Object *>(valueObject) = value;
         }
@@ -377,7 +391,8 @@ namespace Common
             type = NIL;
             new(valueObject)Object(std::move(value));
             type = OBJECT;
-        } else
+        }
+        else
         {
             *reinterpret_cast<Object *>(valueObject) = std::move(value);
         }
@@ -405,7 +420,8 @@ namespace Common
             type = NIL;
             new(valueString)String(value);
             type = STRING;
-        } else
+        }
+        else
         {
             *reinterpret_cast<String *>(valueString) = value;
         }
@@ -421,7 +437,8 @@ namespace Common
             type = NIL;
             new(valueString)String(std::move(value));
             type = STRING;
-        } else
+        }
+        else
         {
             *reinterpret_cast<String *>(valueString) = std::move(value);
         }
@@ -584,23 +601,35 @@ namespace Common
         return getObject().count(key) > 0;
     }
 
-    JsonValue &JsonValue::insert(const Key &key, const JsonValue &value)
+    JsonValue &JsonValue::insert(
+        const Key &key,
+        const JsonValue &value
+    )
     {
         return getObject().emplace(key, value).first->second;
     }
 
-    JsonValue &JsonValue::insert(const Key &key, JsonValue &&value)
+    JsonValue &JsonValue::insert(
+        const Key &key,
+        JsonValue &&value
+    )
     {
         return getObject().emplace(key, std::move(value)).first->second;
     }
 
-    JsonValue &JsonValue::set(const Key &key, const JsonValue &value)
+    JsonValue &JsonValue::set(
+        const Key &key,
+        const JsonValue &value
+    )
     {
         getObject()[key] = value;
         return *this;
     }
 
-    JsonValue &JsonValue::set(const Key &key, JsonValue &&value)
+    JsonValue &JsonValue::set(
+        const Key &key,
+        JsonValue &&value
+    )
     {
         getObject()[key] = std::move(value);
         return *this;
@@ -631,7 +660,10 @@ namespace Common
         return stream.str();
     }
 
-    std::ostream &operator<<(std::ostream &out, const JsonValue &jsonValue)
+    std::ostream &operator<<(
+        std::ostream &out,
+        const JsonValue &jsonValue
+    )
     {
         switch (jsonValue.type)
         {
@@ -652,7 +684,11 @@ namespace Common
                 break;
             }
             case JsonValue::BOOL:
-                out << (jsonValue.valueBool ? "true" : "false");
+                out << (
+                    jsonValue.valueBool
+                    ? "true"
+                    : "false"
+                );
                 break;
             case JsonValue::INTEGER:
                 out << jsonValue.valueInteger;
@@ -698,7 +734,6 @@ namespace Common
 
         return out;
     }
-
 
     namespace
     {
@@ -755,33 +790,42 @@ namespace Common
 
     }
 
-
-    std::istream &operator>>(std::istream &in, JsonValue &jsonValue)
+    std::istream &operator>>(
+        std::istream &in,
+        JsonValue &jsonValue
+    )
     {
         char c = readNonWsChar(in);
 
         if (c == '[')
         {
             jsonValue.readArray(in);
-        } else if (c == 't')
+        }
+        else if (c == 't')
         {
             jsonValue.readTrue(in);
-        } else if (c == 'f')
+        }
+        else if (c == 'f')
         {
             jsonValue.readFalse(in);
-        } else if ((c == '-') || (c >= '0' && c <= '9'))
+        }
+        else if ((c == '-') || (c >= '0' && c <= '9'))
         {
             jsonValue.readNumber(in, c);
-        } else if (c == 'n')
+        }
+        else if (c == 'n')
         {
             jsonValue.readNull(in);
-        } else if (c == '{')
+        }
+        else if (c == '{')
         {
             jsonValue.readObject(in);
-        } else if (c == '"')
+        }
+        else if (c == '"')
         {
             jsonValue.readString(in);
-        } else
+        }
+        else
         {
             throw std::runtime_error("Unable to parse");
         }
@@ -896,7 +940,10 @@ namespace Common
         }
     }
 
-    void JsonValue::readNumber(std::istream &in, char c)
+    void JsonValue::readNumber(
+        std::istream &in,
+        char c
+    )
     {
         std::string text;
         text += c;
@@ -908,12 +955,14 @@ namespace Common
             {
                 in.read(&c, 1);
                 text += c;
-            } else if (i == '.')
+            }
+            else if (i == '.')
             {
                 in.read(&c, 1);
                 text += '.';
                 ++dots;
-            } else
+            }
+            else
             {
                 break;
             }
@@ -937,7 +986,8 @@ namespace Common
                     in.read(&c, 1);
                     text += c;
                     i = in.peek();
-                } else if (i == '-')
+                }
+                else if (i == '-')
                 {
                     in.read(&c, 1);
                     text += c;
@@ -966,7 +1016,8 @@ namespace Common
             }
 
             valueReal = value;
-        } else
+        }
+        else
         {
             if (text.size() > 1 && ((text[0] == '0') || (text[0] == '-' && text[1] == '0')))
             {

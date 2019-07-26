@@ -61,7 +61,10 @@ namespace CryptoNote
         }
     }
 
-    void HttpResponse::addHeader(const std::string &name, const std::string &value)
+    void HttpResponse::addHeader(
+        const std::string &name,
+        const std::string &value
+    )
     {
         headers[name] = value;
     }
@@ -72,7 +75,8 @@ namespace CryptoNote
         if (!body.empty())
         {
             headers["Content-Length"] = std::to_string(body.size());
-        } else
+        }
+        else
         {
             headers.erase("Content-Length");
         }

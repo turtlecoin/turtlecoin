@@ -13,8 +13,15 @@
 namespace CryptoNote
 {
 
-    HttpClient::HttpClient(System::Dispatcher &dispatcher, const std::string &address, uint16_t port) :
-            m_dispatcher(dispatcher), m_address(address), m_port(port)
+    HttpClient::HttpClient(
+        System::Dispatcher &dispatcher,
+        const std::string &address,
+        uint16_t port
+    ) : m_dispatcher(
+        dispatcher
+    ),
+        m_address(address),
+        m_port(port)
     {
     }
 
@@ -26,7 +33,10 @@ namespace CryptoNote
         }
     }
 
-    void HttpClient::request(const HttpRequest &req, HttpResponse &res)
+    void HttpClient::request(
+        const HttpRequest &req,
+        HttpResponse &res
+    )
     {
         std::scoped_lock lock(m_mutex);
 
@@ -42,7 +52,8 @@ namespace CryptoNote
             stream << req;
             stream.flush();
             parser.receiveResponse(stream, res);
-        } catch (const std::exception &)
+        }
+        catch (const std::exception &)
         {
             disconnect();
             throw;
@@ -57,7 +68,8 @@ namespace CryptoNote
             m_connection = System::TcpConnector(m_dispatcher).connect(ipAddr, m_port);
             m_streamBuf.reset(new System::TcpStreambuf(m_connection));
             m_connected = true;
-        } catch (const std::exception &e)
+        }
+        catch (const std::exception &e)
         {
             throw ConnectException(e.what());
         }
@@ -74,7 +86,8 @@ namespace CryptoNote
         try
         {
             m_connection.write(nullptr, 0); //Socket shutdown.
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             //Ignoring possible exception.
         }
@@ -82,7 +95,8 @@ namespace CryptoNote
         try
         {
             m_connection = System::TcpConnection();
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             //Ignoring possible exception.
         }

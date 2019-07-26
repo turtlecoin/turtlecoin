@@ -17,21 +17,24 @@ namespace
     const uint64_t MEGABYTE = 1024 * 1024;
 }
 
-DataBaseConfig::DataBaseConfig() :
-        dataDir(Tools::getDefaultDataDirectory()),
-        backgroundThreadsCount(DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT),
-        maxOpenFiles(DATABASE_DEFAULT_MAX_OPEN_FILES),
-        writeBufferSize(DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE * MEGABYTE),
-        readCacheSize(DATABASE_READ_BUFFER_MB_DEFAULT_SIZE * MEGABYTE),
-        configFolderDefaulted(false),
-        compressionEnabled(false)
+DataBaseConfig::DataBaseConfig()
+    : dataDir(Tools::getDefaultDataDirectory()),
+      backgroundThreadsCount(DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT),
+      maxOpenFiles(DATABASE_DEFAULT_MAX_OPEN_FILES),
+      writeBufferSize(DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE * MEGABYTE),
+      readCacheSize(DATABASE_READ_BUFFER_MB_DEFAULT_SIZE * MEGABYTE),
+      configFolderDefaulted(false),
+      compressionEnabled(false)
 {
 }
 
 bool DataBaseConfig::init(
-        const std::string dataDirectory, const int backgroundThreads,
-        const int openFiles, const int writeBufferMB, const int readCacheMB,
-        const bool enableDbCompression
+    const std::string dataDirectory,
+    const int backgroundThreads,
+    const int openFiles,
+    const int writeBufferMB,
+    const int readCacheMB,
+    const bool enableDbCompression
 )
 {
     dataDir = dataDirectory;

@@ -30,23 +30,21 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
 
     if (localDaemonBlockCount + 1 <= networkBlockCount)
     {
-        std::cout << "Your " << WalletConfig::daemonName << " isn't fully "
-                  << "synced yet!\n"
+        std::cout << "Your " << WalletConfig::daemonName << " isn't fully " << "synced yet!\n"
                   << "Until you are fully synced, you won't be able to send "
-                  << "transactions,\nand your balance may be missing or "
-                  << "incorrect!\n\n";
+                  << "transactions,\nand your balance may be missing or " << "incorrect!\n\n";
     }
 
     if (walletBlockCount == 0)
     {
         std::stringstream stream;
 
-        stream << "Scanning through the blockchain to find transactions "
-               << "that belong to you.\n"
+        stream << "Scanning through the blockchain to find transactions " << "that belong to you.\n"
                << "Please wait, this will take some time.\n\n";
 
         std::cout << InformationMsg(stream.str());
-    } else
+    }
+    else
     {
         std::stringstream stream;
 
@@ -67,13 +65,13 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
         auto[tmpWalletBlockCount, localDaemonBlockCount, networkBlockCount]
         = walletBackend->getSyncStatus();
 
-        std::cout << SuccessMsg(tmpWalletBlockCount) << " of "
-                  << InformationMsg(localDaemonBlockCount) << std::endl;
+        std::cout << SuccessMsg(tmpWalletBlockCount) << " of " << InformationMsg(localDaemonBlockCount) << std::endl;
 
         if (walletBlockCount == tmpWalletBlockCount)
         {
             stuckCounter++;
-        } else
+        }
+        else
         {
             stuckCounter = 0;
         }
@@ -90,7 +88,8 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
                 if (tx.totalAmount() < 0)
                 {
                     printOutgoingTransfer(tx);
-                } else
+                }
+                else
                 {
                     printIncomingTransfer(tx);
                 }
@@ -115,10 +114,8 @@ void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)
 
             stream << "Syncing may be stuck. Ensure your daemon or remote "
                       "node is online, and not syncing.\n(Syncing often stalls "
-                      "wallet operation)\nGive the daemon a restart if possible.\n"
-                   << "If this persists, visit "
-                   << WalletConfig::contactLink
-                   << " for support.";
+                      "wallet operation)\nGive the daemon a restart if possible.\n" << "If this persists, visit "
+                   << WalletConfig::contactLink << " for support.";
 
             std::cout << WarningMsg(stream.str()) << std::endl;
         }

@@ -13,28 +13,33 @@
 #include <config/CryptoNoteConfig.h>
 
 #ifdef WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#include <windows.h>
-#include <shlobj.h>
-#include <strsafe.h>
+    #include <windows.h>
+    #include <shlobj.h>
+    #include <strsafe.h>
 
 #else
-#include <sys/utsname.h>
+    #include <sys/utsname.h>
 #endif
-
 
 namespace Tools
 {
-#ifdef WIN32
+    #ifdef WIN32
 
     std::string get_windows_version_display_string()
     {
         typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
-        typedef BOOL (WINAPI *PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
-#define BUFSIZE 10000
+        typedef BOOL(WINAPI *PGPI)(
+            DWORD,
+            DWORD,
+            DWORD,
+            DWORD,
+            PDWORD
+        );
+        #define BUFSIZE 10000
 
         char pszOS[BUFSIZE] = {0};
         OSVERSIONINFOEX osvi;
@@ -50,19 +55,26 @@ namespace Tools
         osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
         bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO *) &osvi);
 
-        if (!bOsVersionInfoEx) return pszOS;
+        if (!bOsVersionInfoEx)
+        {
+            return pszOS;
+        }
 
         // Call GetNativeSystemInfo if supported or GetSystemInfo otherwise.
 
         pGNSI = (PGNSI) GetProcAddress(
-                GetModuleHandle(TEXT("kernel32.dll")),
-                "GetNativeSystemInfo");
+            GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo"
+        );
         if (NULL != pGNSI)
+        {
             pGNSI(&si);
-        else GetSystemInfo(&si);
+        }
+        else
+        {
+            GetSystemInfo(&si);
+        }
 
-        if (VER_PLATFORM_WIN32_NT == osvi.dwPlatformId &&
-            osvi.dwMajorVersion > 4)
+        if (VER_PLATFORM_WIN32_NT == osvi.dwPlatformId && osvi.dwMajorVersion > 4)
         {
             StringCchCopy(pszOS, BUFSIZE, TEXT("Microsoft "));
 
@@ -87,8 +99,8 @@ namespace Tools
                 }
 
                 pGPI = (PGPI) GetProcAddress(
-                        GetModuleHandle(TEXT("kernel32.dll")),
-                        "GetProductInfo");
+                    GetModuleHandle(TEXT("kernel32.dll")), "GetProductInfo"
+                );
 
                 pGPI(osvi.dwMajorVersion, osvi.dwMinorVersion, 0, 0, &dwType);
 
@@ -163,7 +175,8 @@ namespace Tools
                          si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
                 {
                     StringCchCat(pszOS, BUFSIZE, TEXT("Windows XP Professional x64 Edition"));
-                } else
+                }
+                else
                     StringCchCat(pszOS, BUFSIZE, TEXT("Windows Server 2003, "));
 
                 // Test for the server type.
@@ -175,7 +188,8 @@ namespace Tools
                             StringCchCat(pszOS, BUFSIZE, TEXT("Datacenter Edition for Itanium-based Systems"));
                         else if (osvi.wSuiteMask & VER_SUITE_ENTERPRISE)
                             StringCchCat(pszOS, BUFSIZE, TEXT("Enterprise Edition for Itanium-based Systems"));
-                    } else if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+                    }
+                    else if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
                     {
                         if (osvi.wSuiteMask & VER_SUITE_DATACENTER)
                             StringCchCat(pszOS, BUFSIZE, TEXT("Datacenter x64 Edition"));
@@ -183,7 +197,8 @@ namespace Tools
                             StringCchCat(pszOS, BUFSIZE, TEXT("Enterprise x64 Edition"));
                         else
                             StringCchCat(pszOS, BUFSIZE, TEXT("Standard x64 Edition"));
-                    } else
+                    }
+                    else
                     {
                         if (osvi.wSuiteMask & VER_SUITE_COMPUTE_SERVER)
                             StringCchCat(pszOS, BUFSIZE, TEXT("Compute Cluster Edition"));
@@ -215,7 +230,8 @@ namespace Tools
                 if (osvi.wProductType == VER_NT_WORKSTATION)
                 {
                     StringCchCat(pszOS, BUFSIZE, TEXT("Professional"));
-                } else
+                }
+                else
                 {
                     if (osvi.wSuiteMask & VER_SUITE_DATACENTER)
                         StringCchCat(pszOS, BUFSIZE, TEXT("Datacenter Server"));
@@ -248,14 +264,15 @@ namespace Tools
             }
 
             return pszOS;
-        } else
+        }
+        else
         {
             printf("This sample does not support this version of Windows.\n");
             return pszOS;
         }
     }
 
-#else
+    #else
     std::string get_nix_version_display_string()
     {
       utsname un;
@@ -264,22 +281,23 @@ namespace Tools
         return std::string("*nix: failed to get os version");
       return std::string() + un.sysname + " " + un.version + " " + un.release;
     }
-#endif
-
+    #endif
 
     std::string get_os_version_string()
     {
-#ifdef WIN32
+        #ifdef WIN32
         return get_windows_version_display_string();
-#else
+        #else
         return get_nix_version_display_string();
-#endif
+        #endif
     }
 
+    #ifdef WIN32
 
-#ifdef WIN32
-
-    std::string get_special_folder_path(int nfolder, bool iscreate)
+    std::string get_special_folder_path(
+        int nfolder,
+        bool iscreate
+    )
     {
         char psz_path[MAX_PATH] = "";
 
@@ -291,7 +309,7 @@ namespace Tools
         return "";
     }
 
-#endif
+    #endif
 
     std::string getDefaultDataDirectory()
     {
@@ -300,25 +318,25 @@ namespace Tools
         // Mac: ~/Library/Application Support/CRYPTONOTE_NAME
         // Unix: ~/.CRYPTONOTE_NAME
         std::string config_folder;
-#ifdef WIN32
+        #ifdef WIN32
         // Windows
         config_folder = get_special_folder_path(CSIDL_APPDATA, true) + "/" + CryptoNote::CRYPTONOTE_NAME;
-#else
+        #else
         std::string pathRet;
         char* pszHome = getenv("HOME");
         if (pszHome == NULL || std::strlen(pszHome) == 0)
           pathRet = "/";
         else
           pathRet = pszHome;
-#ifdef MAC_OSX
+              #ifdef MAC_OSX
         // Mac
         pathRet /= "Library/Application Support";
         config_folder =  (pathRet + "/" + CryptoNote::CRYPTONOTE_NAME);
-#else
+            #else
         // Unix
         config_folder = (pathRet + "/." + CryptoNote::CRYPTONOTE_NAME);
-#endif
-#endif
+            #endif
+        #endif
 
         return config_folder;
     }

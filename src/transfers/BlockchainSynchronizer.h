@@ -21,157 +21,190 @@
 namespace CryptoNote
 {
 
-    class BlockchainSynchronizer :
-            public IObservableImpl<IBlockchainSynchronizerObserver, IBlockchainSynchronizer>,
-            public INodeObserver
+    class BlockchainSynchronizer : public IObservableImpl<
+        IBlockchainSynchronizerObserver, IBlockchainSynchronizer
+    >,
+                                   public INodeObserver
     {
-    public:
+        public:
 
-        BlockchainSynchronizer(INode &node, std::shared_ptr<Logging::ILogger> logger,
-                               const Crypto::Hash &genesisBlockHash);
+            BlockchainSynchronizer(
+                INode &node,
+                std::shared_ptr<Logging::ILogger> logger,
+                const Crypto::Hash &genesisBlockHash
+            );
 
-        ~BlockchainSynchronizer();
+            ~BlockchainSynchronizer();
 
-        // IBlockchainSynchronizer
-        virtual void addConsumer(IBlockchainConsumer *consumer) override;
+            // IBlockchainSynchronizer
+            virtual void addConsumer(IBlockchainConsumer *consumer) override;
 
-        virtual bool removeConsumer(IBlockchainConsumer *consumer) override;
+            virtual bool removeConsumer(IBlockchainConsumer *consumer) override;
 
-        virtual IStreamSerializable *getConsumerState(IBlockchainConsumer *consumer) const override;
+            virtual IStreamSerializable *getConsumerState(IBlockchainConsumer *consumer) const override;
 
-        virtual std::vector<Crypto::Hash> getConsumerKnownBlocks(IBlockchainConsumer &consumer) const override;
+            virtual std::vector<Crypto::Hash> getConsumerKnownBlocks(IBlockchainConsumer &consumer) const override;
 
-        virtual std::future<std::error_code> addUnconfirmedTransaction(const ITransactionReader &transaction) override;
+            virtual std::future<
+                std::error_code
+            > addUnconfirmedTransaction(const ITransactionReader &transaction) override;
 
-        virtual std::future<void> removeUnconfirmedTransaction(const Crypto::Hash &transactionHash) override;
+            virtual std::future<void> removeUnconfirmedTransaction(const Crypto::Hash &transactionHash) override;
 
-        virtual void start() override;
+            virtual void start() override;
 
-        virtual void stop() override;
+            virtual void stop() override;
 
-        // IStreamSerializable
-        virtual void save(std::ostream &os) override;
+            // IStreamSerializable
+            virtual void save(std::ostream &os) override;
 
-        virtual void load(std::istream &in) override;
+            virtual void load(std::istream &in) override;
 
-        // INodeObserver
-        virtual void localBlockchainUpdated(uint32_t height) override;
+            // INodeObserver
+            virtual void localBlockchainUpdated(uint32_t height) override;
 
-        virtual void lastKnownBlockHeightUpdated(uint32_t height) override;
+            virtual void lastKnownBlockHeightUpdated(uint32_t height) override;
 
-        virtual void poolChanged() override;
+            virtual void poolChanged() override;
 
-        std::vector<Crypto::Hash> getLastKnownBlockHashes() const;
+            std::vector<Crypto::Hash> getLastKnownBlockHashes() const;
 
-    private:
+        private:
 
-        struct GetBlocksResponse
-        {
-            uint32_t startHeight;
-            std::vector<BlockShortEntry> newBlocks;
-        };
-
-        struct GetBlocksRequest
-        {
-            GetBlocksRequest()
+            struct GetBlocksResponse
             {
-                syncStart.timestamp = 0;
-                syncStart.height = 0;
-            }
+                uint32_t startHeight;
+                std::vector<BlockShortEntry> newBlocks;
+            };
 
-            SynchronizationStart syncStart;
-            std::vector<Crypto::Hash> knownBlocks;
-        };
+            struct GetBlocksRequest
+            {
+                GetBlocksRequest()
+                {
+                    syncStart.timestamp = 0;
+                    syncStart.height = 0;
+                }
 
-        struct GetPoolResponse
-        {
-            bool isLastKnownBlockActual;
-            std::vector<std::unique_ptr<ITransactionReader>> newTxs;
-            std::vector<Crypto::Hash> deletedTxIds;
-        };
+                SynchronizationStart syncStart;
 
-        struct GetPoolRequest
-        {
-            std::vector<Crypto::Hash> knownTxIds;
-            Crypto::Hash lastKnownBlock;
-        };
+                std::vector<Crypto::Hash> knownBlocks;
+            };
 
-        enum class State
-        { //prioritized finite states
-            idle = 0,           //DO
-            poolSync = 1,       //NOT
-            blockchainSync = 2, //REORDER
-            deleteOldTxs = 3,   //!!!
-            stopped = 4         //!!!
-        };
+            struct GetPoolResponse
+            {
+                bool isLastKnownBlockActual;
+                std::vector<std::unique_ptr<ITransactionReader>> newTxs;
+                std::vector<Crypto::Hash> deletedTxIds;
+            };
 
-        enum class UpdateConsumersResult
-        {
-            nothingChanged = 0,
-            addedNewBlocks = 1,
-            errorOccurred = 2
-        };
+            struct GetPoolRequest
+            {
+                std::vector<Crypto::Hash> knownTxIds;
+                Crypto::Hash lastKnownBlock;
+            };
 
-        //void startSync();
-        void removeOutdatedTransactions();
+            enum class State
+            { //prioritized finite states
+                    idle = 0,           //DO
+                    poolSync = 1,       //NOT
+                    blockchainSync = 2, //REORDER
+                    deleteOldTxs = 3,   //!!!
+                    stopped = 4         //!!!
+            };
 
-        void startPoolSync();
+            enum class UpdateConsumersResult
+            {
+                    nothingChanged = 0,
+                    addedNewBlocks = 1,
+                    errorOccurred = 2
+            };
 
-        void startBlockchainSync();
+            //void startSync();
+            void removeOutdatedTransactions();
 
-        void processBlocks(GetBlocksResponse &response);
+            void startPoolSync();
 
-        UpdateConsumersResult
-        updateConsumers(const BlockchainInterval &interval, const std::vector<CompleteBlock> &blocks);
+            void startBlockchainSync();
 
-        std::error_code processPoolTxs(GetPoolResponse &response);
+            void processBlocks(GetBlocksResponse &response);
 
-        std::error_code getPoolSymmetricDifferenceSync(GetPoolRequest &&request, GetPoolResponse &response);
+            UpdateConsumersResult updateConsumers(
+                const BlockchainInterval &interval,
+                const std::vector<CompleteBlock> &blocks
+            );
 
-        std::error_code doAddUnconfirmedTransaction(const ITransactionReader &transaction);
+            std::error_code processPoolTxs(GetPoolResponse &response);
 
-        void doRemoveUnconfirmedTransaction(const Crypto::Hash &transactionHash);
+            std::error_code getPoolSymmetricDifferenceSync(
+                GetPoolRequest &&request,
+                GetPoolResponse &response
+            );
 
-        ///second parameter is used only in case of errors returned into callback from INode, such as aborted or connection lost
-        bool setFutureState(State s);
+            std::error_code doAddUnconfirmedTransaction(const ITransactionReader &transaction);
 
-        bool setFutureStateIf(State s, std::function<bool(void)> &&pred);
+            void doRemoveUnconfirmedTransaction(const Crypto::Hash &transactionHash);
 
-        void actualizeFutureState();
+            ///second parameter is used only in case of errors returned into callback from INode, such as aborted or connection lost
+            bool setFutureState(State s);
 
-        bool checkIfShouldStop() const;
+            bool setFutureStateIf(
+                State s,
+                std::function<bool(void)> &&pred
+            );
 
-        bool checkIfStopped() const;
+            void actualizeFutureState();
 
-        void workingProcedure();
+            bool checkIfShouldStop() const;
 
-        GetBlocksRequest getCommonHistory();
+            bool checkIfStopped() const;
 
-        void getPoolUnionAndIntersection(std::unordered_set<Crypto::Hash> &poolUnion,
-                                         std::unordered_set<Crypto::Hash> &poolIntersection) const;
+            void workingProcedure();
 
-        SynchronizationState *getConsumerSynchronizationState(IBlockchainConsumer *consumer) const;
+            GetBlocksRequest getCommonHistory();
 
-        typedef std::map<IBlockchainConsumer *, std::shared_ptr<SynchronizationState>> ConsumersMap;
+            void getPoolUnionAndIntersection(
+                std::unordered_set<Crypto::Hash> &poolUnion,
+                std::unordered_set<Crypto::Hash> &poolIntersection
+            ) const;
 
-        mutable Logging::LoggerRef m_logger;
-        ConsumersMap m_consumers;
-        INode &m_node;
-        const Crypto::Hash m_genesisBlockHash;
+            SynchronizationState *getConsumerSynchronizationState(IBlockchainConsumer *consumer) const;
 
-        Crypto::Hash lastBlockId;
+            typedef std::map<
+                IBlockchainConsumer *, std::shared_ptr<SynchronizationState>> ConsumersMap;
 
-        State m_currentState;
-        State m_futureState;
-        std::unique_ptr<std::thread> workingThread;
-        std::list<std::pair<const ITransactionReader *, std::promise<std::error_code>>> m_addTransactionTasks;
-        std::list<std::pair<const Crypto::Hash *, std::promise<void>>> m_removeTransactionTasks;
+            mutable Logging::LoggerRef m_logger;
 
-        mutable std::mutex m_consumersMutex;
-        mutable std::mutex m_stateMutex;
-        std::condition_variable m_hasWork;
+            ConsumersMap m_consumers;
 
-        bool wasStarted = false;
+            INode &m_node;
+
+            const Crypto::Hash m_genesisBlockHash;
+
+            Crypto::Hash lastBlockId;
+
+            State m_currentState;
+
+            State m_futureState;
+
+            std::unique_ptr<std::thread> workingThread;
+
+            std::list<
+                std::pair<
+                    const ITransactionReader *, std::promise<std::error_code>>
+            > m_addTransactionTasks;
+
+            std::list<
+                std::pair<
+                    const Crypto::Hash *, std::promise<void>>
+            > m_removeTransactionTasks;
+
+            mutable std::mutex m_consumersMutex;
+
+            mutable std::mutex m_stateMutex;
+
+            std::condition_variable m_hasWork;
+
+            bool wasStarted = false;
     };
 
 }

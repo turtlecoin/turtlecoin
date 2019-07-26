@@ -13,12 +13,14 @@ namespace
 
     const uint64_t LEVIN_SIGNATURE = 0x0101010101012101LL;  //Bender's nightmare
     const uint32_t LEVIN_PACKET_REQUEST = 0x00000001;
+
     const uint32_t LEVIN_PACKET_RESPONSE = 0x00000002;
+
     const uint32_t LEVIN_DEFAULT_MAX_PACKET_SIZE = 100000000;      //100MB by default
     const uint32_t LEVIN_PROTOCOL_VER_1 = 1;
 
-#pragma pack(push)
-#pragma pack(1)
+    #pragma pack(push)
+    #pragma pack(1)
     struct bucket_head2
     {
         uint64_t m_signature;
@@ -29,7 +31,7 @@ namespace
         uint32_t m_flags;
         uint32_t m_protocol_version;
     };
-#pragma pack(pop)
+    #pragma pack(pop)
 
 }
 
@@ -38,11 +40,15 @@ bool LevinProtocol::Command::needReply() const
     return !(isNotify || isResponse);
 }
 
-LevinProtocol::LevinProtocol(System::TcpConnection &connection)
-        : m_conn(connection)
-{}
+LevinProtocol::LevinProtocol(System::TcpConnection &connection) : m_conn(connection)
+{
+}
 
-void LevinProtocol::sendMessage(uint32_t command, const BinaryArray &out, bool needResponse)
+void LevinProtocol::sendMessage(
+    uint32_t command,
+    const BinaryArray &out,
+    bool needResponse
+)
 {
     bucket_head2 head = {0};
     head.m_signature = LEVIN_SIGNATURE;
@@ -101,7 +107,11 @@ bool LevinProtocol::readCommand(Command &cmd)
     return true;
 }
 
-void LevinProtocol::sendReply(uint32_t command, const BinaryArray &out, int32_t returnCode)
+void LevinProtocol::sendReply(
+    uint32_t command,
+    const BinaryArray &out,
+    int32_t returnCode
+)
 {
     bucket_head2 head = {0};
     head.m_signature = LEVIN_SIGNATURE;
@@ -122,7 +132,10 @@ void LevinProtocol::sendReply(uint32_t command, const BinaryArray &out, int32_t 
     writeStrict(writeBuffer.data(), writeBuffer.size());
 }
 
-void LevinProtocol::writeStrict(const uint8_t *ptr, size_t size)
+void LevinProtocol::writeStrict(
+    const uint8_t *ptr,
+    size_t size
+)
 {
     size_t offset = 0;
     while (offset < size)
@@ -131,7 +144,10 @@ void LevinProtocol::writeStrict(const uint8_t *ptr, size_t size)
     }
 }
 
-bool LevinProtocol::readStrict(uint8_t *ptr, size_t size)
+bool LevinProtocol::readStrict(
+    uint8_t *ptr,
+    size_t size
+)
 {
     size_t offset = 0;
     while (offset < size)

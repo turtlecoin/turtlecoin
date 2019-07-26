@@ -13,15 +13,17 @@ using namespace Logging;
 namespace CryptoNote
 {
 
-    TransfersSubscription::TransfersSubscription(const CryptoNote::Currency &currency,
-                                                 std::shared_ptr<Logging::ILogger> logger,
-                                                 const AccountSubscription &sub)
-            : subscription(sub), logger(logger, "TransfersSubscription"),
-              transfers(currency, logger, sub.transactionSpendableAge),
-              m_address(currency.accountAddressAsString(sub.keys.address))
+    TransfersSubscription::TransfersSubscription(
+        const CryptoNote::Currency &currency,
+        std::shared_ptr<Logging::ILogger> logger,
+        const AccountSubscription &sub
+    )
+        : subscription(sub),
+          logger(logger, "TransfersSubscription"),
+          transfers(currency, logger, sub.transactionSpendableAge),
+          m_address(currency.accountAddressAsString(sub.keys.address))
     {
     }
-
 
     SynchronizationStart TransfersSubscription::getSyncStart()
     {
@@ -38,7 +40,10 @@ namespace CryptoNote
         }
     }
 
-    void TransfersSubscription::onError(const std::error_code &ec, uint32_t height)
+    void TransfersSubscription::onError(
+        const std::error_code &ec,
+        uint32_t height
+    )
     {
         if (height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT)
         {
@@ -57,8 +62,11 @@ namespace CryptoNote
         return subscription.keys;
     }
 
-    bool TransfersSubscription::addTransaction(const TransactionBlockInfo &blockInfo, const ITransactionReader &tx,
-                                               const std::vector<TransactionOutputInformationIn> &transfersList)
+    bool TransfersSubscription::addTransaction(
+        const TransactionBlockInfo &blockInfo,
+        const ITransactionReader &tx,
+        const std::vector<TransactionOutputInformationIn> &transfersList
+    )
     {
         bool added = transfers.addTransaction(blockInfo, tx, transfersList);
         if (added)
@@ -90,8 +98,11 @@ namespace CryptoNote
         }
     }
 
-    void TransfersSubscription::markTransactionConfirmed(const TransactionBlockInfo &block, const Hash &transactionHash,
-                                                         const std::vector<uint32_t> &globalIndices)
+    void TransfersSubscription::markTransactionConfirmed(
+        const TransactionBlockInfo &block,
+        const Hash &transactionHash,
+        const std::vector<uint32_t> &globalIndices
+    )
     {
         transfers.markTransactionConfirmed(block, transactionHash, globalIndices);
         m_observerManager.notify(&ITransfersObserver::onTransactionUpdated, this, transactionHash);

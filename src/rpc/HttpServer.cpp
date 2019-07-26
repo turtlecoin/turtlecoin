@@ -16,13 +16,22 @@ using namespace Logging;
 namespace CryptoNote
 {
 
-    HttpServer::HttpServer(System::Dispatcher &dispatcher, std::shared_ptr<Logging::ILogger> log)
-            : m_dispatcher(dispatcher), workingContextGroup(dispatcher), logger(log, "HttpServer")
+    HttpServer::HttpServer(
+        System::Dispatcher &dispatcher,
+        std::shared_ptr<Logging::ILogger> log
+    ) : m_dispatcher(
+        dispatcher
+    ),
+        workingContextGroup(dispatcher),
+        logger(log, "HttpServer")
     {
 
     }
 
-    void HttpServer::start(const std::string &address, uint16_t port)
+    void HttpServer::start(
+        const std::string &address,
+        uint16_t port
+    )
     {
         m_listener = System::TcpListener(m_dispatcher, System::Ipv4Address(address), port);
         workingContextGroup.spawn(std::bind(&HttpServer::acceptLoop, this));
@@ -47,10 +56,12 @@ namespace CryptoNote
                 {
                     connection = m_listener.accept();
                     accepted = true;
-                } catch (System::InterruptedException &)
+                }
+                catch (System::InterruptedException &)
                 {
                     throw;
-                } catch (std::exception &)
+                }
+                catch (std::exception &)
                 {
                     // try again
                 }
@@ -58,7 +69,8 @@ namespace CryptoNote
 
             m_connections.insert(&connection);
             BOOST_SCOPE_EXIT_ALL(this, &connection){
-                    m_connections.erase(&connection);};
+                m_connections.erase(&connection);
+            };
 
             workingContextGroup.spawn(std::bind(&HttpServer::acceptLoop, this));
 
@@ -90,9 +102,11 @@ namespace CryptoNote
             logger(DEBUGGING) << "Closing connection from " << addr.first.toDottedDecimal() << ":" << addr.second
                               << " total=" << m_connections.size();
 
-        } catch (System::InterruptedException &)
+        }
+        catch (System::InterruptedException &)
         {
-        } catch (std::exception &e)
+        }
+        catch (std::exception &e)
         {
             logger(DEBUGGING) << "Connection error: " << e.what();
         }

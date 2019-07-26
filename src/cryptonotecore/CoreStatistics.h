@@ -13,9 +13,13 @@ namespace CryptoNote
     struct CoreStatistics
     {
         uint64_t transactionPoolSize;
+
         uint64_t blockchainHeight;
+
         uint64_t miningSpeed;
+
         uint64_t alternativeBlockCount;
+
         std::string topBlockHashString;
 
         void serialize(ISerializer &s)

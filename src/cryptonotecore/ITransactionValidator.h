@@ -13,6 +13,7 @@ namespace CryptoNote
     struct BlockInfo
     {
         uint32_t height;
+
         Crypto::Hash id;
 
         BlockInfo()
@@ -34,18 +35,25 @@ namespace CryptoNote
 
     class ITransactionValidator
     {
-    public:
-        virtual ~ITransactionValidator()
-        {}
+        public:
+            virtual ~ITransactionValidator()
+            {
+            }
 
-        virtual bool checkTransactionInputs(const CryptoNote::Transaction &tx, BlockInfo &maxUsedBlock) = 0;
+            virtual bool checkTransactionInputs(
+                const CryptoNote::Transaction &tx,
+                BlockInfo &maxUsedBlock
+            ) = 0;
 
-        virtual bool
-        checkTransactionInputs(const CryptoNote::Transaction &tx, BlockInfo &maxUsedBlock, BlockInfo &lastFailed) = 0;
+            virtual bool checkTransactionInputs(
+                const CryptoNote::Transaction &tx,
+                BlockInfo &maxUsedBlock,
+                BlockInfo &lastFailed
+            ) = 0;
 
-        virtual bool haveSpentKeyImages(const CryptoNote::Transaction &tx) = 0;
+            virtual bool haveSpentKeyImages(const CryptoNote::Transaction &tx) = 0;
 
-        virtual bool checkTransactionSize(size_t blobSize) = 0;
+            virtual bool checkTransactionSize(size_t blobSize) = 0;
     };
 
 }

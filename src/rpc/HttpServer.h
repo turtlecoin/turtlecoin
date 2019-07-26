@@ -24,30 +24,42 @@ namespace CryptoNote
     class HttpServer
     {
 
-    public:
+        public:
 
-        HttpServer(System::Dispatcher &dispatcher, std::shared_ptr<Logging::ILogger> log);
+            HttpServer(
+                System::Dispatcher &dispatcher,
+                std::shared_ptr<Logging::ILogger> log
+            );
 
-        void start(const std::string &address, uint16_t port);
+            void start(
+                const std::string &address,
+                uint16_t port
+            );
 
-        void stop();
+            void stop();
 
-        virtual void processRequest(const HttpRequest &request, HttpResponse &response) = 0;
+            virtual void processRequest(
+                const HttpRequest &request,
+                HttpResponse &response
+            ) = 0;
 
-    protected:
+        protected:
 
-        System::Dispatcher &m_dispatcher;
+            System::Dispatcher &m_dispatcher;
 
-    private:
+        private:
 
-        void acceptLoop();
+            void acceptLoop();
 
-        void connectionHandler(System::TcpConnection &&conn);
+            void connectionHandler(System::TcpConnection &&conn);
 
-        System::ContextGroup workingContextGroup;
-        Logging::LoggerRef logger;
-        System::TcpListener m_listener;
-        std::unordered_set<System::TcpConnection *> m_connections;
+            System::ContextGroup workingContextGroup;
+
+            Logging::LoggerRef logger;
+
+            System::TcpListener m_listener;
+
+            std::unordered_set<System::TcpConnection *> m_connections;
     };
 
 }

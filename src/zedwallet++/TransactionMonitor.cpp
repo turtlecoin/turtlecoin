@@ -15,10 +15,12 @@
 void TransactionMonitor::start()
 {
     /* Grab new transactions and push them into a queue for processing */
-    m_walletBackend->m_eventHandler->onTransaction.subscribe([this](const auto tx)
-                                                             {
-                                                                 m_queuedTransactions.push(tx);
-                                                             });
+    m_walletBackend->m_eventHandler->onTransaction.subscribe(
+        [this](const auto tx)
+        {
+            m_queuedTransactions.push(tx);
+        }
+    );
 
     const std::string prompt = getPrompt(m_walletBackend);
 

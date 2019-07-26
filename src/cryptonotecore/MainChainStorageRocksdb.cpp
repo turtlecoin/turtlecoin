@@ -19,13 +19,13 @@
 using namespace rapidjson;
 using namespace CryptoNote;
 
-
 namespace CryptoNote
 {
     MainChainStorageRocksdb::MainChainStorageRocksdb(
-            const std::string &blocksFilename,
-            const std::string &indexesFilename,
-            const DataBaseConfig &config)
+        const std::string &blocksFilename,
+        const std::string &indexesFilename,
+        const DataBaseConfig &config
+    )
     {
         /* setup db options */
         rocksdb::DBOptions dbOpts;
@@ -50,11 +50,13 @@ namespace CryptoNote
         cfOpts.num_levels = 10;
         cfOpts.compaction_style = rocksdb::kCompactionStyleLevel;
 
-        const auto compressionLevel = config.getCompressionEnabled() ? rocksdb::kLZ4Compression
-                                                                     : rocksdb::kNoCompression;
+        const auto compressionLevel = config.getCompressionEnabled()
+                                      ? rocksdb::kLZ4Compression
+                                      : rocksdb::kNoCompression;
         std::fill_n(std::back_inserter(cfOpts.compression_per_level), cfOpts.num_levels, compressionLevel);
-        cfOpts.bottommost_compression = config.getCompressionEnabled() ? rocksdb::kLZ4HCCompression
-                                                                       : rocksdb::kNoCompression;
+        cfOpts.bottommost_compression = config.getCompressionEnabled()
+                                        ? rocksdb::kLZ4HCCompression
+                                        : rocksdb::kNoCompression;
 
         rocksdb::BlockBasedTableOptions tblOpts;
         tblOpts.block_cache = rocksdb::NewLRUCache(32 * 1024 * 1024);
@@ -178,10 +180,7 @@ namespace CryptoNote
         /* get the serialized RawBlock from db */
         rocksdb::PinnableSlice rawBlockString;
         rocksdb::Status s = m_db->Get(
-                rocksdb::ReadOptions(),
-                m_db->DefaultColumnFamily(),
-                std::to_string(index),
-                &rawBlockString
+            rocksdb::ReadOptions(), m_db->DefaultColumnFamily(), std::to_string(index), &rawBlockString
         );
 
         /* parse it back to RawBlock */
@@ -207,7 +206,8 @@ namespace CryptoNote
         {
             /* got the block count, use it as initial value for m_blockcount */
             m_blockcount = std::stoi(count.ToString());
-        } else if (s.IsNotFound())
+        }
+        else if (s.IsNotFound())
         {
             /* "count" key is not found (newly created db), so add the key and set value to zero */
             rocksdb::WriteOptions write_options;
@@ -217,7 +217,8 @@ namespace CryptoNote
             {
                 throw std::runtime_error("Failed to initialize block count: " + s.ToString());
             }
-        } else
+        }
+        else
         {
             throw std::runtime_error("Failed to to initialize block count: " + s.ToString());
         }
@@ -258,18 +259,16 @@ namespace CryptoNote
     }
 
     std::unique_ptr<IMainChainStorage> createSwappedMainChainStorageRocksdb(
-            const std::string &dataDir,
-            const Currency &currency,
-            const DataBaseConfig &config
+        const std::string &dataDir,
+        const Currency &currency,
+        const DataBaseConfig &config
     )
     {
         fs::path blocksFilename = fs::path(dataDir) / currency.blocksFileName();
         fs::path indexesFilename = fs::path(dataDir) / currency.blockIndexesFileName();
 
         auto storage = std::make_unique<MainChainStorageRocksdb>(
-                blocksFilename.string() + ".rocksdb",
-                indexesFilename.string(),
-                config
+            blocksFilename.string() + ".rocksdb", indexesFilename.string(), config
         );
 
         if (storage->getBlockCount() == 0)

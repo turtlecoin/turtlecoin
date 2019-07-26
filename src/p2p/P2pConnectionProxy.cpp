@@ -16,9 +16,15 @@ using namespace System;
 namespace CryptoNote
 {
 
-    P2pConnectionProxy::P2pConnectionProxy(P2pContextOwner &&ctx, IP2pNodeInternal &node)
-            : m_contextOwner(std::move(ctx)), m_context(m_contextOwner.get()), m_node(node)
-    {}
+    P2pConnectionProxy::P2pConnectionProxy(
+        P2pContextOwner &&ctx,
+        IP2pNodeInternal &node
+    ) : m_contextOwner(
+        std::move(ctx)),
+        m_context(m_contextOwner.get()),
+        m_node(node)
+    {
+    }
 
     P2pConnectionProxy::~P2pConnectionProxy()
     {
@@ -41,8 +47,12 @@ namespace CryptoNote
 
         if (cmd.command == COMMAND_PING::ID)
         {
-            COMMAND_PING::response resp{PING_OK_RESPONSE_STATUS_TEXT, m_node.getPeerId()};
-            m_context.writeMessage(makeReply(COMMAND_PING::ID, LevinProtocol::encode(resp), LEVIN_PROTOCOL_RETCODE_SUCCESS));
+            COMMAND_PING::response resp{
+                PING_OK_RESPONSE_STATUS_TEXT,
+                m_node.getPeerId()
+            };
+            m_context.writeMessage(
+                makeReply(COMMAND_PING::ID, LevinProtocol::encode(resp), LEVIN_PROTOCOL_RETCODE_SUCCESS));
             return false;
         }
 
@@ -72,10 +82,12 @@ namespace CryptoNote
             {
                 handleHandshakeResponse(cmd, message);
                 break;
-            } else if (cmd.command == COMMAND_TIMED_SYNC::ID)
+            }
+            else if (cmd.command == COMMAND_TIMED_SYNC::ID)
             {
                 handleTimedSync(cmd);
-            } else
+            }
+            else
             {
                 message.data = std::move(cmd.buf);
                 break;
@@ -88,7 +100,8 @@ namespace CryptoNote
         if (message.type == COMMAND_HANDSHAKE::ID)
         {
             writeHandshake(message);
-        } else
+        }
+        else
         {
             m_context.writeMessage(P2pContext::Message(P2pMessage(message), P2pContext::Message::NOTIFY));
         }
@@ -111,9 +124,11 @@ namespace CryptoNote
             res.node_data = m_node.getNodeData();
             res.payload_data = coreSync;
             res.local_peerlist = m_node.getLocalPeerList();
-            m_context.writeMessage(makeReply(COMMAND_HANDSHAKE::ID, LevinProtocol::encode(res), LEVIN_PROTOCOL_RETCODE_SUCCESS));
+            m_context.writeMessage(
+                makeReply(COMMAND_HANDSHAKE::ID, LevinProtocol::encode(res), LEVIN_PROTOCOL_RETCODE_SUCCESS));
             m_node.tryPing(m_context);
-        } else
+        }
+        else
         {
             // request
             COMMAND_HANDSHAKE::request req;
@@ -132,11 +147,18 @@ namespace CryptoNote
         }
 
         m_node.handleNodeData(req.node_data, m_context);
-        m_readQueue.push(P2pMessage{
-                cmd.command, LevinProtocol::encode(req.payload_data)}); // enqueue payload info
+        m_readQueue.push(
+            P2pMessage{
+                cmd.command,
+                LevinProtocol::encode(req.payload_data)
+            }
+        ); // enqueue payload info
     }
 
-    void P2pConnectionProxy::handleHandshakeResponse(const LevinProtocol::Command &cmd, P2pMessage &message)
+    void P2pConnectionProxy::handleHandshakeResponse(
+        const LevinProtocol::Command &cmd,
+        P2pMessage &message
+    )
     {
         if (m_context.isIncoming())
         {
@@ -163,7 +185,8 @@ namespace CryptoNote
             COMMAND_TIMED_SYNC::response res;
             LevinProtocol::decode(cmd.buf, res);
             m_node.handleRemotePeerList(res.local_peerlist, res.local_time);
-        } else
+        }
+        else
         {
             // we ignore information from the request
             // COMMAND_TIMED_SYNC::request req;
@@ -174,7 +197,8 @@ namespace CryptoNote
             res.local_peerlist = m_node.getLocalPeerList();
             res.payload_data = m_node.getGenesisPayload();
 
-            m_context.writeMessage(makeReply(COMMAND_TIMED_SYNC::ID, LevinProtocol::encode(res), LEVIN_PROTOCOL_RETCODE_SUCCESS));
+            m_context.writeMessage(
+                makeReply(COMMAND_TIMED_SYNC::ID, LevinProtocol::encode(res), LEVIN_PROTOCOL_RETCODE_SUCCESS));
         }
     }
 

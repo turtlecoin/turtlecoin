@@ -12,17 +12,20 @@
 
 struct WalletInfo
 {
-    WalletInfo(std::string walletFileName,
-               std::string walletPass,
-               std::string walletAddress,
-               bool viewWallet,
-               CryptoNote::WalletGreen &wallet) :
-            walletFileName(walletFileName),
-            walletPass(walletPass),
-            walletAddress(walletAddress),
-            viewWallet(viewWallet),
-            wallet(wallet)
-    {}
+    WalletInfo(
+        std::string walletFileName,
+        std::string walletPass,
+        std::string walletAddress,
+        bool viewWallet,
+        CryptoNote::WalletGreen &wallet
+    )
+        : walletFileName(walletFileName),
+          walletPass(walletPass),
+          walletAddress(walletAddress),
+          viewWallet(viewWallet),
+          wallet(wallet)
+    {
+    }
 
     /* How many transactions do we know about */
     size_t knownTransactionCount = 0;
@@ -70,17 +73,26 @@ struct Config
 struct AddressBookEntry
 {
     AddressBookEntry()
-    {}
+    {
+    }
 
     /* Used for quick comparison with strings */
     AddressBookEntry(std::string friendlyName) : friendlyName(friendlyName)
-    {}
+    {
+    }
 
-    AddressBookEntry(std::string friendlyName, std::string address,
-                     std::string paymentID, bool integratedAddress) :
-            friendlyName(friendlyName), address(address),
-            paymentID(paymentID), integratedAddress(integratedAddress)
-    {}
+    AddressBookEntry(
+        std::string friendlyName,
+        std::string address,
+        std::string paymentID,
+        bool integratedAddress
+    )
+        : friendlyName(friendlyName),
+          address(address),
+          paymentID(paymentID),
+          integratedAddress(integratedAddress)
+    {
+    }
 
     /* Friendly name for this address book entry */
     std::string friendlyName;
@@ -173,13 +185,18 @@ template<class X>
 struct Maybe
 {
     X x;
+
     bool isJust;
 
-    Maybe(const X &x) : x(x), isJust(true)
-    {}
+    Maybe(const X &x)
+        : x(x),
+          isJust(true)
+    {
+    }
 
     Maybe() : isJust(false)
-    {}
+    {
+    }
 };
 
 template<class X>

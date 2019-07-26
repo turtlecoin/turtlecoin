@@ -17,43 +17,58 @@
 
 class PaymentGateService
 {
-public:
-    PaymentGateService();
+    public:
+        PaymentGateService();
 
-    bool init(int argc, char **argv);
+        bool init(
+            int argc,
+            char **argv
+        );
 
-    const PaymentService::ConfigurationManager &getConfig() const
-    { return config; }
+        const PaymentService::ConfigurationManager &getConfig() const
+        {
+            return config;
+        }
 
-    PaymentService::WalletConfiguration getWalletConfig() const;
+        PaymentService::WalletConfiguration getWalletConfig() const;
 
-    const CryptoNote::Currency getCurrency();
+        const CryptoNote::Currency getCurrency();
 
-    void run();
+        void run();
 
-    void stop();
+        void stop();
 
-    std::shared_ptr<Logging::ILogger> getLogger()
-    { return logger; }
+        std::shared_ptr<Logging::ILogger> getLogger()
+        {
+            return logger;
+        }
 
-private:
+    private:
 
-    void runInProcess(Logging::LoggerRef &log);
+        void runInProcess(Logging::LoggerRef &log);
 
-    void runRpcProxy(Logging::LoggerRef &log);
+        void runRpcProxy(Logging::LoggerRef &log);
 
-    void runWalletService(const CryptoNote::Currency &currency, CryptoNote::INode &node);
+        void runWalletService(
+            const CryptoNote::Currency &currency,
+            CryptoNote::INode &node
+        );
 
-    System::Dispatcher *dispatcher;
-    System::Event *stopEvent;
-    PaymentService::ConfigurationManager config;
-    PaymentService::WalletService *service;
+        System::Dispatcher *dispatcher;
 
-    std::shared_ptr<Logging::LoggerGroup> logger = std::make_shared<Logging::LoggerGroup>();
+        System::Event *stopEvent;
 
-    std::shared_ptr<CryptoNote::CurrencyBuilder> currencyBuilder;
+        PaymentService::ConfigurationManager config;
 
-    std::ofstream fileStream;
-    Logging::StreamLogger fileLogger;
-    Logging::ConsoleLogger consoleLogger;
+        PaymentService::WalletService *service;
+
+        std::shared_ptr<Logging::LoggerGroup> logger = std::make_shared<Logging::LoggerGroup>();
+
+        std::shared_ptr<CryptoNote::CurrencyBuilder> currencyBuilder;
+
+        std::ofstream fileStream;
+
+        Logging::StreamLogger fileLogger;
+
+        Logging::ConsoleLogger consoleLogger;
 };

@@ -32,100 +32,121 @@ namespace CryptoNote
 
     class P2pConnectionProxy;
 
-    class P2pNode :
-            public IP2pNode,
-            public IStreamSerializable,
-            IP2pNodeInternal
+    class P2pNode : public IP2pNode,
+                    public IStreamSerializable,
+                    IP2pNodeInternal
     {
 
-    public:
+        public:
 
-        P2pNode(
+            P2pNode(
                 const P2pNodeConfig &cfg,
                 System::Dispatcher &dispatcher,
                 std::shared_ptr<Logging::ILogger> log,
                 const Crypto::Hash &genesisHash,
-                uint64_t peerId);
+                uint64_t peerId
+            );
 
-        ~P2pNode();
+            ~P2pNode();
 
-        // IP2pNode
-        virtual void stop() override;
+            // IP2pNode
+            virtual void stop() override;
 
-        // IStreamSerializable
-        virtual void save(std::ostream &os) override;
+            // IStreamSerializable
+            virtual void save(std::ostream &os) override;
 
-        virtual void load(std::istream &in) override;
+            virtual void load(std::istream &in) override;
 
-        // P2pNode
-        void start();
+            // P2pNode
+            void start();
 
-        void serialize(ISerializer &s);
+            void serialize(ISerializer &s);
 
-    private:
-        typedef std::unique_ptr<P2pContext> ContextPtr;
-        typedef std::list<ContextPtr> ContextList;
+        private:
+            typedef std::unique_ptr<P2pContext> ContextPtr;
 
-        Logging::LoggerRef logger;
-        bool m_stopRequested;
-        const P2pNodeConfig m_cfg;
-        const uint64_t m_myPeerId;
-        const CORE_SYNC_DATA m_genesisPayload;
+            typedef std::list<ContextPtr> ContextList;
 
-        System::Dispatcher &m_dispatcher;
-        System::ContextGroup workingContextGroup;
-        System::TcpListener m_listener;
-        System::Timer m_connectorTimer;
-        PeerlistManager m_peerlist;
-        ContextList m_contexts;
-        System::Event m_queueEvent;
-        std::deque<std::unique_ptr<IP2pConnection>> m_connectionQueue;
+            Logging::LoggerRef logger;
 
-        // IP2pNodeInternal
-        virtual const CORE_SYNC_DATA &getGenesisPayload() const override;
+            bool m_stopRequested;
 
-        virtual std::list<PeerlistEntry> getLocalPeerList() override;
+            const P2pNodeConfig m_cfg;
 
-        virtual basic_node_data getNodeData() const override;
+            const uint64_t m_myPeerId;
 
-        virtual uint64_t getPeerId() const override;
+            const CORE_SYNC_DATA m_genesisPayload;
 
-        virtual void handleNodeData(const basic_node_data &node, P2pContext &ctx) override;
+            System::Dispatcher &m_dispatcher;
 
-        virtual bool handleRemotePeerList(const std::list<PeerlistEntry> &peerlist, time_t local_time) override;
+            System::ContextGroup workingContextGroup;
 
-        virtual void tryPing(P2pContext &ctx) override;
+            System::TcpListener m_listener;
 
-        // spawns
-        void acceptLoop();
+            System::Timer m_connectorTimer;
 
-        void connectorLoop();
+            PeerlistManager m_peerlist;
 
-        // connection related
-        void connectPeers();
+            ContextList m_contexts;
 
-        void connectPeerList(const std::vector<NetworkAddress> &peers);
+            System::Event m_queueEvent;
 
-        bool isPeerConnected(const NetworkAddress &address);
+            std::deque<std::unique_ptr<IP2pConnection>> m_connectionQueue;
 
-        bool isPeerUsed(const PeerlistEntry &peer);
+            // IP2pNodeInternal
+            virtual const CORE_SYNC_DATA &getGenesisPayload() const override;
 
-        ContextPtr tryToConnectPeer(const NetworkAddress &address);
+            virtual std::list<PeerlistEntry> getLocalPeerList() override;
 
-        bool fetchPeerList(ContextPtr connection);
+            virtual basic_node_data getNodeData() const override;
 
-        // making and processing connections
-        size_t getOutgoingConnectionsCount() const;
+            virtual uint64_t getPeerId() const override;
 
-        void makeExpectedConnectionsCount(const Peerlist &peerlist, size_t connectionsCount);
+            virtual void handleNodeData(
+                const basic_node_data &node,
+                P2pContext &ctx
+            ) override;
 
-        bool makeNewConnectionFromPeerlist(const Peerlist &peerlist);
+            virtual bool handleRemotePeerList(
+                const std::list<PeerlistEntry> &peerlist,
+                time_t local_time
+            ) override;
 
-        void preprocessIncomingConnection(ContextPtr ctx);
+            virtual void tryPing(P2pContext &ctx) override;
 
-        void enqueueConnection(std::unique_ptr<P2pConnectionProxy> proxy);
+            // spawns
+            void acceptLoop();
 
-        std::unique_ptr<P2pConnectionProxy> createProxy(ContextPtr ctx);
+            void connectorLoop();
+
+            // connection related
+            void connectPeers();
+
+            void connectPeerList(const std::vector<NetworkAddress> &peers);
+
+            bool isPeerConnected(const NetworkAddress &address);
+
+            bool isPeerUsed(const PeerlistEntry &peer);
+
+            ContextPtr tryToConnectPeer(const NetworkAddress &address);
+
+            bool fetchPeerList(ContextPtr connection);
+
+            // making and processing connections
+            size_t getOutgoingConnectionsCount() const;
+
+            void makeExpectedConnectionsCount(
+                const Peerlist &peerlist,
+                size_t connectionsCount
+            );
+
+            bool makeNewConnectionFromPeerlist(const Peerlist &peerlist);
+
+            void preprocessIncomingConnection(ContextPtr ctx);
+
+            void enqueueConnection(std::unique_ptr<P2pConnectionProxy> proxy);
+
+            std::unique_ptr<P2pConnectionProxy> createProxy(ContextPtr ctx);
     };
 
 }

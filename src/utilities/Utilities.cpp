@@ -19,7 +19,11 @@
 namespace Utilities
 {
 
-    uint64_t getTransactionSum(const std::vector<std::pair<std::string, uint64_t>> destinations)
+    uint64_t getTransactionSum(
+        const std::vector<
+            std::pair<
+                std::string, uint64_t>> destinations
+    )
     {
         uint64_t amountSum = 0;
 
@@ -31,23 +35,30 @@ namespace Utilities
         return amountSum;
     }
 
-/* Round value to the nearest multiple (rounding down) */
-    uint64_t getLowerBound(const uint64_t val, const uint64_t nearestMultiple)
+    /* Round value to the nearest multiple (rounding down) */
+    uint64_t getLowerBound(
+        const uint64_t val,
+        const uint64_t nearestMultiple
+    )
     {
         uint64_t remainder = val % nearestMultiple;
 
         return val - remainder;
     }
 
-/* Round value to the nearest multiple (rounding down) */
-    uint64_t getUpperBound(const uint64_t val, const uint64_t nearestMultiple)
+    /* Round value to the nearest multiple (rounding down) */
+    uint64_t getUpperBound(
+        const uint64_t val,
+        const uint64_t nearestMultiple
+    )
     {
         return getLowerBound(val, nearestMultiple) + nearestMultiple;
     }
 
     bool isInputUnlocked(
-            const uint64_t unlockTime,
-            const uint64_t currentHeight)
+        const uint64_t unlockTime,
+        const uint64_t currentHeight
+    )
     {
         /* Might as well return fast with the case that is true for nearly all
            transactions (excluding coinbase) */
@@ -60,44 +71,44 @@ namespace Utilities
            timestamp, otherwise we treat it as a block height */
         if (unlockTime >= CryptoNote::parameters::CRYPTONOTE_MAX_BLOCK_NUMBER)
         {
-            const uint64_t currentTimeAdjusted = static_cast<uint64_t>(std::time(nullptr))
-                                                 + CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS;
+            const uint64_t currentTimeAdjusted = static_cast<uint64_t>(std::time(nullptr)) +
+                                                 CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS;
 
             return currentTimeAdjusted >= unlockTime;
         }
 
-        const uint64_t currentHeightAdjusted = currentHeight
-                                               + CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS;
+        const uint64_t
+            currentHeightAdjusted = currentHeight + CryptoNote::parameters::CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS;
 
         return currentHeightAdjusted >= unlockTime;
     }
 
-/* The formula for the block size is as follows. Calculate the
-   maxBlockCumulativeSize. This is equal to:
-   100,000 + ((height * 102,400) / 1,051,200)
-   At a block height of 400k, this gives us a size of 138,964.
-   The constants this calculation arise from can be seen below, or in
-   src/CryptoNoteCore/Currency.cpp::maxBlockCumulativeSize(). Call this value
-   x.
+    /* The formula for the block size is as follows. Calculate the
+       maxBlockCumulativeSize. This is equal to:
+       100,000 + ((height * 102,400) / 1,051,200)
+       At a block height of 400k, this gives us a size of 138,964.
+       The constants this calculation arise from can be seen below, or in
+       src/CryptoNoteCore/Currency.cpp::maxBlockCumulativeSize(). Call this value
+       x.
 
-   Next, calculate the median size of the last 100 blocks. Take the max of
-   this value, and 100,000. Multiply this value by 1.25. Call this value y.
+       Next, calculate the median size of the last 100 blocks. Take the max of
+       this value, and 100,000. Multiply this value by 1.25. Call this value y.
 
-   Finally, return the minimum of x and y.
+       Finally, return the minimum of x and y.
 
-   Or, in short: min(140k (slowly rising), 1.25 * max(100k, median(last 100 blocks size)))
-   Block size will always be 125k or greater (Assuming non testnet)
+       Or, in short: min(140k (slowly rising), 1.25 * max(100k, median(last 100 blocks size)))
+       Block size will always be 125k or greater (Assuming non testnet)
 
-   To get the max transaction size, remove 600 from this value, for the
-   reserved miner transaction.
+       To get the max transaction size, remove 600 from this value, for the
+       reserved miner transaction.
 
-   We are going to ignore the median(last 100 blocks size), as it is possible
-   for a transaction to be valid for inclusion in a block when it is submitted,
-   but not when it actually comes to be mined, for example if the median
-   block size suddenly decreases. This gives a bit of a lower cap of max
-   tx sizes, but prevents anything getting stuck in the pool.
+       We are going to ignore the median(last 100 blocks size), as it is possible
+       for a transaction to be valid for inclusion in a block when it is submitted,
+       but not when it actually comes to be mined, for example if the median
+       block size suddenly decreases. This gives a bit of a lower cap of max
+       tx sizes, but prevents anything getting stuck in the pool.
 
-*/
+    */
     uint64_t getMaxTxSize(const uint64_t currentHeight)
     {
         const uint64_t numerator = currentHeight * CryptoNote::parameters::MAX_BLOCK_SIZE_GROWTH_SPEED_NUMERATOR;
@@ -113,11 +124,12 @@ namespace Utilities
         return std::min(x, y) - CryptoNote::parameters::CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE;
     }
 
-/* Sleep for approximately duration, unless condition is true. This lets us
-   not bother the node too often, but makes shutdown times still quick. */
+    /* Sleep for approximately duration, unless condition is true. This lets us
+       not bother the node too often, but makes shutdown times still quick. */
     void sleepUnlessStopping(
-            const std::chrono::milliseconds duration,
-            std::atomic<bool> &condition)
+        const std::chrono::milliseconds duration,
+        std::atomic<bool> &condition
+    )
     {
         auto sleptFor = std::chrono::milliseconds::zero();
 
@@ -132,7 +144,7 @@ namespace Utilities
         }
     }
 
-/* Converts a height to a timestamp */
+    /* Converts a height to a timestamp */
     uint64_t scanHeightToTimestamp(const uint64_t scanHeight)
     {
         if (scanHeight == 0)
@@ -141,12 +153,10 @@ namespace Utilities
         }
 
         /* Get the amount of seconds since the blockchain launched */
-        uint64_t secondsSinceLaunch = scanHeight *
-                                      CryptoNote::parameters::DIFFICULTY_TARGET;
+        uint64_t secondsSinceLaunch = scanHeight * CryptoNote::parameters::DIFFICULTY_TARGET;
 
         /* Get the genesis block timestamp and add the time since launch */
-        uint64_t timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP
-                             + secondsSinceLaunch;
+        uint64_t timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP + secondsSinceLaunch;
 
         /* Don't make timestamp too large or daemon throws an error */
         if (timestamp >= getCurrentTimestampAdjusted())
@@ -176,8 +186,7 @@ namespace Utilities
         /* Get an estimation of the amount of blocks that have passed before the
            timestamp */
         return std::max<uint64_t>(
-                0,
-                (launchTimestampDelta / CryptoNote::parameters::DIFFICULTY_TARGET) - 10000
+            0, (launchTimestampDelta / CryptoNote::parameters::DIFFICULTY_TARGET) - 10000
         );
     }
 
@@ -187,12 +196,11 @@ namespace Utilities
         std::time_t time = std::time(nullptr);
 
         /* Take the amount of time a block can potentially be in the past/future */
-        std::initializer_list<uint64_t> limits =
-                {
-                        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT,
-                        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3,
-                        CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4
-                };
+        std::initializer_list<uint64_t> limits = {
+            CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT,
+            CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V3,
+            CryptoNote::parameters::CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT_V4
+        };
 
         /* Get the largest adjustment possible */
         uint64_t adjust = std::max(limits);
@@ -201,7 +209,11 @@ namespace Utilities
         return time - adjust;
     }
 
-    bool parseDaemonAddressFromString(std::string &host, uint16_t &port, std::string address)
+    bool parseDaemonAddressFromString(
+        std::string &host,
+        uint16_t &port,
+        std::string address
+    )
     {
         /* Lets users enter url's instead of host:port */
         address = Utilities::removePrefix(address, "https://");
@@ -212,7 +224,8 @@ namespace Utilities
         if (parts.empty())
         {
             return false;
-        } else if (parts.size() >= 2)
+        }
+        else if (parts.size() >= 2)
         {
             try
             {
@@ -233,9 +246,10 @@ namespace Utilities
     }
 
     size_t getApproximateMaximumInputCount(
-            const size_t transactionSize,
-            const size_t outputCount,
-            const size_t mixinCount)
+        const size_t transactionSize,
+        const size_t outputCount,
+        const size_t mixinCount
+    )
     {
 
         const size_t KEY_IMAGE_SIZE = sizeof(Crypto::KeyImage);
@@ -253,15 +267,13 @@ namespace Utilities
         const size_t TRANSACTION_UNLOCK_TIME_SIZE = sizeof(uint64_t);
 
         const size_t outputsSize = outputCount * (OUTPUT_TAG_SIZE + OUTPUT_KEY_SIZE + AMOUNT_SIZE);
-        const size_t headerSize =
-                TRANSACTION_VERSION_SIZE + TRANSACTION_UNLOCK_TIME_SIZE + EXTRA_TAG_SIZE + PUBLIC_KEY_SIZE;
+        const size_t
+            headerSize = TRANSACTION_VERSION_SIZE + TRANSACTION_UNLOCK_TIME_SIZE + EXTRA_TAG_SIZE + PUBLIC_KEY_SIZE;
         const size_t inputSize =
-                INPUT_TAG_SIZE + AMOUNT_SIZE + KEY_IMAGE_SIZE + SIGNATURE_SIZE + GLOBAL_INDEXES_VECTOR_SIZE_SIZE +
-                GLOBAL_INDEXES_INITIAL_VALUE_SIZE +
-                mixinCount * (GLOBAL_INDEXES_DIFFERENCE_SIZE + SIGNATURE_SIZE);
+            INPUT_TAG_SIZE + AMOUNT_SIZE + KEY_IMAGE_SIZE + SIGNATURE_SIZE + GLOBAL_INDEXES_VECTOR_SIZE_SIZE +
+            GLOBAL_INDEXES_INITIAL_VALUE_SIZE + mixinCount * (GLOBAL_INDEXES_DIFFERENCE_SIZE + SIGNATURE_SIZE);
 
         return (transactionSize - headerSize - outputsSize) / inputSize;
     }
-
 
 } // namespace Utilities

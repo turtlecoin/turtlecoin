@@ -24,86 +24,126 @@ namespace CryptoNote
 
     class INode;
 
-    class TransfersConsumer : public IObservableImpl<IBlockchainConsumerObserver, IBlockchainConsumer>
+    class TransfersConsumer : public IObservableImpl<
+        IBlockchainConsumerObserver, IBlockchainConsumer
+    >
     {
-    public:
+        public:
 
-        TransfersConsumer(const CryptoNote::Currency &currency, INode &node, std::shared_ptr<Logging::ILogger> logger,
-                          const Crypto::SecretKey &viewSecret);
+            TransfersConsumer(
+                const CryptoNote::Currency &currency,
+                INode &node,
+                std::shared_ptr<Logging::ILogger> logger,
+                const Crypto::SecretKey &viewSecret
+            );
 
-        ITransfersSubscription &addSubscription(const AccountSubscription &subscription);
+            ITransfersSubscription &addSubscription(const AccountSubscription &subscription);
 
-        // returns true if no subscribers left
-        bool removeSubscription(const AccountPublicAddress &address);
+            // returns true if no subscribers left
+            bool removeSubscription(const AccountPublicAddress &address);
 
-        ITransfersSubscription *getSubscription(const AccountPublicAddress &acc);
+            ITransfersSubscription *getSubscription(const AccountPublicAddress &acc);
 
-        void getSubscriptions(std::vector<AccountPublicAddress> &subscriptions);
+            void getSubscriptions(std::vector<AccountPublicAddress> &subscriptions);
 
-        void initTransactionPool(const std::unordered_set<Crypto::Hash> &uncommitedTransactions);
+            void initTransactionPool(const std::unordered_set<Crypto::Hash> &uncommitedTransactions);
 
-        void addPublicKeysSeen(const Crypto::Hash &transactionHash, const Crypto::PublicKey &outputKey);
+            void addPublicKeysSeen(
+                const Crypto::Hash &transactionHash,
+                const Crypto::PublicKey &outputKey
+            );
 
-        // IBlockchainConsumer
-        virtual SynchronizationStart getSyncStart() override;
+            // IBlockchainConsumer
+            virtual SynchronizationStart getSyncStart() override;
 
-        virtual void onBlockchainDetach(uint32_t height) override;
+            virtual void onBlockchainDetach(uint32_t height) override;
 
-        virtual uint32_t onNewBlocks(const CompleteBlock *blocks, uint32_t startHeight, uint32_t count) override;
+            virtual uint32_t onNewBlocks(
+                const CompleteBlock *blocks,
+                uint32_t startHeight,
+                uint32_t count
+            ) override;
 
-        virtual std::error_code onPoolUpdated(const std::vector<std::unique_ptr<ITransactionReader>> &addedTransactions,
-                                              const std::vector<Crypto::Hash> &deletedTransactions) override;
+            virtual std::error_code onPoolUpdated(
+                const std::vector<std::unique_ptr<ITransactionReader>> &addedTransactions,
+                const std::vector<Crypto::Hash> &deletedTransactions
+            ) override;
 
-        virtual const std::unordered_set<Crypto::Hash> &getKnownPoolTxIds() const override;
+            virtual const std::unordered_set<Crypto::Hash> &getKnownPoolTxIds() const override;
 
-        virtual std::error_code addUnconfirmedTransaction(const ITransactionReader &transaction) override;
+            virtual std::error_code addUnconfirmedTransaction(const ITransactionReader &transaction) override;
 
-        virtual void removeUnconfirmedTransaction(const Crypto::Hash &transactionHash) override;
+            virtual void removeUnconfirmedTransaction(const Crypto::Hash &transactionHash) override;
 
-    private:
+        private:
 
-        template<typename F>
-        void forEachSubscription(F action)
-        {
-            for (const auto &kv : m_subscriptions)
+            template<typename F>
+            void forEachSubscription(F action)
             {
-                action(*kv.second);
+                for (const auto &kv : m_subscriptions)
+                {
+                    action(*kv.second);
+                }
             }
-        }
 
-        struct PreprocessInfo
-        {
-            std::unordered_map<Crypto::PublicKey, std::vector<TransactionOutputInformationIn>> outputs;
-            std::vector<uint32_t> globalIdxs;
-        };
+            struct PreprocessInfo
+            {
+                std::unordered_map<
+                    Crypto::PublicKey, std::vector<TransactionOutputInformationIn>> outputs;
+                std::vector<uint32_t> globalIdxs;
+            };
 
-        std::error_code
-        preprocessOutputs(const TransactionBlockInfo &blockInfo, const ITransactionReader &tx, PreprocessInfo &info);
+            std::error_code preprocessOutputs(
+                const TransactionBlockInfo &blockInfo,
+                const ITransactionReader &tx,
+                PreprocessInfo &info
+            );
 
-        std::error_code processTransaction(const TransactionBlockInfo &blockInfo, const ITransactionReader &tx);
+            std::error_code processTransaction(
+                const TransactionBlockInfo &blockInfo,
+                const ITransactionReader &tx
+            );
 
-        void processTransaction(const TransactionBlockInfo &blockInfo, const ITransactionReader &tx,
-                                const PreprocessInfo &info);
+            void processTransaction(
+                const TransactionBlockInfo &blockInfo,
+                const ITransactionReader &tx,
+                const PreprocessInfo &info
+            );
 
-        void
-        processOutputs(const TransactionBlockInfo &blockInfo, TransfersSubscription &sub, const ITransactionReader &tx,
-                       const std::vector<TransactionOutputInformationIn> &outputs,
-                       const std::vector<uint32_t> &globalIdxs, bool &contains, bool &updated);
+            void processOutputs(
+                const TransactionBlockInfo &blockInfo,
+                TransfersSubscription &sub,
+                const ITransactionReader &tx,
+                const std::vector<TransactionOutputInformationIn> &outputs,
+                const std::vector<uint32_t> &globalIdxs,
+                bool &contains,
+                bool &updated
+            );
 
-        std::error_code getGlobalIndices(const Crypto::Hash &transactionHash, std::vector<uint32_t> &outsGlobalIndices);
+            std::error_code getGlobalIndices(
+                const Crypto::Hash &transactionHash,
+                std::vector<uint32_t> &outsGlobalIndices
+            );
 
-        void updateSyncStart();
+            void updateSyncStart();
 
-        SynchronizationStart m_syncStart;
-        const Crypto::SecretKey m_viewSecret;
-        // map { spend public key -> subscription }
-        std::unordered_map<Crypto::PublicKey, std::unique_ptr<TransfersSubscription>> m_subscriptions;
-        std::unordered_set<Crypto::PublicKey> m_spendKeys;
-        std::unordered_set<Crypto::Hash> m_poolTxs;
+            SynchronizationStart m_syncStart;
 
-        INode &m_node;
-        const CryptoNote::Currency &m_currency;
-        Logging::LoggerRef m_logger;
+            const Crypto::SecretKey m_viewSecret;
+
+            // map { spend public key -> subscription }
+            std::unordered_map<
+                Crypto::PublicKey, std::unique_ptr<TransfersSubscription>> m_subscriptions;
+
+            std::unordered_set<Crypto::PublicKey> m_spendKeys;
+
+            std::unordered_set<Crypto::Hash> m_poolTxs;
+
+            INode &m_node;
+
+            const CryptoNote::Currency &m_currency;
+
+            Logging::LoggerRef m_logger;
     };
 
 }

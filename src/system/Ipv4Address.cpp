@@ -12,7 +12,10 @@ namespace System
     namespace
     {
 
-        uint8_t readUint8(const std::string &source, size_t &offset)
+        uint8_t readUint8(
+            const std::string &source,
+            size_t &offset
+        )
         {
             if (offset == source.size() || source[offset] < '0' || source[offset] > '9')
             {
@@ -123,11 +126,11 @@ namespace System
     {
         return
             // 10.0.0.0/8
-                (int) (value & 0xff000000) == (int) (10 << 24) ||
-                // 172.16.0.0/12
-                (int) (value & 0xfff00000) == (int) ((172 << 24) | (16 << 16)) ||
-                // 192.168.0.0/16
-                (int) (value & 0xffff0000) == (int) ((192 << 24) | (168 << 16));
+            (int) (value & 0xff000000) == (int) (10 << 24) ||
+            // 172.16.0.0/12
+            (int) (value & 0xfff00000) == (int) ((172 << 24) | (16 << 16)) ||
+            // 192.168.0.0/16
+            (int) (value & 0xffff0000) == (int) ((192 << 24) | (168 << 16));
     }
 
 }

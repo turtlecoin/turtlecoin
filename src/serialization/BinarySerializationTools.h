@@ -27,7 +27,10 @@ namespace CryptoNote
     }
 
     template<typename T>
-    void loadFromBinary(T &obj, const BinaryArray &blob)
+    void loadFromBinary(
+        T &obj,
+        const BinaryArray &blob
+    )
     {
         Common::MemoryInputStream stream(blob.data(), blob.size());
         BinaryInputStreamSerializer ba(stream);
@@ -35,7 +38,10 @@ namespace CryptoNote
     }
 
     template<typename T>
-    bool storeToBinaryFile(const T &obj, const std::string &filename)
+    bool storeToBinaryFile(
+        const T &obj,
+        const std::string &filename
+    )
     {
         try
         {
@@ -56,7 +62,8 @@ namespace CryptoNote
             }
 
             dataFile.flush();
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }
@@ -65,7 +72,10 @@ namespace CryptoNote
     }
 
     template<class T>
-    bool loadFromBinaryFile(T &obj, const std::string &filename)
+    bool loadFromBinaryFile(
+        T &obj,
+        const std::string &filename
+    )
     {
         try
         {
@@ -80,7 +90,8 @@ namespace CryptoNote
             BinaryInputStreamSerializer in(stream);
             serialize(obj, in);
             return !dataFile.fail();
-        } catch (std::exception &)
+        }
+        catch (std::exception &)
         {
             return false;
         }

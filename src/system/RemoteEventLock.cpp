@@ -13,25 +13,32 @@
 namespace System
 {
 
-    RemoteEventLock::RemoteEventLock(Dispatcher &dispatcher, Event &event) : dispatcher(dispatcher), event(event)
+    RemoteEventLock::RemoteEventLock(
+        Dispatcher &dispatcher,
+        Event &event
+    )
+        : dispatcher(dispatcher),
+          event(event)
     {
         std::mutex mutex;
         std::condition_variable condition;
         bool locked = false;
 
-        dispatcher.remoteSpawn([&]()
-                               {
-                                   while (!event.get())
-                                   {
-                                       event.wait();
-                                   }
+        dispatcher.remoteSpawn(
+            [&]()
+            {
+                while (!event.get())
+                {
+                    event.wait();
+                }
 
-                                   event.clear();
-                                   mutex.lock();
-                                   locked = true;
-                                   condition.notify_one();
-                                   mutex.unlock();
-                               });
+                event.clear();
+                mutex.lock();
+                locked = true;
+                condition.notify_one();
+                mutex.unlock();
+            }
+        );
 
         std::unique_lock<std::mutex> lock(mutex);
         while (!locked)
@@ -47,16 +54,18 @@ namespace System
         bool locked = true;
 
         Event *eventPointer = &event;
-        dispatcher.remoteSpawn([&]()
-                               {
-                                   assert(!eventPointer->get());
-                                   eventPointer->set();
+        dispatcher.remoteSpawn(
+            [&]()
+            {
+                assert(!eventPointer->get());
+                eventPointer->set();
 
-                                   mutex.lock();
-                                   locked = false;
-                                   condition.notify_one();
-                                   mutex.unlock();
-                               });
+                mutex.lock();
+                locked = false;
+                condition.notify_one();
+                mutex.unlock();
+            }
+        );
 
         std::unique_lock<std::mutex> lock(mutex);
         while (locked)

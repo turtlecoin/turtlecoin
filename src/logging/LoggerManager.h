@@ -16,17 +16,22 @@ namespace Logging
 
     class LoggerManager : public LoggerGroup
     {
-    public:
-        LoggerManager();
+        public:
+            LoggerManager();
 
-        void configure(const Common::JsonValue &val);
+            void configure(const Common::JsonValue &val);
 
-        virtual void operator()(const std::string &category, Level level, boost::posix_time::ptime time,
-                                const std::string &body) override;
+            virtual void operator()(
+                const std::string &category,
+                Level level,
+                boost::posix_time::ptime time,
+                const std::string &body
+            ) override;
 
-    private:
-        std::vector<std::unique_ptr<CommonLogger>> loggers;
-        std::mutex reconfigureLock;
+        private:
+            std::vector<std::unique_ptr<CommonLogger>> loggers;
+
+            std::mutex reconfigureLock;
     };
 
 }

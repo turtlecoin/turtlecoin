@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
 #endif
 
 #include <winsock2.h>
@@ -69,7 +69,7 @@ namespace System
             if (closesocket(connection) != 0)
             {
                 throw std::runtime_error(
-                        "TcpConnection::operator=, closesocket failed, " + errorMessage(WSAGetLastError()));
+                    "TcpConnection::operator=, closesocket failed, " + errorMessage(WSAGetLastError()));
             }
         }
 
@@ -87,7 +87,10 @@ namespace System
         return *this;
     }
 
-    size_t TcpConnection::read(uint8_t *data, size_t size)
+    size_t TcpConnection::read(
+        uint8_t *data,
+        size_t size
+    )
     {
         assert(dispatcher != nullptr);
         assert(readContext == nullptr);
@@ -96,7 +99,10 @@ namespace System
             throw InterruptedException();
         }
 
-        WSABUF buf{static_cast<ULONG>(size), reinterpret_cast<char *>(data)};
+        WSABUF buf{
+            static_cast<ULONG>(size),
+            reinterpret_cast<char *>(data)
+        };
         DWORD flags = 0;
         TcpConnectionContext context;
         context.hEvent = NULL;
@@ -148,7 +154,7 @@ namespace System
             if (lastError != ERROR_OPERATION_ABORTED)
             {
                 throw std::runtime_error(
-                        "TcpConnection::read, WSAGetOverlappedResult failed, " + errorMessage(lastError));
+                    "TcpConnection::read, WSAGetOverlappedResult failed, " + errorMessage(lastError));
             }
 
             assert(context.interrupted);
@@ -165,7 +171,10 @@ namespace System
         return transferred;
     }
 
-    size_t TcpConnection::write(const uint8_t *data, size_t size)
+    size_t TcpConnection::write(
+        const uint8_t *data,
+        size_t size
+    )
     {
         assert(dispatcher != nullptr);
         assert(writeContext == nullptr);
@@ -184,7 +193,10 @@ namespace System
             return 0;
         }
 
-        WSABUF buf{static_cast<ULONG>(size), reinterpret_cast<char *>(const_cast<uint8_t *>(data))};
+        WSABUF buf{
+            static_cast<ULONG>(size),
+            reinterpret_cast<char *>(const_cast<uint8_t *>(data))
+        };
         TcpConnectionContext context;
         context.hEvent = NULL;
         if (WSASend(connection, &buf, 1, NULL, 0, &context, NULL) != 0)
@@ -235,7 +247,7 @@ namespace System
             if (lastError != ERROR_OPERATION_ABORTED)
             {
                 throw std::runtime_error(
-                        "TcpConnection::write, WSAGetOverlappedResult failed, " + errorMessage(lastError));
+                    "TcpConnection::write, WSAGetOverlappedResult failed, " + errorMessage(lastError));
             }
 
             assert(context.interrupted);
@@ -252,22 +264,30 @@ namespace System
         return transferred;
     }
 
-    std::pair<Ipv4Address, uint16_t> TcpConnection::getPeerAddressAndPort() const
+    std::pair<
+        Ipv4Address, uint16_t
+    > TcpConnection::getPeerAddressAndPort() const
     {
         sockaddr_in address;
         int size = sizeof(address);
         if (getpeername(connection, reinterpret_cast<sockaddr *>(&address), &size) != 0)
         {
             throw std::runtime_error(
-                    "TcpConnection::getPeerAddress, getpeername failed, " + errorMessage(WSAGetLastError()));
+                "TcpConnection::getPeerAddress, getpeername failed, " + errorMessage(WSAGetLastError()));
         }
 
         assert(size == sizeof(sockaddr_in));
         return std::make_pair(Ipv4Address(htonl(address.sin_addr.S_un.S_addr)), htons(address.sin_port));
     }
 
-    TcpConnection::TcpConnection(Dispatcher &dispatcher, size_t connection)
-            : dispatcher(&dispatcher), connection(connection), readContext(nullptr), writeContext(nullptr)
+    TcpConnection::TcpConnection(
+        Dispatcher &dispatcher,
+        size_t connection
+    )
+        : dispatcher(&dispatcher),
+          connection(connection),
+          readContext(nullptr),
+          writeContext(nullptr)
     {
     }
 

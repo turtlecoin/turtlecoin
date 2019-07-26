@@ -19,7 +19,10 @@ enum WalletState
 
 /* Functions the same as body.at(key).get<T>(), but gives better error messages */
 template<typename T>
-T getJsonValue(const nlohmann::json &body, const std::string key)
+T getJsonValue(
+    const nlohmann::json &body,
+    const std::string key
+)
 {
     if (body.find(key) == body.end())
     {
@@ -45,341 +48,464 @@ T getJsonValue(const nlohmann::json &body, const std::string key)
 
 class ApiDispatcher
 {
-public:
-    //////////////////
-    /* Constructors */
-    //////////////////
+    public:
+        //////////////////
+        /* Constructors */
+        //////////////////
 
-    ApiDispatcher(
+        ApiDispatcher(
             const uint16_t bindPort,
             const std::string rpcBindIp,
             const std::string rpcPassword,
             std::string corsHeader,
             unsigned int walletSyncThreads = std::thread::hardware_concurrency());
 
-    /////////////////////////////
-    /* Public member functions */
-    /////////////////////////////
+        /////////////////////////////
+        /* Public member functions */
+        /////////////////////////////
 
-    /* Starts the server */
-    void start();
+        /* Starts the server */
+        void start();
 
-    /* Stops the server */
-    void stop();
+        /* Stops the server */
+        void stop();
 
-private:
+    private:
 
-    //////////////////////////////
-    /* Private member functions */
-    //////////////////////////////
+        //////////////////////////////
+        /* Private member functions */
+        //////////////////////////////
 
-    /* Check authentication and log, then forward on to the handler if
-       applicable */
-    void middleware(
+        /* Check authentication and log, then forward on to the handler if
+           applicable */
+        void middleware(
             const httplib::Request &req,
             httplib::Response &res,
             const WalletState walletState,
             const bool viewWalletsPermitted,
-            std::function<std::tuple<Error, uint16_t>
-                    (const httplib::Request &req,
-                     httplib::Response &res,
-                     const nlohmann::json &body)> handler);
+            std::function<
+                std::tuple<
+                    Error, uint16_t
+                >(
+                    const httplib::Request &req,
+                    httplib::Response &res,
+                    const nlohmann::json &body
+                )
+            > handler
+        );
 
-    /* Verifies that the request has the correct X-API-KEY, and sends a 401
-       if it is not. */
-    bool checkAuthenticated(
+        /* Verifies that the request has the correct X-API-KEY, and sends a 401
+           if it is not. */
+        bool checkAuthenticated(
             const httplib::Request &req,
-            httplib::Response &res) const;
+            httplib::Response &res
+        ) const;
 
-    ///////////////////
-    /* POST REQUESTS */
-    ///////////////////
+        ///////////////////
+        /* POST REQUESTS */
+        ///////////////////
 
-    /* Opens a wallet */
-    std::tuple<Error, uint16_t> openWallet(
-            const httplib::Request &req,
-            httplib::Response &res,
-            const nlohmann::json &body);
-
-    /* Imports a wallet using a private spend + private view key */
-    std::tuple<Error, uint16_t> keyImportWallet(
-            const httplib::Request &req,
-            httplib::Response &res,
-            const nlohmann::json &body);
-
-    /* Imports a wallet using a mnemonic seed */
-    std::tuple<Error, uint16_t> seedImportWallet(
+        /* Opens a wallet */
+        std::tuple<
+            Error, uint16_t
+        > openWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /* Imports a view only wallet using a private view key + address */
-    std::tuple<Error, uint16_t> importViewWallet(
+        /* Imports a wallet using a private spend + private view key */
+        std::tuple<
+            Error, uint16_t
+        > keyImportWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /* Creates a new wallet, which will be a deterministic wallet */
-    std::tuple<Error, uint16_t> createWallet(
+        /* Imports a wallet using a mnemonic seed */
+        std::tuple<
+            Error, uint16_t
+        > seedImportWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /* Create a new random address */
-    std::tuple<Error, uint16_t> createAddress(
+        /* Imports a view only wallet using a private view key + address */
+        std::tuple<
+            Error, uint16_t
+        > importViewWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /* Imports an address with a private spend key */
-    std::tuple<Error, uint16_t> importAddress(
+        /* Creates a new wallet, which will be a deterministic wallet */
+        std::tuple<
+            Error, uint16_t
+        > createWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /* Imports a view only address with a public spend key */
-    std::tuple<Error, uint16_t> importViewAddress(
+        /* Create a new random address */
+        std::tuple<
+            Error, uint16_t
+        > createAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    std::tuple<Error, uint16_t> validateAddress(
+        /* Imports an address with a private spend key */
+        std::tuple<
+            Error, uint16_t
+        > importAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    std::tuple<Error, uint16_t> sendBasicTransaction(
+        /* Imports a view only address with a public spend key */
+        std::tuple<
+            Error, uint16_t
+        > importViewAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    std::tuple<Error, uint16_t> sendAdvancedTransaction(
+        std::tuple<
+            Error, uint16_t
+        > validateAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    std::tuple<Error, uint16_t> sendBasicFusionTransaction(
+        std::tuple<
+            Error, uint16_t
+        > sendBasicTransaction(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    std::tuple<Error, uint16_t> sendAdvancedFusionTransaction(
+        std::tuple<
+            Error, uint16_t
+        > sendAdvancedTransaction(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /////////////////////
-    /* DELETE REQUESTS */
-    /////////////////////
-
-    /* Close and save the wallet */
-    std::tuple<Error, uint16_t> closeWallet(
+        std::tuple<
+            Error, uint16_t
+        > sendBasicFusionTransaction(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    std::tuple<Error, uint16_t> deleteAddress(
+        std::tuple<
+            Error, uint16_t
+        > sendAdvancedFusionTransaction(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    //////////////////
-    /* PUT REQUESTS */
-    //////////////////
+        /////////////////////
+        /* DELETE REQUESTS */
+        /////////////////////
 
-    /* Saves the wallet (Note - interrupts syncing for a short time) */
-    std::tuple<Error, uint16_t> saveWallet(
+        /* Close and save the wallet */
+        std::tuple<
+            Error, uint16_t
+        > closeWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        );
 
-    /* Resets and saves the wallet */
-    std::tuple<Error, uint16_t> resetWallet(
+        std::tuple<
+            Error, uint16_t
+        > deleteAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        );
 
-    /* Sets the daemon node and port */
-    std::tuple<Error, uint16_t> setNodeInfo(
+        //////////////////
+        /* PUT REQUESTS */
+        //////////////////
+
+        /* Saves the wallet (Note - interrupts syncing for a short time) */
+        std::tuple<
+            Error, uint16_t
+        > saveWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body);
+            const nlohmann::json &body
+        ) const;
 
-    //////////////////
-    /* GET REQUESTS */
-    //////////////////
-
-    /* Gets the node we are currently connected to, and its fee */
-    std::tuple<Error, uint16_t> getNodeInfo(
+        /* Resets and saves the wallet */
+        std::tuple<
+            Error, uint16_t
+        > resetWallet(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        );
 
-    /* Gets the shared private view key */
-    std::tuple<Error, uint16_t> getPrivateViewKey(
+        /* Sets the daemon node and port */
+        std::tuple<
+            Error, uint16_t
+        > setNodeInfo(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        );
 
-    /* Gets the spend keys for the given address */
-    std::tuple<Error, uint16_t> getSpendKeys(
+        //////////////////
+        /* GET REQUESTS */
+        //////////////////
+
+        /* Gets the node we are currently connected to, and its fee */
+        std::tuple<
+            Error, uint16_t
+        > getNodeInfo(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    /* Gets the mnemonic seed for the given address (if possible) */
-    std::tuple<Error, uint16_t> getMnemonicSeed(
+        /* Gets the shared private view key */
+        std::tuple<
+            Error, uint16_t
+        > getPrivateViewKey(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    /* Returns sync status, peer count, etc */
-    std::tuple<Error, uint16_t> getStatus(
+        /* Gets the spend keys for the given address */
+        std::tuple<
+            Error, uint16_t
+        > getSpendKeys(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getAddresses(
+        /* Gets the mnemonic seed for the given address (if possible) */
+        std::tuple<
+            Error, uint16_t
+        > getMnemonicSeed(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getPrimaryAddress(
+        /* Returns sync status, peer count, etc */
+        std::tuple<
+            Error, uint16_t
+        > getStatus(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> createIntegratedAddress(
+        std::tuple<
+            Error, uint16_t
+        > getAddresses(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTransactions(
+        std::tuple<
+            Error, uint16_t
+        > getPrimaryAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getUnconfirmedTransactions(
+        std::tuple<
+            Error, uint16_t
+        > createIntegratedAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getUnconfirmedTransactionsForAddress(
+        std::tuple<
+            Error, uint16_t
+        > getTransactions(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTransactionsFromHeight(
+        std::tuple<
+            Error, uint16_t
+        > getUnconfirmedTransactions(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTransactionsFromHeightToHeight(
+        std::tuple<
+            Error, uint16_t
+        > getUnconfirmedTransactionsForAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTransactionsFromHeightWithAddress(
+        std::tuple<
+            Error, uint16_t
+        > getTransactionsFromHeight(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTransactionsFromHeightToHeightWithAddress(
+        std::tuple<
+            Error, uint16_t
+        > getTransactionsFromHeightToHeight(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTransactionDetails(
+        std::tuple<
+            Error, uint16_t
+        > getTransactionsFromHeightWithAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getBalance(
+        std::tuple<
+            Error, uint16_t
+        > getTransactionsFromHeightToHeightWithAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getBalanceForAddress(
+        std::tuple<
+            Error, uint16_t
+        > getTransactionDetails(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getBalances(
+        std::tuple<
+            Error, uint16_t
+        > getBalance(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    std::tuple<Error, uint16_t> getTxPrivateKey(
+        std::tuple<
+            Error, uint16_t
+        > getBalanceForAddress(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body) const;
+            const nlohmann::json &body
+        ) const;
 
-    //////////////////////
-    /* OPTIONS REQUESTS */
-    //////////////////////
-
-    /* Handles an OPTIONS request */
-    void handleOptions(
+        std::tuple<
+            Error, uint16_t
+        > getBalances(
             const httplib::Request &req,
-            httplib::Response &res) const;
+            httplib::Response &res,
+            const nlohmann::json &body
+        ) const;
 
-    //////////////////////////
-    /* END OF API FUNCTIONS */
-    //////////////////////////
+        std::tuple<
+            Error, uint16_t
+        > getTxPrivateKey(
+            const httplib::Request &req,
+            httplib::Response &res,
+            const nlohmann::json &body
+        ) const;
 
-    /* Extracts {host, port, ssl, filename, password}, from body */
-    std::tuple<std::string, uint16_t, bool, std::string, std::string>
-    getDefaultWalletParams(const nlohmann::json body) const;
+        //////////////////////
+        /* OPTIONS REQUESTS */
+        //////////////////////
 
-    /* Assert the wallet is not a view only wallet */
-    bool assertIsNotViewWallet() const;
+        /* Handles an OPTIONS request */
+        void handleOptions(
+            const httplib::Request &req,
+            httplib::Response &res
+        ) const;
 
-    /* Assert the wallet is a view wallet */
-    bool assertIsViewWallet() const;
+        //////////////////////////
+        /* END OF API FUNCTIONS */
+        //////////////////////////
 
-    /* Assert the wallet is closed */
-    bool assertWalletClosed() const;
+        /* Extracts {host, port, ssl, filename, password}, from body */
+        std::tuple<
+            std::string, uint16_t, bool, std::string, std::string
+        > getDefaultWalletParams(const nlohmann::json body) const;
 
-    /* Assert the wallet is open */
-    bool assertWalletOpen() const;
+        /* Assert the wallet is not a view only wallet */
+        bool assertIsNotViewWallet() const;
 
-    /* Converts a public spend key to an address in a transactions json */
-    void publicKeysToAddresses(nlohmann::json &j) const;
+        /* Assert the wallet is a view wallet */
+        bool assertIsViewWallet() const;
 
-    std::string hashPassword(const std::string password) const;
+        /* Assert the wallet is closed */
+        bool assertWalletClosed() const;
 
-    //////////////////////////////
-    /* Private member variables */
-    //////////////////////////////
+        /* Assert the wallet is open */
+        bool assertWalletOpen() const;
 
-    std::shared_ptr<WalletBackend> m_walletBackend = nullptr;
+        /* Converts a public spend key to an address in a transactions json */
+        void publicKeysToAddresses(nlohmann::json &j) const;
 
-    /* Our server instance */
-    httplib::Server m_server;
+        std::string hashPassword(const std::string password) const;
 
-    /* The --rpc-password hashed with pbkdf2 */
-    std::string m_hashedPassword;
+        //////////////////////////////
+        /* Private member variables */
+        //////////////////////////////
 
-    /* The rpc password - only stored to help indicate invalid passwords */
-    std::string m_rpcPassword;
+        std::shared_ptr<WalletBackend> m_walletBackend = nullptr;
 
-    /* Need a mutex for some actions, mainly mutating actions, like opening
-       wallets, sending transfers, etc */
-    mutable std::mutex m_mutex;
+        /* Our server instance */
+        httplib::Server m_server;
 
-    /* The server host */
-    std::string m_host;
+        /* The --rpc-password hashed with pbkdf2 */
+        std::string m_hashedPassword;
 
-    /* The server port */
-    uint16_t m_port;
+        /* The rpc password - only stored to help indicate invalid passwords */
+        std::string m_rpcPassword;
 
-    /* The header to use with 'Access-Control-Allow-Origin'. If empty string,
-       header is not added. */
-    std::string m_corsHeader;
+        /* Need a mutex for some actions, mainly mutating actions, like opening
+           wallets, sending transfers, etc */
+        mutable std::mutex m_mutex;
 
-    /* Used along with our password with pbkdf2 */
-    CryptoPP::byte m_salt[16];
+        /* The server host */
+        std::string m_host;
 
-    /* Amount of threads to use during wallet syncing */
-    unsigned int m_walletSyncThreads;
+        /* The server port */
+        uint16_t m_port;
+
+        /* The header to use with 'Access-Control-Allow-Origin'. If empty string,
+           header is not added. */
+        std::string m_corsHeader;
+
+        /* Used along with our password with pbkdf2 */
+        CryptoPP::byte m_salt[16];
+
+        /* Amount of threads to use during wallet syncing */
+        unsigned int m_walletSyncThreads;
 };

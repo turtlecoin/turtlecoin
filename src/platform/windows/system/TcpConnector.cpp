@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
 #endif
 
 #include <winsock2.h>
@@ -40,7 +40,9 @@ namespace System
     {
     }
 
-    TcpConnector::TcpConnector(Dispatcher &dispatcher) : dispatcher(&dispatcher), context(nullptr)
+    TcpConnector::TcpConnector(Dispatcher &dispatcher)
+        : dispatcher(&dispatcher),
+          context(nullptr)
     {
     }
 
@@ -73,7 +75,10 @@ namespace System
         return *this;
     }
 
-    TcpConnection TcpConnector::connect(const Ipv4Address &address, uint16_t port)
+    TcpConnection TcpConnector::connect(
+        const Ipv4Address &address,
+        uint16_t port
+    )
     {
         assert(dispatcher != nullptr);
         assert(context == nullptr);
@@ -87,7 +92,8 @@ namespace System
         if (connection == INVALID_SOCKET)
         {
             message = "socket failed, " + errorMessage(WSAGetLastError());
-        } else
+        }
+        else
         {
             sockaddr_in bindAddress;
             bindAddress.sin_family = AF_INET;
@@ -96,23 +102,27 @@ namespace System
             if (bind(connection, reinterpret_cast<sockaddr *>(&bindAddress), sizeof bindAddress) != 0)
             {
                 message = "bind failed, " + errorMessage(WSAGetLastError());
-            } else
+            }
+            else
             {
                 GUID guidConnectEx = WSAID_CONNECTEX;
                 DWORD read = sizeof connectEx;
-                if (connectEx == nullptr &&
-                    WSAIoctl(connection, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidConnectEx, sizeof guidConnectEx, &connectEx, sizeof connectEx, &read, NULL, NULL) !=
-                    0)
+                if (connectEx == nullptr && WSAIoctl(
+                    connection, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidConnectEx, sizeof guidConnectEx, &connectEx, sizeof connectEx, &read, NULL, NULL
+                ) != 0)
                 {
                     message = "WSAIoctl failed, " + errorMessage(WSAGetLastError());
-                } else
+                }
+                else
                 {
                     assert(read == sizeof connectEx);
-                    if (CreateIoCompletionPort(reinterpret_cast<HANDLE>(connection), dispatcher->getCompletionPort(), 0, 0) !=
-                        dispatcher->getCompletionPort())
+                    if (CreateIoCompletionPort(
+                        reinterpret_cast<HANDLE>(connection), dispatcher->getCompletionPort(), 0, 0
+                    ) != dispatcher->getCompletionPort())
                     {
                         message = "CreateIoCompletionPort failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         sockaddr_in addressData;
                         addressData.sin_family = AF_INET;
@@ -120,17 +130,20 @@ namespace System
                         addressData.sin_addr.S_un.S_addr = htonl(address.getValue());
                         TcpConnectorContext context2;
                         context2.hEvent = NULL;
-                        if (connectEx(connection, reinterpret_cast<sockaddr *>(&addressData), sizeof addressData, NULL, 0, NULL, &context2) ==
-                            TRUE)
+                        if (connectEx(
+                            connection, reinterpret_cast<sockaddr *>(&addressData), sizeof addressData, NULL, 0, NULL, &context2
+                        ) == TRUE)
                         {
                             message = "ConnectEx returned immediately, which is not supported.";
-                        } else
+                        }
+                        else
                         {
                             int lastError = WSAGetLastError();
                             if (lastError != WSA_IO_PENDING)
                             {
                                 message = "ConnectEx failed, " + errorMessage(lastError);
-                            } else
+                            }
+                            else
                             {
                                 context2.context = dispatcher->getCurrentContext();
                                 context2.connection = connection;
@@ -150,7 +163,7 @@ namespace System
                                             if (lastError != ERROR_NOT_FOUND)
                                             {
                                                 throw std::runtime_error(
-                                                        "TcpConnector::stop, CancelIoEx failed, " + lastErrorMessage());
+                                                    "TcpConnector::stop, CancelIoEx failed, " + lastErrorMessage());
                                             }
 
                                             context2->context->interrupted = true;
@@ -175,27 +188,33 @@ namespace System
                                     if (lastError != ERROR_OPERATION_ABORTED)
                                     {
                                         message = "ConnectEx failed, " + errorMessage(lastError);
-                                    } else
+                                    }
+                                    else
                                     {
                                         assert(context2.interrupted);
                                         if (closesocket(connection) != 0)
                                         {
-                                            throw std::runtime_error("TcpConnector::connect, closesocket failed, " +
-                                                                     errorMessage(WSAGetLastError()));
-                                        } else
+                                            throw std::runtime_error(
+                                                "TcpConnector::connect, closesocket failed, " +
+                                                errorMessage(WSAGetLastError()));
+                                        }
+                                        else
                                         {
                                             throw InterruptedException();
                                         }
                                     }
-                                } else
+                                }
+                                else
                                 {
                                     if (context2.interrupted)
                                     {
                                         if (closesocket(connection) != 0)
                                         {
-                                            throw std::runtime_error("TcpConnector::connect, closesocket failed, " +
-                                                                     errorMessage(WSAGetLastError()));
-                                        } else
+                                            throw std::runtime_error(
+                                                "TcpConnector::connect, closesocket failed, " +
+                                                errorMessage(WSAGetLastError()));
+                                        }
+                                        else
                                         {
                                             throw InterruptedException();
                                         }
@@ -204,11 +223,13 @@ namespace System
                                     assert(transferred == 0);
                                     assert(flags == 0);
                                     DWORD value = 1;
-                                    if (setsockopt(connection, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, reinterpret_cast<char *>(&value), sizeof(value)) !=
+                                    if (setsockopt(
+                                        connection, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, reinterpret_cast<char *>(&value), sizeof(value)) !=
                                         0)
                                     {
                                         message = "setsockopt failed, " + errorMessage(WSAGetLastError());
-                                    } else
+                                    }
+                                    else
                                     {
                                         return TcpConnection(*dispatcher, connection);
                                     }

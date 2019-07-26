@@ -25,14 +25,16 @@ namespace CryptoNote
             if (in.type() == typeid(KeyInput))
             {
                 if (!ki.insert(boost::get<KeyInput>(in).keyImage).second)
+                {
                     return false;
+                }
             }
         }
 
         return true;
     }
 
-// TransactionInput helper functions
+    // TransactionInput helper functions
 
     size_t getRequiredSignaturesCount(const TransactionInput &in)
     {
@@ -69,7 +71,10 @@ namespace CryptoNote
         return TransactionTypes::InputType::Invalid;
     }
 
-    const TransactionInput &getInputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index)
+    const TransactionInput &getInputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index
+    )
     {
         if (transaction.inputs.size() <= index)
         {
@@ -79,8 +84,11 @@ namespace CryptoNote
         return transaction.inputs[index];
     }
 
-    const TransactionInput &
-    getInputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index, TransactionTypes::InputType type)
+    const TransactionInput &getInputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index,
+        TransactionTypes::InputType type
+    )
     {
         const auto &input = getInputChecked(transaction, index);
         if (getTransactionInputType(input) != type)
@@ -91,7 +99,7 @@ namespace CryptoNote
         return input;
     }
 
-// TransactionOutput helper functions
+    // TransactionOutput helper functions
 
     TransactionTypes::OutputType getTransactionOutputType(const TransactionOutputTarget &out)
     {
@@ -103,7 +111,10 @@ namespace CryptoNote
         return TransactionTypes::OutputType::Invalid;
     }
 
-    const TransactionOutput &getOutputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index)
+    const TransactionOutput &getOutputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index
+    )
     {
         if (transaction.outputs.size() <= index)
         {
@@ -113,8 +124,11 @@ namespace CryptoNote
         return transaction.outputs[index];
     }
 
-    const TransactionOutput &
-    getOutputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index, TransactionTypes::OutputType type)
+    const TransactionOutput &getOutputChecked(
+        const CryptoNote::TransactionPrefix &transaction,
+        size_t index,
+        TransactionTypes::OutputType type
+    )
     {
         const auto &output = getOutputChecked(transaction, index);
         if (getTransactionOutputType(output.target) != type)
@@ -125,8 +139,13 @@ namespace CryptoNote
         return output;
     }
 
-    bool findOutputsToAccount(const CryptoNote::TransactionPrefix &transaction, const AccountPublicAddress &addr,
-                              const SecretKey &viewSecretKey, std::vector<uint32_t> &out, uint64_t &amount)
+    bool findOutputsToAccount(
+        const CryptoNote::TransactionPrefix &transaction,
+        const AccountPublicAddress &addr,
+        const SecretKey &viewSecretKey,
+        std::vector<uint32_t> &out,
+        uint64_t &amount
+    )
     {
         AccountKeys keys;
         keys.address = addr;

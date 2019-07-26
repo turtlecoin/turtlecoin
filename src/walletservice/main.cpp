@@ -14,20 +14,20 @@
 #include "version.h"
 
 #ifdef WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
+    #ifndef NOMINMAX
+        #define NOMINMAX
+    #endif
 
-#include <windows.h>
-#include <winsvc.h>
+    #include <windows.h>
+    #include <winsvc.h>
 
 #else
-#include <unistd.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <errno.h>
+    #include <unistd.h>
+    #include <signal.h>
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <string.h>
+    #include <errno.h>
 #endif
 
 #define SERVICE_NAME "Turtle-Service"
@@ -35,14 +35,16 @@
 PaymentGateService *ppg;
 
 #ifdef WIN32
+
 SERVICE_STATUS_HANDLE serviceStatusHandle;
 
 std::string GetLastErrorMessage(DWORD errorMessageID)
 {
     LPSTR messageBuffer = nullptr;
     size_t size = FormatMessageA(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL, errorMessageID, 0, (LPSTR) &messageBuffer, 0, NULL);
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorMessageID, 0, (LPSTR) &messageBuffer, 0, NULL
+    );
 
     std::string message(messageBuffer, size);
 
@@ -58,14 +60,25 @@ void __stdcall serviceHandler(DWORD fdwControl)
         Logging::LoggerRef log(ppg->getLogger(), "serviceHandler");
         log(Logging::INFO, Logging::BRIGHT_YELLOW) << "Stop signal caught";
 
-        SERVICE_STATUS serviceStatus{SERVICE_WIN32_OWN_PROCESS, SERVICE_STOP_PENDING, 0, NO_ERROR, 0, 0, 0};
+        SERVICE_STATUS serviceStatus{
+            SERVICE_WIN32_OWN_PROCESS,
+            SERVICE_STOP_PENDING,
+            0,
+            NO_ERROR,
+            0,
+            0,
+            0
+        };
         SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
         ppg->stop();
     }
 }
 
-void __stdcall serviceMain(DWORD dwArgc, char **lpszArgv)
+void __stdcall serviceMain(
+    DWORD dwArgc,
+    char **lpszArgv
+)
 {
     Logging::LoggerRef logRef(ppg->getLogger(), "WindowsService");
 
@@ -77,7 +90,15 @@ void __stdcall serviceMain(DWORD dwArgc, char **lpszArgv)
         return;
     }
 
-    SERVICE_STATUS serviceStatus{SERVICE_WIN32_OWN_PROCESS, SERVICE_START_PENDING, 0, NO_ERROR, 0, 1, 3000};
+    SERVICE_STATUS serviceStatus{
+        SERVICE_WIN32_OWN_PROCESS,
+        SERVICE_START_PENDING,
+        0,
+        NO_ERROR,
+        0,
+        1,
+        3000
+    };
     if (SetServiceStatus(serviceStatusHandle, &serviceStatus) != TRUE)
     {
         logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Couldn't make SetServiceStatus call: "
@@ -85,7 +106,15 @@ void __stdcall serviceMain(DWORD dwArgc, char **lpszArgv)
         return;
     }
 
-    serviceStatus = {SERVICE_WIN32_OWN_PROCESS, SERVICE_RUNNING, SERVICE_ACCEPT_STOP, NO_ERROR, 0, 0, 0};
+    serviceStatus = {
+        SERVICE_WIN32_OWN_PROCESS,
+        SERVICE_RUNNING,
+        SERVICE_ACCEPT_STOP,
+        NO_ERROR,
+        0,
+        0,
+        0
+    };
     if (SetServiceStatus(serviceStatusHandle, &serviceStatus) != TRUE)
     {
         logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Couldn't make SetServiceStatus call: "
@@ -96,12 +125,21 @@ void __stdcall serviceMain(DWORD dwArgc, char **lpszArgv)
     try
     {
         ppg->run();
-    } catch (std::exception &ex)
+    }
+    catch (std::exception &ex)
     {
         logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Error occurred: " << ex.what();
     }
 
-    serviceStatus = {SERVICE_WIN32_OWN_PROCESS, SERVICE_STOPPED, 0, NO_ERROR, 0, 0, 0};
+    serviceStatus = {
+        SERVICE_WIN32_OWN_PROCESS,
+        SERVICE_STOPPED,
+        0,
+        NO_ERROR,
+        0,
+        0,
+        0
+    };
     SetServiceStatus(serviceStatusHandle, &serviceStatus);
 }
 
@@ -139,12 +177,10 @@ int daemonize() {
 
 int runDaemon()
 {
-#ifdef WIN32
+    #ifdef WIN32
 
-    SERVICE_TABLE_ENTRY serviceTable[]{
-            {"Payment Gate", serviceMain},
-            {NULL, NULL}
-    };
+    SERVICE_TABLE_ENTRY serviceTable[]{{"Payment Gate", serviceMain},
+                                       {NULL, NULL}};
 
     Logging::LoggerRef logRef(ppg->getLogger(), "RunService");
 
@@ -158,7 +194,7 @@ int runDaemon()
     logRef(Logging::INFO) << "Service stopped";
     return 0;
 
-#else
+    #else
 
     int daemonResult = daemonize();
     if (daemonResult > 0) {
@@ -173,12 +209,12 @@ int runDaemon()
 
     return 0;
 
-#endif
+    #endif
 }
 
 int registerService()
 {
-#ifdef WIN32
+    #ifdef WIN32
     Logging::LoggerRef logRef(ppg->getLogger(), "ServiceRegistrator");
 
     char pathBuff[MAX_PATH];
@@ -211,8 +247,10 @@ int registerService()
             break;
         }
 
-        scService = CreateService(scManager, SERVICE_NAME, NULL, SERVICE_QUERY_STATUS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START,
-                                  SERVICE_ERROR_NORMAL, modulePath.c_str(), NULL, NULL, NULL, NULL, NULL);
+        scService = CreateService(
+            scManager, SERVICE_NAME, NULL, SERVICE_QUERY_STATUS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, modulePath
+            .c_str(), NULL, NULL, NULL, NULL, NULL
+        );
 
         if (scService == NULL)
         {
@@ -238,14 +276,14 @@ int registerService()
     }
 
     return ret;
-#else
+    #else
     return 0;
-#endif
+    #endif
 }
 
 int unregisterService()
 {
-#ifdef WIN32
+    #ifdef WIN32
     Logging::LoggerRef logRef(ppg->getLogger(), "ServiceDeregistrator");
 
     SC_HANDLE scManager = NULL;
@@ -284,7 +322,8 @@ int unregisterService()
                 {
                     logRef(Logging::INFO) << "Waiting...";
                     Sleep(1000);
-                } else
+                }
+                else
                 {
                     break;
                 }
@@ -294,7 +333,8 @@ int unregisterService()
             if (ssSvcStatus.dwCurrentState == SERVICE_STOPPED)
             {
                 logRef(Logging::INFO) << SERVICE_NAME << " is stopped";
-            } else
+            }
+            else
             {
                 logRef(Logging::FATAL, Logging::BRIGHT_RED) << SERVICE_NAME << " failed to stop" << std::endl;
             }
@@ -323,12 +363,15 @@ int unregisterService()
     }
 
     return ret;
-#else
+    #else
     return 0;
-#endif
+    #endif
 }
 
-int main(int argc, char **argv)
+int main(
+    int argc,
+    char **argv
+)
 {
     PaymentGateService pg;
     ppg = &pg;
@@ -367,11 +410,13 @@ int main(int argc, char **argv)
             {
                 throw std::runtime_error("Failed to start daemon");
             }
-        } else
+        }
+        else
         {
             pg.run();
         }
-    } catch (std::exception &ex)
+    }
+    catch (std::exception &ex)
     {
         std::cerr << "Fatal error: " << ex.what() << std::endl;
         return 1;

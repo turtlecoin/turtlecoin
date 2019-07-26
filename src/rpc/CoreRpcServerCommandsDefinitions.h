@@ -21,14 +21,15 @@
 
 namespace CryptoNote
 {
-//-----------------------------------------------
-#define CORE_RPC_STATUS_OK "OK"
-#define CORE_RPC_STATUS_BUSY "BUSY"
+    //-----------------------------------------------
+    #define CORE_RPC_STATUS_OK "OK"
+    #define CORE_RPC_STATUS_BUSY "BUSY"
 
     struct EMPTY_STRUCT
     {
         void serialize(ISerializer &s)
-        {}
+        {
+        }
     };
 
     struct STATUS_STRUCT
@@ -48,7 +49,9 @@ namespace CryptoNote
         struct response
         {
             uint64_t height;
+
             uint32_t network_height;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -65,7 +68,8 @@ namespace CryptoNote
 
         struct request
         {
-            std::vector<Crypto::Hash> block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
+            std::vector<Crypto::Hash>
+                block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
 
             void serialize(ISerializer &s)
             {
@@ -81,7 +85,7 @@ namespace CryptoNote
             std::string status;
         };
     };
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_GET_TRANSACTIONS
     {
         struct request
@@ -108,12 +112,13 @@ namespace CryptoNote
             }
         };
     };
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_GET_POOL_CHANGES
     {
         struct request
         {
             Crypto::Hash tailBlockId;
+
             std::vector<Crypto::Hash> knownTxsIds;
 
             void serialize(ISerializer &s)
@@ -126,6 +131,7 @@ namespace CryptoNote
         struct response
         {
             bool isTailBlockActual;
+
             std::vector<BinaryArray> addedTxs;          // Added transactions blobs
             std::vector<Crypto::Hash> deletedTxsIds; // IDs of not found transactions
             std::string status;
@@ -145,6 +151,7 @@ namespace CryptoNote
         struct request
         {
             Crypto::Hash tailBlockId;
+
             std::vector<Crypto::Hash> knownTxsIds;
 
             void serialize(ISerializer &s)
@@ -157,6 +164,7 @@ namespace CryptoNote
         struct response
         {
             bool isTailBlockActual;
+
             std::vector<TransactionPrefixInfo> addedTxs;          // Added transactions blobs
             std::vector<Crypto::Hash> deletedTxsIds; // IDs of not found transactions
             std::string status;
@@ -171,7 +179,7 @@ namespace CryptoNote
         };
     };
 
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES
     {
 
@@ -188,6 +196,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<uint64_t> o_indexes;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -203,6 +212,7 @@ namespace CryptoNote
         struct request
         {
             uint64_t startHeight;
+
             uint64_t endHeight;
 
             void serialize(ISerializer &s)
@@ -214,7 +224,8 @@ namespace CryptoNote
 
         struct response
         {
-            std::unordered_map<Crypto::Hash, std::vector<uint64_t>> indexes;
+            std::unordered_map<
+                Crypto::Hash, std::vector<uint64_t>> indexes;
 
             std::string status;
 
@@ -227,13 +238,14 @@ namespace CryptoNote
     };
 
 
-//-----------------------------------------------
+    //-----------------------------------------------
 
-#pragma pack(push, 1)
+    #pragma pack(push, 1)
 
     struct OutputEntry
     {
         uint32_t global_amount_index;
+
         Crypto::PublicKey out_key;
 
         void serialize(ISerializer &s)
@@ -243,11 +255,12 @@ namespace CryptoNote
         }
     };
 
-#pragma pack(pop)
+    #pragma pack(pop)
 
     struct RandomOuts
     {
         uint64_t amount;
+
         std::vector<OutputEntry> outs;
 
         void serialize(ISerializer &s)
@@ -257,29 +270,37 @@ namespace CryptoNote
         }
     };
 
-    inline void to_json(nlohmann::json &j, const RandomOuts &r)
+    inline void to_json(
+        nlohmann::json &j,
+        const RandomOuts &r
+    )
     {
-        j = {
-                {"amount", r.amount},
-                {"outs",   r.outs}
-        };
+        j = {{"amount", r.amount},
+             {"outs",   r.outs}};
     }
 
-    inline void from_json(const nlohmann::json &j, RandomOuts &r)
+    inline void from_json(
+        const nlohmann::json &j,
+        RandomOuts &r
+    )
     {
         r.amount = j.at("amount").get<uint64_t>();
         r.outs = j.at("outs").get<std::vector<OutputEntry>>();
     }
 
-    inline void to_json(nlohmann::json &j, const OutputEntry &o)
+    inline void to_json(
+        nlohmann::json &j,
+        const OutputEntry &o
+    )
     {
-        j = {
-                {"global_amount_index", o.global_amount_index},
-                {"out_key",             o.out_key}
-        };
+        j = {{"global_amount_index", o.global_amount_index},
+             {"out_key",             o.out_key}};
     }
 
-    inline void from_json(const nlohmann::json &j, OutputEntry &o)
+    inline void from_json(
+        const nlohmann::json &j,
+        OutputEntry &o
+    )
     {
         o.global_amount_index = j.at("global_amount_index").get<uint32_t>();
         o.out_key = j.at("out_key").get<Crypto::PublicKey>();
@@ -290,6 +311,7 @@ namespace CryptoNote
         struct request
         {
             std::vector<uint64_t> amounts;
+
             uint16_t outs_count;
 
             void serialize(ISerializer &s)
@@ -302,6 +324,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<RandomOuts> outs;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -312,7 +335,7 @@ namespace CryptoNote
         };
     };
 
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_SEND_RAW_TX
     {
         struct request
@@ -320,7 +343,8 @@ namespace CryptoNote
             std::string tx_as_hex;
 
             request()
-            {}
+            {
+            }
 
             explicit request(const Transaction &);
 
@@ -340,12 +364,13 @@ namespace CryptoNote
             }
         };
     };
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_START_MINING
     {
         struct request
         {
             std::string miner_address;
+
             uint64_t threads_count;
 
             void serialize(ISerializer &s)
@@ -365,7 +390,7 @@ namespace CryptoNote
             }
         };
     };
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_GET_INFO
     {
         typedef EMPTY_STRUCT request;
@@ -373,24 +398,43 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             uint64_t height;
+
             uint64_t difficulty;
+
             uint64_t tx_count;
+
             uint64_t tx_pool_size;
+
             uint64_t alt_blocks_count;
+
             uint64_t outgoing_connections_count;
+
             uint64_t incoming_connections_count;
+
             uint64_t white_peerlist_size;
+
             uint64_t grey_peerlist_size;
+
             uint32_t last_known_block_index;
+
             uint32_t network_height;
+
             std::vector<uint64_t> upgrade_heights;
+
             uint64_t supported_height;
+
             uint32_t hashrate;
+
             uint8_t major_version;
+
             uint8_t minor_version;
+
             std::string version;
+
             uint64_t start_time;
+
             bool synced;
 
             void serialize(ISerializer &s)
@@ -419,21 +463,21 @@ namespace CryptoNote
         };
     };
 
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_STOP_MINING
     {
         typedef EMPTY_STRUCT request;
         typedef STATUS_STRUCT response;
     };
 
-//-----------------------------------------------
+    //-----------------------------------------------
     struct COMMAND_RPC_STOP_DAEMON
     {
         typedef EMPTY_STRUCT request;
         typedef STATUS_STRUCT response;
     };
 
-//
+    //
     struct COMMAND_RPC_GETBLOCKCOUNT
     {
         typedef std::vector<std::string> request;
@@ -441,6 +485,7 @@ namespace CryptoNote
         struct response
         {
             uint64_t count;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -474,9 +519,13 @@ namespace CryptoNote
         struct response
         {
             uint64_t difficulty;
+
             uint32_t height;
+
             uint64_t reserved_offset;
+
             std::string blocktemplate_blob;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -514,17 +563,29 @@ namespace CryptoNote
     struct block_header_response
     {
         uint8_t major_version;
+
         uint8_t minor_version;
+
         uint64_t timestamp;
+
         std::string prev_hash;
+
         uint32_t nonce;
+
         bool orphan_status;
+
         uint32_t height;
+
         uint32_t depth;
+
         std::string hash;
+
         uint64_t difficulty;
+
         uint64_t reward;
+
         uint32_t num_txes;
+
         uint64_t block_size;
 
         void serialize(ISerializer &s)
@@ -548,6 +609,7 @@ namespace CryptoNote
     struct BLOCK_HEADER_RESPONSE
     {
         std::string status;
+
         block_header_response block_header;
 
         void serialize(ISerializer &s)
@@ -557,12 +619,12 @@ namespace CryptoNote
         }
     };
 
-
     struct COMMAND_RPC_GET_BLOCK_HEADERS_RANGE
     {
         struct request
         {
             uint64_t start_height;
+
             uint64_t end_height;
 
             void serialize(ISerializer &s)
@@ -579,7 +641,9 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             std::vector<block_header_response> headers;
+
             bool untrusted;
 
             void serialize(ISerializer &s)
@@ -599,8 +663,11 @@ namespace CryptoNote
     struct f_transaction_short_response
     {
         std::string hash;
+
         uint64_t fee;
+
         uint64_t amount_out;
+
         uint64_t size;
 
         void serialize(ISerializer &s)
@@ -615,10 +682,15 @@ namespace CryptoNote
     struct f_transaction_details_response
     {
         std::string hash;
+
         uint64_t size;
+
         std::string paymentId;
+
         uint64_t mixin;
+
         uint64_t fee;
+
         uint64_t amount_out;
 
         void serialize(ISerializer &s)
@@ -635,10 +707,15 @@ namespace CryptoNote
     struct f_block_short_response
     {
         uint64_t difficulty;
+
         uint64_t timestamp;
+
         uint32_t height;
+
         std::string hash;
+
         uint64_t tx_count;
+
         uint64_t cumul_size;
 
         void serialize(ISerializer &s)
@@ -655,25 +732,45 @@ namespace CryptoNote
     struct f_block_details_response
     {
         uint8_t major_version;
+
         uint8_t minor_version;
+
         uint64_t timestamp;
+
         std::string prev_hash;
+
         uint32_t nonce;
+
         bool orphan_status;
+
         uint32_t height;
+
         uint64_t depth;
+
         std::string hash;
+
         uint64_t difficulty;
+
         uint64_t reward;
+
         uint64_t blockSize;
+
         uint64_t sizeMedian;
+
         uint64_t effectiveSizeMedian;
+
         uint64_t transactionsCumulativeSize;
+
         std::string alreadyGeneratedCoins;
+
         uint64_t alreadyGeneratedTransactions;
+
         uint64_t baseReward;
+
         double penalty;
+
         uint64_t totalFeeAmount;
+
         std::vector<f_transaction_short_response> transactions;
 
         void serialize(ISerializer &s)
@@ -778,6 +875,7 @@ namespace CryptoNote
         struct response
         {
             f_block_details_response block;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -803,8 +901,11 @@ namespace CryptoNote
         struct response
         {
             Transaction tx;
+
             f_transaction_details_response txDetails;
+
             f_block_short_response block;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -837,7 +938,8 @@ namespace CryptoNote
     {
         struct request
         {
-            std::vector<Crypto::Hash> block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
+            std::vector<Crypto::Hash>
+                block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
             uint64_t timestamp;
 
             void serialize(ISerializer &s)
@@ -850,9 +952,13 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             uint64_t start_height;
+
             uint64_t current_height;
+
             uint64_t full_offset;
+
             std::vector<BlockFullInfo> items;
 
             void serialize(ISerializer &s)
@@ -871,6 +977,7 @@ namespace CryptoNote
         struct request
         {
             std::vector<Crypto::Hash> blockIds;
+
             uint64_t timestamp;
 
             void serialize(ISerializer &s)
@@ -883,9 +990,13 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             uint64_t startHeight;
+
             uint64_t currentHeight;
+
             uint64_t fullOffset;
+
             std::vector<BlockShortInfo> items;
 
             void serialize(ISerializer &s)
@@ -904,7 +1015,9 @@ namespace CryptoNote
         struct request
         {
             std::vector<Crypto::Hash> blockIds;
+
             uint64_t timestamp;
+
             uint32_t blockCount;
 
             void serialize(ISerializer &s)
@@ -918,9 +1031,13 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             uint64_t startHeight;
+
             uint64_t currentHeight;
+
             uint64_t fullOffset;
+
             std::vector<BlockDetails> blocks;
 
             void serialize(ISerializer &s)
@@ -941,7 +1058,9 @@ namespace CryptoNote
             std::vector<Crypto::Hash> blockIds;
 
             uint64_t startHeight;
+
             uint64_t startTimestamp;
+
             uint64_t blockCount;
 
             bool skipCoinbaseTransactions;
@@ -960,7 +1079,9 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             std::vector<WalletTypes::WalletBlockInfo> items;
+
             bool synced;
 
             /* If synced, these are present */
@@ -1030,6 +1151,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<BlockDetails> blocks;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -1055,6 +1177,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<BlockDetails> blocks;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -1080,6 +1203,7 @@ namespace CryptoNote
         struct response
         {
             BlockDetails block;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -1095,6 +1219,7 @@ namespace CryptoNote
         struct request
         {
             uint64_t timestampBegin;
+
             uint64_t secondsCount;
 
             void serialize(ISerializer &s)
@@ -1107,6 +1232,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<Crypto::Hash> blockHashes;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -1132,6 +1258,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<Crypto::Hash> transactionHashes;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -1157,6 +1284,7 @@ namespace CryptoNote
         struct response
         {
             std::vector<TransactionDetails> transactions;
+
             std::string status;
 
             void serialize(ISerializer &s)
@@ -1175,7 +1303,9 @@ namespace CryptoNote
         struct response
         {
             std::string status;
+
             std::vector<std::string> peers;
+
             std::vector<std::string> gray_peers;
 
             void serialize(ISerializer &s)
@@ -1194,7 +1324,9 @@ namespace CryptoNote
         struct response
         {
             std::string address;
+
             uint32_t amount;
+
             std::string status;
 
             void serialize(ISerializer &s)

@@ -8,9 +8,9 @@
 namespace Tools
 {
 
-    ScopeExit::ScopeExit(std::function<void()> &&handler) :
-            m_handler(std::move(handler)),
-            m_cancelled(false)
+    ScopeExit::ScopeExit(std::function<void()> &&handler)
+        : m_handler(std::move(handler)),
+          m_cancelled(false)
     {
     }
 

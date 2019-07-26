@@ -36,19 +36,21 @@ void changePassword(const std::shared_ptr<WalletBackend> walletBackend)
     ZedUtilities::confirmPassword(walletBackend, "Confirm your current password: ");
 
     /* Get a new password for the wallet */
-    const std::string newPassword
-            = getWalletPassword(true, "Enter your new password: ");
+    const std::string newPassword = getWalletPassword(true, "Enter your new password: ");
 
     /* Change the wallet password */
     Error error = walletBackend->changePassword(newPassword);
 
     if (error)
     {
-        std::cout << WarningMsg("Your password has been changed, but saving "
-                                "the updated wallet failed. If you quit without "
-                                "saving succeeding, your password may not "
-                                "update.") << std::endl;
-    } else
+        std::cout << WarningMsg(
+            "Your password has been changed, but saving "
+            "the updated wallet failed. If you quit without "
+            "saving succeeding, your password may not "
+            "update."
+        ) << std::endl;
+    }
+    else
     {
         std::cout << SuccessMsg("Your password has been changed!") << std::endl;
     }
@@ -69,17 +71,14 @@ void printPrivateKeys(const std::shared_ptr<WalletBackend> walletBackend)
     /* If this isn't a view only wallet, print out the spend key and mnemonic if available */
     if (!walletBackend->isViewWallet())
     {
-        std::cout << SuccessMsg("\nPrivate spend key:\n")
-                  << SuccessMsg(privateSpendKey) << "\n";
+        std::cout << SuccessMsg("\nPrivate spend key:\n") << SuccessMsg(privateSpendKey) << "\n";
     }
 
-    std::cout << SuccessMsg("Private view key:\n")
-              << SuccessMsg(privateViewKey) << "\n";
+    std::cout << SuccessMsg("Private view key:\n") << SuccessMsg(privateViewKey) << "\n";
 
     if (!error)
     {
-        std::cout << SuccessMsg("\nMnemonic seed:\n")
-                  << SuccessMsg(mnemonicSeed) << "\n";
+        std::cout << SuccessMsg("\nMnemonic seed:\n") << SuccessMsg(mnemonicSeed) << "\n";
     }
 }
 
@@ -107,19 +106,19 @@ void balance(const std::shared_ptr<WalletBackend> walletBackend)
 
     const uint64_t totalBalance = unlockedBalance + lockedBalance;
 
-    std::cout << "Available balance: "
-              << SuccessMsg(Utilities::formatAmount(unlockedBalance)) << "\n"
-              << "Locked (unconfirmed) balance: "
-              << WarningMsg(Utilities::formatAmount(lockedBalance))
-              << "\nTotal balance: "
-              << InformationMsg(Utilities::formatAmount(totalBalance)) << "\n";
+    std::cout << "Available balance: " << SuccessMsg(Utilities::formatAmount(unlockedBalance)) << "\n"
+              << "Locked (unconfirmed) balance: " << WarningMsg(Utilities::formatAmount(lockedBalance))
+              << "\nTotal balance: " << InformationMsg(Utilities::formatAmount(totalBalance)) << "\n";
 
     if (walletBackend->isViewWallet())
     {
-        std::cout << InformationMsg("\nPlease note that view only wallets "
-                                    "can only track incoming transactions,\n")
-                  << InformationMsg("and so your wallet balance may appear "
-                                    "inflated.\n");
+        std::cout << InformationMsg(
+            "\nPlease note that view only wallets "
+            "can only track incoming transactions,\n"
+        ) << InformationMsg(
+            "and so your wallet balance may appear "
+            "inflated.\n"
+        );
     }
 
     const auto[walletBlockCount, localDaemonBlockCount, networkBlockCount]
@@ -127,25 +126,27 @@ void balance(const std::shared_ptr<WalletBackend> walletBackend)
 
     if (localDaemonBlockCount < networkBlockCount)
     {
-        std::cout << InformationMsg("\nYour daemon is not fully synced with "
-                                    "the network!\n")
-                  << "Your balance may be incorrect until you are fully "
-                  << "synced!\n";
+        std::cout << InformationMsg(
+            "\nYour daemon is not fully synced with "
+            "the network!\n"
+        ) << "Your balance may be incorrect until you are fully " << "synced!\n";
     }
         /* Small buffer because wallet height doesn't update instantly like node
            height does */
     else if (walletBlockCount + 1000 < networkBlockCount)
     {
-        std::cout << InformationMsg("\nThe blockchain is still being scanned for "
-                                    "your transactions.\n")
-                  << "Balances might be incorrect whilst this is ongoing.\n";
+        std::cout << InformationMsg(
+            "\nThe blockchain is still being scanned for "
+            "your transactions.\n"
+        ) << "Balances might be incorrect whilst this is ongoing.\n";
     }
 }
 
 void printHeights(
-        const uint64_t localDaemonBlockCount,
-        const uint64_t networkBlockCount,
-        const uint64_t walletBlockCount)
+    const uint64_t localDaemonBlockCount,
+    const uint64_t networkBlockCount,
+    const uint64_t walletBlockCount
+)
 {
     /* This is the height that the wallet has been scanned to. The blockchain
        can be fully updated, but we have to walk the chain to find our
@@ -157,7 +158,8 @@ void printHeights(
     if (walletBlockCount + 1000 > networkBlockCount)
     {
         std::cout << SuccessMsg(walletBlockCount);
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(walletBlockCount);
     }
@@ -167,32 +169,32 @@ void printHeights(
     if (localDaemonBlockCount == networkBlockCount)
     {
         std::cout << SuccessMsg(localDaemonBlockCount);
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(localDaemonBlockCount);
     }
 
-    std::cout << "\nNetwork blockchain height: "
-              << SuccessMsg(networkBlockCount) << "\n";
+    std::cout << "\nNetwork blockchain height: " << SuccessMsg(networkBlockCount) << "\n";
 }
 
 void printSyncStatus(
-        const uint64_t localDaemonBlockCount,
-        const uint64_t networkBlockCount,
-        const uint64_t walletBlockCount)
+    const uint64_t localDaemonBlockCount,
+    const uint64_t networkBlockCount,
+    const uint64_t walletBlockCount
+)
 {
-    std::string networkSyncPercentage
-            = Utilities::get_sync_percentage(localDaemonBlockCount, networkBlockCount) + "%";
+    std::string networkSyncPercentage = Utilities::get_sync_percentage(localDaemonBlockCount, networkBlockCount) + "%";
 
-    std::string walletSyncPercentage
-            = Utilities::get_sync_percentage(walletBlockCount, networkBlockCount) + "%";
+    std::string walletSyncPercentage = Utilities::get_sync_percentage(walletBlockCount, networkBlockCount) + "%";
 
     std::cout << "Network sync status: ";
 
     if (localDaemonBlockCount == networkBlockCount)
     {
         std::cout << SuccessMsg(networkSyncPercentage) << std::endl;
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(networkSyncPercentage) << std::endl;
     }
@@ -203,38 +205,42 @@ void printSyncStatus(
     if (walletBlockCount + 10 > networkBlockCount)
     {
         std::cout << SuccessMsg(walletSyncPercentage) << std::endl;
-    } else
+    }
+    else
     {
         std::cout << WarningMsg(walletSyncPercentage) << std::endl;
     }
 }
 
 void printSyncSummary(
-        const uint64_t localDaemonBlockCount,
-        const uint64_t networkBlockCount,
-        const uint64_t walletBlockCount)
+    const uint64_t localDaemonBlockCount,
+    const uint64_t networkBlockCount,
+    const uint64_t walletBlockCount
+)
 {
     if (localDaemonBlockCount == 0 && networkBlockCount == 0)
     {
-        std::cout << WarningMsg("Uh oh, it looks like you don't have ")
-                  << WarningMsg(WalletConfig::daemonName)
-                  << WarningMsg(" open!")
-                  << std::endl;
-    } else if (walletBlockCount + 1000 < networkBlockCount && localDaemonBlockCount == networkBlockCount)
+        std::cout << WarningMsg("Uh oh, it looks like you don't have ") << WarningMsg(WalletConfig::daemonName)
+                  << WarningMsg(" open!") << std::endl;
+    }
+    else if (walletBlockCount + 1000 < networkBlockCount && localDaemonBlockCount == networkBlockCount)
     {
-        std::cout << InformationMsg("You are synced with the network, but the "
-                                    "blockchain is still being scanned for "
-                                    "your transactions.")
-                  << std::endl
-                  << "Balances might be incorrect whilst this is ongoing."
-                  << std::endl;
-    } else if (localDaemonBlockCount == networkBlockCount)
+        std::cout << InformationMsg(
+            "You are synced with the network, but the "
+            "blockchain is still being scanned for "
+            "your transactions."
+        ) << std::endl << "Balances might be incorrect whilst this is ongoing." << std::endl;
+    }
+    else if (localDaemonBlockCount == networkBlockCount)
     {
         std::cout << SuccessMsg("Yay! You are synced!") << std::endl;
-    } else
+    }
+    else
     {
-        std::cout << WarningMsg("Be patient, you are still syncing with the "
-                                "network!") << std::endl;
+        std::cout << WarningMsg(
+            "Be patient, you are still syncing with the "
+            "network!"
+        ) << std::endl;
     }
 }
 
@@ -246,8 +252,7 @@ void printHashrate(const uint64_t hashrate)
         return;
     }
 
-    std::cout << "Network hashrate: "
-              << SuccessMsg(Utilities::get_mining_speed(hashrate))
+    std::cout << "Network hashrate: " << SuccessMsg(Utilities::get_mining_speed(hashrate))
               << " (Based on the last local block)" << std::endl;
 }
 
@@ -257,16 +262,14 @@ void status(const std::shared_ptr<WalletBackend> walletBackend)
 
     /* Print the heights of local, remote, and wallet */
     printHeights(
-            status.localDaemonBlockCount, status.networkBlockCount,
-            status.walletBlockCount
+        status.localDaemonBlockCount, status.networkBlockCount, status.walletBlockCount
     );
 
     std::cout << "\n";
 
     /* Print the network and wallet sync status in percentage */
     printSyncStatus(
-            status.localDaemonBlockCount, status.networkBlockCount,
-            status.walletBlockCount
+        status.localDaemonBlockCount, status.networkBlockCount, status.walletBlockCount
     );
 
     std::cout << "\n";
@@ -279,8 +282,7 @@ void status(const std::shared_ptr<WalletBackend> walletBackend)
 
     /* Print a summary of the sync status */
     printSyncSummary(
-            status.localDaemonBlockCount, status.networkBlockCount,
-            status.walletBlockCount
+        status.localDaemonBlockCount, status.networkBlockCount, status.walletBlockCount
     );
 }
 
@@ -288,11 +290,8 @@ void reset(const std::shared_ptr<WalletBackend> walletBackend)
 {
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    std::cout << std::endl
-              << InformationMsg("This process may take some time to complete.")
-              << std::endl
-              << InformationMsg("You can't make any transactions during the ")
-              << InformationMsg("process.")
+    std::cout << std::endl << InformationMsg("This process may take some time to complete.") << std::endl
+              << InformationMsg("You can't make any transactions during the ") << InformationMsg("process.")
               << std::endl << std::endl;
 
     if (!Utilities::confirm("Are you sure?"))
@@ -330,20 +329,20 @@ void saveCSV(const std::shared_ptr<WalletBackend> walletBackend)
 
     if (!csv)
     {
-        std::cout << WarningMsg("Couldn't open transactions.csv file for "
-                                "saving!")
-                  << std::endl
-                  << WarningMsg("Ensure it is not open in any other "
-                                "application.")
-                  << std::endl;
+        std::cout << WarningMsg(
+            "Couldn't open transactions.csv file for "
+            "saving!"
+        ) << std::endl << WarningMsg(
+            "Ensure it is not open in any other "
+            "application."
+        ) << std::endl;
         return;
     }
 
     std::cout << InformationMsg("Saving CSV file...") << std::endl;
 
     /* Create CSV header */
-    csv << "Timestamp,Block Height,Hash,Amount,In/Out"
-        << std::endl;
+    csv << "Timestamp,Block Height,Hash,Amount,In/Out" << std::endl;
 
     for (const auto tx : transactions)
     {
@@ -355,7 +354,9 @@ void saveCSV(const std::shared_ptr<WalletBackend> walletBackend)
 
         const std::string amount = Utilities::formatAmountBasic(std::abs(tx.totalAmount()));
 
-        const std::string direction = tx.totalAmount() > 0 ? "IN" : "OUT";
+        const std::string direction = tx.totalAmount() > 0
+                                      ? "IN"
+                                      : "OUT";
 
         csv << Utilities::unixTimeToDate(tx.timestamp) << ","    /* Timestamp */
             << tx.blockHeight << ","                                /* Block Height */
@@ -365,9 +366,7 @@ void saveCSV(const std::shared_ptr<WalletBackend> walletBackend)
             << std::endl;
     }
 
-    std::cout << SuccessMsg("CSV successfully written to ")
-              << SuccessMsg(WalletConfig::csvFilename)
-              << SuccessMsg("!")
+    std::cout << SuccessMsg("CSV successfully written to ") << SuccessMsg(WalletConfig::csvFilename) << SuccessMsg("!")
               << std::endl;
 }
 
@@ -382,13 +381,12 @@ void printOutgoingTransfer(const WalletTypes::Transaction tx)
     /* These will not be initialized for outgoing, unconfirmed transactions */
     if (tx.blockHeight != 0 && tx.timestamp != 0)
     {
-        stream << "Block height: " << tx.blockHeight << "\n"
-               << "Timestamp: " << Utilities::unixTimeToDate(tx.timestamp) << "\n";
+        stream << "Block height: " << tx.blockHeight << "\n" << "Timestamp: " << Utilities::unixTimeToDate(tx.timestamp)
+               << "\n";
     }
 
-    stream << "Spent: " << Utilities::formatAmount(amount - tx.fee) << "\n"
-           << "Fee: " << Utilities::formatAmount(tx.fee) << "\n"
-           << "Total Spent: " << Utilities::formatAmount(amount) << "\n";
+    stream << "Spent: " << Utilities::formatAmount(amount - tx.fee) << "\n" << "Fee: "
+           << Utilities::formatAmount(tx.fee) << "\n" << "Total Spent: " << Utilities::formatAmount(amount) << "\n";
 
     if (tx.paymentID != "")
     {
@@ -404,10 +402,9 @@ void printIncomingTransfer(const WalletTypes::Transaction tx)
 
     const int64_t amount = tx.totalAmount();
 
-    stream << "Incoming transfer:\nHash: " << tx.hash << "\n"
-           << "Block height: " << tx.blockHeight << "\n"
-           << "Timestamp: " << Utilities::unixTimeToDate(tx.timestamp) << "\n"
-           << "Amount: " << Utilities::formatAmount(amount) << "\n";
+    stream << "Incoming transfer:\nHash: " << tx.hash << "\n" << "Block height: " << tx.blockHeight << "\n"
+           << "Timestamp: " << Utilities::unixTimeToDate(tx.timestamp) << "\n" << "Amount: "
+           << Utilities::formatAmount(amount) << "\n";
 
     if (tx.paymentID != "")
     {
@@ -422,33 +419,27 @@ void printIncomingTransfer(const WalletTypes::Transaction tx)
     {
         int64_t unlockInUnixTime = tx.timestamp + (difference * CryptoNote::parameters::DIFFICULTY_TARGET);
 
-        std::cout << SuccessMsg(stream.str())
-                  << InformationMsg("Unlock height: ")
-                  << InformationMsg(tx.unlockTime)
-                  << std::endl
-                  << InformationMsg("Unlocks at approximately: ")
-                  << InformationMsg(Utilities::unixTimeToDate(unlockInUnixTime))
-                  << std::endl
-                  << std::endl;
+        std::cout << SuccessMsg(stream.str()) << InformationMsg("Unlock height: ") << InformationMsg(tx.unlockTime)
+                  << std::endl << InformationMsg("Unlocks at approximately: ")
+                  << InformationMsg(Utilities::unixTimeToDate(unlockInUnixTime)) << std::endl << std::endl;
     }
         /* Here we treat Unlock as Unix time, and treat it that way in the future */
     else if (tx.unlockTime > std::time(nullptr))
     {
-        std::cout << SuccessMsg(stream.str())
-                  << InformationMsg("Unlocks at: ")
-                  << InformationMsg(Utilities::unixTimeToDate(tx.unlockTime))
-                  << std::endl
-                  << std::endl;
-    } else
+        std::cout << SuccessMsg(stream.str()) << InformationMsg("Unlocks at: ")
+                  << InformationMsg(Utilities::unixTimeToDate(tx.unlockTime)) << std::endl << std::endl;
+    }
+    else
     {
         std::cout << SuccessMsg(stream.str()) << std::endl;
     }
 }
 
 void listTransfers(
-        const bool incoming,
-        const bool outgoing,
-        const std::shared_ptr<WalletBackend> walletBackend)
+    const bool incoming,
+    const bool outgoing,
+    const std::shared_ptr<WalletBackend> walletBackend
+)
 {
     uint64_t totalSpent = 0;
     uint64_t totalReceived = 0;
@@ -463,8 +454,8 @@ void listTransfers(
     const auto unconfirmedTransactions = walletBackend->getUnconfirmedTransactions();
 
     /* Append them, unconfirmed transactions last */
-    transactions.insert(transactions.end(), unconfirmedTransactions.begin(),
-                        unconfirmedTransactions.end());
+    transactions.insert(
+        transactions.end(), unconfirmedTransactions.begin(), unconfirmedTransactions.end());
 
     for (const auto tx : transactions)
     {
@@ -484,7 +475,8 @@ void listTransfers(
 
             totalSpent += -amount;
             numOutgoingTransactions++;
-        } else if (amount > 0 && incoming)
+        }
+        else if (amount > 0 && incoming)
         {
             printIncomingTransfer(tx);
 
@@ -497,18 +489,14 @@ void listTransfers(
 
     if (incoming)
     {
-        std::cout << SuccessMsg(numIncomingTransactions)
-                  << SuccessMsg(" incoming transactions, totalling ")
-                  << SuccessMsg(Utilities::formatAmount(totalReceived))
-                  << std::endl;
+        std::cout << SuccessMsg(numIncomingTransactions) << SuccessMsg(" incoming transactions, totalling ")
+                  << SuccessMsg(Utilities::formatAmount(totalReceived)) << std::endl;
     }
 
     if (outgoing)
     {
-        std::cout << WarningMsg(numOutgoingTransactions)
-                  << WarningMsg(" outgoing transactions, totalling ")
-                  << WarningMsg(Utilities::formatAmount(totalSpent))
-                  << std::endl;
+        std::cout << WarningMsg(numOutgoingTransactions) << WarningMsg(" outgoing transactions, totalling ")
+                  << WarningMsg(Utilities::formatAmount(totalSpent)) << std::endl;
     }
 }
 
@@ -520,9 +508,9 @@ void save(const std::shared_ptr<WalletBackend> walletBackend)
 
     if (error)
     {
-        std::cout << WarningMsg("Failed to save wallet! Error: ")
-                  << WarningMsg(error) << std::endl;
-    } else
+        std::cout << WarningMsg("Failed to save wallet! Error: ") << WarningMsg(error) << std::endl;
+    }
+    else
     {
         std::cout << InformationMsg("Saved.") << std::endl;
     }
@@ -531,8 +519,7 @@ void save(const std::shared_ptr<WalletBackend> walletBackend)
 void createIntegratedAddress()
 {
     std::cout << InformationMsg("Creating an integrated address from an ")
-              << InformationMsg("address and payment ID pair...")
-              << std::endl << std::endl;
+              << InformationMsg("address and payment ID pair...") << std::endl << std::endl;
 
     std::string address;
     std::string paymentID;
@@ -549,9 +536,9 @@ void createIntegratedAddress()
 
         if (Error error = validateAddresses({address}, integratedAddressesAllowed); error != SUCCESS)
         {
-            std::cout << WarningMsg("Invalid address: ")
-                      << WarningMsg(error) << std::endl;
-        } else
+            std::cout << WarningMsg("Invalid address: ") << WarningMsg(error) << std::endl;
+        }
+        else
         {
             break;
         }
@@ -568,24 +555,24 @@ void createIntegratedAddress()
         /* Validate the payment ID */
         if (Error error = validatePaymentID(paymentID); error != SUCCESS)
         {
-            std::cout << WarningMsg("Invalid payment ID: ")
-                      << WarningMsg(error) << std::endl;
-        } else
+            std::cout << WarningMsg("Invalid payment ID: ") << WarningMsg(error) << std::endl;
+        }
+        else
         {
             break;
         }
     }
 
     const auto[error, integratedAddress] = Utilities::createIntegratedAddress(
-            address, paymentID
+        address, paymentID
     );
 
     /* Shouldn't happen, but lets check anyway */
     if (error)
     {
-        std::cout << WarningMsg("Failed to create integrated address: ")
-                  << WarningMsg(error) << std::endl;
-    } else
+        std::cout << WarningMsg("Failed to create integrated address: ") << WarningMsg(error) << std::endl;
+    }
+    else
     {
         std::cout << InformationMsg(integratedAddress) << std::endl;
     }
@@ -596,7 +583,8 @@ void help(const std::shared_ptr<WalletBackend> walletBackend)
     if (walletBackend->isViewWallet())
     {
         printCommands(basicViewWalletCommands());
-    } else
+    }
+    else
     {
         printCommands(basicCommands());
     }
@@ -608,12 +596,13 @@ void advanced(const std::shared_ptr<WalletBackend> walletBackend)
        command numbers */
     if (walletBackend->isViewWallet())
     {
-        printCommands(advancedViewWalletCommands(),
-                      basicViewWalletCommands().size());
-    } else
+        printCommands(
+            advancedViewWalletCommands(), basicViewWalletCommands().size());
+    }
+    else
     {
-        printCommands(advancedCommands(),
-                      basicCommands().size());
+        printCommands(
+            advancedCommands(), basicCommands().size());
     }
 }
 
@@ -631,7 +620,7 @@ void swapNode(const std::shared_ptr<WalletBackend> walletBackend)
 void getTxPrivateKey(const std::shared_ptr<WalletBackend> walletBackend)
 {
     const std::string txHash = getHash(
-            "What transaction hash do you want to get the private key of?: ", true
+        "What transaction hash do you want to get the private key of?: ", true
     );
 
     if (txHash == "cancel")
@@ -648,27 +637,27 @@ void getTxPrivateKey(const std::shared_ptr<WalletBackend> walletBackend)
     if (error)
     {
         std::cout << WarningMsg(error) << std::endl;
-    } else
+    }
+    else
     {
-        std::cout << InformationMsg("Transaction private key: ")
-                  << SuccessMsg(key) << std::endl;
+        std::cout << InformationMsg("Transaction private key: ") << SuccessMsg(key) << std::endl;
     }
 }
 
 void setLogLevel()
 {
     const std::vector<Command> logLevels = {
-            Command("Debug", "Display all logging messages"),
-            Command("Info", "Display informational logging messages"),
-            Command("Warning", "Display messages when something may be wrong"),
-            Command("Fatal", "Display messages when something fails"),
-            Command("Disabled", "Don't display any logging messages"),
+        Command("Debug", "Display all logging messages"),
+        Command("Info", "Display informational logging messages"),
+        Command("Warning", "Display messages when something may be wrong"),
+        Command("Fatal", "Display messages when something fails"),
+        Command("Disabled", "Don't display any logging messages"),
     };
 
     printCommands(logLevels);
 
     std::string level = parseCommand(
-            logLevels, logLevels, "What log level do you want to use?: "
+        logLevels, logLevels, "What log level do you want to use?: "
     );
 
     if (level == "exit")

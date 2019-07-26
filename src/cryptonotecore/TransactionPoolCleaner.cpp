@@ -16,15 +16,15 @@ namespace CryptoNote
 {
 
     TransactionPoolCleanWrapper::TransactionPoolCleanWrapper(
-            std::unique_ptr<ITransactionPool> &&transactionPool,
-            std::unique_ptr<ITimeProvider> &&timeProvider,
-            std::shared_ptr<Logging::ILogger> logger,
-            uint64_t timeout)
-            :
-            transactionPool(std::move(transactionPool)),
-            timeProvider(std::move(timeProvider)),
-            logger(logger, "TransactionPoolCleanWrapper"),
-            timeout(timeout)
+        std::unique_ptr<ITransactionPool> &&transactionPool,
+        std::unique_ptr<ITimeProvider> &&timeProvider,
+        std::shared_ptr<Logging::ILogger> logger,
+        uint64_t timeout
+    )
+        : transactionPool(std::move(transactionPool)),
+          timeProvider(std::move(timeProvider)),
+          logger(logger, "TransactionPoolCleanWrapper"),
+          timeout(timeout)
     {
 
         assert(this->timeProvider);
@@ -34,8 +34,10 @@ namespace CryptoNote
     {
     }
 
-    bool
-    TransactionPoolCleanWrapper::pushTransaction(CachedTransaction &&tx, TransactionValidatorState &&transactionState)
+    bool TransactionPoolCleanWrapper::pushTransaction(
+        CachedTransaction &&tx,
+        TransactionValidatorState &&transactionState
+    )
     {
         return !isTransactionRecentlyDeleted(tx.getTransactionHash()) &&
                transactionPool->pushTransaction(std::move(tx), std::move(transactionState));
@@ -76,8 +78,9 @@ namespace CryptoNote
         return transactionPool->getPoolTransactions();
     }
 
-    std::tuple<std::vector<CachedTransaction>, std::vector<CachedTransaction>>
-    TransactionPoolCleanWrapper::getPoolTransactionsForBlockTemplate() const
+    std::tuple<
+        std::vector<CachedTransaction>,
+        std::vector<CachedTransaction>> TransactionPoolCleanWrapper::getPoolTransactionsForBlockTemplate() const
     {
         return transactionPool->getPoolTransactionsForBlockTemplate();
     }
@@ -87,8 +90,9 @@ namespace CryptoNote
         return transactionPool->getTransactionReceiveTime(hash);
     }
 
-    std::vector<Crypto::Hash>
-    TransactionPoolCleanWrapper::getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const
+    std::vector<
+        Crypto::Hash
+    > TransactionPoolCleanWrapper::getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const
     {
         return transactionPool->getTransactionHashesByPaymentId(paymentId);
     }
@@ -121,8 +125,7 @@ namespace CryptoNote
                 if (!success)
                 {
                     logger(Logging::DEBUGGING) << "Deleting invalid transaction " << Common::podToHex(hash)
-                                               << " from pool." <<
-                                               error;
+                                               << " from pool." << error;
                     recentlyDeletedTransactions.emplace(hash, currentTime);
                     transactionPool->removeTransaction(hash);
                     deletedTransactions.emplace_back(std::move(hash));
@@ -131,10 +134,12 @@ namespace CryptoNote
 
             cleanRecentlyDeletedTransactions(currentTime);
             return deletedTransactions;
-        } catch (System::InterruptedException &)
+        }
+        catch (System::InterruptedException &)
         {
             throw;
-        } catch (std::exception &e)
+        }
+        catch (std::exception &e)
         {
             logger(Logging::WARNING) << "Caught an exception: " << e.what() << ", stopping cleaning procedure cycle";
             throw;
@@ -154,7 +159,8 @@ namespace CryptoNote
             if (currentTime - it->second >= timeout)
             {
                 it = recentlyDeletedTransactions.erase(it);
-            } else
+            }
+            else
             {
                 ++it;
             }

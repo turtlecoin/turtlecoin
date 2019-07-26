@@ -11,7 +11,11 @@
 namespace Common
 {
 
-    void read(IInputStream &in, void *data, uint64_t size)
+    void read(
+        IInputStream &in,
+        void *data,
+        uint64_t size
+    )
     {
         while (size > 0)
         {
@@ -26,66 +30,101 @@ namespace Common
         }
     }
 
-    void read(IInputStream &in, int8_t &value)
+    void read(
+        IInputStream &in,
+        int8_t &value
+    )
     {
         read(in, &value, sizeof(value));
     }
 
-    void read(IInputStream &in, int16_t &value)
-    {
-        // TODO: Convert from little endian on big endian platforms
-        read(in, &value, sizeof(value));
-    }
-
-    void read(IInputStream &in, int32_t &value)
-    {
-        // TODO: Convert from little endian on big endian platforms
-        read(in, &value, sizeof(value));
-    }
-
-    void read(IInputStream &in, int64_t &value)
+    void read(
+        IInputStream &in,
+        int16_t &value
+    )
     {
         // TODO: Convert from little endian on big endian platforms
         read(in, &value, sizeof(value));
     }
 
-    void read(IInputStream &in, uint8_t &value)
-    {
-        read(in, &value, sizeof(value));
-    }
-
-    void read(IInputStream &in, uint16_t &value)
+    void read(
+        IInputStream &in,
+        int32_t &value
+    )
     {
         // TODO: Convert from little endian on big endian platforms
         read(in, &value, sizeof(value));
     }
 
-    void read(IInputStream &in, uint32_t &value)
+    void read(
+        IInputStream &in,
+        int64_t &value
+    )
     {
         // TODO: Convert from little endian on big endian platforms
         read(in, &value, sizeof(value));
     }
 
-    void read(IInputStream &in, uint64_t &value)
+    void read(
+        IInputStream &in,
+        uint8_t &value
+    )
+    {
+        read(in, &value, sizeof(value));
+    }
+
+    void read(
+        IInputStream &in,
+        uint16_t &value
+    )
     {
         // TODO: Convert from little endian on big endian platforms
         read(in, &value, sizeof(value));
     }
 
-    void read(IInputStream &in, std::vector<uint8_t> &data, uint64_t size)
+    void read(
+        IInputStream &in,
+        uint32_t &value
+    )
+    {
+        // TODO: Convert from little endian on big endian platforms
+        read(in, &value, sizeof(value));
+    }
+
+    void read(
+        IInputStream &in,
+        uint64_t &value
+    )
+    {
+        // TODO: Convert from little endian on big endian platforms
+        read(in, &value, sizeof(value));
+    }
+
+    void read(
+        IInputStream &in,
+        std::vector<uint8_t> &data,
+        uint64_t size
+    )
     {
         data.resize(size);
         read(in, data.data(), size);
     }
 
-    void read(IInputStream &in, std::string &data, uint64_t size)
+    void read(
+        IInputStream &in,
+        std::string &data,
+        uint64_t size
+    )
     {
         std::vector<char> temp(size);
         read(in, temp.data(), size);
         data.assign(temp.data(), size);
     }
 
-    void readVarint(IInputStream &in, uint8_t &value)
+    void readVarint(
+        IInputStream &in,
+        uint8_t &value
+    )
     {
         uint8_t temp = 0;
         for (uint8_t shift = 0;; shift += 7)
@@ -112,7 +151,10 @@ namespace Common
         value = temp;
     }
 
-    void readVarint(IInputStream &in, uint16_t &value)
+    void readVarint(
+        IInputStream &in,
+        uint16_t &value
+    )
     {
         uint16_t temp = 0;
         for (uint8_t shift = 0;; shift += 7)
@@ -139,7 +181,10 @@ namespace Common
         value = temp;
     }
 
-    void readVarint(IInputStream &in, uint32_t &value)
+    void readVarint(
+        IInputStream &in,
+        uint32_t &value
+    )
     {
         uint32_t temp = 0;
         for (uint8_t shift = 0;; shift += 7)
@@ -166,7 +211,10 @@ namespace Common
         value = temp;
     }
 
-    void readVarint(IInputStream &in, uint64_t &value)
+    void readVarint(
+        IInputStream &in,
+        uint64_t &value
+    )
     {
         uint64_t temp = 0;
         for (uint8_t shift = 0;; shift += 7)
@@ -193,7 +241,11 @@ namespace Common
         value = temp;
     }
 
-    void write(IOutputStream &out, const void *data, uint64_t size)
+    void write(
+        IOutputStream &out,
+        const void *data,
+        uint64_t size
+    )
     {
         while (size > 0)
         {
@@ -208,63 +260,96 @@ namespace Common
         }
     }
 
-    void write(IOutputStream &out, int8_t value)
+    void write(
+        IOutputStream &out,
+        int8_t value
+    )
     {
         write(out, &value, sizeof(value));
     }
 
-    void write(IOutputStream &out, int16_t value)
-    {
-        // TODO: Convert to little endian on big endian platforms
-        write(out, &value, sizeof(value));
-    }
-
-    void write(IOutputStream &out, int32_t value)
-    {
-        // TODO: Convert to little endian on big endian platforms
-        write(out, &value, sizeof(value));
-    }
-
-    void write(IOutputStream &out, int64_t value)
+    void write(
+        IOutputStream &out,
+        int16_t value
+    )
     {
         // TODO: Convert to little endian on big endian platforms
         write(out, &value, sizeof(value));
     }
 
-    void write(IOutputStream &out, uint8_t value)
-    {
-        write(out, &value, sizeof(value));
-    }
-
-    void write(IOutputStream &out, uint16_t value)
+    void write(
+        IOutputStream &out,
+        int32_t value
+    )
     {
         // TODO: Convert to little endian on big endian platforms
         write(out, &value, sizeof(value));
     }
 
-    void write(IOutputStream &out, uint32_t value)
+    void write(
+        IOutputStream &out,
+        int64_t value
+    )
     {
         // TODO: Convert to little endian on big endian platforms
         write(out, &value, sizeof(value));
     }
 
-    void write(IOutputStream &out, uint64_t value)
+    void write(
+        IOutputStream &out,
+        uint8_t value
+    )
+    {
+        write(out, &value, sizeof(value));
+    }
+
+    void write(
+        IOutputStream &out,
+        uint16_t value
+    )
     {
         // TODO: Convert to little endian on big endian platforms
         write(out, &value, sizeof(value));
     }
 
-    void write(IOutputStream &out, const std::vector<uint8_t> &data)
+    void write(
+        IOutputStream &out,
+        uint32_t value
+    )
+    {
+        // TODO: Convert to little endian on big endian platforms
+        write(out, &value, sizeof(value));
+    }
+
+    void write(
+        IOutputStream &out,
+        uint64_t value
+    )
+    {
+        // TODO: Convert to little endian on big endian platforms
+        write(out, &value, sizeof(value));
+    }
+
+    void write(
+        IOutputStream &out,
+        const std::vector<uint8_t> &data
+    )
     {
         write(out, data.data(), data.size());
     }
 
-    void write(IOutputStream &out, const std::string &data)
+    void write(
+        IOutputStream &out,
+        const std::string &data
+    )
     {
         write(out, data.data(), data.size());
     }
 
-    void writeVarint(IOutputStream &out, uint32_t value)
+    void writeVarint(
+        IOutputStream &out,
+        uint32_t value
+    )
     {
         while (value >= 0x80)
         {
@@ -275,7 +360,10 @@ namespace Common
         write(out, static_cast<uint8_t>(value));
     }
 
-    void writeVarint(IOutputStream &out, uint64_t value)
+    void writeVarint(
+        IOutputStream &out,
+        uint64_t value
+    )
     {
         while (value >= 0x80)
         {

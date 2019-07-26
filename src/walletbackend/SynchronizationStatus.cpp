@@ -18,8 +18,9 @@ uint64_t SynchronizationStatus::getHeight() const
 }
 
 void SynchronizationStatus::storeBlockHash(
-        const Crypto::Hash hash,
-        const uint64_t height)
+    const Crypto::Hash hash,
+    const uint64_t height
+)
 {
     m_lastKnownBlockHeight = height;
 

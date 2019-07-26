@@ -8,27 +8,34 @@
 namespace CryptoNote
 {
 
-    BlockchainMessage::BlockchainMessage(const NewBlock &message) : type(Type::NewBlock), newBlock(std::move(message))
+    BlockchainMessage::BlockchainMessage(const NewBlock &message)
+        : type(Type::NewBlock),
+          newBlock(std::move(message))
     {
     }
 
     BlockchainMessage::BlockchainMessage(const NewAlternativeBlock &message)
-            : type(Type::NewAlternativeBlock), newAlternativeBlock(message)
+        : type(Type::NewAlternativeBlock),
+          newAlternativeBlock(message)
     {
     }
 
     BlockchainMessage::BlockchainMessage(const ChainSwitch &message)
-            : type(Type::ChainSwitch), chainSwitch(new ChainSwitch(message))
+        : type(Type::ChainSwitch),
+          chainSwitch(new ChainSwitch(message))
     {
     }
 
     BlockchainMessage::BlockchainMessage(const AddTransaction &message)
-            : type(Type::AddTransaction), addTransaction(new AddTransaction(message))
+        : type(Type::AddTransaction),
+          addTransaction(new AddTransaction(message))
     {
     }
 
     BlockchainMessage::BlockchainMessage(const DeleteTransaction &message)
-            : type(Type::DeleteTransaction), deleteTransaction(new DeleteTransaction(message))
+        : type(Type::DeleteTransaction),
+          deleteTransaction(
+              new DeleteTransaction(message))
     {
     }
 
@@ -99,19 +106,40 @@ namespace CryptoNote
         return *chainSwitch;
     }
 
-    BlockchainMessage makeChainSwitchMessage(uint32_t index, std::vector<Crypto::Hash> &&hashes)
+    BlockchainMessage makeChainSwitchMessage(
+        uint32_t index,
+        std::vector<Crypto::Hash> &&hashes
+    )
     {
-        return BlockchainMessage{Messages::ChainSwitch{index, std::move(hashes)}};
+        return BlockchainMessage{
+            Messages::ChainSwitch{
+                index,
+                std::move(hashes)
+            }};
     }
 
-    BlockchainMessage makeNewAlternativeBlockMessage(uint32_t index, const Crypto::Hash &hash)
+    BlockchainMessage makeNewAlternativeBlockMessage(
+        uint32_t index,
+        const Crypto::Hash &hash
+    )
     {
-        return BlockchainMessage{Messages::NewAlternativeBlock{index, std::move(hash)}};
+        return BlockchainMessage{
+            Messages::NewAlternativeBlock{
+                index,
+                std::move(hash)
+            }};
     }
 
-    BlockchainMessage makeNewBlockMessage(uint32_t index, const Crypto::Hash &hash)
+    BlockchainMessage makeNewBlockMessage(
+        uint32_t index,
+        const Crypto::Hash &hash
+    )
     {
-        return BlockchainMessage{Messages::NewBlock{index, std::move(hash)}};
+        return BlockchainMessage{
+            Messages::NewBlock{
+                index,
+                std::move(hash)
+            }};
     }
 
     BlockchainMessage makeAddTransactionMessage(std::vector<Crypto::Hash> &&hashes)
@@ -119,17 +147,25 @@ namespace CryptoNote
         return BlockchainMessage{Messages::AddTransaction{std::move(hashes)}};
     }
 
-    BlockchainMessage makeDelTransactionMessage(std::vector<Crypto::Hash> &&hashes,
-                                                Messages::DeleteTransaction::Reason reason)
+    BlockchainMessage makeDelTransactionMessage(
+        std::vector<Crypto::Hash> &&hashes,
+        Messages::DeleteTransaction::Reason reason
+    )
     {
-        return BlockchainMessage{Messages::DeleteTransaction{std::move(hashes), reason}};
+        return BlockchainMessage{
+            Messages::DeleteTransaction{
+                std::move(hashes),
+                reason
+            }};
     }
 
-    void BlockchainMessage::match(std::function<void(const NewBlock &)> newBlockVisitor,
-                                  std::function<void(const NewAlternativeBlock &)> newAlternativeBlockVisitor,
-                                  std::function<void(const ChainSwitch &)> chainSwitchMessageVisitor,
-                                  std::function<void(const AddTransaction &)> addTxVisitor,
-                                  std::function<void(const DeleteTransaction &)> delTxVisitor) const
+    void BlockchainMessage::match(
+        std::function<void(const NewBlock &)> newBlockVisitor,
+        std::function<void(const NewAlternativeBlock &)> newAlternativeBlockVisitor,
+        std::function<void(const ChainSwitch &)> chainSwitchMessageVisitor,
+        std::function<void(const AddTransaction &)> addTxVisitor,
+        std::function<void(const DeleteTransaction &)> delTxVisitor
+    ) const
     {
         switch (getType())
         {

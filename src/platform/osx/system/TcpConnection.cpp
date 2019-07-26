@@ -45,7 +45,8 @@ namespace System
             assert(writeContext == nullptr);
             int result = close(connection);
             if (result)
-            {}
+            {
+            }
             assert(result != -1);
         }
     }
@@ -76,7 +77,10 @@ namespace System
         return *this;
     }
 
-    size_t TcpConnection::read(uint8_t *data, size_t size)
+    size_t TcpConnection::read(
+        uint8_t *data,
+        size_t size
+    )
     {
         assert(dispatcher != nullptr);
         assert(readContext == nullptr);
@@ -92,7 +96,8 @@ namespace System
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
                 message = "recv failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 OperationContext context;
                 context.context = dispatcher->getCurrentContext();
@@ -102,7 +107,8 @@ namespace System
                 if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
                 {
                     message = "kevent failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     readContext = &context;
                     dispatcher->getCurrentContext()->interruptProcedure = [&]
@@ -118,7 +124,7 @@ namespace System
                             if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
                             {
                                 throw std::runtime_error(
-                                        "TcpListener::interruptionProcedure, kevent failed, " + lastErrorMessage());
+                                    "TcpListener::interruptionProcedure, kevent failed, " + lastErrorMessage());
                             }
 
                             context->interrupted = true;
@@ -142,7 +148,8 @@ namespace System
                     if (transferred == -1)
                     {
                         message = "recv failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         assert(transferred <= static_cast<ssize_t>(size));
                         return transferred;
@@ -157,7 +164,10 @@ namespace System
         return transferred;
     }
 
-    size_t TcpConnection::write(const uint8_t *data, size_t size)
+    size_t TcpConnection::write(
+        const uint8_t *data,
+        size_t size
+    )
     {
         assert(dispatcher != nullptr);
         assert(writeContext == nullptr);
@@ -183,7 +193,8 @@ namespace System
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
                 message = "send failed, " + lastErrorMessage();
-            } else
+            }
+            else
             {
                 OperationContext context;
                 context.context = dispatcher->getCurrentContext();
@@ -193,7 +204,8 @@ namespace System
                 if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
                 {
                     message = "kevent failed, " + lastErrorMessage();
-                } else
+                }
+                else
                 {
                     writeContext = &context;
                     dispatcher->getCurrentContext()->interruptProcedure = [&]
@@ -232,7 +244,8 @@ namespace System
                     if (transferred == -1)
                     {
                         message = "send failed, " + lastErrorMessage();
-                    } else
+                    }
+                    else
                     {
                         assert(transferred <= static_cast<ssize_t>(size));
                         return transferred;
@@ -247,7 +260,9 @@ namespace System
         return transferred;
     }
 
-    std::pair<Ipv4Address, uint16_t> TcpConnection::getPeerAddressAndPort() const
+    std::pair<
+        Ipv4Address, uint16_t
+    > TcpConnection::getPeerAddressAndPort() const
     {
         sockaddr_in addr;
         socklen_t size = sizeof(addr);
@@ -260,8 +275,14 @@ namespace System
         return std::make_pair(Ipv4Address(htonl(addr.sin_addr.s_addr)), htons(addr.sin_port));
     }
 
-    TcpConnection::TcpConnection(Dispatcher &dispatcher, int socket)
-            : dispatcher(&dispatcher), connection(socket), readContext(nullptr), writeContext(nullptr)
+    TcpConnection::TcpConnection(
+        Dispatcher &dispatcher,
+        int socket
+    )
+        : dispatcher(&dispatcher),
+          connection(socket),
+          readContext(nullptr),
+          writeContext(nullptr)
     {
         int val = 1;
         if (setsockopt(connection, SOL_SOCKET, SO_NOSIGPIPE, (void *) &val, sizeof val) == -1)

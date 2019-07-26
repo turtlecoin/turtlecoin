@@ -16,13 +16,18 @@ namespace CryptoNote
     namespace
     {
 
-        bool parsePeerFromString(NetworkAddress &pe, const std::string &node_addr)
+        bool parsePeerFromString(
+            NetworkAddress &pe,
+            const std::string &node_addr
+        )
         {
             return Common::parseIpAddressAndPort(pe.ip, pe.port, node_addr);
         }
 
-        bool parsePeersAndAddToNetworkContainer(const std::vector<std::string> peerList,
-                                                std::vector<NetworkAddress> &container)
+        bool parsePeersAndAddToNetworkContainer(
+            const std::vector<std::string> peerList,
+            std::vector<NetworkAddress> &container
+        )
         {
             for (const std::string &peer : peerList)
             {
@@ -36,8 +41,10 @@ namespace CryptoNote
             return true;
         }
 
-        bool parsePeersAndAddToPeerListContainer(const std::vector<std::string> peerList,
-                                                 std::vector<PeerlistEntry> &container)
+        bool parsePeersAndAddToPeerListContainer(
+            const std::vector<std::string> peerList,
+            std::vector<PeerlistEntry> &container
+        )
         {
             for (const std::string &peer : peerList)
             {
@@ -65,11 +72,19 @@ namespace CryptoNote
         p2pStateReset = false;
     }
 
-    bool NetNodeConfig::init(const std::string interface, const int port, const int external, const bool localIp,
-                             const bool hidePort, const std::string dataDir, const std::vector<std::string> addPeers,
-                             const std::vector<std::string> addExclusiveNodes,
-                             const std::vector<std::string> addPriorityNodes,
-                             const std::vector<std::string> addSeedNodes, const bool p2pResetPeerState)
+    bool NetNodeConfig::init(
+        const std::string interface,
+        const int port,
+        const int external,
+        const bool localIp,
+        const bool hidePort,
+        const std::string dataDir,
+        const std::vector<std::string> addPeers,
+        const std::vector<std::string> addExclusiveNodes,
+        const std::vector<std::string> addPriorityNodes,
+        const std::vector<std::string> addSeedNodes,
+        const bool p2pResetPeerState
+    )
     {
         bindIp = interface;
         bindPort = port;

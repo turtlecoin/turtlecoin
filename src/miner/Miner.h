@@ -27,39 +27,55 @@ namespace CryptoNote
 
     class Miner
     {
-    public:
-        Miner(System::Dispatcher &dispatcher);
+        public:
+            Miner(System::Dispatcher &dispatcher);
 
-        BlockTemplate mine(const BlockMiningParameters &blockMiningParameters, size_t threadCount);
+            BlockTemplate mine(
+                const BlockMiningParameters &blockMiningParameters,
+                size_t threadCount
+            );
 
-        uint64_t getHashCount();
+            uint64_t getHashCount();
 
-        //NOTE! this is blocking method
-        void stop();
+            //NOTE! this is blocking method
+            void stop();
 
-    private:
-        System::Dispatcher &m_dispatcher;
-        System::Event m_miningStopped;
+        private:
+            System::Dispatcher &m_dispatcher;
 
-        enum class MiningState : uint8_t
-        {
-            MINING_STOPPED, BLOCK_FOUND, MINING_IN_PROGRESS
-        };
-        std::atomic<MiningState> m_state;
+            System::Event m_miningStopped;
 
-        std::vector<std::unique_ptr<System::RemoteContext<void>>> m_workers;
+            enum class MiningState : uint8_t
+            {
+                    MINING_STOPPED,
+                    BLOCK_FOUND,
+                    MINING_IN_PROGRESS
+            };
 
-        BlockTemplate m_block;
-        std::atomic<uint64_t> m_hash_count = 0;
-        std::mutex m_hashes_mutex;
+            std::atomic<MiningState> m_state;
 
-        void runWorkers(BlockMiningParameters blockMiningParameters, size_t threadCount);
+            std::vector<std::unique_ptr<System::RemoteContext<void>>> m_workers;
 
-        void workerFunc(const BlockTemplate &blockTemplate, uint64_t difficulty, uint32_t nonceStep);
+            BlockTemplate m_block;
 
-        bool setStateBlockFound();
+            std::atomic<uint64_t> m_hash_count = 0;
 
-        void incrementHashCount();
+            std::mutex m_hashes_mutex;
+
+            void runWorkers(
+                BlockMiningParameters blockMiningParameters,
+                size_t threadCount
+            );
+
+            void workerFunc(
+                const BlockTemplate &blockTemplate,
+                uint64_t difficulty,
+                uint32_t nonceStep
+            );
+
+            bool setStateBlockFound();
+
+            void incrementHashCount();
     };
 
 } //namespace CryptoNote

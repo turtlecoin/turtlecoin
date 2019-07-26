@@ -13,14 +13,14 @@ namespace Logging
 
     class ConsoleLogger : public CommonLogger
     {
-    public:
-        ConsoleLogger(Level level = DEBUGGING);
+        public:
+            ConsoleLogger(Level level = DEBUGGING);
 
-    protected:
-        virtual void doLogString(const std::string &message) override;
+        protected:
+            virtual void doLogString(const std::string &message) override;
 
-    private:
-        std::mutex mutex;
+        private:
+            std::mutex mutex;
     };
 
 }

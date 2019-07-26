@@ -15,12 +15,16 @@ using namespace Logging;
 
 namespace CryptoNote
 {
-//---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
     Checkpoints::Checkpoints(std::shared_ptr<Logging::ILogger> log) : logger(log, "checkpoints")
-    {}
+    {
+    }
 
-//---------------------------------------------------------------------------
-    bool Checkpoints::addCheckpoint(uint32_t index, const std::string &hash_str)
+    //---------------------------------------------------------------------------
+    bool Checkpoints::addCheckpoint(
+        uint32_t index,
+        const std::string &hash_str
+    )
     {
         Crypto::Hash h = Constants::NULL_HASH;
 
@@ -32,7 +36,12 @@ namespace CryptoNote
 
         /* The return value lets us check if it was inserted or not. If it wasn't,
            there is already a key (i.e., a height value) existing */
-        if (!points.insert({index, h}).second)
+        if (!points.insert(
+            {
+                index,
+                h
+            }
+        ).second)
         {
             logger(ERROR, BRIGHT_RED) << "CHECKPOINT ALREADY EXISTS!";
             return false;
@@ -47,8 +56,7 @@ namespace CryptoNote
 
         if (!file)
         {
-            logger(ERROR, BRIGHT_RED) << "Could not load checkpoints file: "
-                                      << filename;
+            logger(ERROR, BRIGHT_RED) << "Could not load checkpoints file: " << filename;
 
             return false;
         }
@@ -97,46 +105,52 @@ namespace CryptoNote
             }
         }
 
-        logger(INFO) << "Loaded " << points.size() << " checkpoints from "
-                     << filename;
+        logger(INFO) << "Loaded " << points.size() << " checkpoints from " << filename;
 
         return true;
     }
 
-//---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
     bool Checkpoints::isInCheckpointZone(uint32_t index) const
     {
         return !points.empty() && (index <= (--points.end())->first);
     }
 
-//---------------------------------------------------------------------------
-    bool Checkpoints::checkBlock(uint32_t index, const Crypto::Hash &h,
-                                 bool &isCheckpoint) const
+    //---------------------------------------------------------------------------
+    bool Checkpoints::checkBlock(
+        uint32_t index,
+        const Crypto::Hash &h,
+        bool &isCheckpoint
+    ) const
     {
         auto it = points.find(index);
         isCheckpoint = it != points.end();
         if (!isCheckpoint)
+        {
             return true;
+        }
 
         if (it->second == h)
         {
             if (index % 100 == 0)
             {
-                logger(Logging::INFO, BRIGHT_GREEN)
-                        << "CHECKPOINT PASSED FOR INDEX " << index << " " << h;
+                logger(Logging::INFO, BRIGHT_GREEN) << "CHECKPOINT PASSED FOR INDEX " << index << " " << h;
             }
             return true;
-        } else
+        }
+        else
         {
-            logger(Logging::WARNING, BRIGHT_YELLOW) << "CHECKPOINT FAILED FOR HEIGHT " << index
-                                                    << ". EXPECTED HASH: " << it->second
-                                                    << ", FETCHED HASH: " << h;
+            logger(Logging::WARNING, BRIGHT_YELLOW) << "CHECKPOINT FAILED FOR HEIGHT " << index << ". EXPECTED HASH: "
+                                                    << it->second << ", FETCHED HASH: " << h;
             return false;
         }
     }
 
-//---------------------------------------------------------------------------
-    bool Checkpoints::checkBlock(uint32_t index, const Crypto::Hash &h) const
+    //---------------------------------------------------------------------------
+    bool Checkpoints::checkBlock(
+        uint32_t index,
+        const Crypto::Hash &h
+    ) const
     {
         bool ignored;
         return checkBlock(index, h, ignored);

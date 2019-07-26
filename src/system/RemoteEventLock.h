@@ -14,14 +14,18 @@ namespace System
 
     class RemoteEventLock
     {
-    public:
-        RemoteEventLock(Dispatcher &dispatcher, Event &event);
+        public:
+            RemoteEventLock(
+                Dispatcher &dispatcher,
+                Event &event
+            );
 
-        ~RemoteEventLock();
+            ~RemoteEventLock();
 
-    private:
-        Dispatcher &dispatcher;
-        Event &event;
+        private:
+            Dispatcher &dispatcher;
+
+            Event &event;
     };
 
 }

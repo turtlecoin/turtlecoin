@@ -10,26 +10,28 @@
 
 class TransactionMonitor
 {
-public:
-    TransactionMonitor(
-            const std::shared_ptr<WalletBackend> walletBackend) :
-            m_walletBackend(walletBackend),
-            m_shouldStop(false)
-    {}
+    public:
+        TransactionMonitor(
+            const std::shared_ptr<WalletBackend> walletBackend
+        )
+            : m_walletBackend(walletBackend),
+              m_shouldStop(false)
+        {
+        }
 
-    void start();
+        void start();
 
-    void stop();
+        void stop();
 
-    std::shared_ptr<std::mutex> getMutex() const;
+        std::shared_ptr<std::mutex> getMutex() const;
 
-private:
+    private:
 
-    std::atomic<bool> m_shouldStop;
+        std::atomic<bool> m_shouldStop;
 
-    std::shared_ptr<WalletBackend> m_walletBackend;
+        std::shared_ptr<WalletBackend> m_walletBackend;
 
-    ThreadSafeQueue<WalletTypes::Transaction> m_queuedTransactions;
+        ThreadSafeQueue<WalletTypes::Transaction> m_queuedTransactions;
 
-    std::shared_ptr<std::mutex> m_mutex = std::make_shared<std::mutex>();
+        std::shared_ptr<std::mutex> m_mutex = std::make_shared<std::mutex>();
 };

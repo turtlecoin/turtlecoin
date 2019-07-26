@@ -36,8 +36,9 @@ uint32_t MemoryBlockchainStorage::getBlockCount() const
 
 //Returns MemoryBlockchainStorage with elements from [splitIndex, blocks.size() - 1].
 //Original MemoryBlockchainStorage will contain elements from [0, splitIndex - 1].
-std::unique_ptr<BlockchainStorage::IBlockchainStorageInternal>
-MemoryBlockchainStorage::splitStorage(uint32_t splitIndex)
+std::unique_ptr<
+    BlockchainStorage::IBlockchainStorageInternal
+> MemoryBlockchainStorage::splitStorage(uint32_t splitIndex)
 {
     assert(splitIndex > 0);
     assert(splitIndex < blocks.size());

@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
 #endif
 
 #include <ws2tcpip.h>
@@ -60,7 +60,16 @@ namespace System
             throw InterruptedException();
         }
 
-        addrinfo hints = {0, AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
+        addrinfo hints = {
+            0,
+            AF_INET,
+            SOCK_STREAM,
+            IPPROTO_TCP,
+            0,
+            NULL,
+            NULL,
+            NULL
+        };
         addrinfo *addressInfos;
         int result = getaddrinfo(host.c_str(), NULL, &hints, &addressInfos);
         if (result != 0)

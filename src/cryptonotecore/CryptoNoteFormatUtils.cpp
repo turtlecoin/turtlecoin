@@ -27,8 +27,13 @@ using namespace Common;
 namespace CryptoNote
 {
 
-    bool generate_key_image_helper(const AccountKeys &ack, const PublicKey &tx_public_key, size_t real_output_index,
-                                   KeyPair &in_ephemeral, KeyImage &ki)
+    bool generate_key_image_helper(
+        const AccountKeys &ack,
+        const PublicKey &tx_public_key,
+        size_t real_output_index,
+        KeyPair &in_ephemeral,
+        KeyImage &ki
+    )
     {
         KeyDerivation recv_derivation;
         bool r = generate_key_derivation(tx_public_key, ack.viewSecretKey, recv_derivation);
@@ -54,7 +59,10 @@ namespace CryptoNote
         return true;
     }
 
-    bool get_tx_fee(const Transaction &tx, uint64_t &fee)
+    bool get_tx_fee(
+        const Transaction &tx,
+        uint64_t &fee
+    )
     {
         uint64_t amount_in = 0;
         uint64_t amount_out = 0;
@@ -85,7 +93,9 @@ namespace CryptoNote
     {
         uint64_t r = 0;
         if (!get_tx_fee(tx, r))
+        {
             return 0;
+        }
         return r;
     }
 
@@ -93,13 +103,18 @@ namespace CryptoNote
     {
         std::vector<uint32_t> res = off;
         for (size_t i = 1; i < res.size(); i++)
+        {
             res[i] += res[i - 1];
+        }
         return res;
     }
 
     std::vector<uint32_t> absolute_output_offsets_to_relative(const std::vector<uint32_t> &off)
     {
-        if (off.empty()) return {};
+        if (off.empty())
+        {
+            return {};
+        }
         auto copy = off;
         for (size_t i = 1; i < copy.size(); ++i)
         {
@@ -121,7 +136,10 @@ namespace CryptoNote
         return true;
     }
 
-    bool checkOutsValid(const TransactionPrefix &tx, std::string *error)
+    bool checkOutsValid(
+        const TransactionPrefix &tx,
+        std::string *error
+    )
     {
         for (const TransactionOutput &out : tx.outputs)
         {
@@ -144,7 +162,8 @@ namespace CryptoNote
                     }
                     return false;
                 }
-            } else
+            }
+            else
             {
                 if (error)
                 {
@@ -171,7 +190,9 @@ namespace CryptoNote
             }
 
             if (money > amount + money)
+            {
                 return false;
+            }
 
             money += amount;
         }
@@ -184,21 +205,32 @@ namespace CryptoNote
         for (const auto &o : tx.outputs)
         {
             if (money > o.amount + money)
+            {
                 return false;
+            }
             money += o.amount;
         }
         return true;
     }
 
-    bool
-    is_out_to_acc(const AccountKeys &acc, const KeyOutput &out_key, const KeyDerivation &derivation, size_t keyIndex)
+    bool is_out_to_acc(
+        const AccountKeys &acc,
+        const KeyOutput &out_key,
+        const KeyDerivation &derivation,
+        size_t keyIndex
+    )
     {
         PublicKey pk;
         derive_public_key(derivation, keyIndex, acc.address.spendPublicKey, pk);
         return pk == out_key.key;
     }
 
-    bool is_out_to_acc(const AccountKeys &acc, const KeyOutput &out_key, const PublicKey &tx_pub_key, size_t keyIndex)
+    bool is_out_to_acc(
+        const AccountKeys &acc,
+        const KeyOutput &out_key,
+        const PublicKey &tx_pub_key,
+        size_t keyIndex
+    )
     {
         KeyDerivation derivation;
         generate_key_derivation(tx_pub_key, acc.viewSecretKey, derivation);
@@ -246,17 +278,20 @@ namespace CryptoNote
         return amount;
     }
 
-    void decomposeAmount(uint64_t amount, uint64_t dustThreshold, std::vector<uint64_t> &decomposedAmounts)
+    void decomposeAmount(
+        uint64_t amount,
+        uint64_t dustThreshold,
+        std::vector<uint64_t> &decomposedAmounts
+    )
     {
-        decompose_amount_into_digits(amount, dustThreshold,
-                                     [&](uint64_t amount)
-                                     {
-                                         decomposedAmounts.push_back(amount);
-                                     },
-                                     [&](uint64_t dust)
-                                     {
-                                         decomposedAmounts.push_back(dust);
-                                     }
+        decompose_amount_into_digits(
+            amount, dustThreshold, [&](uint64_t amount)
+        {
+            decomposedAmounts.push_back(amount);
+        }, [&](uint64_t dust)
+            {
+                decomposedAmounts.push_back(dust);
+            }
         );
     }
 
