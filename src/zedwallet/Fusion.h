@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <Wallet/WalletGreen.h>
+#include <wallet/WalletGreen.h>
 
 bool fusionTX(CryptoNote::WalletGreen &wallet,
               CryptoNote::TransactionParameters p,

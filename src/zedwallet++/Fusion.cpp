@@ -8,11 +8,11 @@
 
 #include <iostream>
 
-#include <Utilities/FormatTools.h>
+#include <utilities/FormatTools.h>
 
-#include <WalletBackend/WalletBackend.h>
+#include <walletbackend/WalletBackend.h>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet++/Utilities.h>
 
 void optimize(const std::shared_ptr<WalletBackend> walletBackend)

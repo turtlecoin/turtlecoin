@@ -6,14 +6,14 @@
 #include <zedwallet/Open.h>
 ///////////////////////////
 
-#include <CryptoNoteCore/Account.h>
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
+#include <cryptonotecore/Account.h>
+#include <cryptonotecore/CryptoNoteBasicImpl.h>
 
-#include <Mnemonics/Mnemonics.h>
+#include <mnemonics/Mnemonics.h>
 
-#include <Wallet/WalletErrors.h>
+#include <wallet/WalletErrors.h>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet/CommandImplementations.h>
 #include <zedwallet/Tools.h>
 #include <zedwallet/Transfer.h>

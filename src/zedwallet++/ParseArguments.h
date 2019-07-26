@@ -6,7 +6,7 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <Logger/Logger.h>
+#include <logger/Logger.h>
 
 struct ZedConfig
 {

@@ -8,10 +8,10 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <Wallet/WalletGreen.h>
-#include <Wallet/WalletUtils.h>
+#include <wallet/WalletGreen.h>
+#include <wallet/WalletUtils.h>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet/Tools.h>
 #include <config/WalletConfig.h>
 

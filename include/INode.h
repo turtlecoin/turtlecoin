@@ -12,9 +12,9 @@
 #include <vector>
 
 #include "crypto/crypto.h"
-#include "CryptoNoteCore/CryptoNoteBasic.h"
-#include "CryptoNoteProtocol/CryptoNoteProtocolDefinitions.h"
-#include "Rpc/CoreRpcServerCommandsDefinitions.h"
+#include "cryptonotecore/CryptoNoteBasic.h"
+#include "cryptonoteprotocol/CryptoNoteProtocolDefinitions.h"
+#include "rpc/CoreRpcServerCommandsDefinitions.h"
 
 #include "BlockchainExplorerData.h"
 #include "ITransaction.h"

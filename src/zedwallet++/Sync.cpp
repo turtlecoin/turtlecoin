@@ -6,7 +6,7 @@
 #include <zedwallet++/Sync.h>
 /////////////////////////////
 
-#include <Common/SignalHandler.h>
+#include <common/SignalHandler.h>
 
 #include <config/WalletConfig.h>
 
@@ -14,7 +14,7 @@
 
 #include <thread>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet++/CommandImplementations.h>
 
 void syncWallet(const std::shared_ptr<WalletBackend> walletBackend)

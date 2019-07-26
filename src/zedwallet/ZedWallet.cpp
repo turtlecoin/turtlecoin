@@ -7,10 +7,10 @@
 ////////////////////////////////
 
 #include <config/CliHeader.h>
-#include <Common/SignalHandler.h>
-#include <CryptoNoteCore/Currency.h>
-#include <Logging/FileLogger.h>
-#include <Logging/LoggerManager.h>
+#include <common/SignalHandler.h>
+#include <cryptonotecore/Currency.h>
+#include <logging/FileLogger.h>
+#include <logging/LoggerManager.h>
 
 #ifdef _WIN32
 
@@ -18,7 +18,7 @@
 
 #endif
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet/Menu.h>
 #include <zedwallet/ParseArguments.h>
 #include <zedwallet/Tools.h>

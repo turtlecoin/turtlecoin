@@ -8,7 +8,7 @@
 
 #include <config/WalletConfig.h>
 
-#include <Utilities/Container.h>
+#include <utilities/Container.h>
 
 std::vector<Command> startupCommands()
 {

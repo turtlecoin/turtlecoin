@@ -11,7 +11,7 @@
 
 #include "CryptoTypes.h"
 
-#include <Common/StringTools.h>
+#include <common/StringTools.h>
 
 #include "json.hpp"
 

@@ -10,9 +10,9 @@
 
 #include <iostream>
 
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/FormatTools.h>
-#include <Utilities/Input.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/FormatTools.h>
+#include <utilities/Input.h>
 
 #include <zedwallet++/Fusion.h>
 #include <zedwallet++/GetInput.h>

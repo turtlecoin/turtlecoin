@@ -8,7 +8,7 @@
 
 #include <config/WalletConfig.h>
 
-#include <Utilities/FormatTools.h>
+#include <utilities/FormatTools.h>
 
 #include <zedwallet++/CommandDispatcher.h>
 #include <zedwallet++/Commands.h>

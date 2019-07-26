@@ -11,17 +11,17 @@
 
 #include <config/CryptoNoteConfig.h>
 
-#include <Errors/ValidateParameters.h>
+#include <errors/ValidateParameters.h>
 
 #include <fstream>
 
-#include <Logger/Logger.h>
+#include <logger/Logger.h>
 
-#include <Utilities/Addresses.h>
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/FormatTools.h>
-#include <Utilities/Input.h>
-#include <Utilities/String.h>
+#include <utilities/Addresses.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/FormatTools.h>
+#include <utilities/Input.h>
+#include <utilities/String.h>
 
 #include <zedwallet++/Commands.h>
 #include <zedwallet++/GetInput.h>

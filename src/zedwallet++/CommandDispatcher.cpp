@@ -8,8 +8,8 @@
 
 #include <iostream>
 
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/Input.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/Input.h>
 
 #include <zedwallet++/AddressBook.h>
 #include <zedwallet++/CommandImplementations.h>

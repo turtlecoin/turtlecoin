@@ -8,19 +8,19 @@
 
 #include <cmath>
 
-#include <Common/Base58.h>
-#include <Common/StringTools.h>
+#include <common/Base58.h>
+#include <common/StringTools.h>
 
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-#include <Common/CryptoNoteTools.h>
-#include <Common/TransactionExtra.h>
+#include <cryptonotecore/CryptoNoteBasicImpl.h>
+#include <common/CryptoNoteTools.h>
+#include <common/TransactionExtra.h>
 
 #include <fstream>
 
 #include <iostream>
 
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/Addresses.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/Addresses.h>
 #include <zedwallet/PasswordContainer.h>
 #include <config/WalletConfig.h>
 

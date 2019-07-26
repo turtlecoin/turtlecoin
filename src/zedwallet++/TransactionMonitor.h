@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <WalletBackend/WalletBackend.h>
+#include <walletbackend/WalletBackend.h>
 
-#include <Utilities/ThreadSafeQueue.h>
+#include <utilities/ThreadSafeQueue.h>
 
 class TransactionMonitor
 {

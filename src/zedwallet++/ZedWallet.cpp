@@ -4,11 +4,11 @@
 
 #include <iostream>
 
-#include <Common/SignalHandler.h>
+#include <common/SignalHandler.h>
 
 #include <config/CliHeader.h>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet++/Menu.h>
 #include <zedwallet++/ParseArguments.h>
 #include <zedwallet++/Sync.h>

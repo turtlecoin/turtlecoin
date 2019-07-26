@@ -6,9 +6,9 @@
 #include <zedwallet/Sync.h>
 ///////////////////////////
 
-#include <Common/StringTools.h>
+#include <common/StringTools.h>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet/CommandImplementations.h>
 #include <zedwallet/GetInput.h>
 #include <zedwallet/Tools.h>

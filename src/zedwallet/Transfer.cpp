@@ -6,31 +6,31 @@
 #include <zedwallet/Transfer.h>
 ///////////////////////////////
 
-#include <Common/Base58.h>
-#include <Common/StringTools.h>
+#include <common/Base58.h>
+#include <common/StringTools.h>
 
 #include <config/CryptoNoteConfig.h>
 
-#include <CryptoNoteCore/CryptoNoteBasicImpl.h>
-#include <Common/CryptoNoteTools.h>
-#include <Common/TransactionExtra.h>
+#include <cryptonotecore/CryptoNoteBasicImpl.h>
+#include <common/CryptoNoteTools.h>
+#include <common/TransactionExtra.h>
 
 #include "WalletGreenTypes.h"
 
-#include <NodeRpcProxy/NodeErrors.h>
+#include <noderpcproxy/NodeErrors.h>
 
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet/Fusion.h>
 #include <zedwallet/Tools.h>
 #include <config/WalletConfig.h>
 
-#include <Wallet/WalletErrors.h>
+#include <wallet/WalletErrors.h>
 
-#include <Wallet/WalletGreen.h>
-#include <Wallet/WalletUtils.h>
+#include <wallet/WalletGreen.h>
+#include <wallet/WalletUtils.h>
 
-#include <Utilities/Addresses.h>
-#include <Utilities/ParseExtra.h>
+#include <utilities/Addresses.h>
+#include <utilities/ParseExtra.h>
 
 bool parseAmount(std::string strAmount, uint64_t &amount)
 {

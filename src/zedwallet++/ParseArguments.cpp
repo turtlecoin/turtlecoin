@@ -13,7 +13,7 @@
 #include <config/CryptoNoteConfig.h>
 #include <config/WalletConfig.h>
 
-#include <Utilities/Utilities.h>
+#include <utilities/Utilities.h>
 
 #include "version.h"
 

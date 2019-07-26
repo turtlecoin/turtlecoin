@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#include <WalletBackend/WalletBackend.h>
+#include <walletbackend/WalletBackend.h>
 
 namespace ZedUtilities
 {

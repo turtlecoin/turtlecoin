@@ -8,15 +8,15 @@
 
 #include <config/WalletConfig.h>
 
-#include <Errors/ValidateParameters.h>
+#include <errors/ValidateParameters.h>
 
 #include <fstream>
 
 #include <iostream>
 
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/Input.h>
-#include <Utilities/String.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/Input.h>
+#include <utilities/String.h>
 
 #include <zedwallet++/GetInput.h>
 #include <zedwallet++/Transfer.h>

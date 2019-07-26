@@ -4,7 +4,7 @@
 
 #include <string>
 #include <vector>
-#include <WalletBackend/WalletBackend.h>
+#include <walletbackend/WalletBackend.h>
 
 
 struct AddressBookEntry

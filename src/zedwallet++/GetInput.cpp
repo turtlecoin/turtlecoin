@@ -10,15 +10,15 @@
 
 #include <config/WalletConfig.h>
 
-#include <Errors/ValidateParameters.h>
+#include <errors/ValidateParameters.h>
 
 #include "linenoise.hpp"
 
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/FormatTools.h>
-#include <Utilities/Input.h>
-#include <Utilities/String.h>
-#include <Utilities/Utilities.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/FormatTools.h>
+#include <utilities/Input.h>
+#include <utilities/String.h>
+#include <utilities/Utilities.h>
 
 #include <zedwallet++/Commands.h>
 
