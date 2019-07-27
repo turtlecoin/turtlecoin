@@ -502,7 +502,7 @@ namespace Common
     template<
         class Object,
         class Size
-    > const SizeArrayView<
+    > const Size ArrayView<
         Object, Size
     >::INVALID = std::numeric_limits<Size>::max();
 
