@@ -6,61 +6,39 @@
 #ifndef HTTPPARSER_H_
 #define HTTPPARSER_H_
 
-#include <iostream>
-#include <map>
-#include <string>
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 
+#include <iostream>
+#include <map>
+#include <string>
+
 namespace CryptoNote
 {
-
-    //Blocking HttpParser
+    // Blocking HttpParser
     class HttpParser
     {
-        public:
-            HttpParser()
-            {
-            };
+      public:
+        HttpParser() {};
 
-            static void receiveRequest(
-                std::istream &stream,
-                HttpRequest &request
-            );
+        static void receiveRequest(std::istream &stream, HttpRequest &request);
 
-            static void receiveResponse(
-                std::istream &stream,
-                HttpResponse &response
-            );
+        static void receiveResponse(std::istream &stream, HttpResponse &response);
 
-            static HttpResponse::HTTP_STATUS parseResponseStatusFromString(const std::string &status);
+        static HttpResponse::HTTP_STATUS parseResponseStatusFromString(const std::string &status);
 
-        private:
-            static void readWord(
-                std::istream &stream,
-                std::string &word
-            );
+      private:
+        static void readWord(std::istream &stream, std::string &word);
 
-            static void readHeaders(
-                std::istream &stream,
-                HttpRequest::Headers &headers
-            );
+        static void readHeaders(std::istream &stream, HttpRequest::Headers &headers);
 
-            static bool readHeader(
-                std::istream &stream,
-                std::string &name,
-                std::string &value
-            );
+        static bool readHeader(std::istream &stream, std::string &name, std::string &value);
 
-            static size_t getBodyLen(const HttpRequest::Headers &headers);
+        static size_t getBodyLen(const HttpRequest::Headers &headers);
 
-            static void readBody(
-                std::istream &stream,
-                std::string &body,
-                const size_t bodyLen
-            );
+        static void readBody(std::istream &stream, std::string &body, const size_t bodyLen);
     };
 
-} //namespace CryptoNote
+} // namespace CryptoNote
 
 #endif /* HTTPPARSER_H_ */

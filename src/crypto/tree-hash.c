@@ -3,18 +3,14 @@
 //
 // Please see the included LICENSE file for more information.
 
+#include "hash-ops.h"
+
 #include <alloca.h>
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
-#include "hash-ops.h"
-
-void tree_hash(
-    const char (*hashes)[HASH_SIZE],
-    size_t count,
-    char *root_hash
-)
+void tree_hash(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash)
 {
     assert(count > 0);
     if (count == 1)
@@ -29,7 +25,7 @@ void tree_hash(
     {
         size_t i, j;
         size_t cnt = count - 1;
-        char (*ints)[HASH_SIZE];
+        char(*ints)[HASH_SIZE];
         for (i = 1; i < 8 * sizeof(size_t); i <<= 1)
         {
             cnt |= cnt >> i;
@@ -70,16 +66,12 @@ size_t tree_depth(size_t count)
     return depth;
 }
 
-void tree_branch(
-    const char (*hashes)[HASH_SIZE],
-    size_t count,
-    char (*branch)[HASH_SIZE]
-)
+void tree_branch(const char (*hashes)[HASH_SIZE], size_t count, char (*branch)[HASH_SIZE])
 {
     size_t i, j;
     size_t cnt = 1;
     size_t depth = 0;
-    char (*ints)[HASH_SIZE];
+    char(*ints)[HASH_SIZE];
     assert(count > 0);
     for (i = sizeof(size_t) << 2; i > 0; i >>= 1)
     {
@@ -116,8 +108,7 @@ void tree_hash_from_branch(
     size_t depth,
     const char *leaf,
     const void *path,
-    char *root_hash
-)
+    char *root_hash)
 {
     if (depth == 0)
     {
@@ -131,7 +122,7 @@ void tree_hash_from_branch(
         while (depth > 0)
         {
             --depth;
-            if (path && (((const char *) path)[depth >> 3] & (1 << (depth & 7))) != 0)
+            if (path && (((const char *)path)[depth >> 3] & (1 << (depth & 7))) != 0)
             {
                 leaf_path = buffer[1];
                 branch_path = buffer[0];

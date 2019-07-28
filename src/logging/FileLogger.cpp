@@ -7,10 +7,7 @@
 
 namespace Logging
 {
-
-    FileLogger::FileLogger(Level level) : StreamLogger(level)
-    {
-    }
+    FileLogger::FileLogger(Level level): StreamLogger(level) {}
 
     void FileLogger::init(const std::string &fileName)
     {
@@ -18,4 +15,4 @@ namespace Logging
         StreamLogger::attachToStream(fileStream);
     }
 
-}
+} // namespace Logging

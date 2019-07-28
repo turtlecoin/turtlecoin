@@ -5,61 +5,44 @@
 
 #pragma once
 
-#include <unordered_set>
-
 #include <http/HttpRequest.h>
 #include <http/HttpResponse.h>
-
+#include <logging/LoggerRef.h>
 #include <system/ContextGroup.h>
 #include <system/Dispatcher.h>
-#include <system/TcpListener.h>
-#include <system/TcpConnection.h>
 #include <system/Event.h>
-
-#include <logging/LoggerRef.h>
+#include <system/TcpConnection.h>
+#include <system/TcpListener.h>
+#include <unordered_set>
 
 namespace CryptoNote
 {
-
     class HttpServer
     {
+      public:
+        HttpServer(System::Dispatcher &dispatcher, std::shared_ptr<Logging::ILogger> log);
 
-        public:
+        void start(const std::string &address, uint16_t port);
 
-            HttpServer(
-                System::Dispatcher &dispatcher,
-                std::shared_ptr<Logging::ILogger> log
-            );
+        void stop();
 
-            void start(
-                const std::string &address,
-                uint16_t port
-            );
+        virtual void processRequest(const HttpRequest &request, HttpResponse &response) = 0;
 
-            void stop();
+      protected:
+        System::Dispatcher &m_dispatcher;
 
-            virtual void processRequest(
-                const HttpRequest &request,
-                HttpResponse &response
-            ) = 0;
+      private:
+        void acceptLoop();
 
-        protected:
+        void connectionHandler(System::TcpConnection &&conn);
 
-            System::Dispatcher &m_dispatcher;
+        System::ContextGroup workingContextGroup;
 
-        private:
+        Logging::LoggerRef logger;
 
-            void acceptLoop();
+        System::TcpListener m_listener;
 
-            void connectionHandler(System::TcpConnection &&conn);
-
-            System::ContextGroup workingContextGroup;
-
-            Logging::LoggerRef logger;
-
-            System::TcpListener m_listener;
-
-            std::unordered_set<System::TcpConnection *> m_connections;
+        std::unordered_set<System::TcpConnection *> m_connections;
     };
 
-}
+} // namespace CryptoNote

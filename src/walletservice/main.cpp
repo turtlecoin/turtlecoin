@@ -3,31 +3,30 @@
 //
 // Please see the included LICENSE file for more information.
 
-#include <iostream>
-#include <memory>
-#include <thread>
-
-#include <string.h>
-
-#include <config/CliHeader.h>
 #include "PaymentGateService.h"
 #include "version.h"
 
-#ifdef WIN32
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
+#include <config/CliHeader.h>
+#include <iostream>
+#include <memory>
+#include <string.h>
+#include <thread>
 
-    #include <windows.h>
-    #include <winsvc.h>
+#ifdef WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <windows.h>
+#include <winsvc.h>
 
 #else
-    #include <unistd.h>
-    #include <signal.h>
-    #include <sys/types.h>
-    #include <sys/stat.h>
-    #include <string.h>
-    #include <errno.h>
+#include <errno.h>
+#include <signal.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #endif
 
 #define SERVICE_NAME "Turtle-Service"
@@ -42,9 +41,13 @@ std::string GetLastErrorMessage(DWORD errorMessageID)
 {
     LPSTR messageBuffer = nullptr;
     size_t size = FormatMessageA(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-        FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorMessageID, 0, (LPSTR) &messageBuffer, 0, NULL
-    );
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        errorMessageID,
+        0,
+        (LPSTR)&messageBuffer,
+        0,
+        NULL);
 
     std::string message(messageBuffer, size);
 
@@ -60,65 +63,38 @@ void __stdcall serviceHandler(DWORD fdwControl)
         Logging::LoggerRef log(ppg->getLogger(), "serviceHandler");
         log(Logging::INFO, Logging::BRIGHT_YELLOW) << "Stop signal caught";
 
-        SERVICE_STATUS serviceStatus{
-            SERVICE_WIN32_OWN_PROCESS,
-            SERVICE_STOP_PENDING,
-            0,
-            NO_ERROR,
-            0,
-            0,
-            0
-        };
+        SERVICE_STATUS serviceStatus {SERVICE_WIN32_OWN_PROCESS, SERVICE_STOP_PENDING, 0, NO_ERROR, 0, 0, 0};
         SetServiceStatus(serviceStatusHandle, &serviceStatus);
 
         ppg->stop();
     }
 }
 
-void __stdcall serviceMain(
-    DWORD dwArgc,
-    char **lpszArgv
-)
+void __stdcall serviceMain(DWORD dwArgc, char **lpszArgv)
 {
     Logging::LoggerRef logRef(ppg->getLogger(), "WindowsService");
 
     serviceStatusHandle = RegisterServiceCtrlHandler("PaymentGate", serviceHandler);
     if (serviceStatusHandle == NULL)
     {
-        logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Couldn't make RegisterServiceCtrlHandler call: "
-                                                    << GetLastErrorMessage(GetLastError());
+        logRef(Logging::FATAL, Logging::BRIGHT_RED)
+            << "Couldn't make RegisterServiceCtrlHandler call: " << GetLastErrorMessage(GetLastError());
         return;
     }
 
-    SERVICE_STATUS serviceStatus{
-        SERVICE_WIN32_OWN_PROCESS,
-        SERVICE_START_PENDING,
-        0,
-        NO_ERROR,
-        0,
-        1,
-        3000
-    };
+    SERVICE_STATUS serviceStatus {SERVICE_WIN32_OWN_PROCESS, SERVICE_START_PENDING, 0, NO_ERROR, 0, 1, 3000};
     if (SetServiceStatus(serviceStatusHandle, &serviceStatus) != TRUE)
     {
-        logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Couldn't make SetServiceStatus call: "
-                                                    << GetLastErrorMessage(GetLastError());
+        logRef(Logging::FATAL, Logging::BRIGHT_RED)
+            << "Couldn't make SetServiceStatus call: " << GetLastErrorMessage(GetLastError());
         return;
     }
 
-    serviceStatus = {
-        SERVICE_WIN32_OWN_PROCESS,
-        SERVICE_RUNNING,
-        SERVICE_ACCEPT_STOP,
-        NO_ERROR,
-        0,
-        0,
-        0
-    };
+    serviceStatus = {SERVICE_WIN32_OWN_PROCESS, SERVICE_RUNNING, SERVICE_ACCEPT_STOP, NO_ERROR, 0, 0, 0};
     if (SetServiceStatus(serviceStatusHandle, &serviceStatus) != TRUE)
     {
-        logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Couldn't make SetServiceStatus call: "
-                                                    << GetLastErrorMessage(GetLastError());
+        logRef(Logging::FATAL, Logging::BRIGHT_RED)
+            << "Couldn't make SetServiceStatus call: " << GetLastErrorMessage(GetLastError());
         return;
     }
 
@@ -131,90 +107,85 @@ void __stdcall serviceMain(
         logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Error occurred: " << ex.what();
     }
 
-    serviceStatus = {
-        SERVICE_WIN32_OWN_PROCESS,
-        SERVICE_STOPPED,
-        0,
-        NO_ERROR,
-        0,
-        0,
-        0
-    };
+    serviceStatus = {SERVICE_WIN32_OWN_PROCESS, SERVICE_STOPPED, 0, NO_ERROR, 0, 0, 0};
     SetServiceStatus(serviceStatusHandle, &serviceStatus);
 }
 
 #else
-int daemonize() {
-  pid_t pid;
-  pid = fork();
+int daemonize()
+{
+    pid_t pid;
+    pid = fork();
 
-  if (pid < 0)
-    return pid;
+    if (pid < 0)
+        return pid;
 
-  if (pid > 0)
-    return pid;
+    if (pid > 0)
+        return pid;
 
-  if (setsid() < 0)
-    return -1;
+    if (setsid() < 0)
+        return -1;
 
-  signal(SIGCHLD, SIG_IGN);
-  signal(SIGHUP, SIG_IGN);
-  signal(SIGPIPE, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
 
-  pid = fork();
+    pid = fork();
 
-  if (pid < 0)
-    return pid;
+    if (pid < 0)
+        return pid;
 
-  if (pid > 0)
-    return pid;
+    if (pid > 0)
+        return pid;
 
-  umask(0);
+    umask(0);
 
-  return 0;
+    return 0;
 }
 #endif
 
 int runDaemon()
 {
-    #ifdef WIN32
+#ifdef WIN32
 
-    SERVICE_TABLE_ENTRY serviceTable[]{{"Payment Gate", serviceMain},
-                                       {NULL, NULL}};
+    SERVICE_TABLE_ENTRY serviceTable[] {{"Payment Gate", serviceMain}, {NULL, NULL}};
 
     Logging::LoggerRef logRef(ppg->getLogger(), "RunService");
 
     if (StartServiceCtrlDispatcher(serviceTable) != TRUE)
     {
-        logRef(Logging::FATAL, Logging::BRIGHT_RED) << "Couldn't start service: "
-                                                    << GetLastErrorMessage(GetLastError());
+        logRef(Logging::FATAL, Logging::BRIGHT_RED)
+            << "Couldn't start service: " << GetLastErrorMessage(GetLastError());
         return 1;
     }
 
     logRef(Logging::INFO) << "Service stopped";
     return 0;
 
-    #else
+#else
 
     int daemonResult = daemonize();
-    if (daemonResult > 0) {
-      //parent
-      return 0;
-    } else if (daemonResult < 0) {
-      //error occurred
-      return 1;
+    if (daemonResult > 0)
+    {
+        // parent
+        return 0;
+    }
+    else if (daemonResult < 0)
+    {
+        // error occurred
+        return 1;
     }
 
     ppg->run();
 
     return 0;
 
-    #endif
+#endif
 }
 
 int registerService()
 {
-    #ifdef WIN32
+#ifdef WIN32
     Logging::LoggerRef logRef(ppg->getLogger(), "ServiceRegistrator");
 
     char pathBuff[MAX_PATH];
@@ -227,8 +198,8 @@ int registerService()
     {
         if (GetModuleFileName(NULL, pathBuff, ARRAYSIZE(pathBuff)) == 0)
         {
-            logRef(Logging::FATAL, Logging::BRIGHT_RED) << "GetModuleFileName failed with error: "
-                                                        << GetLastErrorMessage(GetLastError());
+            logRef(Logging::FATAL, Logging::BRIGHT_RED)
+                << "GetModuleFileName failed with error: " << GetLastErrorMessage(GetLastError());
             ret = 1;
             break;
         }
@@ -241,27 +212,38 @@ int registerService()
         scManager = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE);
         if (scManager == NULL)
         {
-            logRef(Logging::FATAL, Logging::BRIGHT_RED) << "OpenSCManager failed with error: "
-                                                        << GetLastErrorMessage(GetLastError());
+            logRef(Logging::FATAL, Logging::BRIGHT_RED)
+                << "OpenSCManager failed with error: " << GetLastErrorMessage(GetLastError());
             ret = 1;
             break;
         }
 
         scService = CreateService(
-            scManager, SERVICE_NAME, NULL, SERVICE_QUERY_STATUS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, modulePath
-            .c_str(), NULL, NULL, NULL, NULL, NULL
-        );
+            scManager,
+            SERVICE_NAME,
+            NULL,
+            SERVICE_QUERY_STATUS,
+            SERVICE_WIN32_OWN_PROCESS,
+            SERVICE_AUTO_START,
+            SERVICE_ERROR_NORMAL,
+            modulePath.c_str(),
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL);
 
         if (scService == NULL)
         {
-            logRef(Logging::FATAL, Logging::BRIGHT_RED) << "CreateService failed with error: "
-                                                        << GetLastErrorMessage(GetLastError());
+            logRef(Logging::FATAL, Logging::BRIGHT_RED)
+                << "CreateService failed with error: " << GetLastErrorMessage(GetLastError());
             ret = 1;
             break;
         }
 
         logRef(Logging::INFO) << "Service is registered successfully";
-        logRef(Logging::INFO) << "Please make sure " << moduleDir + "payment_service.conf" << " exists";
+        logRef(Logging::INFO) << "Please make sure " << moduleDir + "payment_service.conf"
+                              << " exists";
         break;
     }
 
@@ -276,14 +258,14 @@ int registerService()
     }
 
     return ret;
-    #else
+#else
     return 0;
-    #endif
+#endif
 }
 
 int unregisterService()
 {
-    #ifdef WIN32
+#ifdef WIN32
     Logging::LoggerRef logRef(ppg->getLogger(), "ServiceDeregistrator");
 
     SC_HANDLE scManager = NULL;
@@ -296,8 +278,8 @@ int unregisterService()
         scManager = OpenSCManager(NULL, NULL, SC_MANAGER_CONNECT);
         if (scManager == NULL)
         {
-            logRef(Logging::FATAL, Logging::BRIGHT_RED) << "OpenSCManager failed with error: "
-                                                        << GetLastErrorMessage(GetLastError());
+            logRef(Logging::FATAL, Logging::BRIGHT_RED)
+                << "OpenSCManager failed with error: " << GetLastErrorMessage(GetLastError());
             ret = 1;
             break;
         }
@@ -305,8 +287,8 @@ int unregisterService()
         scService = OpenService(scManager, SERVICE_NAME, SERVICE_STOP | SERVICE_QUERY_STATUS | DELETE);
         if (scService == NULL)
         {
-            logRef(Logging::FATAL, Logging::BRIGHT_RED) << "OpenService failed with error: "
-                                                        << GetLastErrorMessage(GetLastError());
+            logRef(Logging::FATAL, Logging::BRIGHT_RED)
+                << "OpenService failed with error: " << GetLastErrorMessage(GetLastError());
             ret = 1;
             break;
         }
@@ -342,8 +324,8 @@ int unregisterService()
 
         if (!DeleteService(scService))
         {
-            logRef(Logging::FATAL, Logging::BRIGHT_RED) << "DeleteService failed with error: "
-                                                        << GetLastErrorMessage(GetLastError());
+            logRef(Logging::FATAL, Logging::BRIGHT_RED)
+                << "DeleteService failed with error: " << GetLastErrorMessage(GetLastError());
             ret = 1;
             break;
         }
@@ -363,15 +345,12 @@ int unregisterService()
     }
 
     return ret;
-    #else
+#else
     return 0;
-    #endif
+#endif
 }
 
-int main(
-    int argc,
-    char **argv
-)
+int main(int argc, char **argv)
 {
     PaymentGateService pg;
     ppg = &pg;
@@ -380,7 +359,7 @@ int main(
     {
         if (!pg.init(argc, argv))
         {
-            return 0; //help message requested or so
+            return 0; // help message requested or so
         }
 
         std::cout << CryptoNote::getProjectCLIHeader();

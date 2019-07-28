@@ -5,16 +5,16 @@
 
 #pragma once
 
-#include <string>
-#include <sstream>
-
+#include "common/StdInputStream.h"
 #include "common/StdOutputStream.h"
-#include "serialization/KVBinaryOutputStreamSerializer.h"
-#include "serialization/SerializationOverloads.h"
 #include "cryptonotecore/CryptoNoteFormatUtils.h"
 #include "serialization/CryptoNoteSerialization.h"
-#include "common/StdInputStream.h"
 #include "serialization/KVBinaryInputStreamSerializer.h"
+#include "serialization/KVBinaryOutputStreamSerializer.h"
+#include "serialization/SerializationOverloads.h"
+
+#include <sstream>
+#include <string>
 
 namespace CryptoNote
 {
@@ -56,11 +56,7 @@ namespace CryptoNote
 
         const std::string KEY_OUTPUT_KEY_PREFIX = "j";
 
-        template<class Value>
-        std::string serialize(
-            const Value &value,
-            const std::string &name
-        )
+        template<class Value> std::string serialize(const Value &value, const std::string &name)
         {
             CryptoNote::KVBinaryOutputStreamSerializer serializer;
             std::stringstream ss;
@@ -72,44 +68,20 @@ namespace CryptoNote
             return ss.str();
         }
 
-        std::string serialize(
-            const RawBlock &value,
-            const std::string &name
-        );
+        std::string serialize(const RawBlock &value, const std::string &name);
 
-        template<
-            class Key,
-            class Value
-        >
-        std::pair<
-            std::string, std::string
-        > serialize(
-            const std::string &keyPrefix,
-            const Key &key,
-            const Value &value
-        )
+        template<class Key, class Value>
+        std::pair<std::string, std::string> serialize(const std::string &keyPrefix, const Key &key, const Value &value)
         {
-            return {
-                DB::serialize(std::make_pair(keyPrefix, key), keyPrefix),
-                DB::serialize(value, keyPrefix)
-            };
+            return {DB::serialize(std::make_pair(keyPrefix, key), keyPrefix), DB::serialize(value, keyPrefix)};
         }
 
-        template<class Key>
-        std::string serializeKey(
-            const std::string &keyPrefix,
-            const Key &key
-        )
+        template<class Key> std::string serializeKey(const std::string &keyPrefix, const Key &key)
         {
             return DB::serialize(std::make_pair(keyPrefix, key), keyPrefix);
         }
 
-        template<class Value>
-        void deserialize(
-            const std::string &serialized,
-            Value &value,
-            const std::string &name
-        )
+        template<class Value> void deserialize(const std::string &serialized, Value &value, const std::string &name)
         {
             std::stringstream ss(serialized);
             Common::StdInputStream stream(ss);
@@ -117,44 +89,25 @@ namespace CryptoNote
             serializer(value, name);
         }
 
-        void deserialize(
-            const std::string &serialized,
-            RawBlock &value,
-            const std::string &name
-        );
+        void deserialize(const std::string &serialized, RawBlock &value, const std::string &name);
 
-        template<
-            class Key,
-            class Value
-        >
+        template<class Key, class Value>
         void serializeKeys(
             std::vector<std::string> &rawKeys,
             const std::string keyPrefix,
-            const std::unordered_map<
-                Key, Value
-            > &map
-        )
+            const std::unordered_map<Key, Value> &map)
         {
-            for (const std::pair<
-                    Key, Value
-                > &kv : map)
+            for (const std::pair<Key, Value> &kv : map)
             {
                 rawKeys.emplace_back(DB::serializeKey(keyPrefix, kv.first));
             }
         }
 
-        template<
-            class Key,
-            class Value,
-            class Iterator
-        >
+        template<class Key, class Value, class Iterator>
         void deserializeValues(
-            std::unordered_map<
-                Key, Value
-            > &map,
+            std::unordered_map<Key, Value> &map,
             Iterator &serializedValuesIter,
-            const std::string &name
-        )
+            const std::string &name)
         {
             for (auto iter = map.begin(); iter != map.end(); ++serializedValuesIter)
             {
@@ -170,17 +123,8 @@ namespace CryptoNote
             }
         }
 
-        template<
-            class Value,
-            class Iterator
-        >
-        void deserializeValue(
-            std::pair<
-                Value, bool
-            > &pair,
-            Iterator &serializedValuesIter,
-            const std::string &name
-        )
+        template<class Value, class Iterator>
+        void deserializeValue(std::pair<Value, bool> &pair, Iterator &serializedValuesIter, const std::string &name)
         {
             if (pair.second)
             {
@@ -190,13 +134,10 @@ namespace CryptoNote
                 }
                 else
                 {
-                    pair = {
-                        Value{},
-                        false
-                    };
+                    pair = {Value {}, false};
                 }
                 ++serializedValuesIter;
             }
         }
-    }
-}
+    } // namespace DB
+} // namespace CryptoNote

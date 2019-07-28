@@ -4,17 +4,15 @@
 
 #include "MainChainStorageRocksdb.h"
 
-#include <common/FileSystemShim.h>
-
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-
 #include "common/CryptoNoteTools.h"
-
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rocksdb/cache.h"
 #include "rocksdb/db.h"
 #include "rocksdb/options.h"
-#include "rocksdb/cache.h"
 #include "rocksdb/table.h"
+
+#include <common/FileSystemShim.h>
 
 using namespace rapidjson;
 using namespace CryptoNote;
@@ -24,8 +22,7 @@ namespace CryptoNote
     MainChainStorageRocksdb::MainChainStorageRocksdb(
         const std::string &blocksFilename,
         const std::string &indexesFilename,
-        const DataBaseConfig &config
-    )
+        const DataBaseConfig &config)
     {
         /* setup db options */
         rocksdb::DBOptions dbOpts;
@@ -50,13 +47,11 @@ namespace CryptoNote
         cfOpts.num_levels = 10;
         cfOpts.compaction_style = rocksdb::kCompactionStyleLevel;
 
-        const auto compressionLevel = config.getCompressionEnabled()
-                                      ? rocksdb::kLZ4Compression
-                                      : rocksdb::kNoCompression;
+        const auto compressionLevel =
+            config.getCompressionEnabled() ? rocksdb::kLZ4Compression : rocksdb::kNoCompression;
         std::fill_n(std::back_inserter(cfOpts.compression_per_level), cfOpts.num_levels, compressionLevel);
-        cfOpts.bottommost_compression = config.getCompressionEnabled()
-                                        ? rocksdb::kLZ4HCCompression
-                                        : rocksdb::kNoCompression;
+        cfOpts.bottommost_compression =
+            config.getCompressionEnabled() ? rocksdb::kLZ4HCCompression : rocksdb::kNoCompression;
 
         rocksdb::BlockBasedTableOptions tblOpts;
         tblOpts.block_cache = rocksdb::NewLRUCache(32 * 1024 * 1024);
@@ -144,8 +139,8 @@ namespace CryptoNote
             return;
         }
 
-        /* Range of blocks to be deleted. 
-           start: target rewind index/height, 
+        /* Range of blocks to be deleted.
+           start: target rewind index/height,
            end: max block index we have in db */
         rocksdb::Slice start = std::to_string(index);
         rocksdb::Slice end = std::to_string(m_blockcount - 1);
@@ -179,9 +174,8 @@ namespace CryptoNote
     {
         /* get the serialized RawBlock from db */
         rocksdb::PinnableSlice rawBlockString;
-        rocksdb::Status s = m_db->Get(
-            rocksdb::ReadOptions(), m_db->DefaultColumnFamily(), std::to_string(index), &rawBlockString
-        );
+        rocksdb::Status s =
+            m_db->Get(rocksdb::ReadOptions(), m_db->DefaultColumnFamily(), std::to_string(index), &rawBlockString);
 
         /* parse it back to RawBlock */
         Document doc;
@@ -261,15 +255,13 @@ namespace CryptoNote
     std::unique_ptr<IMainChainStorage> createSwappedMainChainStorageRocksdb(
         const std::string &dataDir,
         const Currency &currency,
-        const DataBaseConfig &config
-    )
+        const DataBaseConfig &config)
     {
         fs::path blocksFilename = fs::path(dataDir) / currency.blocksFileName();
         fs::path indexesFilename = fs::path(dataDir) / currency.blockIndexesFileName();
 
         auto storage = std::make_unique<MainChainStorageRocksdb>(
-            blocksFilename.string() + ".rocksdb", indexesFilename.string(), config
-        );
+            blocksFilename.string() + ".rocksdb", indexesFilename.string(), config);
 
         if (storage->getBlockCount() == 0)
         {
@@ -280,4 +272,4 @@ namespace CryptoNote
 
         return storage;
     }
-}
+} // namespace CryptoNote

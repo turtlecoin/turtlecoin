@@ -9,8 +9,7 @@ namespace CryptoNote
 {
     namespace error
     {
-
         BlockValidationErrorCategory BlockValidationErrorCategory::INSTANCE;
 
     }
-}
+} // namespace CryptoNote

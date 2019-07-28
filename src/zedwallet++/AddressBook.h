@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include <string>
@@ -8,23 +8,15 @@
 
 struct AddressBookEntry
 {
-    AddressBookEntry()
-    {
-    }
+    AddressBookEntry() {}
 
     /* Used for quick comparison with strings */
-    AddressBookEntry(const std::string friendlyName) : friendlyName(friendlyName)
-    {
-    }
+    AddressBookEntry(const std::string friendlyName): friendlyName(friendlyName) {}
 
-    AddressBookEntry(
-        const std::string friendlyName,
-        const std::string address,
-        const std::string paymentID
-    )
-        : friendlyName(friendlyName),
-          address(address),
-          paymentID(paymentID)
+    AddressBookEntry(const std::string friendlyName, const std::string address, const std::string paymentID):
+        friendlyName(friendlyName),
+        address(address),
+        paymentID(paymentID)
     {
     }
 
@@ -43,8 +35,7 @@ struct AddressBookEntry
         return rhs.friendlyName == friendlyName;
     }
 
-    template<typename Writer>
-    void toJSON(Writer &writer) const
+    template<typename Writer> void toJSON(Writer &writer) const
     {
         writer.StartObject();
 
@@ -76,11 +67,7 @@ void deleteFromAddressBook();
 
 void listAddressBook();
 
-const std::tuple<
-    bool, AddressBookEntry
-> getAddressBookEntry(
-    const std::vector<AddressBookEntry> addressBook
-);
+const std::tuple<bool, AddressBookEntry> getAddressBookEntry(const std::vector<AddressBookEntry> addressBook);
 
 const std::string getAddressBookName(const std::vector<AddressBookEntry> addressBook);
 

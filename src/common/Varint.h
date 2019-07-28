@@ -13,17 +13,9 @@
 
 namespace Tools
 {
-
-    template<
-        typename OutputIt,
-        typename T
-    >
-    typename std::enable_if<
-        std::is_integral<T>::value && std::is_unsigned<T>::value, void
-    >::type write_varint(
-        OutputIt &&dest,
-        T i
-    )
+    template<typename OutputIt, typename T>
+    typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, void>::type
+        write_varint(OutputIt &&dest, T i)
     {
         while (i >= 0x80)
         {
@@ -33,26 +25,18 @@ namespace Tools
         *dest++ = static_cast<char>(i);
     }
 
-    template<typename t_type>
-    std::string get_varint_data(const t_type &v)
+    template<typename t_type> std::string get_varint_data(const t_type &v)
     {
         std::stringstream ss;
         write_varint(std::ostreambuf_iterator<char>(ss), v);
         return ss.str();
     }
 
-    template<
-        int bits, typename InputIt,
-                  typename T
-    >
+    template<int bits, typename InputIt, typename T>
     typename std::enable_if<
         std::is_integral<T>::value && std::is_unsigned<T>::value && 0 <= bits && bits <= std::numeric_limits<T>::digits,
-        int
-    >::type read_varint(
-        InputIt &&first,
-        InputIt &&last,
-        T &i
-    )
+        int>::type
+        read_varint(InputIt &&first, InputIt &&last, T &i)
     {
         int read = 0;
         i = 0;
@@ -81,18 +65,8 @@ namespace Tools
         return read;
     }
 
-    template<
-        typename InputIt,
-        typename T
-    >
-    int read_varint(
-        InputIt &&first,
-        InputIt &&last,
-        T &i
-    )
+    template<typename InputIt, typename T> int read_varint(InputIt &&first, InputIt &&last, T &i)
     {
-        return read_varint<
-            std::numeric_limits<T>::digits, InputIt, T
-        >(std::move(first), std::move(last), i);
+        return read_varint<std::numeric_limits<T>::digits, InputIt, T>(std::move(first), std::move(last), i);
     }
-}
+} // namespace Tools

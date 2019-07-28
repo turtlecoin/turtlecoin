@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include <cryptonoteprotocol/ICryptoNoteProtocolQuery.h>
 #include <CryptoNote.h>
-
+#include <cryptonoteprotocol/ICryptoNoteProtocolQuery.h>
 #include <vector>
 
 namespace CryptoNote
@@ -24,8 +23,7 @@ namespace CryptoNote
         virtual void relayTransactions(const std::vector<BinaryArray> &transactions) = 0;
     };
 
-    struct ICryptoNoteProtocolHandler : ICryptoNoteProtocol,
-                                        public ICryptoNoteProtocolQuery
+    struct ICryptoNoteProtocolHandler : ICryptoNoteProtocol, public ICryptoNoteProtocolQuery
     {
     };
-}
+} // namespace CryptoNote

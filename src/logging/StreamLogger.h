@@ -5,32 +5,29 @@
 
 #pragma once
 
-#include <mutex>
 #include "CommonLogger.h"
+
+#include <mutex>
 
 namespace Logging
 {
-
     class StreamLogger : public CommonLogger
     {
-        public:
-            StreamLogger(Level level = DEBUGGING);
+      public:
+        StreamLogger(Level level = DEBUGGING);
 
-            StreamLogger(
-                std::ostream &stream,
-                Level level = DEBUGGING
-            );
+        StreamLogger(std::ostream &stream, Level level = DEBUGGING);
 
-            void attachToStream(std::ostream &stream);
+        void attachToStream(std::ostream &stream);
 
-        protected:
-            virtual void doLogString(const std::string &message) override;
+      protected:
+        virtual void doLogString(const std::string &message) override;
 
-        protected:
-            std::ostream *stream;
+      protected:
+        std::ostream *stream;
 
-        private:
-            std::mutex mutex;
+      private:
+        std::mutex mutex;
     };
 
-}
+} // namespace Logging

@@ -9,42 +9,33 @@
 
 namespace CryptoNote
 {
-
     class OnceInInterval
     {
-        public:
+      public:
+        OnceInInterval(unsigned interval, bool startNow = true):
+            m_interval(interval),
+            m_lastCalled(startNow ? 0 : time(nullptr))
+        {
+        }
 
-            OnceInInterval(
-                unsigned interval,
-                bool startNow = true
-            )
-                : m_interval(interval),
-                  m_lastCalled(
-                      startNow
-                      ? 0
-                      : time(nullptr))
+        template<class F> bool call(F func)
+        {
+            time_t currentTime = time(nullptr);
+
+            if (currentTime - m_lastCalled > m_interval)
             {
+                bool res = func();
+                time(&m_lastCalled);
+                return res;
             }
 
-            template<class F>
-            bool call(F func)
-            {
-                time_t currentTime = time(nullptr);
+            return true;
+        }
 
-                if (currentTime - m_lastCalled > m_interval)
-                {
-                    bool res = func();
-                    time(&m_lastCalled);
-                    return res;
-                }
+      private:
+        time_t m_lastCalled;
 
-                return true;
-            }
-
-        private:
-            time_t m_lastCalled;
-
-            time_t m_interval;
+        time_t m_interval;
     };
 
-}
+} // namespace CryptoNote

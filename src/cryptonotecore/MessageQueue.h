@@ -5,88 +5,76 @@
 
 #pragma once
 
-#include <queue>
-
 #include "IntrusiveLinkedList.h"
-
 #include "system/Dispatcher.h"
 #include "system/Event.h"
 #include "system/InterruptedException.h"
 
+#include <queue>
+
 namespace CryptoNote
 {
-
-    template<class MessageType>
-    class MessageQueue
+    template<class MessageType> class MessageQueue
     {
-        public:
-            MessageQueue(System::Dispatcher &dispatcher);
+      public:
+        MessageQueue(System::Dispatcher &dispatcher);
 
-            const MessageType &front();
+        const MessageType &front();
 
-            void pop();
+        void pop();
 
-            void push(const MessageType &message);
+        void push(const MessageType &message);
 
-            void stop();
+        void stop();
 
-        private:
-            friend class IntrusiveLinkedList<MessageQueue<MessageType>>;
+      private:
+        friend class IntrusiveLinkedList<MessageQueue<MessageType>>;
 
-            typename IntrusiveLinkedList<MessageQueue<MessageType>>::hook &getHook();
+        typename IntrusiveLinkedList<MessageQueue<MessageType>>::hook &getHook();
 
-            void wait();
+        void wait();
 
-            System::Dispatcher &dispatcher;
+        System::Dispatcher &dispatcher;
 
-            std::queue<MessageType> messageQueue;
+        std::queue<MessageType> messageQueue;
 
-            System::Event event;
+        System::Event event;
 
-            bool stopped;
+        bool stopped;
 
-            typename IntrusiveLinkedList<MessageQueue<MessageType>>::hook hook;
+        typename IntrusiveLinkedList<MessageQueue<MessageType>>::hook hook;
     };
 
-    template<
-        class MessageQueueContainer,
-        class MessageType
-    >
-    class MesageQueueGuard
+    template<class MessageQueueContainer, class MessageType> class MesageQueueGuard
     {
-        public:
-            MesageQueueGuard(
-                MessageQueueContainer &container,
-                MessageQueue<MessageType> &messageQueue
-            ) : container(
-                container
-            ),
-                messageQueue(messageQueue)
-            {
-                container.addMessageQueue(messageQueue);
-            }
+      public:
+        MesageQueueGuard(MessageQueueContainer &container, MessageQueue<MessageType> &messageQueue):
+            container(container),
+            messageQueue(messageQueue)
+        {
+            container.addMessageQueue(messageQueue);
+        }
 
-            ~MesageQueueGuard()
-            {
-                container.removeMessageQueue(messageQueue);
-            }
+        ~MesageQueueGuard()
+        {
+            container.removeMessageQueue(messageQueue);
+        }
 
-        private:
-            MessageQueueContainer &container;
+      private:
+        MessageQueueContainer &container;
 
-            MessageQueue<MessageType> &messageQueue;
+        MessageQueue<MessageType> &messageQueue;
     };
 
     template<class MessageType>
-    MessageQueue<MessageType>::MessageQueue(System::Dispatcher &dispatch)
-        : dispatcher(dispatch),
-          event(dispatch),
-          stopped(false)
+    MessageQueue<MessageType>::MessageQueue(System::Dispatcher &dispatch):
+        dispatcher(dispatch),
+        event(dispatch),
+        stopped(false)
     {
     }
 
-    template<class MessageType>
-    void MessageQueue<MessageType>::wait()
+    template<class MessageType> void MessageQueue<MessageType>::wait()
     {
         if (messageQueue.empty())
         {
@@ -108,34 +96,27 @@ namespace CryptoNote
         }
     }
 
-    template<class MessageType>
-    const MessageType &MessageQueue<MessageType>::front()
+    template<class MessageType> const MessageType &MessageQueue<MessageType>::front()
     {
         wait();
         return messageQueue.front();
     }
 
-    template<class MessageType>
-    void MessageQueue<MessageType>::pop()
+    template<class MessageType> void MessageQueue<MessageType>::pop()
     {
         wait();
         messageQueue.pop();
     }
 
-    template<class MessageType>
-    void MessageQueue<MessageType>::push(const MessageType &message)
+    template<class MessageType> void MessageQueue<MessageType>::push(const MessageType &message)
     {
-        dispatcher.remoteSpawn(
-            [=]() mutable
-            {
-                messageQueue.push(std::move(message));
-                event.set();
-            }
-        );
+        dispatcher.remoteSpawn([=]() mutable {
+            messageQueue.push(std::move(message));
+            event.set();
+        });
     }
 
-    template<class MessageType>
-    void MessageQueue<MessageType>::stop()
+    template<class MessageType> void MessageQueue<MessageType>::stop()
     {
         stopped = true;
         event.set();
@@ -146,4 +127,4 @@ namespace CryptoNote
     {
         return hook;
     }
-}
+} // namespace CryptoNote

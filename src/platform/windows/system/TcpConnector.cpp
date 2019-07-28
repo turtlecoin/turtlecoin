@@ -1,30 +1,30 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "TcpConnector.h"
+
 #include <cassert>
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <winsock2.h>
-#include <mswsock.h>
-#include <system/InterruptedException.h>
-#include <system/Ipv4Address.h>
 #include "Dispatcher.h"
 #include "ErrorMessage.h"
 #include "TcpConnection.h"
 
+#include <mswsock.h>
+#include <system/InterruptedException.h>
+#include <system/Ipv4Address.h>
+#include <winsock2.h>
+
 namespace System
 {
-
     namespace
     {
-
         struct TcpConnectorContext : public OVERLAPPED
         {
             NativeContext *context;
@@ -34,19 +34,13 @@ namespace System
 
         LPFN_CONNECTEX connectEx = nullptr;
 
-    }
+    } // namespace
 
-    TcpConnector::TcpConnector() : dispatcher(nullptr)
-    {
-    }
+    TcpConnector::TcpConnector(): dispatcher(nullptr) {}
 
-    TcpConnector::TcpConnector(Dispatcher &dispatcher)
-        : dispatcher(&dispatcher),
-          context(nullptr)
-    {
-    }
+    TcpConnector::TcpConnector(Dispatcher &dispatcher): dispatcher(&dispatcher), context(nullptr) {}
 
-    TcpConnector::TcpConnector(TcpConnector &&other) : dispatcher(other.dispatcher)
+    TcpConnector::TcpConnector(TcpConnector &&other): dispatcher(other.dispatcher)
     {
         if (dispatcher != nullptr)
         {
@@ -75,10 +69,7 @@ namespace System
         return *this;
     }
 
-    TcpConnection TcpConnector::connect(
-        const Ipv4Address &address,
-        uint16_t port
-    )
+    TcpConnection TcpConnector::connect(const Ipv4Address &address, uint16_t port)
     {
         assert(dispatcher != nullptr);
         assert(context == nullptr);
@@ -107,9 +98,18 @@ namespace System
             {
                 GUID guidConnectEx = WSAID_CONNECTEX;
                 DWORD read = sizeof connectEx;
-                if (connectEx == nullptr && WSAIoctl(
-                    connection, SIO_GET_EXTENSION_FUNCTION_POINTER, &guidConnectEx, sizeof guidConnectEx, &connectEx, sizeof connectEx, &read, NULL, NULL
-                ) != 0)
+                if (connectEx == nullptr
+                    && WSAIoctl(
+                           connection,
+                           SIO_GET_EXTENSION_FUNCTION_POINTER,
+                           &guidConnectEx,
+                           sizeof guidConnectEx,
+                           &connectEx,
+                           sizeof connectEx,
+                           &read,
+                           NULL,
+                           NULL)
+                           != 0)
                 {
                     message = "WSAIoctl failed, " + errorMessage(WSAGetLastError());
                 }
@@ -117,8 +117,8 @@ namespace System
                 {
                     assert(read == sizeof connectEx);
                     if (CreateIoCompletionPort(
-                        reinterpret_cast<HANDLE>(connection), dispatcher->getCompletionPort(), 0, 0
-                    ) != dispatcher->getCompletionPort())
+                            reinterpret_cast<HANDLE>(connection), dispatcher->getCompletionPort(), 0, 0)
+                        != dispatcher->getCompletionPort())
                     {
                         message = "CreateIoCompletionPort failed, " + lastErrorMessage();
                     }
@@ -131,8 +131,14 @@ namespace System
                         TcpConnectorContext context2;
                         context2.hEvent = NULL;
                         if (connectEx(
-                            connection, reinterpret_cast<sockaddr *>(&addressData), sizeof addressData, NULL, 0, NULL, &context2
-                        ) == TRUE)
+                                connection,
+                                reinterpret_cast<sockaddr *>(&addressData),
+                                sizeof addressData,
+                                NULL,
+                                0,
+                                NULL,
+                                &context2)
+                            == TRUE)
                         {
                             message = "ConnectEx returned immediately, which is not supported.";
                         }
@@ -149,15 +155,14 @@ namespace System
                                 context2.connection = connection;
                                 context2.interrupted = false;
                                 context = &context2;
-                                dispatcher->getCurrentContext()->interruptProcedure = [&]()
-                                {
+                                dispatcher->getCurrentContext()->interruptProcedure = [&]() {
                                     assert(dispatcher != nullptr);
                                     assert(context != nullptr);
                                     TcpConnectorContext *context2 = static_cast<TcpConnectorContext *>(context);
                                     if (!context2->interrupted)
                                     {
-                                        if (CancelIoEx(reinterpret_cast<HANDLE>(context2->connection), context2) !=
-                                            TRUE)
+                                        if (CancelIoEx(reinterpret_cast<HANDLE>(context2->connection), context2)
+                                            != TRUE)
                                         {
                                             DWORD lastError = GetLastError();
                                             if (lastError != ERROR_NOT_FOUND)
@@ -195,8 +200,8 @@ namespace System
                                         if (closesocket(connection) != 0)
                                         {
                                             throw std::runtime_error(
-                                                "TcpConnector::connect, closesocket failed, " +
-                                                errorMessage(WSAGetLastError()));
+                                                "TcpConnector::connect, closesocket failed, "
+                                                + errorMessage(WSAGetLastError()));
                                         }
                                         else
                                         {
@@ -211,8 +216,8 @@ namespace System
                                         if (closesocket(connection) != 0)
                                         {
                                             throw std::runtime_error(
-                                                "TcpConnector::connect, closesocket failed, " +
-                                                errorMessage(WSAGetLastError()));
+                                                "TcpConnector::connect, closesocket failed, "
+                                                + errorMessage(WSAGetLastError()));
                                         }
                                         else
                                         {
@@ -224,8 +229,12 @@ namespace System
                                     assert(flags == 0);
                                     DWORD value = 1;
                                     if (setsockopt(
-                                        connection, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, reinterpret_cast<char *>(&value), sizeof(value)) !=
-                                        0)
+                                            connection,
+                                            SOL_SOCKET,
+                                            SO_UPDATE_CONNECT_CONTEXT,
+                                            reinterpret_cast<char *>(&value),
+                                            sizeof(value))
+                                        != 0)
                                     {
                                         message = "setsockopt failed, " + errorMessage(WSAGetLastError());
                                     }
@@ -247,4 +256,4 @@ namespace System
         throw std::runtime_error("TcpConnector::connect, " + message);
     }
 
-}
+} // namespace System

@@ -5,20 +5,17 @@
 
 #include "CryptoNoteFormatUtils.h"
 
-#include <set>
-#include <logging/LoggerRef.h>
-#include <common/Varint.h>
-
-#include "serialization/BinaryOutputStreamSerializer.h"
-#include "serialization/BinaryInputStreamSerializer.h"
-#include "serialization/CryptoNoteSerialization.h"
-
 #include "Account.h"
 #include "CryptoNoteBasicImpl.h"
-
 #include "common/CryptoNoteTools.h"
+#include "serialization/BinaryInputStreamSerializer.h"
+#include "serialization/BinaryOutputStreamSerializer.h"
+#include "serialization/CryptoNoteSerialization.h"
 
+#include <common/Varint.h>
 #include <config/CryptoNoteConfig.h>
+#include <logging/LoggerRef.h>
+#include <set>
 
 using namespace Logging;
 using namespace Crypto;
@@ -26,14 +23,12 @@ using namespace Common;
 
 namespace CryptoNote
 {
-
     bool generate_key_image_helper(
         const AccountKeys &ack,
         const PublicKey &tx_public_key,
         size_t real_output_index,
         KeyPair &in_ephemeral,
-        KeyImage &ki
-    )
+        KeyImage &ki)
     {
         KeyDerivation recv_derivation;
         bool r = generate_key_derivation(tx_public_key, ack.viewSecretKey, recv_derivation);
@@ -59,10 +54,7 @@ namespace CryptoNote
         return true;
     }
 
-    bool get_tx_fee(
-        const Transaction &tx,
-        uint64_t &fee
-    )
+    bool get_tx_fee(const Transaction &tx, uint64_t &fee)
     {
         uint64_t amount_in = 0;
         uint64_t amount_out = 0;
@@ -136,10 +128,7 @@ namespace CryptoNote
         return true;
     }
 
-    bool checkOutsValid(
-        const TransactionPrefix &tx,
-        std::string *error
-    )
+    bool checkOutsValid(const TransactionPrefix &tx, std::string *error)
     {
         for (const TransactionOutput &out : tx.outputs)
         {
@@ -217,20 +206,14 @@ namespace CryptoNote
         const AccountKeys &acc,
         const KeyOutput &out_key,
         const KeyDerivation &derivation,
-        size_t keyIndex
-    )
+        size_t keyIndex)
     {
         PublicKey pk;
         derive_public_key(derivation, keyIndex, acc.address.spendPublicKey, pk);
         return pk == out_key.key;
     }
 
-    bool is_out_to_acc(
-        const AccountKeys &acc,
-        const KeyOutput &out_key,
-        const PublicKey &tx_pub_key,
-        size_t keyIndex
-    )
+    bool is_out_to_acc(const AccountKeys &acc, const KeyOutput &out_key, const PublicKey &tx_pub_key, size_t keyIndex)
     {
         KeyDerivation derivation;
         generate_key_derivation(tx_pub_key, acc.viewSecretKey, derivation);
@@ -256,7 +239,7 @@ namespace CryptoNote
         std::vector<uint64_t> inputsAmounts;
         inputsAmounts.reserve(transaction.inputs.size());
 
-        for (auto &input: transaction.inputs)
+        for (auto &input : transaction.inputs)
         {
             if (input.type() == typeid(KeyInput))
             {
@@ -278,21 +261,13 @@ namespace CryptoNote
         return amount;
     }
 
-    void decomposeAmount(
-        uint64_t amount,
-        uint64_t dustThreshold,
-        std::vector<uint64_t> &decomposedAmounts
-    )
+    void decomposeAmount(uint64_t amount, uint64_t dustThreshold, std::vector<uint64_t> &decomposedAmounts)
     {
         decompose_amount_into_digits(
-            amount, dustThreshold, [&](uint64_t amount)
-        {
-            decomposedAmounts.push_back(amount);
-        }, [&](uint64_t dust)
-            {
-                decomposedAmounts.push_back(dust);
-            }
-        );
+            amount,
+            dustThreshold,
+            [&](uint64_t amount) { decomposedAmounts.push_back(amount); },
+            [&](uint64_t dust) { decomposedAmounts.push_back(dust); });
     }
 
-}
+} // namespace CryptoNote

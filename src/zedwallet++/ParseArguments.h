@@ -5,7 +5,6 @@
 #pragma once
 
 #include <config/CryptoNoteConfig.h>
-
 #include <logger/Logger.h>
 
 struct ZedConfig
@@ -37,7 +36,4 @@ struct ZedConfig
     unsigned int threads;
 };
 
-ZedConfig parseArguments(
-    int argc,
-    char **argv
-);
+ZedConfig parseArguments(int argc, char **argv);

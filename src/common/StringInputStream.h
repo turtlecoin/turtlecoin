@@ -5,26 +5,23 @@
 
 #pragma once
 
-#include <string>
 #include "IInputStream.h"
+
+#include <string>
 
 namespace Common
 {
-
     class StringInputStream : public IInputStream
     {
-        public:
-            StringInputStream(const std::string &in);
+      public:
+        StringInputStream(const std::string &in);
 
-            uint64_t readSome(
-                void *data,
-                uint64_t size
-            ) override;
+        uint64_t readSome(void *data, uint64_t size) override;
 
-        private:
-            const std::string &in;
+      private:
+        const std::string &in;
 
-            uint64_t offset;
+        uint64_t offset;
     };
 
-}
+} // namespace Common

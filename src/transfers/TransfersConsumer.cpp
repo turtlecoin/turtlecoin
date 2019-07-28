@@ -7,20 +7,17 @@
 
 #include "TransfersConsumer.h"
 
-#include <numeric>
-#include <future>
-
 #include "CommonTypes.h"
+#include "INode.h"
+#include "WalletGreenTypes.h"
 #include "common/BlockingQueue.h"
 #include "cryptonotecore/CryptoNoteBasicImpl.h"
 #include "cryptonotecore/CryptoNoteFormatUtils.h"
 #include "cryptonotecore/TransactionApi.h"
 
 #include <config/Constants.h>
-
-#include "WalletGreenTypes.h"
-#include "INode.h"
 #include <future>
+#include <numeric>
 
 using namespace Crypto;
 using namespace Logging;
@@ -34,23 +31,20 @@ std::mutex seen_mutex;
 
 namespace
 {
-
     using namespace CryptoNote;
 
     class MarkTransactionConfirmedException : public std::exception
     {
-        public:
-            MarkTransactionConfirmedException(const Crypto::Hash &txHash)
-            {
-            }
+      public:
+        MarkTransactionConfirmedException(const Crypto::Hash &txHash) {}
 
-            const Hash &getTxHash() const
-            {
-                return m_txHash;
-            }
+        const Hash &getTxHash() const
+        {
+            return m_txHash;
+        }
 
-        private:
-            Crypto::Hash m_txHash;
+      private:
+        Crypto::Hash m_txHash;
     };
 
     void checkOutputKey(
@@ -59,11 +53,8 @@ namespace
         size_t keyIndex,
         size_t outputIndex,
         const std::unordered_set<PublicKey> &spendKeys,
-        std::unordered_map<
-            PublicKey, std::vector<uint32_t>> &outputs
-    )
+        std::unordered_map<PublicKey, std::vector<uint32_t>> &outputs)
     {
-
         PublicKey spendKey;
         underive_public_key(derivation, keyIndex, key, spendKey);
 
@@ -71,18 +62,14 @@ namespace
         {
             outputs[spendKey].push_back(static_cast<uint32_t>(outputIndex));
         }
-
     }
 
     void findMyOutputs(
         const ITransactionReader &tx,
         const SecretKey &viewSecretKey,
         const std::unordered_set<PublicKey> &spendKeys,
-        std::unordered_map<
-            PublicKey, std::vector<uint32_t>> &outputs
-    )
+        std::unordered_map<PublicKey, std::vector<uint32_t>> &outputs)
     {
-
         auto txPublicKey = tx.getTransactionPublicKey();
         KeyDerivation derivation;
 
@@ -96,26 +83,20 @@ namespace
 
         for (size_t idx = 0; idx < outputCount; ++idx)
         {
-
             auto outType = tx.getOutputType(size_t(idx));
 
             if (outType == TransactionTypes::OutputType::Key)
             {
-
                 uint64_t amount;
                 KeyOutput out;
                 tx.getOutput(idx, out, amount);
                 checkOutputKey(derivation, out.key, keyIndex, idx, spendKeys, outputs);
                 ++keyIndex;
-
             }
         }
     }
 
-    std::vector<Crypto::Hash> getBlockHashes(
-        const CryptoNote::CompleteBlock *blocks,
-        size_t count
-    )
+    std::vector<Crypto::Hash> getBlockHashes(const CryptoNote::CompleteBlock *blocks, size_t count)
     {
         std::vector<Crypto::Hash> result;
         result.reserve(count);
@@ -128,21 +109,19 @@ namespace
         return result;
     }
 
-}
+} // namespace
 
 namespace CryptoNote
 {
-
     TransfersConsumer::TransfersConsumer(
         const CryptoNote::Currency &currency,
         INode &node,
         std::shared_ptr<Logging::ILogger> logger,
-        const SecretKey &viewSecret
-    )
-        : m_node(node),
-          m_viewSecret(viewSecret),
-          m_currency(currency),
-          m_logger(logger, "TransfersConsumer")
+        const SecretKey &viewSecret):
+        m_node(node),
+        m_viewSecret(viewSecret),
+        m_currency(currency),
+        m_logger(logger, "TransfersConsumer")
     {
         updateSyncStart();
     }
@@ -187,9 +166,7 @@ namespace CryptoNote
     ITransfersSubscription *TransfersConsumer::getSubscription(const AccountPublicAddress &acc)
     {
         auto it = m_subscriptions.find(acc.spendPublicKey);
-        return it == m_subscriptions.end()
-               ? nullptr
-               : it->second.get();
+        return it == m_subscriptions.end() ? nullptr : it->second.get();
     }
 
     void TransfersConsumer::getSubscriptions(std::vector<AccountPublicAddress> &subscriptions)
@@ -251,11 +228,7 @@ namespace CryptoNote
         }
     }
 
-    uint32_t TransfersConsumer::onNewBlocks(
-        const CompleteBlock *blocks,
-        uint32_t startHeight,
-        uint32_t count
-    )
+    uint32_t TransfersConsumer::onNewBlocks(const CompleteBlock *blocks, uint32_t startHeight, uint32_t count)
     {
         assert(blocks);
         assert(count > 0);
@@ -267,8 +240,7 @@ namespace CryptoNote
             bool isLastTransactionInBlock;
         };
 
-        struct PreprocessedTx : Tx,
-                                PreprocessInfo
+        struct PreprocessedTx : Tx, PreprocessInfo
         {
         };
 
@@ -286,9 +258,7 @@ namespace CryptoNote
         std::atomic<bool> stopProcessing(false);
         std::atomic<size_t> emptyBlockCount(0);
 
-        auto pushingThread = std::async(
-            std::launch::async, [&]
-        {
+        auto pushingThread = std::async(std::launch::async, [&] {
             for (uint32_t i = 0; i < count && !stopProcessing; ++i)
             {
                 const auto &block = blocks[i].block;
@@ -321,22 +291,16 @@ namespace CryptoNote
                     }
 
                     bool isLastTransactionInBlock = blockInfo.transactionIndex + 1 == blocks[i].transactions.size();
-                    Tx item = {
-                        blockInfo,
-                        tx.get(),
-                        isLastTransactionInBlock
-                    };
+                    Tx item = {blockInfo, tx.get(), isLastTransactionInBlock};
                     inputQueue.push(item);
                     ++blockInfo.transactionIndex;
                 }
             }
 
             inputQueue.close();
-        }
-        );
+        });
 
-        auto processingFunction = [&]
-        {
+        auto processingFunction = [&] {
             Tx item;
             std::error_code ec;
             while (!stopProcessing && inputQueue.pop(item))
@@ -386,12 +350,7 @@ namespace CryptoNote
 
         if (processingError)
         {
-            forEachSubscription(
-                [&](TransfersSubscription &sub)
-                {
-                    sub.onError(processingError, startHeight);
-                }
-            );
+            forEachSubscription([&](TransfersSubscription &sub) { sub.onError(processingError, startHeight); });
 
             return 0;
         }
@@ -401,15 +360,12 @@ namespace CryptoNote
 
         // sort by block height and transaction index in block
         std::sort(
-            preprocessedTransactions.begin(), preprocessedTransactions.end(), [](
-            const PreprocessedTx &a,
-            const PreprocessedTx &b
-        )
-        {
-            return std::tie(a.blockInfo.height, a.blockInfo.transactionIndex) <
-                   std::tie(b.blockInfo.height, b.blockInfo.transactionIndex);
-        }
-        );
+            preprocessedTransactions.begin(),
+            preprocessedTransactions.end(),
+            [](const PreprocessedTx &a, const PreprocessedTx &b) {
+                return std::tie(a.blockInfo.height, a.blockInfo.transactionIndex)
+                       < std::tie(b.blockInfo.height, b.blockInfo.transactionIndex);
+            });
 
         uint32_t processedBlockCount = static_cast<uint32_t>(emptyBlockCount);
         try
@@ -426,12 +382,7 @@ namespace CryptoNote
                                     << blocks[processedBlockCount - 1].blockHash;
 
                     auto newHeight = startHeight + processedBlockCount - 1;
-                    forEachSubscription(
-                        [newHeight](TransfersSubscription &sub)
-                        {
-                            sub.advanceHeight(newHeight);
-                        }
-                    );
+                    forEachSubscription([newHeight](TransfersSubscription &sub) { sub.advanceHeight(newHeight); });
                 }
             }
         }
@@ -440,12 +391,7 @@ namespace CryptoNote
             m_logger(ERROR, BRIGHT_RED) << "Failed to process block transactions: failed to confirm transaction "
                                         << e.getTxHash()
                                         << ", remove this transaction from all containers and transaction pool";
-            forEachSubscription(
-                [&e](TransfersSubscription &sub)
-                {
-                    sub.deleteUnconfirmedTransaction(e.getTxHash());
-                }
-            );
+            forEachSubscription([&e](TransfersSubscription &sub) { sub.deleteUnconfirmedTransaction(e.getTxHash()); });
 
             m_poolTxs.erase(e.getTxHash());
         }
@@ -462,18 +408,12 @@ namespace CryptoNote
         {
             uint32_t detachIndex = startHeight + processedBlockCount;
             m_logger(ERROR, BRIGHT_RED) << "Not all block transactions are processed, fully processed block count: "
-                                        << processedBlockCount << " of " << count << ", last processed block hash " << (
-                                            processedBlockCount > 0
-                                            ? blocks[processedBlockCount - 1].blockHash
-                                            : Constants::NULL_HASH
-                                        ) << ", detach block index " << detachIndex
+                                        << processedBlockCount << " of " << count << ", last processed block hash "
+                                        << (processedBlockCount > 0 ? blocks[processedBlockCount - 1].blockHash
+                                                                    : Constants::NULL_HASH)
+                                        << ", detach block index " << detachIndex
                                         << " to remove partially processed block";
-            forEachSubscription(
-                [detachIndex](TransfersSubscription &sub)
-                {
-                    sub.onBlockchainDetach(detachIndex);
-                }
-            );
+            forEachSubscription([detachIndex](TransfersSubscription &sub) { sub.onBlockchainDetach(detachIndex); });
         }
 
         return processedBlockCount;
@@ -481,8 +421,7 @@ namespace CryptoNote
 
     std::error_code TransfersConsumer::onPoolUpdated(
         const std::vector<std::unique_ptr<ITransactionReader>> &addedTransactions,
-        const std::vector<Hash> &deletedTransactions
-    )
+        const std::vector<Hash> &deletedTransactions)
     {
         TransactionBlockInfo unconfirmedBlockInfo;
         unconfirmedBlockInfo.timestamp = 0;
@@ -545,10 +484,7 @@ namespace CryptoNote
         m_observerManager.notify(&IBlockchainConsumerObserver::onTransactionDeleteEnd, this, transactionHash);
     }
 
-    void TransfersConsumer::addPublicKeysSeen(
-        const Crypto::Hash &transactionHash,
-        const Crypto::PublicKey &outputKey
-    )
+    void TransfersConsumer::addPublicKeysSeen(const Crypto::Hash &transactionHash, const Crypto::PublicKey &outputKey)
     {
         std::lock_guard<std::mutex> lk(seen_mutex);
         transactions_hash_seen.insert(transactionHash);
@@ -562,10 +498,8 @@ namespace CryptoNote
         const std::vector<uint32_t> &outputs,
         const std::vector<uint32_t> &globalIdxs,
         std::vector<TransactionOutputInformationIn> &transfers,
-        Logging::LoggerRef &m_logger
-    )
+        Logging::LoggerRef &m_logger)
     {
-
         auto txPubKey = tx.getTransactionPublicKey();
         std::vector<PublicKey> temp_keys;
         std::lock_guard<std::mutex> lk(seen_mutex);
@@ -592,8 +526,8 @@ namespace CryptoNote
             info.transactionPublicKey = txPubKey;
             info.outputInTransaction = idx;
             info.globalOutputIndex = (blockInfo.height == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT)
-                                     ? UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX
-                                     : globalIdxs[idx];
+                                         ? UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX
+                                         : globalIdxs[idx];
 
             if (outType == TransactionTypes::OutputType::Key)
             {
@@ -602,9 +536,7 @@ namespace CryptoNote
                 tx.getOutput(idx, out, amount);
 
                 CryptoNote::KeyPair in_ephemeral;
-                CryptoNote::generate_key_image_helper(
-                    account, txPubKey, idx, in_ephemeral, info.keyImage
-                );
+                CryptoNote::generate_key_image_helper(account, txPubKey, idx, in_ephemeral, info.keyImage);
 
                 assert(out.key == reinterpret_cast<const PublicKey &>(in_ephemeral.publicKey));
 
@@ -612,8 +544,8 @@ namespace CryptoNote
                 {
                     if (public_keys_seen.find(out.key) != public_keys_seen.end())
                     {
-                        m_logger(WARNING, BRIGHT_RED) << "A duplicate public key was found in "
-                                                      << Common::podToHex(tx.getTransactionHash());
+                        m_logger(WARNING, BRIGHT_RED)
+                            << "A duplicate public key was found in " << Common::podToHex(tx.getTransactionHash());
                         isDuplicate = true;
                     }
                     else
@@ -640,11 +572,9 @@ namespace CryptoNote
     std::error_code TransfersConsumer::preprocessOutputs(
         const TransactionBlockInfo &blockInfo,
         const ITransactionReader &tx,
-        PreprocessInfo &info
-    )
+        PreprocessInfo &info)
     {
-        std::unordered_map<
-            PublicKey, std::vector<uint32_t>> outputs;
+        std::unordered_map<PublicKey, std::vector<uint32_t>> outputs;
         try
         {
             findMyOutputs(tx, m_viewSecret, m_spendKeys, outputs);
@@ -679,8 +609,7 @@ namespace CryptoNote
             {
                 auto &transfers = info.outputs[kv.first];
                 errorCode = createTransfers(
-                    it->second->getKeys(), blockInfo, tx, kv.second, info.globalIdxs, transfers, m_logger
-                );
+                    it->second->getKeys(), blockInfo, tx, kv.second, info.globalIdxs, transfers, m_logger);
                 if (errorCode)
                 {
                     return errorCode;
@@ -691,10 +620,8 @@ namespace CryptoNote
         return std::error_code();
     }
 
-    std::error_code TransfersConsumer::processTransaction(
-        const TransactionBlockInfo &blockInfo,
-        const ITransactionReader &tx
-    )
+    std::error_code
+        TransfersConsumer::processTransaction(const TransactionBlockInfo &blockInfo, const ITransactionReader &tx)
     {
         PreprocessInfo info;
         auto ec = preprocessOutputs(blockInfo, tx, info);
@@ -710,8 +637,7 @@ namespace CryptoNote
     void TransfersConsumer::processTransaction(
         const TransactionBlockInfo &blockInfo,
         const ITransactionReader &tx,
-        const PreprocessInfo &info
-    )
+        const PreprocessInfo &info)
     {
         std::vector<TransactionOutputInformationIn> emptyOutputs;
         std::vector<ITransfersContainer *> transactionContainers;
@@ -722,15 +648,12 @@ namespace CryptoNote
         for (auto &kv : m_subscriptions)
         {
             auto it = info.outputs.find(kv.first);
-            auto &subscriptionOutputs = (it == info.outputs.end())
-                                        ? emptyOutputs
-                                        : it->second;
+            auto &subscriptionOutputs = (it == info.outputs.end()) ? emptyOutputs : it->second;
 
             bool containerContainsTx;
             bool containerUpdated;
             processOutputs(
-                blockInfo, *kv.second, tx, subscriptionOutputs, info.globalIdxs, containerContainsTx, containerUpdated
-            );
+                blockInfo, *kv.second, tx, subscriptionOutputs, info.globalIdxs, containerContainsTx, containerUpdated);
             someContainerUpdated = someContainerUpdated || containerUpdated;
             if (containerContainsTx)
             {
@@ -742,8 +665,10 @@ namespace CryptoNote
         {
             m_logger(TRACE) << "Transaction updated some containers, hash " << tx.getTransactionHash();
             m_observerManager.notify(
-                &IBlockchainConsumerObserver::onTransactionUpdated, this, tx.getTransactionHash(), transactionContainers
-            );
+                &IBlockchainConsumerObserver::onTransactionUpdated,
+                this,
+                tx.getTransactionHash(),
+                transactionContainers);
         }
         else
         {
@@ -758,18 +683,16 @@ namespace CryptoNote
         const std::vector<TransactionOutputInformationIn> &transfers,
         const std::vector<uint32_t> &globalIdxs,
         bool &contains,
-        bool &updated
-    )
+        bool &updated)
     {
-
         TransactionInformation subscribtionTxInfo;
         contains = sub.getContainer().getTransactionInformation(tx.getTransactionHash(), subscribtionTxInfo);
         updated = false;
 
         if (contains)
         {
-            if (subscribtionTxInfo.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT &&
-                blockInfo.height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT)
+            if (subscribtionTxInfo.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT
+                && blockInfo.height != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT)
             {
                 try
                 {
@@ -796,16 +719,13 @@ namespace CryptoNote
         }
     }
 
-    std::error_code TransfersConsumer::getGlobalIndices(
-        const Hash &transactionHash,
-        std::vector<uint32_t> &outsGlobalIndices
-    )
+    std::error_code
+        TransfersConsumer::getGlobalIndices(const Hash &transactionHash, std::vector<uint32_t> &outsGlobalIndices)
     {
         std::promise<std::error_code> prom;
         std::future<std::error_code> f = prom.get_future();
 
-        INode::Callback cb = [&prom](std::error_code ec)
-        {
+        INode::Callback cb = [&prom](std::error_code ec) {
             std::promise<std::error_code> p(std::move(prom));
             p.set_value(ec);
         };
@@ -816,4 +736,4 @@ namespace CryptoNote
         return f.get();
     }
 
-}
+} // namespace CryptoNote

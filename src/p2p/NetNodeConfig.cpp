@@ -6,8 +6,9 @@
 
 #include "NetNodeConfig.h"
 
-#include <common/Util.h>
 #include "common/StringTools.h"
+
+#include <common/Util.h>
 #include <config/CryptoNoteConfig.h>
 #include <crypto/random.h>
 
@@ -15,19 +16,14 @@ namespace CryptoNote
 {
     namespace
     {
-
-        bool parsePeerFromString(
-            NetworkAddress &pe,
-            const std::string &node_addr
-        )
+        bool parsePeerFromString(NetworkAddress &pe, const std::string &node_addr)
         {
             return Common::parseIpAddressAndPort(pe.ip, pe.port, node_addr);
         }
 
         bool parsePeersAndAddToNetworkContainer(
             const std::vector<std::string> peerList,
-            std::vector<NetworkAddress> &container
-        )
+            std::vector<NetworkAddress> &container)
         {
             for (const std::string &peer : peerList)
             {
@@ -43,8 +39,7 @@ namespace CryptoNote
 
         bool parsePeersAndAddToPeerListContainer(
             const std::vector<std::string> peerList,
-            std::vector<PeerlistEntry> &container
-        )
+            std::vector<PeerlistEntry> &container)
         {
             for (const std::string &peer : peerList)
             {
@@ -59,7 +54,7 @@ namespace CryptoNote
             return true;
         }
 
-    } //namespace
+    } // namespace
 
     NetNodeConfig::NetNodeConfig()
     {
@@ -83,8 +78,7 @@ namespace CryptoNote
         const std::vector<std::string> addExclusiveNodes,
         const std::vector<std::string> addPriorityNodes,
         const std::vector<std::string> addSeedNodes,
-        const bool p2pResetPeerState
-    )
+        const bool p2pResetPeerState)
     {
         bindIp = interface;
         bindPort = port;
@@ -190,4 +184,4 @@ namespace CryptoNote
         return configFolder;
     }
 
-} //namespace nodetool
+} // namespace CryptoNote

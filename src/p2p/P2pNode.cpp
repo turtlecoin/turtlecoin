@@ -5,10 +5,19 @@
 
 #include "P2pNode.h"
 
+#include "LevinProtocol.h"
+#include "P2pConnectionProxy.h"
+#include "P2pContext.h"
+#include "P2pContextOwner.h"
+#include "common/StdInputStream.h"
+#include "common/StdOutputStream.h"
+#include "serialization/BinaryInputStreamSerializer.h"
+#include "serialization/BinaryOutputStreamSerializer.h"
+
 #include <boost/uuid/uuid_io.hpp>
-
+#include <config/CryptoNoteConfig.h>
+#include <crypto/random.h>
 #include <random>
-
 #include <system/ContextGroupTimeout.h>
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
@@ -16,75 +25,57 @@
 #include <system/TcpConnection.h>
 #include <system/TcpConnector.h>
 
-#include <config/CryptoNoteConfig.h>
-#include <crypto/random.h>
-#include "common/StdInputStream.h"
-#include "common/StdOutputStream.h"
-#include "serialization/BinaryInputStreamSerializer.h"
-#include "serialization/BinaryOutputStreamSerializer.h"
-
-#include "LevinProtocol.h"
-#include "P2pConnectionProxy.h"
-#include "P2pContext.h"
-#include "P2pContextOwner.h"
-
 using namespace Common;
 using namespace Logging;
 using namespace System;
 
 namespace CryptoNote
 {
-
     namespace
     {
-
         class PeerIndexGenerator
         {
-            public:
+          public:
+            PeerIndexGenerator(size_t maxIndex): maxIndex(maxIndex), randCount(0)
+            {
+                assert(maxIndex > 0);
+            }
 
-                PeerIndexGenerator(size_t maxIndex)
-                    : maxIndex(maxIndex),
-                      randCount(0)
+            bool generate(size_t &num)
+            {
+                while (randCount < (maxIndex + 1) * 3)
                 {
-                    assert(maxIndex > 0);
-                }
-
-                bool generate(size_t &num)
-                {
-                    while (randCount < (maxIndex + 1) * 3)
+                    ++randCount;
+                    auto idx = getRandomIndex();
+                    if (visited.count(idx) == 0)
                     {
-                        ++randCount;
-                        auto idx = getRandomIndex();
-                        if (visited.count(idx) == 0)
-                        {
-                            visited.insert(idx);
-                            num = idx;
-                            return true;
-                        }
+                        visited.insert(idx);
+                        num = idx;
+                        return true;
                     }
-
-                    return false;
                 }
 
-            private:
+                return false;
+            }
 
-                size_t getRandomIndex()
+          private:
+            size_t getRandomIndex()
+            {
+                // divide by zero workaround
+                if (maxIndex == 0)
                 {
-                    //divide by zero workaround
-                    if (maxIndex == 0)
-                    {
-                        return 0;
-                    }
-
-                    size_t x = Random::randomValue<size_t>() % (maxIndex + 1);
-                    return (x * x * x) / (maxIndex * maxIndex);
+                    return 0;
                 }
 
-                const size_t maxIndex;
+                size_t x = Random::randomValue<size_t>() % (maxIndex + 1);
+                return (x * x * x) / (maxIndex * maxIndex);
+            }
 
-                size_t randCount;
+            const size_t maxIndex;
 
-                std::set<size_t> visited;
+            size_t randCount;
+
+            std::set<size_t> visited;
         };
 
         NetworkAddress getRemoteAddress(const TcpConnection &connection)
@@ -99,30 +90,26 @@ namespace CryptoNote
         void doWithTimeoutAndThrow(
             System::Dispatcher &dispatcher,
             std::chrono::nanoseconds timeout,
-            std::function<void()> f
-        )
+            std::function<void()> f)
         {
             std::string result;
             System::ContextGroup cg(dispatcher);
             System::ContextGroupTimeout cgTimeout(dispatcher, cg, timeout);
 
-            cg.spawn(
-                [&]
+            cg.spawn([&] {
+                try
                 {
-                    try
-                    {
-                        f();
-                    }
-                    catch (System::InterruptedException &)
-                    {
-                        result = "Operation timeout";
-                    }
-                    catch (std::exception &e)
-                    {
-                        result = e.what();
-                    }
+                    f();
                 }
-            );
+                catch (System::InterruptedException &)
+                {
+                    result = "Operation timeout";
+                }
+                catch (std::exception &e)
+                {
+                    result = e.what();
+                }
+            });
 
             cg.wait();
 
@@ -132,24 +119,19 @@ namespace CryptoNote
             }
         }
 
-    }
+    } // namespace
 
     P2pNode::P2pNode(
         const P2pNodeConfig &cfg,
         Dispatcher &dispatcher,
         std::shared_ptr<Logging::ILogger> log,
         const Crypto::Hash &genesisHash,
-        uint64_t peerId
-    ) : logger(log, "P2pNode:" + std::to_string(cfg.getBindPort())),
+        uint64_t peerId):
+        logger(log, "P2pNode:" + std::to_string(cfg.getBindPort())),
         m_stopRequested(false),
         m_cfg(cfg),
         m_myPeerId(peerId),
-        m_genesisPayload(
-            CORE_SYNC_DATA{
-                1,
-                genesisHash
-            }
-        ),
+        m_genesisPayload(CORE_SYNC_DATA {1, genesisHash}),
         m_dispatcher(dispatcher),
         workingContextGroup(dispatcher),
         m_connectorTimer(dispatcher),
@@ -226,18 +208,14 @@ namespace CryptoNote
             {
                 auto connection = m_listener.accept();
                 auto ctx = new P2pContext(
-                    m_dispatcher, std::move(connection), true, getRemoteAddress(connection), m_cfg
-                    .getTimedSyncInterval(), getGenesisPayload());
+                    m_dispatcher,
+                    std::move(connection),
+                    true,
+                    getRemoteAddress(connection),
+                    m_cfg.getTimedSyncInterval(),
+                    getGenesisPayload());
                 logger(INFO) << "Incoming connection from " << ctx->getRemoteAddress();
-                workingContextGroup.spawn(
-                    [
-                        this,
-                        ctx
-                    ]
-                    {
-                        preprocessIncomingConnection(ContextPtr(ctx));
-                    }
-                );
+                workingContextGroup.spawn([this, ctx] { preprocessIncomingConnection(ContextPtr(ctx)); });
             }
             catch (InterruptedException &)
             {
@@ -284,7 +262,7 @@ namespace CryptoNote
         if (m_peerlist.get_white_peers_count() == 0 && !m_cfg.getSeedNodes().empty())
         {
             auto seedNodes = m_cfg.getSeedNodes();
-            std::shuffle(seedNodes.begin(), seedNodes.end(), std::random_device{});
+            std::shuffle(seedNodes.begin(), seedNodes.end(), std::random_device {});
             for (const auto &seed : seedNodes)
             {
                 auto conn = tryToConnectPeer(seed);
@@ -298,33 +276,30 @@ namespace CryptoNote
         connectPeerList(m_cfg.getPriorityNodes());
 
         const size_t totalExpectedConnectionsCount = m_cfg.getExpectedOutgoingConnectionsCount();
-        const size_t
-            expectedWhiteConnections = (totalExpectedConnectionsCount * m_cfg.getWhiteListConnectionsPercent()) / 100;
+        const size_t expectedWhiteConnections =
+            (totalExpectedConnectionsCount * m_cfg.getWhiteListConnectionsPercent()) / 100;
         const size_t outgoingConnections = getOutgoingConnectionsCount();
 
         if (outgoingConnections < totalExpectedConnectionsCount)
         {
             if (outgoingConnections < expectedWhiteConnections)
             {
-                //start from white list
+                // start from white list
                 makeExpectedConnectionsCount(m_peerlist.getWhite(), expectedWhiteConnections);
-                //and then do grey list
+                // and then do grey list
                 makeExpectedConnectionsCount(m_peerlist.getGray(), totalExpectedConnectionsCount);
             }
             else
             {
-                //start from grey list
+                // start from grey list
                 makeExpectedConnectionsCount(m_peerlist.getGray(), totalExpectedConnectionsCount);
-                //and then do white list
+                // and then do white list
                 makeExpectedConnectionsCount(m_peerlist.getWhite(), totalExpectedConnectionsCount);
             }
         }
     }
 
-    void P2pNode::makeExpectedConnectionsCount(
-        const Peerlist &peerlist,
-        size_t connectionsCount
-    )
+    void P2pNode::makeExpectedConnectionsCount(const Peerlist &peerlist, size_t connectionsCount)
     {
         while (getOutgoingConnectionsCount() < connectionsCount)
         {
@@ -359,11 +334,8 @@ namespace CryptoNote
                 continue;
             }
 
-            logger(DEBUGGING) << "Selected peer: [" << peer.id << " " << peer.adr << "] last_seen: " << (
-                peer.last_seen
-                ? Common::timeIntervalToString(time(NULL) - peer.last_seen)
-                : "never"
-            );
+            logger(DEBUGGING) << "Selected peer: [" << peer.id << " " << peer.adr << "] last_seen: "
+                              << (peer.last_seen ? Common::timeIntervalToString(time(NULL) - peer.last_seen) : "never");
 
             auto conn = tryToConnectPeer(peer.adr);
             if (conn.get())
@@ -429,7 +401,7 @@ namespace CryptoNote
     {
         if (m_myPeerId == peer.id)
         {
-            return true; //dont make connections to ourself
+            return true; // dont make connections to ourself
         }
 
         for (const auto &c : m_contexts)
@@ -450,20 +422,20 @@ namespace CryptoNote
             TcpConnector connector(m_dispatcher);
             TcpConnection tcpConnection;
 
-            doWithTimeoutAndThrow(
-                m_dispatcher, m_cfg.getConnectTimeout(), [&]
-            {
+            doWithTimeoutAndThrow(m_dispatcher, m_cfg.getConnectTimeout(), [&] {
                 tcpConnection = connector.connect(
                     Ipv4Address(Common::ipAddressToString(address.ip)), static_cast<uint16_t>(address.port));
-            }
-            );
+            });
 
             logger(DEBUGGING) << "connection established to " << address;
 
-            return ContextPtr(
-                new P2pContext(
-                    m_dispatcher, std::move(tcpConnection), false, address, m_cfg
-                    .getTimedSyncInterval(), getGenesisPayload()));
+            return ContextPtr(new P2pContext(
+                m_dispatcher,
+                std::move(tcpConnection),
+                false,
+                address,
+                m_cfg.getTimedSyncInterval(),
+                getGenesisPayload()));
         }
         catch (std::exception &e)
         {
@@ -477,10 +449,7 @@ namespace CryptoNote
     {
         try
         {
-            COMMAND_HANDSHAKE::request request{
-                getNodeData(),
-                getGenesisPayload()
-            };
+            COMMAND_HANDSHAKE::request request {getNodeData(), getGenesisPayload()};
             COMMAND_HANDSHAKE::response response;
 
             OperationTimeout<P2pContext> timeout(m_dispatcher, *connection, m_cfg.getHandshakeTimeout());
@@ -505,8 +474,8 @@ namespace CryptoNote
 
             if (response.node_data.network_id != request.node_data.network_id)
             {
-                logger(DEBUGGING) << *connection << "COMMAND_HANDSHAKE failed, wrong network: "
-                                  << response.node_data.network_id;
+                logger(DEBUGGING) << *connection
+                                  << "COMMAND_HANDSHAKE failed, wrong network: " << response.node_data.network_id;
                 return false;
             }
 
@@ -535,13 +504,9 @@ namespace CryptoNote
 
     namespace
     {
-
-        std::list<PeerlistEntry> fixTimeDelta(
-            const std::list<PeerlistEntry> &peerlist,
-            time_t remoteTime
-        )
+        std::list<PeerlistEntry> fixTimeDelta(const std::list<PeerlistEntry> &peerlist, time_t remoteTime)
         {
-            //fix time delta
+            // fix time delta
             int64_t delta = time(nullptr) - remoteTime;
             std::list<PeerlistEntry> peerlistCopy(peerlist);
 
@@ -557,12 +522,9 @@ namespace CryptoNote
 
             return peerlistCopy;
         }
-    }
+    } // namespace
 
-    bool P2pNode::handleRemotePeerList(
-        const std::list<PeerlistEntry> &peerlist,
-        time_t remoteTime
-    )
+    bool P2pNode::handleRemotePeerList(const std::list<PeerlistEntry> &peerlist, time_t remoteTime)
     {
         return m_peerlist.merge_peerlist(fixTimeDelta(peerlist, remoteTime));
     }
@@ -593,9 +555,7 @@ namespace CryptoNote
         }
         else
         {
-            nodeData.my_port = m_cfg.getExternalPort()
-                               ? m_cfg.getExternalPort()
-                               : m_cfg.getBindPort();
+            nodeData.my_port = m_cfg.getExternalPort() ? m_cfg.getExternalPort() : m_cfg.getBindPort();
         }
 
         return nodeData;
@@ -640,8 +600,8 @@ namespace CryptoNote
 
     void P2pNode::tryPing(P2pContext &ctx)
     {
-        if (ctx.getPeerId() == m_myPeerId || !m_peerlist.is_ip_allowed(ctx.getRemoteAddress().ip) ||
-            ctx.getPeerPort() == 0)
+        if (ctx.getPeerId() == m_myPeerId || !m_peerlist.is_ip_allowed(ctx.getRemoteAddress().ip)
+            || ctx.getPeerPort() == 0)
         {
             return;
         }
@@ -655,17 +615,12 @@ namespace CryptoNote
             TcpConnector connector(m_dispatcher);
             TcpConnection connection;
 
-            doWithTimeoutAndThrow(
-                m_dispatcher, m_cfg.getConnectTimeout(), [&]
-            {
+            doWithTimeoutAndThrow(m_dispatcher, m_cfg.getConnectTimeout(), [&] {
                 connection = connector.connect(
                     Ipv4Address(Common::ipAddressToString(peerAddress.ip)), static_cast<uint16_t>(peerAddress.port));
-            }
-            );
+            });
 
-            doWithTimeoutAndThrow(
-                m_dispatcher, m_cfg.getHandshakeTimeout(), [&]
-            {
+            doWithTimeoutAndThrow(m_dispatcher, m_cfg.getHandshakeTimeout(), [&] {
                 LevinProtocol proto(connection);
                 COMMAND_PING::request request;
                 COMMAND_PING::response response;
@@ -681,12 +636,11 @@ namespace CryptoNote
                 }
                 else
                 {
-                    logger(Logging::DEBUGGING) << ctx << "back ping invoke wrong response \"" << response.status
-                                               << "\" from" << peerAddress << ", expected peerId=" << ctx.getPeerId()
-                                               << ", got " << response.peer_id;
+                    logger(Logging::DEBUGGING)
+                        << ctx << "back ping invoke wrong response \"" << response.status << "\" from" << peerAddress
+                        << ", expected peerId=" << ctx.getPeerId() << ", got " << response.peer_id;
                 }
-            }
-            );
+            });
         }
         catch (std::exception &e)
         {
@@ -694,10 +648,7 @@ namespace CryptoNote
         }
     }
 
-    void P2pNode::handleNodeData(
-        const basic_node_data &node,
-        P2pContext &context
-    )
+    void P2pNode::handleNodeData(const basic_node_data &node, P2pContext &context)
     {
         if (node.network_id != m_cfg.getNetworkId())
         {
@@ -726,4 +677,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

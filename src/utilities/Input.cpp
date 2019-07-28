@@ -1,5 +1,5 @@
 // Copyright (c) 2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////
@@ -7,7 +7,6 @@
 ////////////////////////////
 
 #include <iostream>
-
 #include <utilities/ColouredMsg.h>
 
 namespace Utilities
@@ -19,16 +18,11 @@ namespace Utilities
 
     /* defaultToYes = what value we return on hitting enter, i.e. the "expected"
        workflow */
-    bool confirm(
-        const std::string &msg,
-        const bool defaultToYes
-    )
+    bool confirm(const std::string &msg, const bool defaultToYes)
     {
         /* In unix programs, the upper case letter indicates the default, for
            example when you hit enter */
-        const std::string prompt = defaultToYes
-                                   ? " (Y/n): "
-                                   : " (y/N): ";
+        const std::string prompt = defaultToYes ? " (Y/n): " : " (y/N): ";
 
         while (true)
         {

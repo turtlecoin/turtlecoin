@@ -4,33 +4,26 @@
 // Please see the included LICENSE file for more information.
 
 #include "TcpListener.h"
-#include <cassert>
-#include <stdexcept>
-
-#include <fcntl.h>
-#include <netdb.h>
-#include <sys/epoll.h>
-#include <unistd.h>
-#include <string.h>
 
 #include "Dispatcher.h"
 #include "TcpConnection.h"
+
+#include <cassert>
+#include <fcntl.h>
+#include <netdb.h>
+#include <stdexcept>
+#include <string.h>
+#include <sys/epoll.h>
 #include <system/ErrorMessage.h>
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
+#include <unistd.h>
 
 namespace System
 {
+    TcpListener::TcpListener(): dispatcher(nullptr) {}
 
-    TcpListener::TcpListener() : dispatcher(nullptr)
-    {
-    }
-
-    TcpListener::TcpListener(
-        Dispatcher &dispatcher,
-        const Ipv4Address &addr,
-        uint16_t port
-    ) : dispatcher(&dispatcher)
+    TcpListener::TcpListener(Dispatcher &dispatcher, const Ipv4Address &addr, uint16_t port): dispatcher(&dispatcher)
     {
         std::string message;
         listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -95,7 +88,7 @@ namespace System
         throw std::runtime_error("TcpListener::TcpListener, " + message);
     }
 
-    TcpListener::TcpListener(TcpListener &&other) : dispatcher(other.dispatcher)
+    TcpListener::TcpListener(TcpListener &&other): dispatcher(other.dispatcher)
     {
         if (other.dispatcher != nullptr)
         {
@@ -170,8 +163,7 @@ namespace System
         else
         {
             context = &listenerContext;
-            dispatcher->getCurrentContext()->interruptProcedure = [&]()
-            {
+            dispatcher->getCurrentContext()->interruptProcedure = [&]() {
                 assert(dispatcher != nullptr);
                 assert(context != nullptr);
                 OperationContext *listenerContext = static_cast<OperationContext *>(context);
@@ -240,4 +232,4 @@ namespace System
         throw std::runtime_error("TcpListener::accept, " + message);
     }
 
-}
+} // namespace System

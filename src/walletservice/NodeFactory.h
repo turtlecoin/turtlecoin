@@ -6,37 +6,31 @@
 #pragma once
 
 #include "INode.h"
+#include "logging/LoggerRef.h"
 
 #include <string>
 
-#include "logging/LoggerRef.h"
-
 namespace PaymentService
 {
-
     class NodeFactory
     {
-        public:
-            static CryptoNote::INode *createNode(
-                const std::string &daemonAddress,
-                uint16_t daemonPort,
-                uint16_t initTimeout,
-                std::shared_ptr<Logging::ILogger> logger
-            );
+      public:
+        static CryptoNote::INode *createNode(
+            const std::string &daemonAddress,
+            uint16_t daemonPort,
+            uint16_t initTimeout,
+            std::shared_ptr<Logging::ILogger> logger);
 
-            static CryptoNote::INode *createNodeStub();
+        static CryptoNote::INode *createNodeStub();
 
-        private:
-            NodeFactory();
+      private:
+        NodeFactory();
 
-            ~NodeFactory();
+        ~NodeFactory();
 
-            CryptoNote::INode *getNode(
-                const std::string &daemonAddress,
-                uint16_t daemonPort
-            );
+        CryptoNote::INode *getNode(const std::string &daemonAddress, uint16_t daemonPort);
 
-            static NodeFactory factory;
+        static NodeFactory factory;
     };
 
-} //namespace PaymentService
+} // namespace PaymentService

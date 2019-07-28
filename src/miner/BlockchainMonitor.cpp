@@ -6,14 +6,12 @@
 #include "BlockchainMonitor.h"
 
 #include "common/StringTools.h"
-
-#include <system/EventLock.h>
-#include <system/Timer.h>
-#include <system/InterruptedException.h>
-
 #include "rpc/CoreRpcServerCommandsDefinitions.h"
 #include "rpc/JsonRpc.h"
 
+#include <system/EventLock.h>
+#include <system/InterruptedException.h>
+#include <system/Timer.h>
 #include <utilities/ColouredMsg.h>
 
 using json = nlohmann::json;
@@ -21,8 +19,7 @@ using json = nlohmann::json;
 BlockchainMonitor::BlockchainMonitor(
     System::Dispatcher &dispatcher,
     const size_t pollingInterval,
-    const std::shared_ptr<httplib::Client> httpClient
-) :
+    const std::shared_ptr<httplib::Client> httpClient):
 
     m_dispatcher(dispatcher),
     m_pollingInterval(pollingInterval),
@@ -46,13 +43,10 @@ void BlockchainMonitor::waitBlockchainUpdate()
 
     while (!m_stopped)
     {
-        m_sleepingContext.spawn(
-            [this]()
-            {
-                System::Timer timer(m_dispatcher);
-                timer.sleep(std::chrono::seconds(m_pollingInterval));
-            }
-        );
+        m_sleepingContext.spawn([this]() {
+            System::Timer timer(m_dispatcher);
+            timer.sleep(std::chrono::seconds(m_pollingInterval));
+        });
 
         m_sleepingContext.wait();
 
@@ -86,9 +80,7 @@ void BlockchainMonitor::stop()
 
 std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
 {
-    json j = {{"jsonrpc", "2.0"},
-              {"method",  "getlastblockheader"},
-              {"params",  {}}};
+    json j = {{"jsonrpc", "2.0"}, {"method", "getlastblockheader"}, {"params", {}}};
 
     auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
 
@@ -103,8 +95,8 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
     {
         std::stringstream stream;
 
-        stream << "Failed to get block hash - received unexpected http " << "code from server: " << res->status
-               << std::endl;
+        stream << "Failed to get block hash - received unexpected http "
+               << "code from server: " << res->status << std::endl;
 
         std::cout << WarningMsg(stream.str()) << std::endl;
 
@@ -134,8 +126,8 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
     {
         std::stringstream stream;
 
-        stream << "Failed to parse block hash from daemon. Received data:\n" << res->body << "\nParse error: "
-               << e.what() << std::endl;
+        stream << "Failed to parse block hash from daemon. Received data:\n"
+               << res->body << "\nParse error: " << e.what() << std::endl;
 
         std::cout << WarningMsg(stream.str());
 

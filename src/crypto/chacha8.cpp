@@ -4,49 +4,47 @@ D. J. Bernstein
 Public domain.
 */
 
+#include "chacha8.h"
+
+#include "common/int-util.h"
+
 #include <memory.h>
 #include <stdio.h>
 #include <sys/param.h>
 
-#include "chacha8.h"
-#include "common/int-util.h"
-
 /*
  * The following macros are used to obtain exact-width results.
  */
-#define U8V(v) ((uint8_t)(v) & UINT8_C(0xFF))
-#define U32V(v) ((uint32_t)(v) & UINT32_C(0xFFFFFFFF))
+#define U8V(v) ((uint8_t)(v)&UINT8_C(0xFF))
+#define U32V(v) ((uint32_t)(v)&UINT32_C(0xFFFFFFFF))
 
 /*
  * The following macros load words from an array of bytes with
  * different types of endianness, and vice versa.
  */
-#define U8TO32_LITTLE(p) SWAP32LE(((uint32_t*)(p))[0])
-#define U32TO8_LITTLE(p, v) (((uint32_t*)(p))[0] = SWAP32LE(v))
+#define U8TO32_LITTLE(p) SWAP32LE(((uint32_t *)(p))[0])
+#define U32TO8_LITTLE(p, v) (((uint32_t *)(p))[0] = SWAP32LE(v))
 
-#define ROTATE(v, c) (rol32(v,c))
+#define ROTATE(v, c) (rol32(v, c))
 #define XOR(v, w) ((v) ^ (w))
 #define PLUS(v, w) (U32V((v) + (w)))
-#define PLUSONE(v) (PLUS((v),1))
+#define PLUSONE(v) (PLUS((v), 1))
 
 #define QUARTERROUND(a, b, c, d) \
-  a = PLUS(a,b); d = ROTATE(XOR(d,a),16); \
-  c = PLUS(c,d); b = ROTATE(XOR(b,c),12); \
-  a = PLUS(a,b); d = ROTATE(XOR(d,a), 8); \
-  c = PLUS(c,d); b = ROTATE(XOR(b,c), 7);
+    a = PLUS(a, b);              \
+    d = ROTATE(XOR(d, a), 16);   \
+    c = PLUS(c, d);              \
+    b = ROTATE(XOR(b, c), 12);   \
+    a = PLUS(a, b);              \
+    d = ROTATE(XOR(d, a), 8);    \
+    c = PLUS(c, d);              \
+    b = ROTATE(XOR(b, c), 7);
 
 static const char sigma[] = "expand 32-byte k";
 
 namespace Crypto
 {
-
-    void chacha8(
-        const void *data,
-        size_t length,
-        const uint8_t *key,
-        const uint8_t *iv,
-        char *cipher
-    )
+    void chacha8(const void *data, size_t length, const uint8_t *key, const uint8_t *iv, char *cipher)
     {
         uint32_t x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15;
         uint32_t j0, j1, j2, j3, j4, j5, j6, j7, j8, j9, j10, j11, j12, j13, j14, j15;
@@ -129,22 +127,22 @@ namespace Crypto
             x14 = PLUS(x14, j14);
             x15 = PLUS(x15, j15);
 
-            x0 = XOR(x0, U8TO32_LITTLE((uint8_t *) data + 0));
-            x1 = XOR(x1, U8TO32_LITTLE((uint8_t *) data + 4));
-            x2 = XOR(x2, U8TO32_LITTLE((uint8_t *) data + 8));
-            x3 = XOR(x3, U8TO32_LITTLE((uint8_t *) data + 12));
-            x4 = XOR(x4, U8TO32_LITTLE((uint8_t *) data + 16));
-            x5 = XOR(x5, U8TO32_LITTLE((uint8_t *) data + 20));
-            x6 = XOR(x6, U8TO32_LITTLE((uint8_t *) data + 24));
-            x7 = XOR(x7, U8TO32_LITTLE((uint8_t *) data + 28));
-            x8 = XOR(x8, U8TO32_LITTLE((uint8_t *) data + 32));
-            x9 = XOR(x9, U8TO32_LITTLE((uint8_t *) data + 36));
-            x10 = XOR(x10, U8TO32_LITTLE((uint8_t *) data + 40));
-            x11 = XOR(x11, U8TO32_LITTLE((uint8_t *) data + 44));
-            x12 = XOR(x12, U8TO32_LITTLE((uint8_t *) data + 48));
-            x13 = XOR(x13, U8TO32_LITTLE((uint8_t *) data + 52));
-            x14 = XOR(x14, U8TO32_LITTLE((uint8_t *) data + 56));
-            x15 = XOR(x15, U8TO32_LITTLE((uint8_t *) data + 60));
+            x0 = XOR(x0, U8TO32_LITTLE((uint8_t *)data + 0));
+            x1 = XOR(x1, U8TO32_LITTLE((uint8_t *)data + 4));
+            x2 = XOR(x2, U8TO32_LITTLE((uint8_t *)data + 8));
+            x3 = XOR(x3, U8TO32_LITTLE((uint8_t *)data + 12));
+            x4 = XOR(x4, U8TO32_LITTLE((uint8_t *)data + 16));
+            x5 = XOR(x5, U8TO32_LITTLE((uint8_t *)data + 20));
+            x6 = XOR(x6, U8TO32_LITTLE((uint8_t *)data + 24));
+            x7 = XOR(x7, U8TO32_LITTLE((uint8_t *)data + 28));
+            x8 = XOR(x8, U8TO32_LITTLE((uint8_t *)data + 32));
+            x9 = XOR(x9, U8TO32_LITTLE((uint8_t *)data + 36));
+            x10 = XOR(x10, U8TO32_LITTLE((uint8_t *)data + 40));
+            x11 = XOR(x11, U8TO32_LITTLE((uint8_t *)data + 44));
+            x12 = XOR(x12, U8TO32_LITTLE((uint8_t *)data + 48));
+            x13 = XOR(x13, U8TO32_LITTLE((uint8_t *)data + 52));
+            x14 = XOR(x14, U8TO32_LITTLE((uint8_t *)data + 56));
+            x15 = XOR(x15, U8TO32_LITTLE((uint8_t *)data + 60));
 
             j12 = PLUSONE(j12);
             if (!j12)
@@ -180,7 +178,7 @@ namespace Crypto
             }
             length -= 64;
             cipher += 64;
-            data = (uint8_t *) data + 64;
+            data = (uint8_t *)data + 64;
         }
     }
 

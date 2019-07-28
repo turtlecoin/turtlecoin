@@ -10,7 +10,6 @@
 
 namespace CryptoNote
 {
-
     void ExtendedTransactionInfo::serialize(CryptoNote::ISerializer &s)
     {
         s(static_cast<CachedTransactionInfo &>(*this), "cached_transaction");
@@ -25,4 +24,4 @@ namespace CryptoNote
         s(outputIndex, "output_index");
     }
 
-}
+} // namespace CryptoNote

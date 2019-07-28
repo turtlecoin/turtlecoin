@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ///////////////////////////////
@@ -7,12 +7,9 @@
 ///////////////////////////////
 
 #include <iostream>
-
-#include <utilities/FormatTools.h>
-
-#include <walletbackend/WalletBackend.h>
-
 #include <utilities/ColouredMsg.h>
+#include <utilities/FormatTools.h>
+#include <walletbackend/WalletBackend.h>
 #include <zedwallet++/Utilities.h>
 
 void optimize(const std::shared_ptr<WalletBackend> walletBackend)
@@ -51,7 +48,7 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
        failing the whole round */
     while (failCount < 5)
     {
-        const auto[error, hash] = walletBackend->sendFusionTransactionBasic();
+        const auto [error, hash] = walletBackend->sendFusionTransactionBasic();
 
         if (error == FULLY_OPTIMIZED)
         {
@@ -83,10 +80,9 @@ bool optimizeRound(const std::shared_ptr<WalletBackend> walletBackend)
     /* Wait for balance to unlock, so sending transactions can proceed */
     while (currentBalance < initialBalance)
     {
-        std::cout << InformationMsg(
-            "Waiting for balance to return and unlock:\n"
-            "\nTotal balance: "
-        ) << InformationMsg(Utilities::formatAmount(initialBalance))
+        std::cout << InformationMsg("Waiting for balance to return and unlock:\n"
+                                    "\nTotal balance: ")
+                  << InformationMsg(Utilities::formatAmount(initialBalance))
 
                   << WarningMsg("\nLocked balance: ")
                   << WarningMsg(Utilities::formatAmount(initialBalance - currentBalance))

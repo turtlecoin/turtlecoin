@@ -1,13 +1,10 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
-#include <iostream>
-
 #include <common/SignalHandler.h>
-
 #include <config/CliHeader.h>
-
+#include <iostream>
 #include <utilities/ColouredMsg.h>
 #include <zedwallet++/Menu.h>
 #include <zedwallet++/ParseArguments.h>
@@ -17,8 +14,7 @@
 void shutdown(
     const std::atomic<bool> &ctrl_c,
     const std::atomic<bool> &stop,
-    const std::shared_ptr<WalletBackend> walletBackend
-)
+    const std::shared_ptr<WalletBackend> walletBackend)
 {
     while (!ctrl_c && !stop)
     {
@@ -40,8 +36,8 @@ void shutdown(
         /* Delete the walletbackend - this will call the deconstructor,
            which will set the appropriate m_shouldStop flag. Since this
            function gets triggered from a signal handler, we can't just call
-           save() - The data may be in an invalid state. 
-           
+           save() - The data may be in an invalid state.
+
            Obviously, calling delete on a shared pointer is undefined
            behaviour if we continue using it in another thread - fortunately,
            we're exiting right now. */
@@ -55,8 +51,7 @@ void cleanup(
     std::thread &txMonitorThread,
     std::thread &ctrlCWatcher,
     std::atomic<bool> &stop,
-    std::shared_ptr<TransactionMonitor> txMonitor
-)
+    std::shared_ptr<TransactionMonitor> txMonitor)
 {
     /* Stop the transaction monitor */
     txMonitor->stop();
@@ -77,10 +72,7 @@ void cleanup(
     }
 }
 
-int main(
-    int argc,
-    char **argv
-)
+int main(int argc, char **argv)
 {
     ZedConfig config = parseArguments(argc, argv);
 
@@ -100,7 +92,7 @@ int main(
 
     try
     {
-        const auto[quit, sync, walletBackend] = selectionScreen(config);
+        const auto [quit, sync, walletBackend] = selectionScreen(config);
 
         if (quit)
         {
@@ -109,26 +101,13 @@ int main(
         }
 
         /* Launch the thread which watches for the shutdown signal */
-        ctrlCWatcher = std::thread(
-            [
-                &ctrl_c,
-                &stop,
-                &walletBackend = walletBackend
-            ]
-            {
-                shutdown(ctrl_c, stop, walletBackend);
-            }
-        );
+        ctrlCWatcher =
+            std::thread([&ctrl_c, &stop, &walletBackend = walletBackend] { shutdown(ctrl_c, stop, walletBackend); });
 
         /* Trigger the shutdown signal if ctrl+c is used
            We do the actual handling in a separate thread to handle stuff not
            being re-entrant. */
-        Tools::SignalHandler::install(
-            [&ctrl_c]
-            {
-                ctrl_c = true;
-            }
-        );
+        Tools::SignalHandler::install([&ctrl_c] { ctrl_c = true; });
 
         /* Don't explicitly sync in foreground if it's a new wallet */
         if (sync)
@@ -155,7 +134,8 @@ int main(
     catch (const std::exception &e)
     {
         std::cout << WarningMsg("Unexpected error: " + std::string(e.what())) << std::endl
-                  << "Please report this error, and what you were doing to " << "cause it." << std::endl;
+                  << "Please report this error, and what you were doing to "
+                  << "cause it." << std::endl;
 
         std::cout << "Hit enter to exit: ";
 

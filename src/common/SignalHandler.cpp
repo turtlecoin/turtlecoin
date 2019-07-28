@@ -5,27 +5,26 @@
 
 #include "SignalHandler.h"
 
-#include <mutex>
 #include <iostream>
+#include <mutex>
 
 #ifdef _WIN32
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
-    #include <Windows.h>
+#include <Windows.h>
 
 #else
-    #include <signal.h>
-    #include <cstring>
+#include <cstring>
+#include <signal.h>
 #endif
 
 namespace
 {
-
     std::function<void(void)> m_handler;
 
     void handleSignal()
@@ -43,7 +42,7 @@ namespace
         }
     }
 
-    #if defined(WIN32)
+#if defined(WIN32)
 
     BOOL WINAPI winHandler(DWORD type)
     {
@@ -60,47 +59,50 @@ namespace
         return TRUE;
     }
 
-    #else
+#else
 
-    void posixHandler(int /*type*/) {
-      handleSignal();
+    void posixHandler(int /*type*/)
+    {
+        handleSignal();
     }
-    #endif
+#endif
 
-}
+} // namespace
 
 namespace Tools
 {
-
     bool SignalHandler::install(std::function<void(void)> t)
     {
-        #if defined(WIN32)
+#if defined(WIN32)
         bool r = TRUE == ::SetConsoleCtrlHandler(&winHandler, TRUE);
         if (r)
         {
             m_handler = t;
         }
         return r;
-        #else
+#else
         struct sigaction newMask;
         std::memset(&newMask, 0, sizeof(struct sigaction));
         newMask.sa_handler = posixHandler;
-        if (sigaction(SIGINT, &newMask, nullptr) != 0) {
-          return false;
+        if (sigaction(SIGINT, &newMask, nullptr) != 0)
+        {
+            return false;
         }
 
-        if (sigaction(SIGTERM, &newMask, nullptr) != 0) {
-          return false;
+        if (sigaction(SIGTERM, &newMask, nullptr) != 0)
+        {
+            return false;
         }
 
         std::memset(&newMask, 0, sizeof(struct sigaction));
         newMask.sa_handler = SIG_IGN;
-        if (sigaction(SIGPIPE, &newMask, nullptr) != 0) {
-          return false;
+        if (sigaction(SIGPIPE, &newMask, nullptr) != 0)
+        {
+            return false;
         }
 
         m_handler = t;
         return true;
-        #endif
+#endif
     }
-}
+} // namespace Tools

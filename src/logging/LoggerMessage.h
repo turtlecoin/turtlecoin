@@ -5,52 +5,47 @@
 
 #pragma once
 
-#include <iostream>
 #include "ILogger.h"
+
+#include <iostream>
 
 namespace Logging
 {
-
-    class LoggerMessage : public std::ostream,
-                          std::streambuf
+    class LoggerMessage : public std::ostream, std::streambuf
     {
-        public:
-            LoggerMessage(
-                std::shared_ptr<ILogger> logger,
-                const std::string &category,
-                Level level,
-                const std::string &color
-            );
+      public:
+        LoggerMessage(
+            std::shared_ptr<ILogger> logger,
+            const std::string &category,
+            Level level,
+            const std::string &color);
 
-            ~LoggerMessage();
+        ~LoggerMessage();
 
-            LoggerMessage(const LoggerMessage &) = delete;
+        LoggerMessage(const LoggerMessage &) = delete;
 
-            LoggerMessage &operator=(const LoggerMessage &) = delete;
+        LoggerMessage &operator=(const LoggerMessage &) = delete;
 
-            LoggerMessage(LoggerMessage &&other);
+        LoggerMessage(LoggerMessage &&other);
 
-        private:
-            int sync() override;
+      private:
+        int sync() override;
 
-            std::streamsize xsputn(
-                const char *s,
-                std::streamsize n
-            ) override;
+        std::streamsize xsputn(const char *s, std::streamsize n) override;
 
-            int overflow(int c) override;
+        int overflow(int c) override;
 
-            std::string message;
+        std::string message;
 
-            const std::string category;
+        const std::string category;
 
-            Level logLevel;
+        Level logLevel;
 
-            std::shared_ptr<ILogger> logger;
+        std::shared_ptr<ILogger> logger;
 
-            boost::posix_time::ptime timestamp;
+        boost::posix_time::ptime timestamp;
 
-            bool gotText;
+        bool gotText;
     };
 
-}
+} // namespace Logging

@@ -3,26 +3,16 @@
 // Please see the included LICENSE file for more information.
 
 #include <atomic>
-
 #include <chrono>
-
 #include <common/SignalHandler.h>
-
 #include <config/CliHeader.h>
-
 #include <iostream>
-
 #include <logger/Logger.h>
-
 #include <thread>
-
 #include <walletapi/ApiDispatcher.h>
 #include <walletapi/ParseArguments.h>
 
-int main(
-    int argc,
-    char **argv
-)
+int main(int argc, char **argv)
 {
     ApiConfig config = parseArguments(argc, argv);
 
@@ -39,17 +29,11 @@ int main(
     try
     {
         /* Trigger the shutdown signal if ctrl+c is used */
-        Tools::SignalHandler::install(
-            [&ctrl_c]
-            {
-                ctrl_c = true;
-            }
-        );
+        Tools::SignalHandler::install([&ctrl_c] { ctrl_c = true; });
 
         /* Init the API */
         api = std::make_shared<ApiDispatcher>(
-            config.port, config.rpcBindIp, config.rpcPassword, config.corsHeader, config.threads
-        );
+            config.port, config.rpcBindIp, config.rpcPassword, config.corsHeader, config.threads);
 
         /* Launch the API */
         apiThread = std::thread(&ApiDispatcher::start, api.get());
@@ -82,8 +66,9 @@ int main(
     }
     catch (const std::exception &e)
     {
-        std::cout << "Unexpected error: " << e.what() << "\nPlease report this error, and what you were doing to "
-                                                         "cause it.\n";
+        std::cout << "Unexpected error: " << e.what()
+                  << "\nPlease report this error, and what you were doing to "
+                     "cause it.\n";
     }
 
     std::cout << ("\nSaving and shutting down...\n");

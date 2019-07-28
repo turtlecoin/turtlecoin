@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -83,4 +83,4 @@ namespace WalletConfig
      * The amount of memory to use storing downloaded blocks - 50MB
      */
     const size_t blockStoreMemoryLimit = 1024 * 1024 * 50;
-}
+} // namespace WalletConfig

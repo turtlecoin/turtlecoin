@@ -5,34 +5,26 @@
 
 #include "BinaryInputStreamSerializer.h"
 
+#include "SerializationOverloads.h"
+
 #include <algorithm>
 #include <cassert>
-#include <stdexcept>
 #include <common/StreamTools.h>
-#include "SerializationOverloads.h"
 #include <config/CryptoNoteConfig.h>
+#include <stdexcept>
 
 using namespace Common;
 
 namespace CryptoNote
 {
-
     namespace
     {
-
-        template<
-            typename StorageType,
-            typename T
-        >
-        void readVarintAs(
-            IInputStream &s,
-            T &i
-        )
+        template<typename StorageType, typename T> void readVarintAs(IInputStream &s, T &i)
         {
             i = static_cast<T>(readVarint<StorageType>(s));
         }
 
-    }
+    } // namespace
 
     ISerializer::SerializerType BinaryInputStreamSerializer::type() const
     {
@@ -44,99 +36,65 @@ namespace CryptoNote
         return true;
     }
 
-    void BinaryInputStreamSerializer::endObject()
-    {
-    }
+    void BinaryInputStreamSerializer::endObject() {}
 
-    bool BinaryInputStreamSerializer::beginArray(
-        uint64_t &size,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::beginArray(uint64_t &size, Common::StringView name)
     {
         readVarintAs<uint64_t>(stream, size);
         return true;
     }
 
-    void BinaryInputStreamSerializer::endArray()
-    {
-    }
+    void BinaryInputStreamSerializer::endArray() {}
 
-    bool BinaryInputStreamSerializer::operator()(
-        uint8_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(uint8_t &value, Common::StringView name)
     {
         readVarint(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        uint16_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(uint16_t &value, Common::StringView name)
     {
         readVarint(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        int16_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(int16_t &value, Common::StringView name)
     {
         readVarintAs<uint16_t>(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        uint32_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(uint32_t &value, Common::StringView name)
     {
         readVarint(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        int32_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(int32_t &value, Common::StringView name)
     {
         readVarintAs<uint32_t>(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        int64_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(int64_t &value, Common::StringView name)
     {
         readVarintAs<uint64_t>(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        uint64_t &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(uint64_t &value, Common::StringView name)
     {
         readVarint(stream, value);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        bool &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(bool &value, Common::StringView name)
     {
         value = read<uint8_t>(stream) != 0;
         return true;
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        std::string &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(std::string &value, Common::StringView name)
     {
         uint64_t size;
         readVarint(stream, size);
@@ -175,40 +133,27 @@ namespace CryptoNote
         return true;
     }
 
-    bool BinaryInputStreamSerializer::binary(
-        void *value,
-        uint64_t size,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::binary(void *value, uint64_t size, Common::StringView name)
     {
         checkedRead(static_cast<char *>(value), size);
         return true;
     }
 
-    bool BinaryInputStreamSerializer::binary(
-        std::string &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::binary(std::string &value, Common::StringView name)
     {
         return (*this)(value, name);
     }
 
-    bool BinaryInputStreamSerializer::operator()(
-        double &value,
-        Common::StringView name
-    )
+    bool BinaryInputStreamSerializer::operator()(double &value, Common::StringView name)
     {
-        assert(false); //the method is not supported for this type of serialization
+        assert(false); // the method is not supported for this type of serialization
         throw std::runtime_error("double serialization is not supported in BinaryInputStreamSerializer");
         return false;
     }
 
-    void BinaryInputStreamSerializer::checkedRead(
-        char *buf,
-        uint64_t size
-    )
+    void BinaryInputStreamSerializer::checkedRead(char *buf, uint64_t size)
     {
         read(stream, buf, size);
     }
 
-}
+} // namespace CryptoNote

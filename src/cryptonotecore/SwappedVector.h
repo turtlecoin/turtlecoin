@@ -5,8 +5,13 @@
 
 #pragma once
 
-#include <cstdint>
+#include "common/StdInputStream.h"
+#include "common/StdOutputStream.h"
+#include "serialization/BinaryInputStreamSerializer.h"
+#include "serialization/BinaryOutputStreamSerializer.h"
+
 #include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -15,249 +20,219 @@
 #include <string>
 #include <vector>
 
-#include "common/StdInputStream.h"
-#include "common/StdOutputStream.h"
-#include "serialization/BinaryInputStreamSerializer.h"
-#include "serialization/BinaryOutputStreamSerializer.h"
-
-template<class T>
-class SwappedVector
+template<class T> class SwappedVector
 {
-    public:
+  public:
+    typedef T value_type;
+
+    class const_iterator
+    {
+      public:
+        typedef ptrdiff_t difference_type;
+
+        typedef std::random_access_iterator_tag iterator_category;
+
+        typedef const T *pointer;
+
+        typedef const T &reference;
+
         typedef T value_type;
 
-        class const_iterator
+        const_iterator() {}
+
+        const_iterator(SwappedVector *swappedVector, size_t index): m_swappedVector(swappedVector), m_index(index) {}
+
+        bool operator!=(const const_iterator &other) const
         {
-            public:
-                typedef ptrdiff_t difference_type;
+            return m_index != other.m_index;
+        }
 
-                typedef std::random_access_iterator_tag iterator_category;
-
-                typedef const T *pointer;
-
-                typedef const T &reference;
-
-                typedef T value_type;
-
-                const_iterator()
-                {
-                }
-
-                const_iterator(
-                    SwappedVector *swappedVector,
-                    size_t index
-                )
-                    : m_swappedVector(swappedVector),
-                      m_index(index)
-                {
-                }
-
-                bool operator!=(const const_iterator &other) const
-                {
-                    return m_index != other.m_index;
-                }
-
-                bool operator<(const const_iterator &other) const
-                {
-                    return m_index < other.m_index;
-                }
-
-                bool operator<=(const const_iterator &other) const
-                {
-                    return m_index <= other.m_index;
-                }
-
-                bool operator==(const const_iterator &other) const
-                {
-                    return m_index == other.m_index;
-                }
-
-                bool operator>(const const_iterator &other) const
-                {
-                    return m_index > other.m_index;
-                }
-
-                bool operator>=(const const_iterator &other) const
-                {
-                    return m_index >= other.m_index;
-                }
-
-                const_iterator &operator++()
-                {
-                    ++m_index;
-                    return *this;
-                }
-
-                const_iterator operator++(int)
-                {
-                    const_iterator i = *this;
-                    ++m_index;
-                    return i;
-                }
-
-                const_iterator &operator--()
-                {
-                    --m_index;
-                    return *this;
-                }
-
-                const_iterator operator--(int)
-                {
-                    const_iterator i = *this;
-                    --m_index;
-                    return i;
-                }
-
-                const_iterator &operator+=(difference_type n)
-                {
-                    m_index += n;
-                    return *this;
-                }
-
-                const_iterator &operator-=(difference_type n)
-                {
-                    m_index -= n;
-                    return *this;
-                }
-
-                const_iterator operator+(difference_type n) const
-                {
-                    return const_iterator(m_swappedVector, m_index + n);
-                }
-
-                friend const_iterator operator+(
-                    difference_type n,
-                    const const_iterator &i
-                )
-                {
-                    return const_iterator(i.m_swappedVector, n + i.m_index);
-                }
-
-                difference_type operator-(const const_iterator &other) const
-                {
-                    return m_index - other.m_index;
-                }
-
-                const_iterator &operator-(difference_type n) const
-                {
-                    return const_iterator(m_swappedVector, m_index - n);
-                }
-
-                const T &operator*() const
-                {
-                    return (*m_swappedVector)[m_index];
-                }
-
-                const T *operator->() const
-                {
-                    return &(*m_swappedVector)[m_index];
-                }
-
-                const T &operator[](difference_type offset) const
-                {
-                    return (*m_swappedVector)[m_index + offset];
-                }
-
-                size_t index() const
-                {
-                    return m_index;
-                }
-
-            private:
-                SwappedVector *m_swappedVector;
-
-                size_t m_index;
-        };
-
-        SwappedVector();
-
-        //SwappedVector(const SwappedVector&) = delete;
-        ~SwappedVector();
-        //SwappedVector& operator=(const SwappedVector&) = delete;
-
-        bool open(
-            const std::string &itemFileName,
-            const std::string &indexFileName,
-            size_t poolSize
-        );
-
-        void close();
-
-        bool empty() const;
-
-        uint64_t size() const;
-
-        const_iterator begin();
-
-        const_iterator end();
-
-        const T &operator[](uint64_t index);
-
-        const T &front();
-
-        const T &back();
-
-        void clear();
-
-        void pop_back();
-
-        void push_back(const T &item);
-
-    private:
-        struct ItemEntry;
-        struct CacheEntry;
-
-        struct ItemEntry
+        bool operator<(const const_iterator &other) const
         {
-            public:
-                T item;
-                typename std::list<CacheEntry>::iterator cacheIter;
-        };
+            return m_index < other.m_index;
+        }
 
-        struct CacheEntry
+        bool operator<=(const const_iterator &other) const
         {
-            public:
-                typename std::map<uint64_t, ItemEntry>::iterator itemIter;
-        };
+            return m_index <= other.m_index;
+        }
 
-        std::fstream m_itemsFile;
+        bool operator==(const const_iterator &other) const
+        {
+            return m_index == other.m_index;
+        }
 
-        std::fstream m_indexesFile;
+        bool operator>(const const_iterator &other) const
+        {
+            return m_index > other.m_index;
+        }
 
-        size_t m_poolSize;
+        bool operator>=(const const_iterator &other) const
+        {
+            return m_index >= other.m_index;
+        }
 
-        std::vector<uint64_t> m_offsets;
+        const_iterator &operator++()
+        {
+            ++m_index;
+            return *this;
+        }
 
-        uint64_t m_itemsFileSize;
+        const_iterator operator++(int)
+        {
+            const_iterator i = *this;
+            ++m_index;
+            return i;
+        }
 
-        std::map<uint64_t, ItemEntry> m_items;
+        const_iterator &operator--()
+        {
+            --m_index;
+            return *this;
+        }
 
-        std::list<CacheEntry> m_cache;
+        const_iterator operator--(int)
+        {
+            const_iterator i = *this;
+            --m_index;
+            return i;
+        }
 
-        uint64_t m_cacheHits;
+        const_iterator &operator+=(difference_type n)
+        {
+            m_index += n;
+            return *this;
+        }
 
-        uint64_t m_cacheMisses;
+        const_iterator &operator-=(difference_type n)
+        {
+            m_index -= n;
+            return *this;
+        }
 
-        T *prepare(uint64_t index);
+        const_iterator operator+(difference_type n) const
+        {
+            return const_iterator(m_swappedVector, m_index + n);
+        }
+
+        friend const_iterator operator+(difference_type n, const const_iterator &i)
+        {
+            return const_iterator(i.m_swappedVector, n + i.m_index);
+        }
+
+        difference_type operator-(const const_iterator &other) const
+        {
+            return m_index - other.m_index;
+        }
+
+        const_iterator &operator-(difference_type n) const
+        {
+            return const_iterator(m_swappedVector, m_index - n);
+        }
+
+        const T &operator*() const
+        {
+            return (*m_swappedVector)[m_index];
+        }
+
+        const T *operator->() const
+        {
+            return &(*m_swappedVector)[m_index];
+        }
+
+        const T &operator[](difference_type offset) const
+        {
+            return (*m_swappedVector)[m_index + offset];
+        }
+
+        size_t index() const
+        {
+            return m_index;
+        }
+
+      private:
+        SwappedVector *m_swappedVector;
+
+        size_t m_index;
+    };
+
+    SwappedVector();
+
+    // SwappedVector(const SwappedVector&) = delete;
+    ~SwappedVector();
+    // SwappedVector& operator=(const SwappedVector&) = delete;
+
+    bool open(const std::string &itemFileName, const std::string &indexFileName, size_t poolSize);
+
+    void close();
+
+    bool empty() const;
+
+    uint64_t size() const;
+
+    const_iterator begin();
+
+    const_iterator end();
+
+    const T &operator[](uint64_t index);
+
+    const T &front();
+
+    const T &back();
+
+    void clear();
+
+    void pop_back();
+
+    void push_back(const T &item);
+
+  private:
+    struct ItemEntry;
+    struct CacheEntry;
+
+    struct ItemEntry
+    {
+      public:
+        T item;
+        typename std::list<CacheEntry>::iterator cacheIter;
+    };
+
+    struct CacheEntry
+    {
+      public:
+        typename std::map<uint64_t, ItemEntry>::iterator itemIter;
+    };
+
+    std::fstream m_itemsFile;
+
+    std::fstream m_indexesFile;
+
+    size_t m_poolSize;
+
+    std::vector<uint64_t> m_offsets;
+
+    uint64_t m_itemsFileSize;
+
+    std::map<uint64_t, ItemEntry> m_items;
+
+    std::list<CacheEntry> m_cache;
+
+    uint64_t m_cacheHits;
+
+    uint64_t m_cacheMisses;
+
+    T *prepare(uint64_t index);
 };
 
-template<class T>
-SwappedVector<T>::SwappedVector()
-{
-}
+template<class T> SwappedVector<T>::SwappedVector() {}
 
-template<class T>
-SwappedVector<T>::~SwappedVector()
+template<class T> SwappedVector<T>::~SwappedVector()
 {
     close();
 }
 
 template<class T>
-bool SwappedVector<T>::open(
-    const std::string &itemFileName,
-    const std::string &indexFileName,
-    size_t poolSize
-)
+bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &indexFileName, size_t poolSize)
 {
     if (poolSize == 0)
     {
@@ -320,37 +295,29 @@ bool SwappedVector<T>::open(
     return true;
 }
 
-template<class T>
-void SwappedVector<T>::close()
-{
-}
+template<class T> void SwappedVector<T>::close() {}
 
-template<class T>
-bool SwappedVector<T>::empty() const
+template<class T> bool SwappedVector<T>::empty() const
 {
     return m_offsets.empty();
 }
 
-template<class T>
-uint64_t SwappedVector<T>::size() const
+template<class T> uint64_t SwappedVector<T>::size() const
 {
     return m_offsets.size();
 }
 
-template<class T>
-typename SwappedVector<T>::const_iterator SwappedVector<T>::begin()
+template<class T> typename SwappedVector<T>::const_iterator SwappedVector<T>::begin()
 {
     return const_iterator(this, 0);
 }
 
-template<class T>
-typename SwappedVector<T>::const_iterator SwappedVector<T>::end()
+template<class T> typename SwappedVector<T>::const_iterator SwappedVector<T>::end()
 {
     return const_iterator(this, m_offsets.size());
 }
 
-template<class T>
-const T &SwappedVector<T>::operator[](uint64_t index)
+template<class T> const T &SwappedVector<T>::operator[](uint64_t index)
 {
     auto itemIter = m_items.find(index);
     if (itemIter != m_items.end())
@@ -387,20 +354,17 @@ const T &SwappedVector<T>::operator[](uint64_t index)
     return *item;
 }
 
-template<class T>
-const T &SwappedVector<T>::front()
+template<class T> const T &SwappedVector<T>::front()
 {
     return operator[](0);
 }
 
-template<class T>
-const T &SwappedVector<T>::back()
+template<class T> const T &SwappedVector<T>::back()
 {
     return operator[](m_offsets.size() - 1);
 }
 
-template<class T>
-void SwappedVector<T>::clear()
+template<class T> void SwappedVector<T>::clear()
 {
     if (!m_indexesFile)
     {
@@ -421,8 +385,7 @@ void SwappedVector<T>::clear()
     m_cache.clear();
 }
 
-template<class T>
-void SwappedVector<T>::pop_back()
+template<class T> void SwappedVector<T>::pop_back()
 {
     if (!m_indexesFile)
     {
@@ -447,8 +410,7 @@ void SwappedVector<T>::pop_back()
     }
 }
 
-template<class T>
-void SwappedVector<T>::push_back(const T &item)
+template<class T> void SwappedVector<T>::push_back(const T &item)
 {
     uint64_t itemsFileSize;
 
@@ -497,8 +459,7 @@ void SwappedVector<T>::push_back(const T &item)
     *newItem = item;
 }
 
-template<class T>
-T *SwappedVector<T>::prepare(uint64_t index)
+template<class T> T *SwappedVector<T>::prepare(uint64_t index)
 {
     if (m_items.size() == m_poolSize)
     {

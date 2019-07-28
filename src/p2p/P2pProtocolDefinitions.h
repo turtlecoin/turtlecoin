@@ -6,37 +6,27 @@
 #pragma once
 
 #include "P2pProtocolTypes.h"
+#include "crypto/crypto.h"
 
 #include <boost/uuid/uuid.hpp>
-
-#include "crypto/crypto.h"
 #include <config/CryptoNoteConfig.h>
 
 // new serialization
+#include "serialization/CryptoNoteSerialization.h"
 #include "serialization/ISerializer.h"
 #include "serialization/SerializationOverloads.h"
-#include "serialization/CryptoNoteSerialization.h"
 
 namespace CryptoNote
 {
-    inline bool serialize(
-        boost::uuids::uuid &v,
-        Common::StringView name,
-        ISerializer &s
-    )
+    inline bool serialize(boost::uuids::uuid &v, Common::StringView name, ISerializer &s)
     {
         return s.binary(&v, sizeof(v), name);
     }
 
     struct network_config
     {
-        void serialize(ISerializer &s)
-        {
-            KV_MEMBER(connections_count)
-            KV_MEMBER(handshake_interval)
-            KV_MEMBER(packet_max_size)
-            KV_MEMBER(config_id)
-        }
+        void serialize(ISerializer &s) {KV_MEMBER(connections_count) KV_MEMBER(handshake_interval)
+                                            KV_MEMBER(packet_max_size) KV_MEMBER(config_id)}
 
         uint32_t connections_count;
 
@@ -92,7 +82,7 @@ namespace CryptoNote
         }
     };
 
-    #define P2P_COMMANDS_POOL_BASE 1000
+#define P2P_COMMANDS_POOL_BASE 1000
 
     /************************************************************************/
     /*                                                                      */
@@ -115,7 +105,6 @@ namespace CryptoNote
                 KV_MEMBER(node_data)
                 KV_MEMBER(payload_data)
             }
-
         };
 
         struct response
@@ -154,7 +143,6 @@ namespace CryptoNote
             {
                 KV_MEMBER(payload_data)
             }
-
         };
 
         struct response
@@ -190,14 +178,12 @@ namespace CryptoNote
             ID = P2P_COMMANDS_POOL_BASE + 3
         };
 
-        #define PING_OK_RESPONSE_STATUS_TEXT "OK"
+#define PING_OK_RESPONSE_STATUS_TEXT "OK"
 
         struct request
         {
             /*actually we don't need to send any real data*/
-            void serialize(ISerializer &s)
-            {
-            }
+            void serialize(ISerializer &s) {}
         };
 
         struct response
@@ -213,4 +199,4 @@ namespace CryptoNote
             }
         };
     };
-}
+} // namespace CryptoNote

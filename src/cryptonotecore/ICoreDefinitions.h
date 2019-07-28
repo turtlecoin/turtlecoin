@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <vector>
 #include <CryptoNote.h>
 #include <CryptoTypes.h>
 #include <WalletTypes.h>
+#include <vector>
 
 namespace CryptoNote
 {
-
     struct BlockFullInfo : public RawBlock
     {
         Crypto::Hash block_id;
@@ -31,44 +30,20 @@ namespace CryptoNote
         std::vector<TransactionPrefixInfo> txPrefixes;
     };
 
-    void serialize(
-        BlockFullInfo &,
-        ISerializer &
-    );
+    void serialize(BlockFullInfo &, ISerializer &);
 
-    void serialize(
-        TransactionPrefixInfo &,
-        ISerializer &
-    );
+    void serialize(TransactionPrefixInfo &, ISerializer &);
 
-    void serialize(
-        BlockShortInfo &,
-        ISerializer &
-    );
+    void serialize(BlockShortInfo &, ISerializer &);
 
-    void serialize(
-        WalletTypes::WalletBlockInfo &walletBlockInfo,
-        ISerializer &s
-    );
+    void serialize(WalletTypes::WalletBlockInfo &walletBlockInfo, ISerializer &s);
 
-    void serialize(
-        WalletTypes::RawTransaction &rawTransaction,
-        ISerializer &s
-    );
+    void serialize(WalletTypes::RawTransaction &rawTransaction, ISerializer &s);
 
-    void serialize(
-        WalletTypes::RawCoinbaseTransaction &rawCoinbaseTransaction,
-        ISerializer &s
-    );
+    void serialize(WalletTypes::RawCoinbaseTransaction &rawCoinbaseTransaction, ISerializer &s);
 
-    void serialize(
-        WalletTypes::KeyOutput &keyOutput,
-        ISerializer &s
-    );
+    void serialize(WalletTypes::KeyOutput &keyOutput, ISerializer &s);
 
-    void serialize(
-        WalletTypes::TopBlock &topBlock,
-        ISerializer &s
-    );
+    void serialize(WalletTypes::TopBlock &topBlock, ISerializer &s);
 
-}
+} // namespace CryptoNote

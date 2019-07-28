@@ -15,12 +15,8 @@ using namespace System;
 
 namespace CryptoNote
 {
-
-    P2pConnectionProxy::P2pConnectionProxy(
-        P2pContextOwner &&ctx,
-        IP2pNodeInternal &node
-    ) : m_contextOwner(
-        std::move(ctx)),
+    P2pConnectionProxy::P2pConnectionProxy(P2pContextOwner &&ctx, IP2pNodeInternal &node):
+        m_contextOwner(std::move(ctx)),
         m_context(m_contextOwner.get()),
         m_node(node)
     {
@@ -47,10 +43,7 @@ namespace CryptoNote
 
         if (cmd.command == COMMAND_PING::ID)
         {
-            COMMAND_PING::response resp{
-                PING_OK_RESPONSE_STATUS_TEXT,
-                m_node.getPeerId()
-            };
+            COMMAND_PING::response resp {PING_OK_RESPONSE_STATUS_TEXT, m_node.getPeerId()};
             m_context.writeMessage(
                 makeReply(COMMAND_PING::ID, LevinProtocol::encode(resp), LEVIN_PROTOCOL_RETCODE_SUCCESS));
             return false;
@@ -147,18 +140,10 @@ namespace CryptoNote
         }
 
         m_node.handleNodeData(req.node_data, m_context);
-        m_readQueue.push(
-            P2pMessage{
-                cmd.command,
-                LevinProtocol::encode(req.payload_data)
-            }
-        ); // enqueue payload info
+        m_readQueue.push(P2pMessage {cmd.command, LevinProtocol::encode(req.payload_data)}); // enqueue payload info
     }
 
-    void P2pConnectionProxy::handleHandshakeResponse(
-        const LevinProtocol::Command &cmd,
-        P2pMessage &message
-    )
+    void P2pConnectionProxy::handleHandshakeResponse(const LevinProtocol::Command &cmd, P2pMessage &message)
     {
         if (m_context.isIncoming())
         {
@@ -202,4 +187,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

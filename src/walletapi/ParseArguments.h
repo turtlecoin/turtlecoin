@@ -5,7 +5,6 @@
 #pragma once
 
 #include <config/CryptoNoteConfig.h>
-
 #include <logger/Logger.h>
 
 struct ApiConfig
@@ -28,7 +27,4 @@ struct ApiConfig
     unsigned int threads;
 };
 
-ApiConfig parseArguments(
-    int argc,
-    char **argv
-);
+ApiConfig parseArguments(int argc, char **argv);

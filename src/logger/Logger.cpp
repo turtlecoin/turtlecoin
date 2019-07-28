@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 //////////////////////////
@@ -97,11 +97,7 @@ namespace Logger
         }
     }
 
-    void Logger::log(
-        const std::string message,
-        const LogLevel level,
-        const std::vector<LogCategory> categories
-    ) const
+    void Logger::log(const std::string message, const LogLevel level, const std::vector<LogCategory> categories) const
     {
         if (level == DISABLED)
         {
@@ -109,8 +105,8 @@ namespace Logger
         }
         const std::time_t now = std::time(nullptr);
         std::stringstream output;
-        output << "[" << std::put_time(std::localtime(&now), "%H:%M:%S") << "] " << "[" << logLevelToString(level)
-               << "]";
+        output << "[" << std::put_time(std::localtime(&now), "%H:%M:%S") << "] "
+               << "[" << logLevelToString(level) << "]";
         for (const auto &category : categories)
         {
             output << " [" << logCategoryToString(category) << "]";
@@ -135,17 +131,12 @@ namespace Logger
         m_logLevel = level;
     }
 
-    void Logger::setLogCallback(
-        std::function<
-            void(
-                const std::string prettyMessage,
-                const std::string message,
-                const LogLevel level,
-                const std::vector<LogCategory> categories
-            )
-        > callback
-    )
+    void Logger::setLogCallback(std::function<void(
+                                    const std::string prettyMessage,
+                                    const std::string message,
+                                    const LogLevel level,
+                                    const std::vector<LogCategory> categories)> callback)
     {
         m_callback = callback;
     }
-}
+} // namespace Logger

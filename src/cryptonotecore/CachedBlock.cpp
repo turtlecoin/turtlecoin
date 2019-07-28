@@ -5,16 +5,16 @@
 // Please see the included LICENSE file for more information.
 
 #include "CachedBlock.h"
+
+#include "common/CryptoNoteTools.h"
+
 #include <common/Varint.h>
 #include <config/CryptoNoteConfig.h>
-#include "common/CryptoNoteTools.h"
 
 using namespace Crypto;
 using namespace CryptoNote;
 
-CachedBlock::CachedBlock(const BlockTemplate &block) : block(block)
-{
-}
+CachedBlock::CachedBlock(const BlockTemplate &block): block(block) {}
 
 const BlockTemplate &CachedBlock::getBlock() const
 {
@@ -62,8 +62,8 @@ const Crypto::Hash &CachedBlock::getBlockLongHash() const
     }
 
     const std::vector<uint8_t> &rawHashingBlock = block.majorVersion == CryptoNote::BLOCK_MAJOR_VERSION_1
-                                                  ? getBlockHashingBinaryArray()
-                                                  : getParentBlockHashingBinaryArray(true);
+                                                      ? getBlockHashingBinaryArray()
+                                                      : getParentBlockHashingBinaryArray(true);
 
     blockLongHash = Hash();
 

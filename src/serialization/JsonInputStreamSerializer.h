@@ -5,22 +5,22 @@
 
 #pragma once
 
-#include <iosfwd>
-#include <string>
-#include <vector>
 #include "../common/JsonValue.h"
 #include "JsonInputValueSerializer.h"
 
+#include <iosfwd>
+#include <string>
+#include <vector>
+
 namespace CryptoNote
 {
-
-    //deserialization
+    // deserialization
     class JsonInputStreamSerializer : public JsonInputValueSerializer
     {
-        public:
-            JsonInputStreamSerializer(std::istream &stream);
+      public:
+        JsonInputStreamSerializer(std::istream &stream);
 
-            virtual ~JsonInputStreamSerializer();
+        virtual ~JsonInputStreamSerializer();
     };
 
-}
+} // namespace CryptoNote

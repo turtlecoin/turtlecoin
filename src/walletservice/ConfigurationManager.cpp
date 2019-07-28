@@ -5,29 +5,24 @@
 
 #include "ConfigurationManager.h"
 
-#include <iostream>
-#include <fstream>
-
-#include <CryptoTypes.h>
-#include <config/CliHeader.h>
-#include <config/CryptoNoteConfig.h>
-
 #include "common/Util.h"
 #include "crypto/hash.h"
 #include "logging/ILogger.h"
 
+#include <CryptoTypes.h>
+#include <config/CliHeader.h>
+#include <config/CryptoNoteConfig.h>
+#include <fstream>
+#include <iostream>
+
 namespace PaymentService
 {
-
     ConfigurationManager::ConfigurationManager()
     {
         rpcSecret = Crypto::Hash();
     }
 
-    bool ConfigurationManager::init(
-        int argc,
-        char **argv
-    )
+    bool ConfigurationManager::init(int argc, char **argv)
     {
         // Load in the initial CLI options
         handleSettings(argc, argv, serviceConfig);
@@ -35,7 +30,6 @@ namespace PaymentService
         // If the user passed in the --config-file option, we need to handle that first
         if (!serviceConfig.configFile.empty())
         {
-
             // check if it's old config format & try converting into new format
             try
             {
@@ -48,8 +42,10 @@ namespace PaymentService
             catch (std::runtime_error &e)
             {
                 std::cout << std::endl
-                          << "There was an error parsing the specified configuration file. Please check the file and try again:"
-                          << std::endl << e.what() << std::endl;
+                          << "There was an error parsing the specified configuration file. Please check the file and "
+                             "try again:"
+                          << std::endl
+                          << e.what() << std::endl;
                 exit(1);
             }
             catch (std::exception &e)
@@ -64,8 +60,10 @@ namespace PaymentService
             catch (std::exception &e)
             {
                 std::cout << std::endl
-                          << "There was an error parsing the specified configuration file. Please check the file and try again: "
-                          << std::endl << e.what() << std::endl;
+                          << "There was an error parsing the specified configuration file. Please check the file and "
+                             "try again: "
+                          << std::endl
+                          << e.what() << std::endl;
                 exit(1);
             }
         }
@@ -89,8 +87,9 @@ namespace PaymentService
             }
             catch (std::exception &e)
             {
-                std::cout << CryptoNote::getProjectCLIHeader() << "Could not save configuration to: "
-                          << serviceConfig.outputFile << std::endl << e.what() << std::endl;
+                std::cout << CryptoNote::getProjectCLIHeader()
+                          << "Could not save configuration to: " << serviceConfig.outputFile << std::endl
+                          << e.what() << std::endl;
                 exit(1);
             }
         }
@@ -98,8 +97,7 @@ namespace PaymentService
         if (serviceConfig.registerService && serviceConfig.unregisterService)
         {
             throw std::runtime_error(
-                "It's impossible to use both --register-service and --unregister-service at the same time"
-            );
+                "It's impossible to use both --register-service and --unregister-service at the same time");
         }
 
         if (serviceConfig.logLevel > Logging::TRACE)
@@ -118,20 +116,18 @@ namespace PaymentService
             if (std::ifstream(serviceConfig.containerFile + ".wallet"))
             {
                 throw std::runtime_error(
-                    "The wallet file you specified does not exist. Did you mean: " + serviceConfig.containerFile +
-                    ".wallet?"
-                );
+                    "The wallet file you specified does not exist. Did you mean: " + serviceConfig.containerFile
+                    + ".wallet?");
             }
             else
             {
                 throw std::runtime_error(
-                    "The wallet file you specified does not exist; please check your spelling and try again."
-                );
+                    "The wallet file you specified does not exist; please check your spelling and try again.");
             }
         }
 
-        if ((!serviceConfig.secretViewKey.empty() || !serviceConfig.secretSpendKey.empty()) &&
-            !serviceConfig.generateNewContainer)
+        if ((!serviceConfig.secretViewKey.empty() || !serviceConfig.secretSpendKey.empty())
+            && !serviceConfig.generateNewContainer)
         {
             throw std::runtime_error("--generate-container is required");
         }
@@ -141,8 +137,8 @@ namespace PaymentService
             throw std::runtime_error("--generate-container is required");
         }
 
-        if (!serviceConfig.mnemonicSeed.empty() &&
-            (!serviceConfig.secretViewKey.empty() || !serviceConfig.secretSpendKey.empty()))
+        if (!serviceConfig.mnemonicSeed.empty()
+            && (!serviceConfig.secretViewKey.empty() || !serviceConfig.secretSpendKey.empty()))
         {
             throw std::runtime_error("You cannot specify import from both Mnemonic seed and private keys");
         }
@@ -174,4 +170,4 @@ namespace PaymentService
         return true;
     }
 
-}
+} // namespace PaymentService

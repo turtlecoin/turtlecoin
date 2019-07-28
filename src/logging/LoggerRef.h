@@ -10,26 +10,19 @@
 
 namespace Logging
 {
-
     class LoggerRef
     {
-        public:
-            LoggerRef(
-                std::shared_ptr<ILogger> logger,
-                const std::string &category
-            );
+      public:
+        LoggerRef(std::shared_ptr<ILogger> logger, const std::string &category);
 
-            LoggerMessage operator()(
-                Level level = INFO,
-                const std::string &color = DEFAULT
-            ) const;
+        LoggerMessage operator()(Level level = INFO, const std::string &color = DEFAULT) const;
 
-            std::shared_ptr<ILogger> getLogger() const;
+        std::shared_ptr<ILogger> getLogger() const;
 
-        private:
-            std::shared_ptr<ILogger> logger;
+      private:
+        std::shared_ptr<ILogger> logger;
 
-            std::string category;
+        std::string category;
     };
 
-}
+} // namespace Logging

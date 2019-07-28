@@ -4,26 +4,19 @@
 // Please see the included LICENSE file for more information.
 #include "MemoryMappedFile.h"
 
+#include "common/ScopeExit.h"
+
+#include <cassert>
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include <cassert>
-
-#include "common/ScopeExit.h"
+#include <unistd.h>
 
 namespace System
 {
-
-    MemoryMappedFile::MemoryMappedFile()
-        : m_file(-1),
-          m_size(0),
-          m_data(nullptr)
-    {
-    }
+    MemoryMappedFile::MemoryMappedFile(): m_file(-1), m_size(0), m_data(nullptr) {}
 
     MemoryMappedFile::~MemoryMappedFile()
     {
@@ -64,12 +57,7 @@ namespace System
         return m_data != nullptr;
     }
 
-    void MemoryMappedFile::create(
-        const std::string &path,
-        uint64_t size,
-        bool overwrite,
-        std::error_code &ec
-    )
+    void MemoryMappedFile::create(const std::string &path, uint64_t size, bool overwrite, std::error_code &ec)
     {
         if (isOpened())
         {
@@ -80,25 +68,13 @@ namespace System
             }
         }
 
-        Tools::ScopeExit failExitHandler(
-            [
-                this,
-                &ec
-            ]
-            {
-                ec = std::error_code(errno, std::system_category());
-                std::error_code ignore;
-                close(ignore);
-            }
-        );
+        Tools::ScopeExit failExitHandler([this, &ec] {
+            ec = std::error_code(errno, std::system_category());
+            std::error_code ignore;
+            close(ignore);
+        });
 
-        m_file = ::open(
-            path.c_str(), O_RDWR | O_CREAT | (
-            overwrite
-            ? O_TRUNC
-            : O_EXCL
-        ), S_IRUSR | S_IWUSR
-        );
+        m_file = ::open(path.c_str(), O_RDWR | O_CREAT | (overwrite ? O_TRUNC : O_EXCL), S_IRUSR | S_IWUSR);
         if (m_file == -1)
         {
             return;
@@ -110,9 +86,8 @@ namespace System
             return;
         }
 
-        m_data = reinterpret_cast<uint8_t *>(::mmap(
-            nullptr, static_cast<size_t>(size), PROT_READ | PROT_WRITE, MAP_SHARED, m_file, 0
-        ));
+        m_data = reinterpret_cast<uint8_t *>(
+            ::mmap(nullptr, static_cast<size_t>(size), PROT_READ | PROT_WRITE, MAP_SHARED, m_file, 0));
         if (m_data == MAP_FAILED)
         {
             return;
@@ -125,11 +100,7 @@ namespace System
         failExitHandler.cancel();
     }
 
-    void MemoryMappedFile::create(
-        const std::string &path,
-        uint64_t size,
-        bool overwrite
-    )
+    void MemoryMappedFile::create(const std::string &path, uint64_t size, bool overwrite)
     {
         std::error_code ec;
         create(path, size, overwrite, ec);
@@ -139,10 +110,7 @@ namespace System
         }
     }
 
-    void MemoryMappedFile::open(
-        const std::string &path,
-        std::error_code &ec
-    )
+    void MemoryMappedFile::open(const std::string &path, std::error_code &ec)
     {
         if (isOpened())
         {
@@ -153,17 +121,11 @@ namespace System
             }
         }
 
-        Tools::ScopeExit failExitHandler(
-            [
-                this,
-                &ec
-            ]
-            {
-                ec = std::error_code(errno, std::system_category());
-                std::error_code ignore;
-                close(ignore);
-            }
-        );
+        Tools::ScopeExit failExitHandler([this, &ec] {
+            ec = std::error_code(errno, std::system_category());
+            std::error_code ignore;
+            close(ignore);
+        });
 
         m_file = ::open(path.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
         if (m_file == -1)
@@ -180,9 +142,8 @@ namespace System
 
         m_size = static_cast<uint64_t>(fileStat.st_size);
 
-        m_data = reinterpret_cast<uint8_t *>(::mmap(
-            nullptr, static_cast<size_t>(m_size), PROT_READ | PROT_WRITE, MAP_SHARED, m_file, 0
-        ));
+        m_data = reinterpret_cast<uint8_t *>(
+            ::mmap(nullptr, static_cast<size_t>(m_size), PROT_READ | PROT_WRITE, MAP_SHARED, m_file, 0));
         if (m_data == MAP_FAILED)
         {
             return;
@@ -204,10 +165,7 @@ namespace System
         }
     }
 
-    void MemoryMappedFile::rename(
-        const std::string &newPath,
-        std::error_code &ec
-    )
+    void MemoryMappedFile::rename(const std::string &newPath, std::error_code &ec)
     {
         assert(isOpened());
 
@@ -286,11 +244,7 @@ namespace System
         }
     }
 
-    void MemoryMappedFile::flush(
-        uint8_t *data,
-        uint64_t size,
-        std::error_code &ec
-    )
+    void MemoryMappedFile::flush(uint8_t *data, uint64_t size, std::error_code &ec)
     {
         assert(isOpened());
 
@@ -298,9 +252,8 @@ namespace System
         uintptr_t dataAddr = reinterpret_cast<uintptr_t>(data);
         uintptr_t pageOffset = (dataAddr / pageSize) * pageSize;
 
-        int result = ::msync(
-            reinterpret_cast<void *>(pageOffset), static_cast<size_t>(dataAddr % pageSize + size), MS_SYNC
-        );
+        int result =
+            ::msync(reinterpret_cast<void *>(pageOffset), static_cast<size_t>(dataAddr % pageSize + size), MS_SYNC);
         if (result == 0)
         {
             result = ::fsync(m_file);
@@ -314,10 +267,7 @@ namespace System
         ec = std::error_code(errno, std::system_category());
     }
 
-    void MemoryMappedFile::flush(
-        uint8_t *data,
-        uint64_t size
-    )
+    void MemoryMappedFile::flush(uint8_t *data, uint64_t size)
     {
         assert(isOpened());
 
@@ -337,4 +287,4 @@ namespace System
         std::swap(m_size, other.m_size);
     }
 
-}
+} // namespace System

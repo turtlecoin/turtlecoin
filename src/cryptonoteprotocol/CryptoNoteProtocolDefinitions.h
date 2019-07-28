@@ -6,24 +6,24 @@
 
 #pragma once
 
-#include <list>
 #include "cryptonotecore/CryptoNoteBasic.h"
 
+#include <list>
+
 // ISerializer-based serialization
+#include "serialization/CryptoNoteSerialization.h"
 #include "serialization/ISerializer.h"
 #include "serialization/SerializationOverloads.h"
-#include "serialization/CryptoNoteSerialization.h"
 
 namespace CryptoNote
 {
-
-    #define BC_COMMANDS_POOL_BASE 2000
+#define BC_COMMANDS_POOL_BASE 2000
 
     /************************************************************************/
     /*                                                                      */
     /************************************************************************/
 
-    //just to keep backward compatibility with BlockCompleteEntry serialization
+    // just to keep backward compatibility with BlockCompleteEntry serialization
     struct RawBlockLegacy
     {
         BinaryArray blockTemplate;
@@ -100,7 +100,8 @@ namespace CryptoNote
         struct request
         {
             std::vector<Crypto::Hash>
-                block_ids; /*IDs of the first 10 blocks are sequential, next goes with pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
+                block_ids; /*IDs of the first 10 blocks are sequential, next goes with pow(2,n) offset, like 2, 4, 8,
+                              16, 32, 64 and so on, and the last one is always genesis block */
 
             void serialize(ISerializer &s)
             {
@@ -178,4 +179,4 @@ namespace CryptoNote
         const static int ID = BC_COMMANDS_POOL_BASE + 10;
         typedef NOTIFY_MISSING_TXS_request request;
     };
-}
+} // namespace CryptoNote

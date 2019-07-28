@@ -7,16 +7,13 @@
 
 namespace Logging
 {
-
     namespace
     {
-
         std::string formatPattern(
             const std::string &pattern,
             const std::string &category,
             Level level,
-            boost::posix_time::ptime time
-        )
+            boost::posix_time::ptime time)
         {
             std::stringstream s;
 
@@ -54,14 +51,10 @@ namespace Logging
             return s.str();
         }
 
-    }
+    } // namespace
 
-    void CommonLogger::operator()(
-        const std::string &category,
-        Level level,
-        boost::posix_time::ptime time,
-        const std::string &body
-    )
+    void CommonLogger::
+        operator()(const std::string &category, Level level, boost::posix_time::ptime time, const std::string &body)
     {
         if (level <= logLevel && disabledCategories.count(category) == 0)
         {
@@ -100,14 +93,8 @@ namespace Logging
         logLevel = level;
     }
 
-    CommonLogger::CommonLogger(Level level)
-        : logLevel(level),
-          pattern("%D %T %L [%C] ")
-    {
-    }
+    CommonLogger::CommonLogger(Level level): logLevel(level), pattern("%D %T %L [%C] ") {}
 
-    void CommonLogger::doLogString(const std::string &message)
-    {
-    }
+    void CommonLogger::doLogString(const std::string &message) {}
 
-}
+} // namespace Logging

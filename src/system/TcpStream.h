@@ -11,38 +11,33 @@
 
 namespace System
 {
-
     class TcpConnection;
 
     class TcpStreambuf : public std::streambuf
     {
-        public:
-            explicit TcpStreambuf(TcpConnection &connection);
+      public:
+        explicit TcpStreambuf(TcpConnection &connection);
 
-            TcpStreambuf(const TcpStreambuf &) = delete;
+        TcpStreambuf(const TcpStreambuf &) = delete;
 
-            ~TcpStreambuf();
+        ~TcpStreambuf();
 
-            TcpStreambuf &operator=(const TcpStreambuf &) = delete;
+        TcpStreambuf &operator=(const TcpStreambuf &) = delete;
 
-        private:
-            TcpConnection &connection;
+      private:
+        TcpConnection &connection;
 
-            std::array<
-                char, 4096
-            > readBuf;
+        std::array<char, 4096> readBuf;
 
-            std::array<
-                uint8_t, 1024
-            > writeBuf;
+        std::array<uint8_t, 1024> writeBuf;
 
-            std::streambuf::int_type overflow(std::streambuf::int_type ch) override;
+        std::streambuf::int_type overflow(std::streambuf::int_type ch) override;
 
-            int sync() override;
+        int sync() override;
 
-            std::streambuf::int_type underflow() override;
+        std::streambuf::int_type underflow() override;
 
-            bool dumpBuffer(bool finalize);
+        bool dumpBuffer(bool finalize);
     };
 
-}
+} // namespace System

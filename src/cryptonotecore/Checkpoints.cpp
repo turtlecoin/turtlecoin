@@ -6,9 +6,7 @@
 #include "Checkpoints.h"
 
 #include <common/StringTools.h>
-
 #include <config/Constants.h>
-
 #include <fstream>
 
 using namespace Logging;
@@ -16,15 +14,10 @@ using namespace Logging;
 namespace CryptoNote
 {
     //---------------------------------------------------------------------------
-    Checkpoints::Checkpoints(std::shared_ptr<Logging::ILogger> log) : logger(log, "checkpoints")
-    {
-    }
+    Checkpoints::Checkpoints(std::shared_ptr<Logging::ILogger> log): logger(log, "checkpoints") {}
 
     //---------------------------------------------------------------------------
-    bool Checkpoints::addCheckpoint(
-        uint32_t index,
-        const std::string &hash_str
-    )
+    bool Checkpoints::addCheckpoint(uint32_t index, const std::string &hash_str)
     {
         Crypto::Hash h = Constants::NULL_HASH;
 
@@ -36,12 +29,7 @@ namespace CryptoNote
 
         /* The return value lets us check if it was inserted or not. If it wasn't,
            there is already a key (i.e., a height value) existing */
-        if (!points.insert(
-            {
-                index,
-                h
-            }
-        ).second)
+        if (!points.insert({index, h}).second)
         {
             logger(ERROR, BRIGHT_RED) << "CHECKPOINT ALREADY EXISTS!";
             return false;
@@ -117,11 +105,7 @@ namespace CryptoNote
     }
 
     //---------------------------------------------------------------------------
-    bool Checkpoints::checkBlock(
-        uint32_t index,
-        const Crypto::Hash &h,
-        bool &isCheckpoint
-    ) const
+    bool Checkpoints::checkBlock(uint32_t index, const Crypto::Hash &h, bool &isCheckpoint) const
     {
         auto it = points.find(index);
         isCheckpoint = it != points.end();
@@ -140,20 +124,17 @@ namespace CryptoNote
         }
         else
         {
-            logger(Logging::WARNING, BRIGHT_YELLOW) << "CHECKPOINT FAILED FOR HEIGHT " << index << ". EXPECTED HASH: "
-                                                    << it->second << ", FETCHED HASH: " << h;
+            logger(Logging::WARNING, BRIGHT_YELLOW) << "CHECKPOINT FAILED FOR HEIGHT " << index
+                                                    << ". EXPECTED HASH: " << it->second << ", FETCHED HASH: " << h;
             return false;
         }
     }
 
     //---------------------------------------------------------------------------
-    bool Checkpoints::checkBlock(
-        uint32_t index,
-        const Crypto::Hash &h
-    ) const
+    bool Checkpoints::checkBlock(uint32_t index, const Crypto::Hash &h) const
     {
         bool ignored;
         return checkBlock(index, h, ignored);
     }
 
-}
+} // namespace CryptoNote

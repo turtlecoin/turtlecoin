@@ -8,9 +8,8 @@
 #include "common/MemoryInputStream.h"
 #include "common/StreamTools.h"
 #include "common/StringTools.h"
-
-#include "serialization/BinaryOutputStreamSerializer.h"
 #include "serialization/BinaryInputStreamSerializer.h"
+#include "serialization/BinaryOutputStreamSerializer.h"
 #include "serialization/SerializationTools.h"
 
 using namespace Crypto;
@@ -18,11 +17,9 @@ using namespace Common;
 
 namespace CryptoNote
 {
-
     bool parseTransactionExtra(
         const std::vector<uint8_t> &transactionExtra,
-        std::vector<TransactionExtraField> &transactionExtraFields
-    )
+        std::vector<TransactionExtraField> &transactionExtraFields)
     {
         transactionExtraFields.clear();
 
@@ -71,7 +68,7 @@ namespace CryptoNote
                             return false;
                         }
 
-                        transactionExtraFields.push_back(TransactionExtraPadding{size});
+                        transactionExtraFields.push_back(TransactionExtraPadding {size});
                         break;
                     }
 
@@ -140,9 +137,7 @@ namespace CryptoNote
     {
         std::vector<uint8_t> &extra;
 
-        ExtraSerializerVisitor(std::vector<uint8_t> &tx_extra) : extra(tx_extra)
-        {
-        }
+        ExtraSerializerVisitor(std::vector<uint8_t> &tx_extra): extra(tx_extra) {}
 
         bool operator()(const TransactionExtraPadding &t)
         {
@@ -170,10 +165,8 @@ namespace CryptoNote
         }
     };
 
-    bool writeTransactionExtra(
-        std::vector<uint8_t> &tx_extra,
-        const std::vector<TransactionExtraField> &tx_extra_fields
-    )
+    bool
+        writeTransactionExtra(std::vector<uint8_t> &tx_extra, const std::vector<TransactionExtraField> &tx_extra_fields)
     {
         ExtraSerializerVisitor visitor(tx_extra);
 
@@ -202,10 +195,7 @@ namespace CryptoNote
         return pub_key_field.publicKey;
     }
 
-    bool addTransactionPublicKeyToExtra(
-        std::vector<uint8_t> &tx_extra,
-        const PublicKey &tx_pub_key
-    )
+    bool addTransactionPublicKeyToExtra(std::vector<uint8_t> &tx_extra, const PublicKey &tx_pub_key)
     {
         tx_extra.resize(tx_extra.size() + 1 + sizeof(PublicKey));
         tx_extra[tx_extra.size() - 1 - sizeof(PublicKey)] = TX_EXTRA_TAG_PUBKEY;
@@ -213,10 +203,7 @@ namespace CryptoNote
         return true;
     }
 
-    bool addExtraNonceToTransactionExtra(
-        std::vector<uint8_t> &tx_extra,
-        const BinaryArray &extra_nonce
-    )
+    bool addExtraNonceToTransactionExtra(std::vector<uint8_t> &tx_extra, const BinaryArray &extra_nonce)
     {
         if (extra_nonce.size() > TX_EXTRA_NONCE_MAX_COUNT)
         {
@@ -225,21 +212,18 @@ namespace CryptoNote
 
         size_t start_pos = tx_extra.size();
         tx_extra.resize(tx_extra.size() + 2 + extra_nonce.size());
-        //write tag
+        // write tag
         tx_extra[start_pos] = TX_EXTRA_NONCE;
-        //write len
+        // write len
         ++start_pos;
         tx_extra[start_pos] = static_cast<uint8_t>(extra_nonce.size());
-        //write data
+        // write data
         ++start_pos;
         memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
         return true;
     }
 
-    bool appendMergeMiningTagToExtra(
-        std::vector<uint8_t> &tx_extra,
-        const TransactionExtraMergeMiningTag &mm_tag
-    )
+    bool appendMergeMiningTagToExtra(std::vector<uint8_t> &tx_extra, const TransactionExtraMergeMiningTag &mm_tag)
     {
         BinaryArray blob;
         if (!toBinaryArray(mm_tag, blob))
@@ -249,15 +233,13 @@ namespace CryptoNote
 
         tx_extra.push_back(TX_EXTRA_MERGE_MINING_TAG);
         std::copy(
-            reinterpret_cast<const uint8_t *>(blob.data()), reinterpret_cast<const uint8_t *>(blob.data() +
-                                                                                              blob.size()), std::back_inserter(tx_extra));
+            reinterpret_cast<const uint8_t *>(blob.data()),
+            reinterpret_cast<const uint8_t *>(blob.data() + blob.size()),
+            std::back_inserter(tx_extra));
         return true;
     }
 
-    bool getMergeMiningTagFromExtra(
-        const std::vector<uint8_t> &tx_extra,
-        TransactionExtraMergeMiningTag &mm_tag
-    )
+    bool getMergeMiningTagFromExtra(const std::vector<uint8_t> &tx_extra, TransactionExtraMergeMiningTag &mm_tag)
     {
         std::vector<TransactionExtraField> tx_extra_fields;
         parseTransactionExtra(tx_extra, tx_extra_fields);
@@ -265,10 +247,7 @@ namespace CryptoNote
         return findTransactionExtraFieldByType(tx_extra_fields, mm_tag);
     }
 
-    void setPaymentIdToTransactionExtraNonce(
-        std::vector<uint8_t> &extra_nonce,
-        const Hash &payment_id
-    )
+    void setPaymentIdToTransactionExtraNonce(std::vector<uint8_t> &extra_nonce, const Hash &payment_id)
     {
         extra_nonce.clear();
         extra_nonce.push_back(TX_EXTRA_NONCE_PAYMENT_ID);
@@ -276,10 +255,7 @@ namespace CryptoNote
         std::copy(payment_id_ptr, payment_id_ptr + sizeof(payment_id), std::back_inserter(extra_nonce));
     }
 
-    bool getPaymentIdFromTransactionExtraNonce(
-        const std::vector<uint8_t> &extra_nonce,
-        Hash &payment_id
-    )
+    bool getPaymentIdFromTransactionExtraNonce(const std::vector<uint8_t> &extra_nonce, Hash &payment_id)
     {
         if (sizeof(Hash) + 1 != extra_nonce.size())
         {
@@ -293,18 +269,12 @@ namespace CryptoNote
         return true;
     }
 
-    bool parsePaymentId(
-        const std::string &paymentIdString,
-        Hash &paymentId
-    )
+    bool parsePaymentId(const std::string &paymentIdString, Hash &paymentId)
     {
         return Common::podFromHex(paymentIdString, paymentId);
     }
 
-    bool createTxExtraWithPaymentId(
-        const std::string &paymentIdString,
-        std::vector<uint8_t> &extra
-    )
+    bool createTxExtraWithPaymentId(const std::string &paymentIdString, std::vector<uint8_t> &extra)
     {
         Hash paymentIdBin;
 
@@ -324,10 +294,7 @@ namespace CryptoNote
         return true;
     }
 
-    bool getPaymentIdFromTxExtra(
-        const std::vector<uint8_t> &extra,
-        Hash &paymentId
-    )
+    bool getPaymentIdFromTxExtra(const std::vector<uint8_t> &extra, Hash &paymentId)
     {
         std::vector<TransactionExtraField> tx_extra_fields;
         if (!parseTransactionExtra(extra, tx_extra_fields))
@@ -351,4 +318,4 @@ namespace CryptoNote
         return true;
     }
 
-}
+} // namespace CryptoNote

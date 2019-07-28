@@ -6,30 +6,26 @@
 
 #pragma once
 
-#include "cryptonoteprotocol/CryptoNoteProtocolDefinitions.h"
+#include "BlockchainExplorerData.h"
+#include "crypto/hash.h"
 #include "cryptonotecore/CryptoNoteBasic.h"
 #include "cryptonotecore/Difficulty.h"
-#include "crypto/hash.h"
-
-#include "BlockchainExplorerData.h"
-
-#include "serialization/SerializationOverloads.h"
+#include "cryptonoteprotocol/CryptoNoteProtocolDefinitions.h"
 #include "serialization/BlockchainExplorerDataSerialization.h"
-#include <cryptonotecore/ICoreDefinitions.h>
+#include "serialization/SerializationOverloads.h"
 
 #include <WalletTypes.h>
+#include <cryptonotecore/ICoreDefinitions.h>
 
 namespace CryptoNote
 {
-    //-----------------------------------------------
-    #define CORE_RPC_STATUS_OK "OK"
-    #define CORE_RPC_STATUS_BUSY "BUSY"
+//-----------------------------------------------
+#define CORE_RPC_STATUS_OK "OK"
+#define CORE_RPC_STATUS_BUSY "BUSY"
 
     struct EMPTY_STRUCT
     {
-        void serialize(ISerializer &s)
-        {
-        }
+        void serialize(ISerializer &s) {}
     };
 
     struct STATUS_STRUCT
@@ -65,11 +61,11 @@ namespace CryptoNote
 
     struct COMMAND_RPC_GET_BLOCKS_FAST
     {
-
         struct request
         {
             std::vector<Crypto::Hash>
-                block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
+                block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64
+                           // and so on, and the last one is always genesis block */
 
             void serialize(ISerializer &s)
             {
@@ -100,8 +96,8 @@ namespace CryptoNote
 
         struct response
         {
-            std::vector<std::string> txs_as_hex; //transactions blobs as hex
-            std::vector<std::string> missed_tx;  //not found transactions
+            std::vector<std::string> txs_as_hex; // transactions blobs as hex
+            std::vector<std::string> missed_tx; // not found transactions
             std::string status;
 
             void serialize(ISerializer &s)
@@ -132,7 +128,7 @@ namespace CryptoNote
         {
             bool isTailBlockActual;
 
-            std::vector<BinaryArray> addedTxs;          // Added transactions blobs
+            std::vector<BinaryArray> addedTxs; // Added transactions blobs
             std::vector<Crypto::Hash> deletedTxsIds; // IDs of not found transactions
             std::string status;
 
@@ -165,7 +161,7 @@ namespace CryptoNote
         {
             bool isTailBlockActual;
 
-            std::vector<TransactionPrefixInfo> addedTxs;          // Added transactions blobs
+            std::vector<TransactionPrefixInfo> addedTxs; // Added transactions blobs
             std::vector<Crypto::Hash> deletedTxsIds; // IDs of not found transactions
             std::string status;
 
@@ -182,7 +178,6 @@ namespace CryptoNote
     //-----------------------------------------------
     struct COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES
     {
-
         struct request
         {
             Crypto::Hash txid;
@@ -224,8 +219,7 @@ namespace CryptoNote
 
         struct response
         {
-            std::unordered_map<
-                Crypto::Hash, std::vector<uint64_t>> indexes;
+            std::unordered_map<Crypto::Hash, std::vector<uint64_t>> indexes;
 
             std::string status;
 
@@ -240,7 +234,7 @@ namespace CryptoNote
 
     //-----------------------------------------------
 
-    #pragma pack(push, 1)
+#pragma pack(push, 1)
 
     struct OutputEntry
     {
@@ -255,7 +249,7 @@ namespace CryptoNote
         }
     };
 
-    #pragma pack(pop)
+#pragma pack(pop)
 
     struct RandomOuts
     {
@@ -270,37 +264,23 @@ namespace CryptoNote
         }
     };
 
-    inline void to_json(
-        nlohmann::json &j,
-        const RandomOuts &r
-    )
+    inline void to_json(nlohmann::json &j, const RandomOuts &r)
     {
-        j = {{"amount", r.amount},
-             {"outs",   r.outs}};
+        j = {{"amount", r.amount}, {"outs", r.outs}};
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        RandomOuts &r
-    )
+    inline void from_json(const nlohmann::json &j, RandomOuts &r)
     {
         r.amount = j.at("amount").get<uint64_t>();
         r.outs = j.at("outs").get<std::vector<OutputEntry>>();
     }
 
-    inline void to_json(
-        nlohmann::json &j,
-        const OutputEntry &o
-    )
+    inline void to_json(nlohmann::json &j, const OutputEntry &o)
     {
-        j = {{"global_amount_index", o.global_amount_index},
-             {"out_key",             o.out_key}};
+        j = {{"global_amount_index", o.global_amount_index}, {"out_key", o.out_key}};
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        OutputEntry &o
-    )
+    inline void from_json(const nlohmann::json &j, OutputEntry &o)
     {
         o.global_amount_index = j.at("global_amount_index").get<uint32_t>();
         o.out_key = j.at("out_key").get<Crypto::PublicKey>();
@@ -342,9 +322,7 @@ namespace CryptoNote
         {
             std::string tx_as_hex;
 
-            request()
-            {
-            }
+            request() {}
 
             explicit request(const Transaction &);
 
@@ -506,7 +484,7 @@ namespace CryptoNote
     {
         struct request
         {
-            uint64_t reserve_size; //max 255 bytes
+            uint64_t reserve_size; // max 255 bytes
             std::string wallet_address;
 
             void serialize(ISerializer &s)
@@ -849,7 +827,7 @@ namespace CryptoNote
 
         struct response
         {
-            std::vector<f_block_short_response> blocks; //transactions blobs as hex
+            std::vector<f_block_short_response> blocks; // transactions blobs as hex
             std::string status;
 
             void serialize(ISerializer &s)
@@ -924,7 +902,7 @@ namespace CryptoNote
 
         struct response
         {
-            std::vector<f_transaction_short_response> transactions; //transactions blobs as hex
+            std::vector<f_transaction_short_response> transactions; // transactions blobs as hex
             std::string status;
 
             void serialize(ISerializer &s)
@@ -939,7 +917,8 @@ namespace CryptoNote
         struct request
         {
             std::vector<Crypto::Hash>
-                block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64 and so on, and the last one is always genesis block */
+                block_ids; //*first 10 blocks id goes sequential, next goes in pow(2,n) offset, like 2, 4, 8, 16, 32, 64
+                           // and so on, and the last one is always genesis block */
             uint64_t timestamp;
 
             void serialize(ISerializer &s)
@@ -1338,4 +1317,4 @@ namespace CryptoNote
         };
     };
 
-}
+} // namespace CryptoNote

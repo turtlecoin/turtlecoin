@@ -1,15 +1,14 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.#pragma once
 
 #pragma once
 
-#include <string>
-
 #include <crypto/hash.h>
 #include <crypto/random.h>
+#include <string>
 
 constexpr inline int CHACHA8_KEY_SIZE = 32;
 
@@ -17,15 +16,9 @@ constexpr inline int CHACHA8_IV_SIZE = 8;
 
 namespace Crypto
 {
-    void chacha8(
-        const void *data,
-        size_t length,
-        const uint8_t *key,
-        const uint8_t *iv,
-        char *cipher
-    );
+    void chacha8(const void *data, size_t length, const uint8_t *key, const uint8_t *iv, char *cipher);
 
-    #pragma pack(push, 1)
+#pragma pack(push, 1)
     struct chacha8_key
     {
         uint8_t data[CHACHA8_KEY_SIZE];
@@ -35,27 +28,18 @@ namespace Crypto
     {
         uint8_t data[CHACHA8_IV_SIZE];
     };
-    #pragma pack(pop)
+#pragma pack(pop)
 
     static_assert(
-        sizeof(chacha8_key) == CHACHA8_KEY_SIZE && sizeof(chacha8_iv) == CHACHA8_IV_SIZE, "Invalid structure size"
-    );
+        sizeof(chacha8_key) == CHACHA8_KEY_SIZE && sizeof(chacha8_iv) == CHACHA8_IV_SIZE,
+        "Invalid structure size");
 
-    inline void chacha8(
-        const void *data,
-        size_t length,
-        const chacha8_key &key,
-        const chacha8_iv &iv,
-        char *cipher
-    )
+    inline void chacha8(const void *data, size_t length, const chacha8_key &key, const chacha8_iv &iv, char *cipher)
     {
         chacha8(data, length, reinterpret_cast<const uint8_t *>(&key), reinterpret_cast<const uint8_t *>(&iv), cipher);
     }
 
-    inline void generate_chacha8_key(
-        const std::string &password,
-        chacha8_key &key
-    )
+    inline void generate_chacha8_key(const std::string &password, chacha8_key &key)
     {
         static_assert(sizeof(chacha8_key) <= sizeof(Hash), "Size of hash must be at least that of chacha8_key");
         Hash pwd_hash;
@@ -73,4 +57,4 @@ namespace Crypto
         Random::randomBytes(CHACHA8_IV_SIZE, result.data);
         return result;
     }
-}
+} // namespace Crypto

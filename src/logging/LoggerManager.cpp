@@ -4,25 +4,20 @@
 // Please see the included LICENSE file for more information.
 
 #include "LoggerManager.h"
-#include <thread>
+
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 
+#include <thread>
+
 namespace Logging
 {
-
     using Common::JsonValue;
 
-    LoggerManager::LoggerManager()
-    {
-    }
+    LoggerManager::LoggerManager() {}
 
-    void LoggerManager::operator()(
-        const std::string &category,
-        Level level,
-        boost::posix_time::ptime time,
-        const std::string &body
-    )
+    void LoggerManager::
+        operator()(const std::string &category, Level level, boost::posix_time::ptime time, const std::string &body)
     {
         std::unique_lock<std::mutex> lock(reconfigureLock);
         LoggerGroup::operator()(category, level, time, body);
@@ -152,4 +147,4 @@ namespace Logging
         }
     }
 
-}
+} // namespace Logging

@@ -1,13 +1,11 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
 #include <config/CryptoNoteConfig.h>
-
 #include <serialization/ISerializer.h>
-
 #include <wallet/WalletGreen.h>
 
 struct WalletInfo
@@ -17,13 +15,12 @@ struct WalletInfo
         std::string walletPass,
         std::string walletAddress,
         bool viewWallet,
-        CryptoNote::WalletGreen &wallet
-    )
-        : walletFileName(walletFileName),
-          walletPass(walletPass),
-          walletAddress(walletAddress),
-          viewWallet(viewWallet),
-          wallet(wallet)
+        CryptoNote::WalletGreen &wallet):
+        walletFileName(walletFileName),
+        walletPass(walletPass),
+        walletAddress(walletAddress),
+        viewWallet(viewWallet),
+        wallet(wallet)
     {
     }
 
@@ -72,25 +69,16 @@ struct Config
 
 struct AddressBookEntry
 {
-    AddressBookEntry()
-    {
-    }
+    AddressBookEntry() {}
 
     /* Used for quick comparison with strings */
-    AddressBookEntry(std::string friendlyName) : friendlyName(friendlyName)
-    {
-    }
+    AddressBookEntry(std::string friendlyName): friendlyName(friendlyName) {}
 
-    AddressBookEntry(
-        std::string friendlyName,
-        std::string address,
-        std::string paymentID,
-        bool integratedAddress
-    )
-        : friendlyName(friendlyName),
-          address(address),
-          paymentID(paymentID),
-          integratedAddress(integratedAddress)
+    AddressBookEntry(std::string friendlyName, std::string address, std::string paymentID, bool integratedAddress):
+        friendlyName(friendlyName),
+        address(address),
+        paymentID(paymentID),
+        integratedAddress(integratedAddress)
     {
     }
 
@@ -181,32 +169,23 @@ typedef std::vector<AddressBookEntry> AddressBook;
 
 */
 
-template<class X>
-struct Maybe
+template<class X> struct Maybe
 {
     X x;
 
     bool isJust;
 
-    Maybe(const X &x)
-        : x(x),
-          isJust(true)
-    {
-    }
+    Maybe(const X &x): x(x), isJust(true) {}
 
-    Maybe() : isJust(false)
-    {
-    }
+    Maybe(): isJust(false) {}
 };
 
-template<class X>
-Maybe<X> Just(const X &x)
+template<class X> Maybe<X> Just(const X &x)
 {
     return Maybe<X>(x);
 }
 
-template<class X>
-Maybe<X> Nothing()
+template<class X> Maybe<X> Nothing()
 {
     return Maybe<X>();
 }

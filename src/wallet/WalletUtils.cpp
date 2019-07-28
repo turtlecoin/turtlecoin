@@ -11,7 +11,6 @@
 
 namespace CryptoNote
 {
-
     uint64_t getDefaultMixinByHeight(const uint64_t height)
     {
         if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
@@ -35,8 +34,7 @@ namespace CryptoNote
     void throwIfKeysMismatch(
         const Crypto::SecretKey &secretKey,
         const Crypto::PublicKey &expectedPublicKey,
-        const std::string &message
-    )
+        const std::string &message)
     {
         Crypto::PublicKey pub;
         bool r = Crypto::secret_key_to_public_key(secretKey, pub);
@@ -46,19 +44,13 @@ namespace CryptoNote
         }
     }
 
-    bool validateAddress(
-        const std::string &address,
-        const CryptoNote::Currency &currency
-    )
+    bool validateAddress(const std::string &address, const CryptoNote::Currency &currency)
     {
         CryptoNote::AccountPublicAddress ignore;
         return currency.parseAccountAddressString(address, ignore);
     }
 
-    std::ostream &operator<<(
-        std::ostream &os,
-        CryptoNote::WalletTransactionState state
-    )
+    std::ostream &operator<<(std::ostream &os, CryptoNote::WalletTransactionState state)
     {
         switch (state)
         {
@@ -84,10 +76,7 @@ namespace CryptoNote
         return os << " (" << static_cast<int>(state) << ')';
     }
 
-    std::ostream &operator<<(
-        std::ostream &os,
-        CryptoNote::WalletTransferType type
-    )
+    std::ostream &operator<<(std::ostream &os, CryptoNote::WalletTransferType type)
     {
         switch (type)
         {
@@ -107,10 +96,7 @@ namespace CryptoNote
         return os << " (" << static_cast<int>(type) << ')';
     }
 
-    std::ostream &operator<<(
-        std::ostream &os,
-        CryptoNote::WalletGreen::WalletState state
-    )
+    std::ostream &operator<<(std::ostream &os, CryptoNote::WalletGreen::WalletState state)
     {
         switch (state)
         {
@@ -127,10 +113,7 @@ namespace CryptoNote
         return os << " (" << static_cast<int>(state) << ')';
     }
 
-    std::ostream &operator<<(
-        std::ostream &os,
-        CryptoNote::WalletGreen::WalletTrackingMode mode
-    )
+    std::ostream &operator<<(std::ostream &os, CryptoNote::WalletGreen::WalletTrackingMode mode)
     {
         switch (mode)
         {
@@ -152,10 +135,9 @@ namespace CryptoNote
 
     TransferListFormatter::TransferListFormatter(
         const CryptoNote::Currency &currency,
-        const WalletGreen::TransfersRange &range
-    )
-        : m_currency(currency),
-          m_range(range)
+        const WalletGreen::TransfersRange &range):
+        m_currency(currency),
+        m_range(range)
     {
     }
 
@@ -163,18 +145,13 @@ namespace CryptoNote
     {
         for (auto it = m_range.first; it != m_range.second; ++it)
         {
-            os << '\n' << std::setw(21) << m_currency.formatAmount(it->second.amount) << ' ' << (
-                it->second.address.empty()
-                ? "<UNKNOWN>"
-                : it->second.address
-            ) << ' ' << it->second.type;
+            os << '\n'
+               << std::setw(21) << m_currency.formatAmount(it->second.amount) << ' '
+               << (it->second.address.empty() ? "<UNKNOWN>" : it->second.address) << ' ' << it->second.type;
         }
     }
 
-    std::ostream &operator<<(
-        std::ostream &os,
-        const TransferListFormatter &formatter
-    )
+    std::ostream &operator<<(std::ostream &os, const TransferListFormatter &formatter)
     {
         formatter.print(os);
         return os;
@@ -182,10 +159,9 @@ namespace CryptoNote
 
     WalletOrderListFormatter::WalletOrderListFormatter(
         const CryptoNote::Currency &currency,
-        const std::vector<CryptoNote::WalletOrder> &walletOrderList
-    )
-        : m_currency(currency),
-          m_walletOrderList(walletOrderList)
+        const std::vector<CryptoNote::WalletOrder> &walletOrderList):
+        m_currency(currency),
+        m_walletOrderList(walletOrderList)
     {
     }
 
@@ -207,13 +183,10 @@ namespace CryptoNote
         os << '}';
     }
 
-    std::ostream &operator<<(
-        std::ostream &os,
-        const WalletOrderListFormatter &formatter
-    )
+    std::ostream &operator<<(std::ostream &os, const WalletOrderListFormatter &formatter)
     {
         formatter.print(os);
         return os;
     }
 
-}
+} // namespace CryptoNote

@@ -15,7 +15,6 @@ using namespace Common;
 
 namespace CryptoNote
 {
-
     SynchronizationState::ShortHistory SynchronizationState::getShortHistory(uint32_t localHeight) const
     {
         ShortHistory history;
@@ -61,12 +60,7 @@ namespace CryptoNote
     {
         assert(interval.startHeight <= m_blockchain.size());
 
-        CheckResult result = {
-            false,
-            0,
-            false,
-            0
-        };
+        CheckResult result = {false, 0, false, 0};
 
         uint32_t intervalEnd = interval.startHeight + static_cast<uint32_t>(interval.blocks.size());
         uint32_t iterationEnd = std::min(static_cast<uint32_t>(m_blockchain.size()), intervalEnd);
@@ -103,11 +97,7 @@ namespace CryptoNote
         m_blockchain.resize(height);
     }
 
-    void SynchronizationState::addBlocks(
-        const Crypto::Hash *blockHashes,
-        uint32_t height,
-        uint32_t count
-    )
+    void SynchronizationState::addBlocks(const Crypto::Hash *blockHashes, uint32_t height, uint32_t count)
     {
         assert(blockHashes);
         auto size = m_blockchain.size();
@@ -147,10 +137,7 @@ namespace CryptoNote
         serialize(s, "state");
     }
 
-    CryptoNote::ISerializer &SynchronizationState::serialize(
-        CryptoNote::ISerializer &s,
-        const std::string &name
-    )
+    CryptoNote::ISerializer &SynchronizationState::serialize(CryptoNote::ISerializer &s, const std::string &name)
     {
         s.beginObject(name);
         s(m_blockchain, "blockchain");
@@ -158,4 +145,4 @@ namespace CryptoNote
         return s;
     }
 
-}
+} // namespace CryptoNote

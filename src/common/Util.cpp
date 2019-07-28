@@ -5,41 +5,33 @@
 
 #include "Util.h"
 
+#include <common/FileSystemShim.h>
+#include <config/CryptoNoteConfig.h>
 #include <cstdio>
 #include <cstring>
 
-#include <common/FileSystemShim.h>
-
-#include <config/CryptoNoteConfig.h>
-
 #ifdef WIN32
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
-    #include <windows.h>
-    #include <shlobj.h>
-    #include <strsafe.h>
+#include <shlobj.h>
+#include <strsafe.h>
+#include <windows.h>
 
 #else
-    #include <sys/utsname.h>
+#include <sys/utsname.h>
 #endif
 
 namespace Tools
 {
-    #ifdef WIN32
+#ifdef WIN32
 
     std::string get_windows_version_display_string()
     {
-        typedef void (WINAPI *PGNSI)(LPSYSTEM_INFO);
-        typedef BOOL(WINAPI *PGPI)(
-            DWORD,
-            DWORD,
-            DWORD,
-            DWORD,
-            PDWORD
-        );
-        #define BUFSIZE 10000
+        typedef void(WINAPI * PGNSI)(LPSYSTEM_INFO);
+        typedef BOOL(WINAPI * PGPI)(DWORD, DWORD, DWORD, DWORD, PDWORD);
+#define BUFSIZE 10000
 
         char pszOS[BUFSIZE] = {0};
         OSVERSIONINFOEX osvi;
@@ -53,7 +45,7 @@ namespace Tools
         ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
 
         osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-        bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO *) &osvi);
+        bOsVersionInfoEx = GetVersionEx((OSVERSIONINFO *)&osvi);
 
         if (!bOsVersionInfoEx)
         {
@@ -62,9 +54,7 @@ namespace Tools
 
         // Call GetNativeSystemInfo if supported or GetSystemInfo otherwise.
 
-        pGNSI = (PGNSI) GetProcAddress(
-            GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo"
-        );
+        pGNSI = (PGNSI)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo");
         if (NULL != pGNSI)
         {
             pGNSI(&si);
@@ -98,9 +88,7 @@ namespace Tools
                         StringCchCat(pszOS, BUFSIZE, TEXT("Windows Server 2008 R2 "));
                 }
 
-                pGPI = (PGPI) GetProcAddress(
-                    GetModuleHandle(TEXT("kernel32.dll")), "GetProductInfo"
-                );
+                pGPI = (PGPI)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetProductInfo");
 
                 pGPI(osvi.dwMajorVersion, osvi.dwMinorVersion, 0, 0, &dwType);
 
@@ -171,8 +159,9 @@ namespace Tools
                     StringCchCat(pszOS, BUFSIZE, TEXT("Windows Storage Server 2003"));
                 else if (osvi.wSuiteMask & VER_SUITE_WH_SERVER)
                     StringCchCat(pszOS, BUFSIZE, TEXT("Windows Home Server"));
-                else if (osvi.wProductType == VER_NT_WORKSTATION &&
-                         si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+                else if (
+                    osvi.wProductType == VER_NT_WORKSTATION
+                    && si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
                 {
                     StringCchCat(pszOS, BUFSIZE, TEXT("Windows XP Professional x64 Edition"));
                 }
@@ -272,32 +261,29 @@ namespace Tools
         }
     }
 
-    #else
+#else
     std::string get_nix_version_display_string()
     {
-      utsname un;
+        utsname un;
 
-      if(uname(&un) < 0)
-        return std::string("*nix: failed to get os version");
-      return std::string() + un.sysname + " " + un.version + " " + un.release;
+        if (uname(&un) < 0)
+            return std::string("*nix: failed to get os version");
+        return std::string() + un.sysname + " " + un.version + " " + un.release;
     }
-    #endif
+#endif
 
     std::string get_os_version_string()
     {
-        #ifdef WIN32
+#ifdef WIN32
         return get_windows_version_display_string();
-        #else
+#else
         return get_nix_version_display_string();
-        #endif
+#endif
     }
 
-    #ifdef WIN32
+#ifdef WIN32
 
-    std::string get_special_folder_path(
-        int nfolder,
-        bool iscreate
-    )
+    std::string get_special_folder_path(int nfolder, bool iscreate)
     {
         char psz_path[MAX_PATH] = "";
 
@@ -309,7 +295,7 @@ namespace Tools
         return "";
     }
 
-    #endif
+#endif
 
     std::string getDefaultDataDirectory()
     {
@@ -318,25 +304,25 @@ namespace Tools
         // Mac: ~/Library/Application Support/CRYPTONOTE_NAME
         // Unix: ~/.CRYPTONOTE_NAME
         std::string config_folder;
-        #ifdef WIN32
+#ifdef WIN32
         // Windows
         config_folder = get_special_folder_path(CSIDL_APPDATA, true) + "/" + CryptoNote::CRYPTONOTE_NAME;
-        #else
+#else
         std::string pathRet;
-        char* pszHome = getenv("HOME");
+        char *pszHome = getenv("HOME");
         if (pszHome == NULL || std::strlen(pszHome) == 0)
-          pathRet = "/";
+            pathRet = "/";
         else
-          pathRet = pszHome;
-              #ifdef MAC_OSX
+            pathRet = pszHome;
+#ifdef MAC_OSX
         // Mac
         pathRet /= "Library/Application Support";
-        config_folder =  (pathRet + "/" + CryptoNote::CRYPTONOTE_NAME);
-            #else
+        config_folder = (pathRet + "/" + CryptoNote::CRYPTONOTE_NAME);
+#else
         // Unix
         config_folder = (pathRet + "/." + CryptoNote::CRYPTONOTE_NAME);
-            #endif
-        #endif
+#endif
+#endif
 
         return config_folder;
     }
@@ -353,4 +339,4 @@ namespace Tools
         std::error_code e;
         return fs::is_directory(path, e);
     }
-}
+} // namespace Tools

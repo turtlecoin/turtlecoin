@@ -1,12 +1,13 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "Account.h"
-#include "serialization/CryptoNoteSerialization.h"
+
 #include "crypto/keccak.h"
+#include "serialization/CryptoNoteSerialization.h"
 
 namespace CryptoNote
 {
@@ -25,7 +26,6 @@ namespace CryptoNote
     //-----------------------------------------------------------------
     void AccountBase::generate()
     {
-
         Crypto::generate_keys(m_keys.address.spendPublicKey, m_keys.spendSecretKey);
 
         /* We derive the view secret key by taking our spend secret key, hashing
@@ -33,10 +33,8 @@ namespace CryptoNote
            of keys - the public and private view keys. See generate_deterministic_keys */
 
         Crypto::crypto_ops::generateViewFromSpend(
-            m_keys.spendSecretKey, m_keys.viewSecretKey, m_keys.address.viewPublicKey
-        );
+            m_keys.spendSecretKey, m_keys.viewSecretKey, m_keys.address.viewPublicKey);
         m_creation_timestamp = time(NULL);
-
     }
 
     //-----------------------------------------------------------------
@@ -51,4 +49,4 @@ namespace CryptoNote
         s(m_keys, "m_keys");
         s(m_creation_timestamp, "m_creation_timestamp");
     }
-}
+} // namespace CryptoNote

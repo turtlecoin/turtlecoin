@@ -5,26 +5,23 @@
 
 #pragma once
 
-#include <ostream>
 #include "IOutputStream.h"
+
+#include <ostream>
 
 namespace Common
 {
-
     class StdOutputStream : public IOutputStream
     {
-        public:
-            StdOutputStream(std::ostream &out);
+      public:
+        StdOutputStream(std::ostream &out);
 
-            StdOutputStream &operator=(const StdOutputStream &) = delete;
+        StdOutputStream &operator=(const StdOutputStream &) = delete;
 
-            uint64_t writeSome(
-                const void *data,
-                uint64_t size
-            ) override;
+        uint64_t writeSome(const void *data, uint64_t size) override;
 
-        private:
-            std::ostream &out;
+      private:
+        std::ostream &out;
     };
 
-}
+} // namespace Common

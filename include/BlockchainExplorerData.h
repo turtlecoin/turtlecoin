@@ -5,22 +5,20 @@
 
 #pragma once
 
+#include "CryptoNote.h"
+#include "CryptoTypes.h"
+
 #include <array>
+#include <boost/variant.hpp>
 #include <string>
 #include <vector>
 
-#include "CryptoTypes.h"
-#include "CryptoNote.h"
-
-#include <boost/variant.hpp>
-
 namespace CryptoNote
 {
-
     enum class TransactionRemoveReason : uint8_t
     {
-            INCLUDED_IN_BLOCK = 0,
-            TIMEOUT = 1
+        INCLUDED_IN_BLOCK = 0,
+        TIMEOUT = 1
     };
 
     struct TransactionOutputDetails
@@ -48,9 +46,7 @@ namespace CryptoNote
         TransactionOutputReferenceDetails output;
     };
 
-    typedef boost::variant<
-        BaseInputDetails, KeyInputDetails
-    > TransactionInputDetails;
+    typedef boost::variant<BaseInputDetails, KeyInputDetails> TransactionInputDetails;
 
     struct TransactionExtraDetails
     {
@@ -103,4 +99,4 @@ namespace CryptoNote
         std::vector<TransactionDetails> transactions;
     };
 
-}
+} // namespace CryptoNote

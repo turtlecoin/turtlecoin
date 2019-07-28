@@ -4,9 +4,9 @@
 // Please see the included LICENSE file for more information.
 
 #include "TransactionPoolCleaner.h"
+
 #include "Core.h"
 #include "Mixins.h"
-
 #include "common/StringTools.h"
 
 #include <system/InterruptedException.h>
@@ -14,33 +14,27 @@
 
 namespace CryptoNote
 {
-
     TransactionPoolCleanWrapper::TransactionPoolCleanWrapper(
         std::unique_ptr<ITransactionPool> &&transactionPool,
         std::unique_ptr<ITimeProvider> &&timeProvider,
         std::shared_ptr<Logging::ILogger> logger,
-        uint64_t timeout
-    )
-        : transactionPool(std::move(transactionPool)),
-          timeProvider(std::move(timeProvider)),
-          logger(logger, "TransactionPoolCleanWrapper"),
-          timeout(timeout)
+        uint64_t timeout):
+        transactionPool(std::move(transactionPool)),
+        timeProvider(std::move(timeProvider)),
+        logger(logger, "TransactionPoolCleanWrapper"),
+        timeout(timeout)
     {
-
         assert(this->timeProvider);
     }
 
-    TransactionPoolCleanWrapper::~TransactionPoolCleanWrapper()
-    {
-    }
+    TransactionPoolCleanWrapper::~TransactionPoolCleanWrapper() {}
 
     bool TransactionPoolCleanWrapper::pushTransaction(
         CachedTransaction &&tx,
-        TransactionValidatorState &&transactionState
-    )
+        TransactionValidatorState &&transactionState)
     {
-        return !isTransactionRecentlyDeleted(tx.getTransactionHash()) &&
-               transactionPool->pushTransaction(std::move(tx), std::move(transactionState));
+        return !isTransactionRecentlyDeleted(tx.getTransactionHash())
+               && transactionPool->pushTransaction(std::move(tx), std::move(transactionState));
     }
 
     const CachedTransaction &TransactionPoolCleanWrapper::getTransaction(const Crypto::Hash &hash) const
@@ -78,9 +72,8 @@ namespace CryptoNote
         return transactionPool->getPoolTransactions();
     }
 
-    std::tuple<
-        std::vector<CachedTransaction>,
-        std::vector<CachedTransaction>> TransactionPoolCleanWrapper::getPoolTransactionsForBlockTemplate() const
+    std::tuple<std::vector<CachedTransaction>, std::vector<CachedTransaction>>
+        TransactionPoolCleanWrapper::getPoolTransactionsForBlockTemplate() const
     {
         return transactionPool->getPoolTransactionsForBlockTemplate();
     }
@@ -90,9 +83,8 @@ namespace CryptoNote
         return transactionPool->getTransactionReceiveTime(hash);
     }
 
-    std::vector<
-        Crypto::Hash
-    > TransactionPoolCleanWrapper::getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const
+    std::vector<Crypto::Hash>
+        TransactionPoolCleanWrapper::getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const
     {
         return transactionPool->getTransactionHashesByPaymentId(paymentId);
     }
@@ -105,7 +97,7 @@ namespace CryptoNote
             auto transactionHashes = transactionPool->getTransactionHashes();
 
             std::vector<Crypto::Hash> deletedTransactions;
-            for (const auto &hash: transactionHashes)
+            for (const auto &hash : transactionHashes)
             {
                 uint64_t transactionAge = currentTime - transactionPool->getTransactionReceiveTime(hash);
                 if (transactionAge >= timeout)
@@ -120,12 +112,12 @@ namespace CryptoNote
                 std::vector<CachedTransaction> transactions;
                 transactions.emplace_back(transaction);
 
-                auto[success, error] = Mixins::validate(transactions, height);
+                auto [success, error] = Mixins::validate(transactions, height);
 
                 if (!success)
                 {
-                    logger(Logging::DEBUGGING) << "Deleting invalid transaction " << Common::podToHex(hash)
-                                               << " from pool." << error;
+                    logger(Logging::DEBUGGING)
+                        << "Deleting invalid transaction " << Common::podToHex(hash) << " from pool." << error;
                     recentlyDeletedTransactions.emplace(hash, currentTime);
                     transactionPool->removeTransaction(hash);
                     deletedTransactions.emplace_back(std::move(hash));
@@ -167,4 +159,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

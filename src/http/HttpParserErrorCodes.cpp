@@ -9,8 +9,7 @@ namespace CryptoNote
 {
     namespace error
     {
-
         HttpParserErrorCategory HttpParserErrorCategory::INSTANCE;
 
-    } //namespace error
-} //namespace CryptoNote
+    } // namespace error
+} // namespace CryptoNote

@@ -6,16 +6,15 @@
 
 #pragma once
 
-#include <queue>
-
-#include <system/ContextGroup.h>
-#include <system/Event.h>
-
 #include "BlockchainMonitor.h"
-#include "logging/LoggerRef.h"
 #include "Miner.h"
 #include "MinerEvent.h"
 #include "MiningConfig.h"
+#include "logging/LoggerRef.h"
+
+#include <queue>
+#include <system/ContextGroup.h>
+#include <system/Event.h>
 
 namespace System
 {
@@ -24,60 +23,58 @@ namespace System
 
 namespace Miner
 {
-
     class MinerManager
     {
-        public:
-            MinerManager(
-                System::Dispatcher &dispatcher,
-                const CryptoNote::MiningConfig &config,
-                const std::shared_ptr<httplib::Client> httpClient
-            );
+      public:
+        MinerManager(
+            System::Dispatcher &dispatcher,
+            const CryptoNote::MiningConfig &config,
+            const std::shared_ptr<httplib::Client> httpClient);
 
-            void start();
+        void start();
 
-        private:
-            System::ContextGroup m_contextGroup;
+      private:
+        System::ContextGroup m_contextGroup;
 
-            CryptoNote::MiningConfig m_config;
+        CryptoNote::MiningConfig m_config;
 
-            CryptoNote::Miner m_miner;
+        CryptoNote::Miner m_miner;
 
-            BlockchainMonitor m_blockchainMonitor;
+        BlockchainMonitor m_blockchainMonitor;
 
-            System::Event m_eventOccurred;
+        System::Event m_eventOccurred;
 
-            std::queue<MinerEvent> m_events;
+        std::queue<MinerEvent> m_events;
 
-            bool isRunning;
+        bool isRunning;
 
-            CryptoNote::BlockTemplate m_minedBlock;
+        CryptoNote::BlockTemplate m_minedBlock;
 
-            uint64_t m_lastBlockTimestamp;
+        uint64_t m_lastBlockTimestamp;
 
-            std::shared_ptr<httplib::Client> m_httpClient = nullptr;
+        std::shared_ptr<httplib::Client> m_httpClient = nullptr;
 
-            void eventLoop();
+        void eventLoop();
 
-            MinerEvent waitEvent();
+        MinerEvent waitEvent();
 
-            void pushEvent(MinerEvent &&event);
+        void pushEvent(MinerEvent &&event);
 
-            void printHashRate();
+        void printHashRate();
 
-            void startMining(const CryptoNote::BlockMiningParameters &params);
+        void startMining(const CryptoNote::BlockMiningParameters &params);
 
-            void stopMining();
+        void stopMining();
 
-            void startBlockchainMonitoring();
+        void startBlockchainMonitoring();
 
-            void stopBlockchainMonitoring();
+        void stopBlockchainMonitoring();
 
-            bool submitBlock(const CryptoNote::BlockTemplate &minedBlock);
+        bool submitBlock(const CryptoNote::BlockTemplate &minedBlock);
 
-            CryptoNote::BlockMiningParameters requestMiningParameters();
+        CryptoNote::BlockMiningParameters requestMiningParameters();
 
-            void adjustBlockTemplate(CryptoNote::BlockTemplate &blockTemplate) const;
+        void adjustBlockTemplate(CryptoNote::BlockTemplate &blockTemplate) const;
     };
 
-} //namespace Miner
+} // namespace Miner

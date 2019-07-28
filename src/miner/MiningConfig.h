@@ -12,15 +12,11 @@
 
 namespace CryptoNote
 {
-
     struct MiningConfig
     {
         MiningConfig();
 
-        void parse(
-            int argc,
-            char **argv
-        );
+        void parse(int argc, char **argv);
 
         std::string miningAddress;
 
@@ -45,4 +41,4 @@ namespace CryptoNote
         bool version;
     };
 
-} //namespace CryptoNote
+} // namespace CryptoNote

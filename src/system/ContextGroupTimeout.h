@@ -11,20 +11,15 @@
 
 namespace System
 {
-
     class ContextGroupTimeout
     {
-        public:
-            ContextGroupTimeout(
-                Dispatcher &,
-                ContextGroup &,
-                std::chrono::nanoseconds
-            );
+      public:
+        ContextGroupTimeout(Dispatcher &, ContextGroup &, std::chrono::nanoseconds);
 
-        private:
-            Timer timeoutTimer;
+      private:
+        Timer timeoutTimer;
 
-            ContextGroup workingContextGroup;
+        ContextGroup workingContextGroup;
     };
 
-}
+} // namespace System

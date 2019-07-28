@@ -12,13 +12,12 @@
 
 #ifndef __GLIBC__
 
-    #include <bits/reg.h>
+#include <bits/reg.h>
 
 #endif
 
 namespace System
 {
-
     struct NativeContextGroup;
 
     struct NativeContext
@@ -58,90 +57,90 @@ namespace System
 
     class Dispatcher
     {
-        public:
-            Dispatcher();
+      public:
+        Dispatcher();
 
-            Dispatcher(const Dispatcher &) = delete;
+        Dispatcher(const Dispatcher &) = delete;
 
-            ~Dispatcher();
+        ~Dispatcher();
 
-            Dispatcher &operator=(const Dispatcher &) = delete;
+        Dispatcher &operator=(const Dispatcher &) = delete;
 
-            void clear();
+        void clear();
 
-            void dispatch();
+        void dispatch();
 
-            NativeContext *getCurrentContext() const;
+        NativeContext *getCurrentContext() const;
 
-            void interrupt();
+        void interrupt();
 
-            void interrupt(NativeContext *context);
+        void interrupt(NativeContext *context);
 
-            bool interrupted();
+        bool interrupted();
 
-            void pushContext(NativeContext *context);
+        void pushContext(NativeContext *context);
 
-            void remoteSpawn(std::function<void()> &&procedure);
+        void remoteSpawn(std::function<void()> &&procedure);
 
-            void yield();
+        void yield();
 
-            // system-dependent
-            int getEpoll() const;
+        // system-dependent
+        int getEpoll() const;
 
-            NativeContext &getReusableContext();
+        NativeContext &getReusableContext();
 
-            void pushReusableContext(NativeContext &);
+        void pushReusableContext(NativeContext &);
 
-            int getTimer();
+        int getTimer();
 
-            void pushTimer(int timer);
+        void pushTimer(int timer);
 
-            #ifdef __x86_64__
-                # if __WORDSIZE == 64
-            static const int SIZEOF_PTHREAD_MUTEX_T = 40;
-                # else
-            static const int SIZEOF_PTHREAD_MUTEX_T = 32;
-                # endif
-            #elif __aarch64__
-            static const int SIZEOF_PTHREAD_MUTEX_T = 48;
-            #else
+#ifdef __x86_64__
+#if __WORDSIZE == 64
+        static const int SIZEOF_PTHREAD_MUTEX_T = 40;
+#else
+        static const int SIZEOF_PTHREAD_MUTEX_T = 32;
+#endif
+#elif __aarch64__
+        static const int SIZEOF_PTHREAD_MUTEX_T = 48;
+#else
 
-            static const int SIZEOF_PTHREAD_MUTEX_T = 24;
+        static const int SIZEOF_PTHREAD_MUTEX_T = 24;
 
-            #endif
+#endif
 
-        private:
-            void spawn(std::function<void()> &&procedure);
+      private:
+        void spawn(std::function<void()> &&procedure);
 
-            int epoll;
+        int epoll;
 
-            alignas(void *) uint8_t mutex[SIZEOF_PTHREAD_MUTEX_T];
+        alignas(void *) uint8_t mutex[SIZEOF_PTHREAD_MUTEX_T];
 
-            int remoteSpawnEvent;
+        int remoteSpawnEvent;
 
-            ContextPair remoteSpawnEventContext;
+        ContextPair remoteSpawnEventContext;
 
-            std::queue<std::function<void()>> remoteSpawningProcedures;
+        std::queue<std::function<void()>> remoteSpawningProcedures;
 
-            std::stack<int> timers;
+        std::stack<int> timers;
 
-            NativeContext mainContext;
+        NativeContext mainContext;
 
-            NativeContextGroup contextGroup;
+        NativeContextGroup contextGroup;
 
-            NativeContext *currentContext;
+        NativeContext *currentContext;
 
-            NativeContext *firstResumingContext;
+        NativeContext *firstResumingContext;
 
-            NativeContext *lastResumingContext;
+        NativeContext *lastResumingContext;
 
-            NativeContext *firstReusableContext;
+        NativeContext *firstReusableContext;
 
-            size_t runningContextCount;
+        size_t runningContextCount;
 
-            void contextProcedure(void *ucontext);
+        void contextProcedure(void *ucontext);
 
-            static void contextProcedureStatic(void *context);
+        static void contextProcedureStatic(void *context);
     };
 
-}
+} // namespace System

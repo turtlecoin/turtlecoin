@@ -5,25 +5,20 @@
 
 #include "P2pContext.h"
 
+#include "LevinProtocol.h"
+
 #include <system/EventLock.h>
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
 #include <system/OperationTimeout.h>
 
-#include "LevinProtocol.h"
-
 using namespace System;
 
 namespace CryptoNote
 {
-
-    P2pContext::Message::Message(
-        P2pMessage &&msg,
-        Type messageType,
-        uint32_t returnCode
-    )
-        : messageType(messageType),
-          returnCode(returnCode)
+    P2pContext::Message::Message(P2pMessage &&msg, Type messageType, uint32_t returnCode):
+        messageType(messageType),
+        returnCode(returnCode)
     {
         type = msg.type;
         data = std::move(msg.data);
@@ -40,20 +35,19 @@ namespace CryptoNote
         bool isIncoming,
         const NetworkAddress &remoteAddress,
         std::chrono::nanoseconds timedSyncInterval,
-        const CORE_SYNC_DATA &timedSyncData
-    )
-        : incoming(isIncoming),
-          remoteAddress(remoteAddress),
-          dispatcher(dispatcher),
-          contextGroup(dispatcher),
-          timeStarted(Clock::now()),
-          timedSyncInterval(timedSyncInterval),
-          timedSyncData(timedSyncData),
-          timedSyncTimer(dispatcher),
-          timedSyncFinished(dispatcher),
-          connection(std::move(conn)),
-          writeEvent(dispatcher),
-          readEvent(dispatcher)
+        const CORE_SYNC_DATA &timedSyncData):
+        incoming(isIncoming),
+        remoteAddress(remoteAddress),
+        dispatcher(dispatcher),
+        contextGroup(dispatcher),
+        timeStarted(Clock::now()),
+        timedSyncInterval(timedSyncInterval),
+        timedSyncData(timedSyncData),
+        timedSyncTimer(dispatcher),
+        timedSyncFinished(dispatcher),
+        connection(std::move(conn)),
+        writeEvent(dispatcher),
+        readEvent(dispatcher)
     {
         writeEvent.set();
         readEvent.set();
@@ -91,11 +85,7 @@ namespace CryptoNote
         return incoming;
     }
 
-    void P2pContext::setPeerInfo(
-        uint8_t protocolVersion,
-        uint64_t id,
-        uint16_t port
-    )
+    void P2pContext::setPeerInfo(uint8_t protocolVersion, uint64_t id, uint16_t port)
     {
         version = protocolVersion;
         peerId = id;
@@ -159,13 +149,9 @@ namespace CryptoNote
     void P2pContext::timedSyncLoop()
     {
         // construct message
-        P2pContext::Message timedSyncMessage{
-            P2pMessage{
-                COMMAND_TIMED_SYNC::ID,
-                LevinProtocol::encode(COMMAND_TIMED_SYNC::request{timedSyncData})
-            },
-            P2pContext::Message::REQUEST
-        };
+        P2pContext::Message timedSyncMessage {
+            P2pMessage {COMMAND_TIMED_SYNC::ID, LevinProtocol::encode(COMMAND_TIMED_SYNC::request {timedSyncData})},
+            P2pContext::Message::REQUEST};
 
         while (!stopped)
         {
@@ -197,39 +183,19 @@ namespace CryptoNote
         timedSyncFinished.set();
     }
 
-    P2pContext::Message makeReply(
-        uint32_t command,
-        const BinaryArray &data,
-        uint32_t returnCode
-    )
+    P2pContext::Message makeReply(uint32_t command, const BinaryArray &data, uint32_t returnCode)
     {
-        return P2pContext::Message(
-            P2pMessage{
-                command,
-                data
-            }, P2pContext::Message::REPLY, returnCode
-        );
+        return P2pContext::Message(P2pMessage {command, data}, P2pContext::Message::REPLY, returnCode);
     }
 
-    P2pContext::Message makeRequest(
-        uint32_t command,
-        const BinaryArray &data
-    )
+    P2pContext::Message makeRequest(uint32_t command, const BinaryArray &data)
     {
-        return P2pContext::Message(
-            P2pMessage{
-                command,
-                data
-            }, P2pContext::Message::REQUEST
-        );
+        return P2pContext::Message(P2pMessage {command, data}, P2pContext::Message::REQUEST);
     }
 
-    std::ostream &operator<<(
-        std::ostream &s,
-        const P2pContext &conn
-    )
+    std::ostream &operator<<(std::ostream &s, const P2pContext &conn)
     {
         return s << "[" << conn.getRemoteAddress() << "]";
     }
 
-}
+} // namespace CryptoNote

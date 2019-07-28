@@ -5,19 +5,15 @@
 
 #include "MainChainStorage.h"
 
-#include <boost/filesystem.hpp>
-
 #include "common/CryptoNoteTools.h"
+
+#include <boost/filesystem.hpp>
 
 namespace CryptoNote
 {
-
     const size_t STORAGE_CACHE_SIZE = 100;
 
-    MainChainStorage::MainChainStorage(
-        const std::string &blocksFilename,
-        const std::string &indexesFilename
-    )
+    MainChainStorage::MainChainStorage(const std::string &blocksFilename, const std::string &indexesFilename)
     {
         if (!storage.open(blocksFilename, indexesFilename, STORAGE_CACHE_SIZE))
         {
@@ -53,8 +49,8 @@ namespace CryptoNote
         if (index >= storage.size())
         {
             throw std::out_of_range(
-                "Block index " + std::to_string(index) + " is out of range. Blocks count: " +
-                std::to_string(storage.size()));
+                "Block index " + std::to_string(index)
+                + " is out of range. Blocks count: " + std::to_string(storage.size()));
         }
 
         return storage[index];
@@ -70,16 +66,14 @@ namespace CryptoNote
         storage.clear();
     }
 
-    std::unique_ptr<IMainChainStorage> createSwappedMainChainStorage(
-        const std::string &dataDir,
-        const Currency &currency
-    )
+    std::unique_ptr<IMainChainStorage>
+        createSwappedMainChainStorage(const std::string &dataDir, const Currency &currency)
     {
         boost::filesystem::path blocksFilename = boost::filesystem::path(dataDir) / currency.blocksFileName();
         boost::filesystem::path indexesFilename = boost::filesystem::path(dataDir) / currency.blockIndexesFileName();
 
-        std::unique_ptr<IMainChainStorage>
-            storage(new MainChainStorage(blocksFilename.string(), indexesFilename.string()));
+        std::unique_ptr<IMainChainStorage> storage(
+            new MainChainStorage(blocksFilename.string(), indexesFilename.string()));
         if (storage->getBlockCount() == 0)
         {
             RawBlock genesis;
@@ -90,4 +84,4 @@ namespace CryptoNote
         return storage;
     }
 
-}
+} // namespace CryptoNote

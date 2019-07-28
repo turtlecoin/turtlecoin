@@ -2,8 +2,9 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
-#include "WalletGreenTypes.h"
 #include "TransfersContainer.h"
+
+#include "WalletGreenTypes.h"
 #include "common/StdInputStream.h"
 #include "common/StdOutputStream.h"
 #include "cryptonotecore/CryptoNoteBasicImpl.h"
@@ -20,11 +21,7 @@ using namespace Logging;
 
 namespace CryptoNote
 {
-
-    void serialize(
-        TransactionInformation &ti,
-        CryptoNote::ISerializer &s
-    )
+    void serialize(TransactionInformation &ti, CryptoNote::ISerializer &s)
     {
         s(ti.transactionHash, "");
         s(ti.publicKey, "");
@@ -41,96 +38,74 @@ namespace CryptoNote
 
     namespace
     {
-        template<typename TIterator>
-        class TransferIteratorList
+        template<typename TIterator> class TransferIteratorList
         {
-            public:
-                TransferIteratorList(
-                    const TIterator &begin,
-                    const TIterator &end
-                ) : m_end(end)
+          public:
+            TransferIteratorList(const TIterator &begin, const TIterator &end): m_end(end)
+            {
+                for (auto it = begin; it != end; ++it)
                 {
-                    for (auto it = begin; it != end; ++it)
-                    {
-                        m_list.emplace_back(it);
-                    }
+                    m_list.emplace_back(it);
                 }
+            }
 
-                TransferIteratorList(TransferIteratorList<TIterator> &&other)
-                {
-                    m_list = std::move(other.m_list);
-                    m_end = std::move(other.m_end);
-                }
+            TransferIteratorList(TransferIteratorList<TIterator> &&other)
+            {
+                m_list = std::move(other.m_list);
+                m_end = std::move(other.m_end);
+            }
 
-                TransferIteratorList &operator=(TransferIteratorList<TIterator> &&other)
-                {
-                    m_list = std::move(other.m_list);
-                    m_end = std::move(other.m_end);
-                    return *this;
-                }
+            TransferIteratorList &operator=(TransferIteratorList<TIterator> &&other)
+            {
+                m_list = std::move(other.m_list);
+                m_end = std::move(other.m_end);
+                return *this;
+            }
 
-                void sort()
-                {
-                    std::sort(m_list.begin(), m_list.end(), &TransferIteratorList::lessTIterator);
-                }
+            void sort()
+            {
+                std::sort(m_list.begin(), m_list.end(), &TransferIteratorList::lessTIterator);
+            }
 
-                TIterator findFirstByAmount(uint64_t amount) const
-                {
-                    auto listIt = std::find_if(
-                        m_list.begin(), m_list.end(), [amount](const TIterator &it)
-                    {
-                        return it->amount == amount;
-                    }
-                    );
-                    return listIt == m_list.end()
-                           ? m_end
-                           : *listIt;
-                }
+            TIterator findFirstByAmount(uint64_t amount) const
+            {
+                auto listIt = std::find_if(
+                    m_list.begin(), m_list.end(), [amount](const TIterator &it) { return it->amount == amount; });
+                return listIt == m_list.end() ? m_end : *listIt;
+            }
 
-                TIterator minElement() const
-                {
-                    auto listIt = std::min_element(m_list.begin(), m_list.end(), &TransferIteratorList::lessTIterator);
-                    return listIt == m_list.end()
-                           ? m_end
-                           : *listIt;
-                }
+            TIterator minElement() const
+            {
+                auto listIt = std::min_element(m_list.begin(), m_list.end(), &TransferIteratorList::lessTIterator);
+                return listIt == m_list.end() ? m_end : *listIt;
+            }
 
-            private:
-                static bool lessTIterator(
-                    const TIterator &it1,
-                    const TIterator &it2
-                )
-                {
-                    return (it1->blockHeight < it2->blockHeight) ||
-                           (it1->blockHeight == it2->blockHeight && it1->transactionIndex < it2->transactionIndex);
-                }
+          private:
+            static bool lessTIterator(const TIterator &it1, const TIterator &it2)
+            {
+                return (it1->blockHeight < it2->blockHeight)
+                       || (it1->blockHeight == it2->blockHeight && it1->transactionIndex < it2->transactionIndex);
+            }
 
-            private:
-                std::vector<TIterator> m_list;
+          private:
+            std::vector<TIterator> m_list;
 
-                TIterator m_end;
+            TIterator m_end;
         };
 
         template<typename TIterator>
-        TransferIteratorList<TIterator> createTransferIteratorList(
-            const std::pair<
-                TIterator, TIterator
-            > &itPair
-        )
+        TransferIteratorList<TIterator> createTransferIteratorList(const std::pair<TIterator, TIterator> &itPair)
         {
             return TransferIteratorList<TIterator>(itPair.first, itPair.second);
         }
-    }
+    } // namespace
 
-    SpentOutputDescriptor::SpentOutputDescriptor() : m_type(TransactionTypes::OutputType::Invalid)
-    {
-    }
+    SpentOutputDescriptor::SpentOutputDescriptor(): m_type(TransactionTypes::OutputType::Invalid) {}
 
-    SpentOutputDescriptor::SpentOutputDescriptor(const TransactionOutputInformationIn &transactionInfo) : m_type(
-        transactionInfo.type
-    ),
-                                                                                                          m_amount(0),
-                                                                                                          m_globalOutputIndex(0)
+    SpentOutputDescriptor::SpentOutputDescriptor(const TransactionOutputInformationIn &transactionInfo):
+        m_type(transactionInfo.type),
+        m_amount(0),
+        m_globalOutputIndex(0)
     {
         if (m_type == TransactionTypes::OutputType::Key)
         {
@@ -183,22 +158,19 @@ namespace CryptoNote
     TransfersContainer::TransfersContainer(
         const Currency &currency,
         std::shared_ptr<Logging::ILogger> logger,
-        size_t transactionSpendableAge
-    )
-        : m_currentHeight(0),
-          m_currency(currency),
-          m_logger(logger, "TransfersContainer"),
-          m_transactionSpendableAge(transactionSpendableAge)
+        size_t transactionSpendableAge):
+        m_currentHeight(0),
+        m_currency(currency),
+        m_logger(logger, "TransfersContainer"),
+        m_transactionSpendableAge(transactionSpendableAge)
     {
     }
 
     bool TransfersContainer::addTransaction(
         const TransactionBlockInfo &block,
         const ITransactionReader &tx,
-        const std::vector<TransactionOutputInformationIn> &transfers
-    )
+        const std::vector<TransactionOutputInformationIn> &transfers)
     {
-
         try
         {
             std::unique_lock<std::mutex> lock(m_mutex);
@@ -206,8 +178,8 @@ namespace CryptoNote
             if (block.height < m_currentHeight)
             {
                 auto message = "Failed to add transaction: block index < m_currentHeight";
-                m_logger(ERROR, BRIGHT_RED) << message << ", block " << block.height << ", m_currentHeight "
-                                            << m_currentHeight;
+                m_logger(ERROR, BRIGHT_RED)
+                    << message << ", block " << block.height << ", m_currentHeight " << m_currentHeight;
                 throw std::invalid_argument(message);
             }
 
@@ -249,10 +221,7 @@ namespace CryptoNote
     /**
      * \pre m_mutex is locked.
      */
-    void TransfersContainer::addTransaction(
-        const TransactionBlockInfo &block,
-        const ITransactionReader &tx
-    )
+    void TransfersContainer::addTransaction(const TransactionBlockInfo &block, const ITransactionReader &tx)
     {
         auto txHash = tx.getTransactionHash();
 
@@ -272,7 +241,7 @@ namespace CryptoNote
         }
 
         auto result = m_transactions.insert(std::move(txInfo));
-        (void) result; // Disable unused warning
+        (void)result; // Disable unused warning
         assert(result.second);
     }
 
@@ -282,8 +251,7 @@ namespace CryptoNote
     bool TransfersContainer::addTransactionOutputs(
         const TransactionBlockInfo &block,
         const ITransactionReader &tx,
-        const std::vector<TransactionOutputInformationIn> &transfers
-    )
+        const std::vector<TransactionOutputInformationIn> &transfers)
     {
         bool outputsAdded = false;
 
@@ -315,7 +283,7 @@ namespace CryptoNote
             if (transferIsUnconfirmed)
             {
                 auto result = m_unconfirmedTransfers.insert(std::move(info));
-                (void) result; // Disable unused warning
+                (void)result; // Disable unused warning
                 assert(result.second);
             }
             else
@@ -325,12 +293,12 @@ namespace CryptoNote
                     bool duplicate = false;
                     SpentOutputDescriptor descriptor(transfer);
 
-                    auto
-                        availableRange = m_availableTransfers.get<SpentOutputDescriptorIndex>().equal_range(descriptor);
+                    auto availableRange =
+                        m_availableTransfers.get<SpentOutputDescriptorIndex>().equal_range(descriptor);
                     for (auto it = availableRange.first; !duplicate && it != availableRange.second; ++it)
                     {
-                        if (it->transactionHash == info.transactionHash &&
-                            it->outputInTransaction == info.outputInTransaction)
+                        if (it->transactionHash == info.transactionHash
+                            && it->outputInTransaction == info.outputInTransaction)
                         {
                             duplicate = true;
                         }
@@ -339,8 +307,8 @@ namespace CryptoNote
                     auto spentRange = m_spentTransfers.get<SpentOutputDescriptorIndex>().equal_range(descriptor);
                     for (auto it = spentRange.first; !duplicate && it != spentRange.second; ++it)
                     {
-                        if (it->transactionHash == info.transactionHash &&
-                            it->outputInTransaction == info.outputInTransaction)
+                        if (it->transactionHash == info.transactionHash
+                            && it->outputInTransaction == info.outputInTransaction)
                         {
                             duplicate = true;
                         }
@@ -349,15 +317,15 @@ namespace CryptoNote
                     if (duplicate)
                     {
                         auto message = "Failed to add transaction output: key output already exists";
-                        m_logger(ERROR, BRIGHT_RED) << message << ", transaction hash " << info.transactionHash
-                                                    << ", output index " << info.outputInTransaction << ", key image "
-                                                    << info.keyImage;
+                        m_logger(ERROR, BRIGHT_RED)
+                            << message << ", transaction hash " << info.transactionHash << ", output index "
+                            << info.outputInTransaction << ", key image " << info.keyImage;
                         throw std::runtime_error(message);
                     }
                 }
 
                 auto result = m_availableTransfers.insert(std::move(info));
-                (void) result; // Disable unused warning
+                (void)result; // Disable unused warning
                 assert(result.second);
             }
 
@@ -375,10 +343,7 @@ namespace CryptoNote
     /**
      * \pre m_mutex is locked.
      */
-    bool TransfersContainer::addTransactionInputs(
-        const TransactionBlockInfo &block,
-        const ITransactionReader &tx
-    )
+    bool TransfersContainer::addTransactionInputs(const TransactionBlockInfo &block, const ITransactionReader &tx)
     {
         bool inputsAdded = false;
 
@@ -398,25 +363,25 @@ namespace CryptoNote
                     assert(std::distance(spentRange.first, spentRange.second) == 1);
                     const auto &spentOutput = *spentRange.first;
                     auto message = "Failed add key input: key image already spent";
-                    m_logger(ERROR, BRIGHT_RED) << message << ", key image " << input.keyImage << '\n'
-                                                << "    rejected transaction" << ": hash " << tx.getTransactionHash()
-                                                << ", block " << block.height << ", transaction index "
-                                                << block.transactionIndex << ", input " << i << '\n'
-                                                << "    spending transaction" << ": hash "
-                                                << spentOutput.spendingTransactionHash << ", block "
-                                                << spentOutput.spendingBlock.height << ", input "
-                                                << spentOutput.inputInTransaction << '\n' << "    spent output        "
-                                                << ": hash " << spentOutput.transactionHash << ", block "
-                                                << spentOutput.blockHeight << ", transaction index "
-                                                << spentOutput.transactionIndex << ", output "
-                                                << spentOutput.outputInTransaction << ", amount "
-                                                << m_currency.formatAmount(spentOutput.amount);
+                    m_logger(ERROR, BRIGHT_RED)
+                        << message << ", key image " << input.keyImage << '\n'
+                        << "    rejected transaction"
+                        << ": hash " << tx.getTransactionHash() << ", block " << block.height << ", transaction index "
+                        << block.transactionIndex << ", input " << i << '\n'
+                        << "    spending transaction"
+                        << ": hash " << spentOutput.spendingTransactionHash << ", block "
+                        << spentOutput.spendingBlock.height << ", input " << spentOutput.inputInTransaction << '\n'
+                        << "    spent output        "
+                        << ": hash " << spentOutput.transactionHash << ", block " << spentOutput.blockHeight
+                        << ", transaction index " << spentOutput.transactionIndex << ", output "
+                        << spentOutput.outputInTransaction << ", amount "
+                        << m_currency.formatAmount(spentOutput.amount);
                     throw std::runtime_error(message);
                 }
 
                 auto availableRange = m_availableTransfers.get<SpentOutputDescriptorIndex>().equal_range(descriptor);
-                auto
-                    unconfirmedRange = m_unconfirmedTransfers.get<SpentOutputDescriptorIndex>().equal_range(descriptor);
+                auto unconfirmedRange =
+                    m_unconfirmedTransfers.get<SpentOutputDescriptorIndex>().equal_range(descriptor);
                 size_t availableCount = std::distance(availableRange.first, availableRange.second);
                 size_t unconfirmedCount = std::distance(unconfirmedRange.first, unconfirmedRange.second);
 
@@ -491,8 +456,7 @@ namespace CryptoNote
     bool TransfersContainer::markTransactionConfirmed(
         const TransactionBlockInfo &block,
         const Hash &transactionHash,
-        const std::vector<uint32_t> &globalIndices
-    )
+        const std::vector<uint32_t> &globalIndices)
     {
         if (block.height == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT)
         {
@@ -540,7 +504,7 @@ namespace CryptoNote
                 transfer.globalOutputIndex = globalIndices[transfer.outputInTransaction];
 
                 auto result = m_availableTransfers.insert(std::move(transfer));
-                (void) result; // Disable unused warning
+                (void)result; // Disable unused warning
                 assert(result.second);
 
                 transferIt = m_unconfirmedTransfers.get<ContainingTransactionIndex>().erase(transferIt);
@@ -584,7 +548,7 @@ namespace CryptoNote
                 unconfirmedTransfer.globalOutputIndex = UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX;
 
                 auto result = m_unconfirmedTransfers.insert(std::move(unconfirmedTransfer));
-                (void) result; // Disable unused warning
+                (void)result; // Disable unused warning
                 assert(result.second);
 
                 transferIt = m_availableTransfers.get<ContainingTransactionIndex>().erase(transferIt);
@@ -675,8 +639,7 @@ namespace CryptoNote
         const TransactionBlockInfo &block,
         const ITransactionReader &tx,
         size_t inputIndex,
-        const TransactionOutputInformationEx &output
-    )
+        const TransactionOutputInformationEx &output)
     {
         assert(output.blockHeight != WALLET_UNCONFIRMED_TRANSACTION_HEIGHT);
         assert(output.globalOutputIndex != UNCONFIRMED_TRANSACTION_GLOBAL_OUTPUT_INDEX);
@@ -687,7 +650,7 @@ namespace CryptoNote
         spentOutput.spendingTransactionHash = tx.getTransactionHash();
         spentOutput.inputInTransaction = static_cast<uint32_t>(inputIndex);
         auto result = m_spentTransfers.insert(std::move(spentOutput));
-        (void) result; // Disable unused warning
+        (void)result; // Disable unused warning
         assert(result.second);
     }
 
@@ -737,24 +700,14 @@ namespace CryptoNote
         }
 
         // TODO: notification on detach
-        m_currentHeight = height == 0
-                          ? 0
-                          : height - 1;
+        m_currentHeight = height == 0 ? 0 : height - 1;
 
         return deletedTransactions;
     }
 
     namespace
     {
-        template<
-            typename C,
-            typename T
-        >
-        void updateVisibility(
-            C &collection,
-            const T &range,
-            bool visible
-        )
+        template<typename C, typename T> void updateVisibility(C &collection, const T &range, bool visible)
         {
             for (auto it = range.first; it != range.second; ++it)
             {
@@ -763,7 +716,7 @@ namespace CryptoNote
                 collection.replace(it, updated);
             }
         }
-    }
+    } // namespace
 
     /**
      * \pre m_mutex is locked.
@@ -884,10 +837,7 @@ namespace CryptoNote
         return result;
     }
 
-    void TransfersContainer::getOutputs(
-        std::vector<TransactionOutputInformation> &transfers,
-        uint32_t flags
-    ) const
+    void TransfersContainer::getOutputs(std::vector<TransactionOutputInformation> &transfers, uint32_t flags) const
     {
         std::lock_guard<std::mutex> lk(m_mutex);
         for (const auto &t : m_availableTransfers)
@@ -914,8 +864,7 @@ namespace CryptoNote
         const Hash &transactionHash,
         TransactionInformation &info,
         uint64_t *amountIn,
-        uint64_t *amountOut
-    ) const
+        uint64_t *amountOut) const
     {
         std::lock_guard<std::mutex> lk(m_mutex);
         auto it = m_transactions.find(transactionHash);
@@ -948,8 +897,8 @@ namespace CryptoNote
                     *amountOut += it->amount;
                 }
 
-                auto
-                    spentOutputsRange = m_spentTransfers.get<ContainingTransactionIndex>().equal_range(transactionHash);
+                auto spentOutputsRange =
+                    m_spentTransfers.get<ContainingTransactionIndex>().equal_range(transactionHash);
                 for (auto it = spentOutputsRange.first; it != spentOutputsRange.second; ++it)
                 {
                     *amountOut += it->amount;
@@ -970,10 +919,8 @@ namespace CryptoNote
         return true;
     }
 
-    std::vector<TransactionOutputInformation> TransfersContainer::getTransactionOutputs(
-        const Hash &transactionHash,
-        uint32_t flags
-    ) const
+    std::vector<TransactionOutputInformation>
+        TransfersContainer::getTransactionOutputs(const Hash &transactionHash, uint32_t flags) const
     {
         std::lock_guard<std::mutex> lk(m_mutex);
 
@@ -1017,12 +964,10 @@ namespace CryptoNote
         return result;
     }
 
-    std::vector<TransactionOutputInformation> TransfersContainer::getTransactionInputs(
-        const Hash &transactionHash,
-        uint32_t flags
-    ) const
+    std::vector<TransactionOutputInformation>
+        TransfersContainer::getTransactionInputs(const Hash &transactionHash, uint32_t flags) const
     {
-        //only type flags are feasible
+        // only type flags are feasible
         assert((flags & IncludeStateAll) == 0);
         flags |= IncludeStateUnlocked;
 
@@ -1065,11 +1010,9 @@ namespace CryptoNote
         s(m_currentHeight, "height");
         writeSequence<TransactionInformation>(m_transactions.begin(), m_transactions.end(), "transactions", s);
         writeSequence<TransactionOutputInformationEx>(
-            m_unconfirmedTransfers.begin(), m_unconfirmedTransfers.end(), "unconfirmedTransfers", s
-        );
+            m_unconfirmedTransfers.begin(), m_unconfirmedTransfers.end(), "unconfirmedTransfers", s);
         writeSequence<TransactionOutputInformationEx>(
-            m_availableTransfers.begin(), m_availableTransfers.end(), "availableTransfers", s
-        );
+            m_availableTransfers.begin(), m_availableTransfers.end(), "availableTransfers", s);
         writeSequence<SpentTransactionOutput>(m_spentTransfers.begin(), m_spentTransfers.end(), "spentTransfers", s);
     }
 
@@ -1099,11 +1042,9 @@ namespace CryptoNote
         s(currentHeight, "height");
         readSequence<TransactionInformation>(std::inserter(transactions, transactions.end()), "transactions", s);
         readSequence<TransactionOutputInformationEx>(
-            std::inserter(unconfirmedTransfers, unconfirmedTransfers.end()), "unconfirmedTransfers", s
-        );
+            std::inserter(unconfirmedTransfers, unconfirmedTransfers.end()), "unconfirmedTransfers", s);
         readSequence<TransactionOutputInformationEx>(
-            std::inserter(availableTransfers, availableTransfers.end()), "availableTransfers", s
-        );
+            std::inserter(availableTransfers, availableTransfers.end()), "availableTransfers", s);
         readSequence<SpentTransactionOutput>(std::inserter(spentTransfers, spentTransfers.end()), "spentTransfers", s);
 
         m_currentHeight = currentHeight;
@@ -1122,7 +1063,7 @@ namespace CryptoNote
         }
         else
         {
-            //interpret as time
+            // interpret as time
             uint64_t current_time = static_cast<uint64_t>(time(NULL));
             return current_time + m_currency.lockedTxAllowedDeltaSeconds() >= unlockTime;
         }
@@ -1130,10 +1071,7 @@ namespace CryptoNote
         return false;
     }
 
-    bool TransfersContainer::isIncluded(
-        const TransactionOutputInformationEx &info,
-        uint32_t flags
-    ) const
+    bool TransfersContainer::isIncluded(const TransactionOutputInformationEx &info, uint32_t flags) const
     {
         uint32_t state;
         if (info.blockHeight == WALLET_UNCONFIRMED_TRANSACTION_HEIGHT || !isSpendTimeUnlocked(info.unlockTime))
@@ -1152,11 +1090,7 @@ namespace CryptoNote
         return isIncluded(info.type, state, flags);
     }
 
-    bool TransfersContainer::isIncluded(
-        TransactionTypes::OutputType type,
-        uint32_t state,
-        uint32_t flags
-    )
+    bool TransfersContainer::isIncluded(TransactionTypes::OutputType type, uint32_t state, uint32_t flags)
     {
         return
             // filter by type
@@ -1165,4 +1099,4 @@ namespace CryptoNote
             ((flags & state) != 0);
     }
 
-}
+} // namespace CryptoNote

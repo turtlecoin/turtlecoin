@@ -10,7 +10,6 @@
 
 namespace
 {
-
     const char *getStatusString(CryptoNote::HttpResponse::HTTP_STATUS status)
     {
         switch (status)
@@ -39,11 +38,10 @@ namespace
         }
     }
 
-} //namespace
+} // namespace
 
 namespace CryptoNote
 {
-
     HttpResponse::HttpResponse()
     {
         status = STATUS_200;
@@ -61,10 +59,7 @@ namespace CryptoNote
         }
     }
 
-    void HttpResponse::addHeader(
-        const std::string &name,
-        const std::string &value
-    )
+    void HttpResponse::addHeader(const std::string &name, const std::string &value)
     {
         headers[name] = value;
     }
@@ -86,7 +81,7 @@ namespace CryptoNote
     {
         os << "HTTP/1.1 " << getStatusString(status) << "\r\n";
 
-        for (auto pair: headers)
+        for (auto pair : headers)
         {
             os << pair.first << ": " << pair.second << "\r\n";
         }
@@ -100,4 +95,4 @@ namespace CryptoNote
         return os;
     }
 
-} //namespace CryptoNote
+} // namespace CryptoNote

@@ -9,8 +9,7 @@ namespace CryptoNote
 {
     namespace error
     {
-
         AddBlockErrorCategory AddBlockErrorCategory::INSTANCE;
 
     }
-}
+} // namespace CryptoNote

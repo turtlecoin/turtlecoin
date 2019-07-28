@@ -4,17 +4,17 @@
 // Please see the included LICENSE file for more information.
 
 #include "ContextGroup.h"
+
 #include <cassert>
 
 namespace System
 {
-
-    ContextGroup::ContextGroup(Dispatcher &dispatcher) : dispatcher(&dispatcher)
+    ContextGroup::ContextGroup(Dispatcher &dispatcher): dispatcher(&dispatcher)
     {
         contextGroup.firstContext = nullptr;
     }
 
-    ContextGroup::ContextGroup(ContextGroup &&other) : dispatcher(other.dispatcher)
+    ContextGroup::ContextGroup(ContextGroup &&other): dispatcher(other.dispatcher)
     {
         if (dispatcher != nullptr)
         {
@@ -107,4 +107,4 @@ namespace System
         }
     }
 
-}
+} // namespace System

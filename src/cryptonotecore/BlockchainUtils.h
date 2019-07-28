@@ -5,21 +5,19 @@
 
 #pragma once
 
-#include <vector>
-
 #include "CachedTransaction.h"
 #include "CryptoNote.h"
 #include "common/CryptoNoteTools.h"
+
+#include <vector>
 
 namespace CryptoNote
 {
     namespace Utils
     {
-
         bool restoreCachedTransactions(
             const std::vector<BinaryArray> &binaryTransactions,
-            std::vector<CachedTransaction> &transactions
-        );
+            std::vector<CachedTransaction> &transactions);
 
-    } //namespace Utils
-} //namespace CryptoNote
+    } // namespace Utils
+} // namespace CryptoNote

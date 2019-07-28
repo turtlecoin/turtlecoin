@@ -5,21 +5,15 @@
 
 #include "CryptoNote.h"
 
-#include <tuple>
-
-#include <vector>
-
 #include <errors/Errors.h>
+#include <tuple>
+#include <vector>
 
 namespace Mnemonics
 {
-    std::tuple<
-        Error, Crypto::SecretKey
-    > MnemonicToPrivateKey(const std::string words);
+    std::tuple<Error, Crypto::SecretKey> MnemonicToPrivateKey(const std::string words);
 
-    std::tuple<
-        Error, Crypto::SecretKey
-    > MnemonicToPrivateKey(const std::vector<std::string> words);
+    std::tuple<Error, Crypto::SecretKey> MnemonicToPrivateKey(const std::vector<std::string> words);
 
     std::string PrivateKeyToMnemonic(const Crypto::SecretKey privateKey);
 
@@ -28,4 +22,4 @@ namespace Mnemonics
     std::string GetChecksumWord(const std::vector<std::string> words);
 
     std::vector<int> GetWordIndexes(const std::vector<std::string> words);
-}
+} // namespace Mnemonics

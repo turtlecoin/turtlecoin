@@ -5,11 +5,12 @@
 
 #pragma once
 
-#include <rapidjson/document.h>
-#include <config/CryptoNoteConfig.h>
-#include <logging/ILogger.h>
 #include "common/PathTools.h"
 #include "common/Util.h"
+
+#include <config/CryptoNoteConfig.h>
+#include <logging/ILogger.h>
+#include <rapidjson/document.h>
 
 using namespace rapidjson;
 
@@ -131,28 +132,15 @@ namespace DaemonConfig
 
     DaemonConfiguration initConfiguration(const char *path);
 
-    bool updateConfigFormat(
-        const std::string configFile,
-        DaemonConfiguration &config
-    );
+    bool updateConfigFormat(const std::string configFile, DaemonConfiguration &config);
 
-    void handleSettings(
-        int argc,
-        char *argv[],
-        DaemonConfiguration &config
-    );
+    void handleSettings(int argc, char *argv[], DaemonConfiguration &config);
 
-    void handleSettings(
-        const std::string configFile,
-        DaemonConfiguration &config
-    );
+    void handleSettings(const std::string configFile, DaemonConfiguration &config);
 
-    void asFile(
-        const DaemonConfiguration &config,
-        const std::string &filename
-    );
+    void asFile(const DaemonConfiguration &config, const std::string &filename);
 
     std::string asString(const DaemonConfiguration &config);
 
     Document asJSON(const DaemonConfiguration &config);
-}
+} // namespace DaemonConfig

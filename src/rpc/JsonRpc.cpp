@@ -4,19 +4,16 @@
 // Please see the included LICENSE file for more information.
 
 #include "JsonRpc.h"
+
 #include "rpc/HttpClient.h"
 
 namespace CryptoNote
 {
-
     namespace JsonRpc
     {
+        JsonRpcError::JsonRpcError(): code(0) {}
 
-        JsonRpcError::JsonRpcError() : code(0)
-        {
-        }
-
-        JsonRpcError::JsonRpcError(int c) : code(c)
+        JsonRpcError::JsonRpcError(int c): code(c)
         {
             switch (c)
             {
@@ -44,20 +41,9 @@ namespace CryptoNote
             }
         }
 
-        JsonRpcError::JsonRpcError(
-            int c,
-            const std::string &msg
-        )
-            : code(c),
-              message(msg)
-        {
-        }
+        JsonRpcError::JsonRpcError(int c, const std::string &msg): code(c), message(msg) {}
 
-        void invokeJsonRpcCommand(
-            HttpClient &httpClient,
-            JsonRpcRequest &jsReq,
-            JsonRpcResponse &jsRes
-        )
+        void invokeJsonRpcCommand(HttpClient &httpClient, JsonRpcRequest &jsReq, JsonRpcResponse &jsRes)
         {
             HttpRequest httpReq;
             HttpResponse httpRes;
@@ -82,5 +68,5 @@ namespace CryptoNote
             }
         }
 
-    }
-}
+    } // namespace JsonRpc
+} // namespace CryptoNote

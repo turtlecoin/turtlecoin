@@ -4,44 +4,36 @@
 // Please see the included LICENSE file for more information.
 
 #include "TcpConnector.h"
-#include <cassert>
-#include <stdexcept>
 
-#include <fcntl.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <sys/epoll.h>
-
-#include <system/InterruptedException.h>
-#include <system/Ipv4Address.h>
 #include "Dispatcher.h"
 #include "ErrorMessage.h"
 #include "TcpConnection.h"
 
+#include <cassert>
+#include <fcntl.h>
+#include <netdb.h>
+#include <stdexcept>
+#include <sys/epoll.h>
+#include <system/InterruptedException.h>
+#include <system/Ipv4Address.h>
+#include <unistd.h>
+
 namespace System
 {
-
     namespace
     {
-
         struct TcpConnectorContextExt : public OperationContext
         {
             int connection;
         };
 
-    }
+    } // namespace
 
-    TcpConnector::TcpConnector() : dispatcher(nullptr)
-    {
-    }
+    TcpConnector::TcpConnector(): dispatcher(nullptr) {}
 
-    TcpConnector::TcpConnector(Dispatcher &dispatcher)
-        : dispatcher(&dispatcher),
-          context(nullptr)
-    {
-    }
+    TcpConnector::TcpConnector(Dispatcher &dispatcher): dispatcher(&dispatcher), context(nullptr) {}
 
-    TcpConnector::TcpConnector(TcpConnector &&other) : dispatcher(other.dispatcher)
+    TcpConnector::TcpConnector(TcpConnector &&other): dispatcher(other.dispatcher)
     {
         if (other.dispatcher != nullptr)
         {
@@ -51,9 +43,7 @@ namespace System
         }
     }
 
-    TcpConnector::~TcpConnector()
-    {
-    }
+    TcpConnector::~TcpConnector() {}
 
     TcpConnector &TcpConnector::operator=(TcpConnector &&other)
     {
@@ -68,10 +58,7 @@ namespace System
         return *this;
     }
 
-    TcpConnection TcpConnector::connect(
-        const Ipv4Address &address,
-        uint16_t port
-    )
+    TcpConnection TcpConnector::connect(const Ipv4Address &address, uint16_t port)
     {
         assert(dispatcher != nullptr);
         assert(context == nullptr);
@@ -114,7 +101,6 @@ namespace System
                     {
                         if (errno == EINPROGRESS)
                         {
-
                             ContextPair contextPair;
                             TcpConnectorContextExt connectorContext;
                             connectorContext.interrupted = false;
@@ -134,10 +120,9 @@ namespace System
                             else
                             {
                                 context = &connectorContext;
-                                dispatcher->getCurrentContext()->interruptProcedure = [&]
-                                {
-                                    TcpConnectorContextExt
-                                        *connectorContext1 = static_cast<TcpConnectorContextExt *>(context);
+                                dispatcher->getCurrentContext()->interruptProcedure = [&] {
+                                    TcpConnectorContextExt *connectorContext1 =
+                                        static_cast<TcpConnectorContextExt *>(context);
                                     if (!connectorContext1->interrupted)
                                     {
                                         if (close(connectorContext1->connection) == -1)
@@ -220,4 +205,4 @@ namespace System
         throw std::runtime_error("TcpConnector::connect, " + message);
     }
 
-}
+} // namespace System

@@ -9,7 +9,6 @@
 
 namespace CryptoNote
 {
-
     struct CoreStatistics
     {
         uint64_t transactionPoolSize;
@@ -32,4 +31,4 @@ namespace CryptoNote
         }
     };
 
-}
+} // namespace CryptoNote

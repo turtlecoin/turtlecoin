@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include <zedwallet/Types.h>
@@ -10,8 +10,7 @@ void sendFromAddressBook(
     std::shared_ptr<WalletInfo> walletInfo,
     uint32_t height,
     std::string nodeAddress,
-    uint32_t nodeFee
-);
+    uint32_t nodeFee);
 
 void deleteFromAddressBook();
 

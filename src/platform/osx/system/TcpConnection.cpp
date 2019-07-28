@@ -4,27 +4,24 @@
 // Please see the included LICENSE file for more information.
 
 #include "TcpConnection.h"
-#include <cassert>
-
-#include <netinet/in.h>
-#include <sys/event.h>
-#include <sys/errno.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 #include "Dispatcher.h"
+
+#include <cassert>
+#include <netinet/in.h>
+#include <sys/errno.h>
+#include <sys/event.h>
+#include <sys/socket.h>
 #include <system/ErrorMessage.h>
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
+#include <unistd.h>
 
 namespace System
 {
+    TcpConnection::TcpConnection(): dispatcher(nullptr) {}
 
-    TcpConnection::TcpConnection() : dispatcher(nullptr)
-    {
-    }
-
-    TcpConnection::TcpConnection(TcpConnection &&other) : dispatcher(other.dispatcher)
+    TcpConnection::TcpConnection(TcpConnection &&other): dispatcher(other.dispatcher)
     {
         if (other.dispatcher != nullptr)
         {
@@ -77,10 +74,7 @@ namespace System
         return *this;
     }
 
-    size_t TcpConnection::read(
-        uint8_t *data,
-        size_t size
-    )
+    size_t TcpConnection::read(uint8_t *data, size_t size)
     {
         assert(dispatcher != nullptr);
         assert(readContext == nullptr);
@@ -90,7 +84,7 @@ namespace System
         }
 
         std::string message;
-        ssize_t transferred = ::recv(connection, (void *) data, size, 0);
+        ssize_t transferred = ::recv(connection, (void *)data, size, 0);
         if (transferred == -1)
         {
             if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -111,8 +105,7 @@ namespace System
                 else
                 {
                     readContext = &context;
-                    dispatcher->getCurrentContext()->interruptProcedure = [&]
-                    {
+                    dispatcher->getCurrentContext()->interruptProcedure = [&] {
                         assert(dispatcher != nullptr);
                         assert(readContext != nullptr);
                         OperationContext *context = static_cast<OperationContext *>(readContext);
@@ -144,7 +137,7 @@ namespace System
                         throw InterruptedException();
                     }
 
-                    ssize_t transferred = ::recv(connection, (void *) data, size, 0);
+                    ssize_t transferred = ::recv(connection, (void *)data, size, 0);
                     if (transferred == -1)
                     {
                         message = "recv failed, " + lastErrorMessage();
@@ -164,10 +157,7 @@ namespace System
         return transferred;
     }
 
-    size_t TcpConnection::write(
-        const uint8_t *data,
-        size_t size
-    )
+    size_t TcpConnection::write(const uint8_t *data, size_t size)
     {
         assert(dispatcher != nullptr);
         assert(writeContext == nullptr);
@@ -187,7 +177,7 @@ namespace System
             return 0;
         }
 
-        ssize_t transferred = ::send(connection, (void *) data, size, 0);
+        ssize_t transferred = ::send(connection, (void *)data, size, 0);
         if (transferred == -1)
         {
             if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -208,8 +198,7 @@ namespace System
                 else
                 {
                     writeContext = &context;
-                    dispatcher->getCurrentContext()->interruptProcedure = [&]
-                    {
+                    dispatcher->getCurrentContext()->interruptProcedure = [&] {
                         assert(dispatcher != nullptr);
                         assert(writeContext != nullptr);
                         OperationContext *context = static_cast<OperationContext *>(writeContext);
@@ -240,7 +229,7 @@ namespace System
                         throw InterruptedException();
                     }
 
-                    ssize_t transferred = ::send(connection, (void *) data, size, 0);
+                    ssize_t transferred = ::send(connection, (void *)data, size, 0);
                     if (transferred == -1)
                     {
                         message = "send failed, " + lastErrorMessage();
@@ -260,9 +249,7 @@ namespace System
         return transferred;
     }
 
-    std::pair<
-        Ipv4Address, uint16_t
-    > TcpConnection::getPeerAddressAndPort() const
+    std::pair<Ipv4Address, uint16_t> TcpConnection::getPeerAddressAndPort() const
     {
         sockaddr_in addr;
         socklen_t size = sizeof(addr);
@@ -275,20 +262,17 @@ namespace System
         return std::make_pair(Ipv4Address(htonl(addr.sin_addr.s_addr)), htons(addr.sin_port));
     }
 
-    TcpConnection::TcpConnection(
-        Dispatcher &dispatcher,
-        int socket
-    )
-        : dispatcher(&dispatcher),
-          connection(socket),
-          readContext(nullptr),
-          writeContext(nullptr)
+    TcpConnection::TcpConnection(Dispatcher &dispatcher, int socket):
+        dispatcher(&dispatcher),
+        connection(socket),
+        readContext(nullptr),
+        writeContext(nullptr)
     {
         int val = 1;
-        if (setsockopt(connection, SOL_SOCKET, SO_NOSIGPIPE, (void *) &val, sizeof val) == -1)
+        if (setsockopt(connection, SOL_SOCKET, SO_NOSIGPIPE, (void *)&val, sizeof val) == -1)
         {
             throw std::runtime_error("TcpConnection::TcpConnection, setsockopt failed, " + lastErrorMessage());
         }
     }
 
-}
+} // namespace System

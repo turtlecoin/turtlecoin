@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -21,4 +21,4 @@ namespace ApiConstants
 
     /* 64 char, hex */
     const std::string hashRegex = "[a-fA-F0-9]{64}";
-}
+} // namespace ApiConstants

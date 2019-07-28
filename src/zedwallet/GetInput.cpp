@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 ///////////////////////////////
@@ -29,8 +29,7 @@ std::string getPrompt(std::shared_ptr<WalletInfo> walletInfo)
     std::string walletName = walletInfo->walletFileName;
 
     /* Filename ends in .wallet, remove extension */
-    if (std::equal(
-        extension.rbegin(), extension.rend(), walletInfo->walletFileName.rbegin()))
+    if (std::equal(extension.rbegin(), extension.rend(), walletInfo->walletFileName.rbegin()))
     {
         const size_t extPos = walletInfo->walletFileName.find_last_of('.');
 
@@ -47,8 +46,7 @@ std::string getInputAndWorkInBackground(
     const std::vector<T> &availableCommands,
     std::string prompt,
     bool backgroundRefresh,
-    std::shared_ptr<WalletInfo> walletInfo
-)
+    std::shared_ptr<WalletInfo> walletInfo)
 {
     /* If we are in the main program, we need to check for transactions in
        the background. Unfortunately, we have to do this on the main thread,
@@ -59,14 +57,7 @@ std::string getInputAndWorkInBackground(
         auto lastUpdated = std::chrono::system_clock::now();
 
         std::future<std::string> inputGetter = std::async(
-            std::launch::async, [
-            &availableCommands,
-            &prompt
-        ]
-        {
-            return getInput(availableCommands, prompt);
-        }
-        );
+            std::launch::async, [&availableCommands, &prompt] { return getInput(availableCommands, prompt); });
 
         while (true)
         {
@@ -100,31 +91,21 @@ std::string getInputAndWorkInBackground(
     }
 }
 
-template<typename T>
-std::string getInput(
-    const std::vector<T> &availableCommands,
-    std::string prompt
-)
+template<typename T> std::string getInput(const std::vector<T> &availableCommands, std::string prompt)
 {
-    linenoise::SetCompletionCallback(
-        [availableCommands](
-            const char *input,
-            std::vector<std::string> &completions
-        )
-        {
-            /* Convert to std::string */
-            std::string c = input;
+    linenoise::SetCompletionCallback([availableCommands](const char *input, std::vector<std::string> &completions) {
+        /* Convert to std::string */
+        std::string c = input;
 
-            for (const auto &command : availableCommands)
+        for (const auto &command : availableCommands)
+        {
+            /* Does command begin with input? */
+            if (command.commandName.compare(0, c.length(), c) == 0)
             {
-                /* Does command begin with input? */
-                if (command.commandName.compare(0, c.length(), c) == 0)
-                {
-                    completions.push_back(command.commandName);
-                }
+                completions.push_back(command.commandName);
             }
         }
-    );
+    });
 
     /* Linenoise is printing this out, so we can't write colours to the stream
        like we normally would - have to include the escape characters directly
@@ -159,26 +140,18 @@ std::string getInput(
 
 /* Template instantations that we are going to use - this allows us to have
    the template implementation in the .cpp file. */
-template std::string getInput(
-    const std::vector<Command> &availableCommands,
-    std::string prompt
-);
+template std::string getInput(const std::vector<Command> &availableCommands, std::string prompt);
 
-template std::string getInput(
-    const std::vector<AdvancedCommand> &availableCommands,
-    std::string prompt
-);
+template std::string getInput(const std::vector<AdvancedCommand> &availableCommands, std::string prompt);
 
 template std::string getInputAndWorkInBackground(
     const std::vector<Command> &availableCommands,
     std::string prompt,
     bool backgroundRefresh,
-    std::shared_ptr<WalletInfo> walletInfo
-);
+    std::shared_ptr<WalletInfo> walletInfo);
 
 template std::string getInputAndWorkInBackground(
     const std::vector<AdvancedCommand> &availableCommands,
     std::string prompt,
     bool backgroundRefresh,
-    std::shared_ptr<WalletInfo> walletInfo
-);
+    std::shared_ptr<WalletInfo> walletInfo);
