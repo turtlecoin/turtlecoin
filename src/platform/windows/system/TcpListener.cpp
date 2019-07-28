@@ -8,18 +8,22 @@
 #include <cassert>
 #include <stdexcept>
 
+// clang-format off
+/* Order of includes is important here, because, you know, *windows* ¯\_(ツ)_/¯ */
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
+#include <winsock2.h>
+#include <mswsock.h>
+// clang-format on
 
 #include "Dispatcher.h"
 #include "ErrorMessage.h"
 #include "TcpConnection.h"
 
-#include <mswsock.h>
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
-#include <winsock2.h>
 
 namespace System
 {

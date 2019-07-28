@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 /* From fe.h */
 
 typedef int32_t fe[10];

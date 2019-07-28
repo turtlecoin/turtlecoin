@@ -12,13 +12,21 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
+// clang-format off
+/* Order of includes is important here, because, you know, *windows* ¯\_(ツ)_/¯ */
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <winsock2.h>
+#include <ws2ipdef.h>
+// clang-format on
+
 #include "Dispatcher.h"
 #include "ErrorMessage.h"
 
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
-#include <winsock2.h>
-#include <ws2ipdef.h>
 
 namespace System
 {
