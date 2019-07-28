@@ -1,42 +1,40 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "TcpConnection.h"
+
 #include <cassert>
 #include <stdexcept>
 
 #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <winsock2.h>
-#include <ws2ipdef.h>
-#include <system/InterruptedException.h>
-#include <system/Ipv4Address.h>
 #include "Dispatcher.h"
 #include "ErrorMessage.h"
 
+#include <system/InterruptedException.h>
+#include <system/Ipv4Address.h>
+#include <winsock2.h>
+#include <ws2ipdef.h>
+
 namespace System
 {
-
     namespace
     {
-
         struct TcpConnectionContext : public OVERLAPPED
         {
             NativeContext *context;
             bool interrupted;
         };
 
-    }
+    } // namespace
 
-    TcpConnection::TcpConnection() : dispatcher(nullptr)
-    {
-    }
+    TcpConnection::TcpConnection(): dispatcher(nullptr) {}
 
-    TcpConnection::TcpConnection(TcpConnection &&other) : dispatcher(other.dispatcher)
+    TcpConnection::TcpConnection(TcpConnection &&other): dispatcher(other.dispatcher)
     {
         if (dispatcher != nullptr)
         {
@@ -87,10 +85,7 @@ namespace System
         return *this;
     }
 
-    size_t TcpConnection::read(
-        uint8_t *data,
-        size_t size
-    )
+    size_t TcpConnection::read(uint8_t *data, size_t size)
     {
         assert(dispatcher != nullptr);
         assert(readContext == nullptr);
@@ -99,10 +94,7 @@ namespace System
             throw InterruptedException();
         }
 
-        WSABUF buf{
-            static_cast<ULONG>(size),
-            reinterpret_cast<char *>(data)
-        };
+        WSABUF buf {static_cast<ULONG>(size), reinterpret_cast<char *>(data)};
         DWORD flags = 0;
         TcpConnectionContext context;
         context.hEvent = NULL;
@@ -119,8 +111,7 @@ namespace System
         context.context = dispatcher->getCurrentContext();
         context.interrupted = false;
         readContext = &context;
-        dispatcher->getCurrentContext()->interruptProcedure = [&]()
-        {
+        dispatcher->getCurrentContext()->interruptProcedure = [&]() {
             assert(dispatcher != nullptr);
             assert(readContext != nullptr);
             TcpConnectionContext *context = static_cast<TcpConnectionContext *>(readContext);
@@ -171,10 +162,7 @@ namespace System
         return transferred;
     }
 
-    size_t TcpConnection::write(
-        const uint8_t *data,
-        size_t size
-    )
+    size_t TcpConnection::write(const uint8_t *data, size_t size)
     {
         assert(dispatcher != nullptr);
         assert(writeContext == nullptr);
@@ -193,10 +181,7 @@ namespace System
             return 0;
         }
 
-        WSABUF buf{
-            static_cast<ULONG>(size),
-            reinterpret_cast<char *>(const_cast<uint8_t *>(data))
-        };
+        WSABUF buf {static_cast<ULONG>(size), reinterpret_cast<char *>(const_cast<uint8_t *>(data))};
         TcpConnectionContext context;
         context.hEvent = NULL;
         if (WSASend(connection, &buf, 1, NULL, 0, &context, NULL) != 0)
@@ -211,8 +196,7 @@ namespace System
         context.context = dispatcher->getCurrentContext();
         context.interrupted = false;
         writeContext = &context;
-        dispatcher->getCurrentContext()->interruptProcedure = [&]()
-        {
+        dispatcher->getCurrentContext()->interruptProcedure = [&]() {
             assert(dispatcher != nullptr);
             assert(writeContext != nullptr);
             TcpConnectionContext *context = static_cast<TcpConnectionContext *>(writeContext);
@@ -264,9 +248,7 @@ namespace System
         return transferred;
     }
 
-    std::pair<
-        Ipv4Address, uint16_t
-    > TcpConnection::getPeerAddressAndPort() const
+    std::pair<Ipv4Address, uint16_t> TcpConnection::getPeerAddressAndPort() const
     {
         sockaddr_in address;
         int size = sizeof(address);
@@ -280,15 +262,12 @@ namespace System
         return std::make_pair(Ipv4Address(htonl(address.sin_addr.S_un.S_addr)), htons(address.sin_port));
     }
 
-    TcpConnection::TcpConnection(
-        Dispatcher &dispatcher,
-        size_t connection
-    )
-        : dispatcher(&dispatcher),
-          connection(connection),
-          readContext(nullptr),
-          writeContext(nullptr)
+    TcpConnection::TcpConnection(Dispatcher &dispatcher, size_t connection):
+        dispatcher(&dispatcher),
+        connection(connection),
+        readContext(nullptr),
+        writeContext(nullptr)
     {
     }
 
-}
+} // namespace System

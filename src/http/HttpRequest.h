@@ -13,52 +13,41 @@ namespace CryptoNote
 {
     class HttpRequest
     {
-        public:
-            typedef std::map<
-                std::string, std::string
-            > Headers;
+      public:
+        typedef std::map<std::string, std::string> Headers;
 
-            const std::string &getMethod() const;
+        const std::string &getMethod() const;
 
-            const std::string &getUrl() const;
+        const std::string &getUrl() const;
 
-            const Headers &getHeaders() const;
+        const Headers &getHeaders() const;
 
-            const std::string &getBody() const;
+        const std::string &getBody() const;
 
-            void addHeader(
-                const std::string &name,
-                const std::string &value
-            );
+        void addHeader(const std::string &name, const std::string &value);
 
-            void setBody(const std::string &b);
+        void setBody(const std::string &b);
 
-            void setUrl(const std::string &uri);
+        void setUrl(const std::string &uri);
 
-        private:
-            friend class HttpParser;
+      private:
+        friend class HttpParser;
 
-            std::string method;
+        std::string method;
 
-            std::string url;
+        std::string url;
 
-            Headers headers;
+        Headers headers;
 
-            std::string body;
+        std::string body;
 
-            friend std::ostream &operator<<(
-                std::ostream &os,
-                const HttpRequest &resp
-            );
+        friend std::ostream &operator<<(std::ostream &os, const HttpRequest &resp);
 
-            std::ostream &printHttpRequest(std::ostream &os) const;
+        std::ostream &printHttpRequest(std::ostream &os) const;
     };
 
-    inline std::ostream &operator<<(
-        std::ostream &os,
-        const HttpRequest &resp
-    )
+    inline std::ostream &operator<<(std::ostream &os, const HttpRequest &resp)
     {
         return resp.printHttpRequest(os);
     }
-}
+} // namespace CryptoNote

@@ -4,26 +4,15 @@
 // Please see the included LICENSE file for more information.
 
 #include "StreamLogger.h"
+
 #include <iostream>
 #include <sstream>
 
 namespace Logging
 {
+    StreamLogger::StreamLogger(Level level): CommonLogger(level), stream(nullptr) {}
 
-    StreamLogger::StreamLogger(Level level)
-        : CommonLogger(level),
-          stream(nullptr)
-    {
-    }
-
-    StreamLogger::StreamLogger(
-        std::ostream &stream,
-        Level level
-    )
-        : CommonLogger(level),
-          stream(&stream)
-    {
-    }
+    StreamLogger::StreamLogger(std::ostream &stream, Level level): CommonLogger(level), stream(&stream) {}
 
     void StreamLogger::attachToStream(std::ostream &stream)
     {
@@ -52,4 +41,4 @@ namespace Logging
         }
     }
 
-}
+} // namespace Logging

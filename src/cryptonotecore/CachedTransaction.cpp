@@ -5,25 +5,19 @@
 
 #include "CachedTransaction.h"
 
-#include <common/Varint.h>
 #include <common/CryptoNoteTools.h>
-
+#include <common/Varint.h>
 #include <config/CryptoNoteConfig.h>
 
 using namespace Crypto;
 using namespace CryptoNote;
 
-CachedTransaction::CachedTransaction(Transaction &&transaction) : transaction(std::move(transaction))
-{
-}
+CachedTransaction::CachedTransaction(Transaction &&transaction): transaction(std::move(transaction)) {}
 
-CachedTransaction::CachedTransaction(const Transaction &transaction) : transaction(transaction)
-{
-}
+CachedTransaction::CachedTransaction(const Transaction &transaction): transaction(transaction) {}
 
-CachedTransaction::CachedTransaction(const BinaryArray &transactionBinaryArray) : transactionBinaryArray(
-    transactionBinaryArray
-)
+CachedTransaction::CachedTransaction(const BinaryArray &transactionBinaryArray):
+    transactionBinaryArray(transactionBinaryArray)
 {
     if (!fromBinaryArray<Transaction>(transaction, this->transactionBinaryArray.get()))
     {

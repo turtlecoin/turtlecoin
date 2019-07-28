@@ -3,19 +3,15 @@
 //
 // Please see the included LICENSE file for more information.
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include "hash-ops.h"
 #include "skein.h"
 
-void hash_extra_skein(
-    const void *data,
-    size_t length,
-    char *hash
-)
+#include <stddef.h>
+#include <stdint.h>
+
+void hash_extra_skein(const void *data, size_t length, char *hash)
 {
-    int r = skein_hash(8 * HASH_SIZE, data, 8 * length, (uint8_t *) hash);
+    int r = skein_hash(8 * HASH_SIZE, data, 8 * length, (uint8_t *)hash);
     if (r)
     {
     }

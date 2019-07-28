@@ -11,54 +11,38 @@
 
 namespace System
 {
-
-    template<typename T>
-    class OperationTimeout
+    template<typename T> class OperationTimeout
     {
-        public:
-            OperationTimeout(
-                Dispatcher &dispatcher,
-                T &object,
-                std::chrono::nanoseconds timeout
-            )
-                : object(object),
-                  timerContext(
-                      dispatcher
-                  ),
-                  timeoutTimer(
-                      dispatcher
-                  )
-            {
-                timerContext.spawn(
-                    [
-                        this,
-                        timeout
-                    ]()
-                    {
-                        try
-                        {
-                            timeoutTimer.sleep(timeout);
-                            timerContext.interrupt();
-                        }
-                        catch (...)
-                        {
-                        }
-                    }
-                );
-            }
+      public:
+        OperationTimeout(Dispatcher &dispatcher, T &object, std::chrono::nanoseconds timeout):
+            object(object),
+            timerContext(dispatcher),
+            timeoutTimer(dispatcher)
+        {
+            timerContext.spawn([this, timeout]() {
+                try
+                {
+                    timeoutTimer.sleep(timeout);
+                    timerContext.interrupt();
+                }
+                catch (...)
+                {
+                }
+            });
+        }
 
-            ~OperationTimeout()
-            {
-                timerContext.interrupt();
-                timerContext.wait();
-            }
+        ~OperationTimeout()
+        {
+            timerContext.interrupt();
+            timerContext.wait();
+        }
 
-        private:
-            T &object;
+      private:
+        T &object;
 
-            ContextGroup timerContext;
+        ContextGroup timerContext;
 
-            Timer timeoutTimer;
+        Timer timeoutTimer;
     };
 
-}
+} // namespace System

@@ -5,12 +5,11 @@
 
 #include "RocksDBWrapper.h"
 
-#include "rocksdb/cache.h"
-#include "rocksdb/table.h"
-#include "rocksdb/db.h"
-#include "rocksdb/utilities/backupable_db.h"
-
 #include "DataBaseErrors.h"
+#include "rocksdb/cache.h"
+#include "rocksdb/db.h"
+#include "rocksdb/table.h"
+#include "rocksdb/utilities/backupable_db.h"
 
 using namespace CryptoNote;
 using namespace Logging;
@@ -20,17 +19,13 @@ namespace
     const std::string DB_NAME = "DB";
 }
 
-RocksDBWrapper::RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger)
-    : logger(logger, "RocksDBWrapper"),
-      state(NOT_INITIALIZED)
+RocksDBWrapper::RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger):
+    logger(logger, "RocksDBWrapper"),
+    state(NOT_INITIALIZED)
 {
-
 }
 
-RocksDBWrapper::~RocksDBWrapper()
-{
-
-}
+RocksDBWrapper::~RocksDBWrapper() {}
 
 void RocksDBWrapper::init(const DataBaseConfig &config)
 {
@@ -126,21 +121,14 @@ std::error_code RocksDBWrapper::write(IWriteBatch &batch)
     return write(batch, false);
 }
 
-std::error_code RocksDBWrapper::write(
-    IWriteBatch &batch,
-    bool sync
-)
+std::error_code RocksDBWrapper::write(IWriteBatch &batch, bool sync)
 {
     rocksdb::WriteOptions writeOptions;
     writeOptions.sync = sync;
 
     rocksdb::WriteBatch rocksdbBatch;
-    std::vector<
-        std::pair<
-            std::string, std::string>> rawData(batch.extractRawDataToInsert());
-    for (const std::pair<
-            std::string, std::string
-        > &kvPair : rawData)
+    std::vector<std::pair<std::string, std::string>> rawData(batch.extractRawDataToInsert());
+    for (const std::pair<std::string, std::string> &kvPair : rawData)
     {
         rocksdbBatch.Put(rocksdb::Slice(kvPair.first), rocksdb::Slice(kvPair.second));
     }
@@ -233,22 +221,15 @@ rocksdb::Options RocksDBWrapper::getDBOptions(const DataBaseConfig &config)
 
     fOptions.compression_per_level.resize(fOptions.num_levels);
 
-    const auto compressionLevel = config.getCompressionEnabled()
-                                  ? rocksdb::kLZ4Compression
-                                  : rocksdb::kNoCompression;
+    const auto compressionLevel = config.getCompressionEnabled() ? rocksdb::kLZ4Compression : rocksdb::kNoCompression;
     for (int i = 0; i < fOptions.num_levels; ++i)
     {
         // don't compress l0 & l1
-        fOptions.compression_per_level[i] = (
-            i < 2
-            ? rocksdb::kNoCompression
-            : compressionLevel
-        );
+        fOptions.compression_per_level[i] = (i < 2 ? rocksdb::kNoCompression : compressionLevel);
     }
     // bottom most use lz4hc
-    fOptions.bottommost_compression = config.getCompressionEnabled()
-                                      ? rocksdb::kLZ4HCCompression
-                                      : rocksdb::kNoCompression;
+    fOptions.bottommost_compression =
+        config.getCompressionEnabled() ? rocksdb::kLZ4HCCompression : rocksdb::kNoCompression;
 
     rocksdb::BlockBasedTableOptions tableOptions;
     tableOptions.block_cache = rocksdb::NewLRUCache(config.getReadCacheSize());

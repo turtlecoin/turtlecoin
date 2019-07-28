@@ -5,15 +5,12 @@
 
 #pragma once
 
+#include "crypto/hash.h"
+
 #include <cstdint>
 #include <vector>
 
-#include "crypto/hash.h"
-
 namespace CryptoNote
 {
-    bool check_hash(
-        const Crypto::Hash &hash,
-        uint64_t difficulty
-    );
+    bool check_hash(const Crypto::Hash &hash, uint64_t difficulty);
 }

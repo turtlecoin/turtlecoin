@@ -5,18 +5,15 @@
 
 #include "TransactionPool.h"
 
-#include "common/int-util.h"
 #include "CryptoNoteBasicImpl.h"
 #include "common/TransactionExtra.h"
+#include "common/int-util.h"
 
 namespace CryptoNote
 {
-
     // lhs > hrs
-    bool TransactionPool::TransactionPriorityComparator::operator()(
-        const PendingTransactionInfo &lhs,
-        const PendingTransactionInfo &rhs
-    ) const
+    bool TransactionPool::TransactionPriorityComparator::
+        operator()(const PendingTransactionInfo &lhs, const PendingTransactionInfo &rhs) const
     {
         const CachedTransaction &left = lhs.cachedTransaction;
         const CachedTransaction &right = rhs.cachedTransaction;
@@ -32,15 +29,13 @@ namespace CryptoNote
             // prefer more profitable transactions
             (lhs_hi > rhs_hi) || (lhs_hi == rhs_hi && lhs_lo > rhs_lo) ||
             // prefer smaller
-            (
-                lhs_hi == rhs_hi && lhs_lo == rhs_lo &&
-                left.getTransactionBinaryArray().size() < right.getTransactionBinaryArray().size()) ||
+            (lhs_hi == rhs_hi && lhs_lo == rhs_lo
+             && left.getTransactionBinaryArray().size() < right.getTransactionBinaryArray().size())
+            ||
             // prefer older
-            (
-                lhs_hi == rhs_hi && lhs_lo == rhs_lo &&
-                left.getTransactionBinaryArray().size() == right.getTransactionBinaryArray().size() &&
-                lhs.receiveTime < rhs.receiveTime
-            );
+            (lhs_hi == rhs_hi && lhs_lo == rhs_lo
+             && left.getTransactionBinaryArray().size() == right.getTransactionBinaryArray().size()
+             && lhs.receiveTime < rhs.receiveTime);
     }
 
     const Crypto::Hash &TransactionPool::PendingTransactionInfo::getTransactionHash() const
@@ -55,29 +50,20 @@ namespace CryptoNote
             return std::numeric_limits<size_t>::max();
         }
 
-        return std::hash<Crypto::Hash>{}(*paymentId);
+        return std::hash<Crypto::Hash> {}(*paymentId);
     }
 
-    TransactionPool::TransactionPool(std::shared_ptr<Logging::ILogger> logger) : transactionHashIndex(
-        transactions.get<TransactionHashTag>()),
-                                                                                 transactionCostIndex(
-                                                                                     transactions
-                                                                                         .get<TransactionCostTag>()),
-                                                                                 paymentIdIndex(
-                                                                                     transactions.get<PaymentIdTag>()),
-                                                                                 logger(logger, "TransactionPool")
+    TransactionPool::TransactionPool(std::shared_ptr<Logging::ILogger> logger):
+        transactionHashIndex(transactions.get<TransactionHashTag>()),
+        transactionCostIndex(transactions.get<TransactionCostTag>()),
+        paymentIdIndex(transactions.get<PaymentIdTag>()),
+        logger(logger, "TransactionPool")
     {
     }
 
-    bool TransactionPool::pushTransaction(
-        CachedTransaction &&transaction,
-        TransactionValidatorState &&transactionState
-    )
+    bool TransactionPool::pushTransaction(CachedTransaction &&transaction, TransactionValidatorState &&transactionState)
     {
-        auto pendingTx = PendingTransactionInfo{
-            static_cast<uint64_t>(time(nullptr)),
-            std::move(transaction)
-        };
+        auto pendingTx = PendingTransactionInfo {static_cast<uint64_t>(time(nullptr)), std::move(transaction)};
 
         Crypto::Hash paymentId;
         if (getPaymentIdFromTxExtra(pendingTx.cachedTransaction.getTransaction().extra, paymentId))
@@ -158,7 +144,7 @@ namespace CryptoNote
         std::vector<CachedTransaction> result;
         result.reserve(transactionCostIndex.size());
 
-        for (const auto &transactionItem: transactionCostIndex)
+        for (const auto &transactionItem : transactionCostIndex)
         {
             result.emplace_back(transactionItem.cachedTransaction);
         }
@@ -166,9 +152,8 @@ namespace CryptoNote
         return result;
     }
 
-    std::tuple<
-        std::vector<CachedTransaction>,
-        std::vector<CachedTransaction>> TransactionPool::getPoolTransactionsForBlockTemplate() const
+    std::tuple<std::vector<CachedTransaction>, std::vector<CachedTransaction>>
+        TransactionPool::getPoolTransactionsForBlockTemplate() const
     {
         std::vector<CachedTransaction> regularTransactions;
 
@@ -188,10 +173,7 @@ namespace CryptoNote
             }
         }
 
-        return {
-            regularTransactions,
-            fusionTransactions
-        };
+        return {regularTransactions, fusionTransactions};
     }
 
     uint64_t TransactionPool::getTransactionReceiveTime(const Crypto::Hash &hash) const
@@ -217,4 +199,4 @@ namespace CryptoNote
         return transactionHashes;
     }
 
-}
+} // namespace CryptoNote

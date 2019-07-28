@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -17,20 +17,17 @@ void status(const std::shared_ptr<WalletBackend> walletBackend);
 void printHeights(
     const uint64_t localDaemonBlockCount,
     const uint64_t networkBlockCount,
-    const uint64_t walletBlockCount
-);
+    const uint64_t walletBlockCount);
 
 void printSyncStatus(
     const uint64_t localDaemonBlockCount,
     const uint64_t networkBlockCount,
-    const uint64_t walletBlockCount
-);
+    const uint64_t walletBlockCount);
 
 void printSyncSummary(
     const uint64_t localDaemonBlockCount,
     const uint64_t networkBlockCount,
-    const uint64_t walletBlockCount
-);
+    const uint64_t walletBlockCount);
 
 void printHashrate(const uint64_t difficulty);
 
@@ -42,11 +39,7 @@ void saveCSV(const std::shared_ptr<WalletBackend> walletBackend);
 
 void save(const std::shared_ptr<WalletBackend> walletBackend);
 
-void listTransfers(
-    const bool incoming,
-    const bool outgoing,
-    const std::shared_ptr<WalletBackend> walletBackend
-);
+void listTransfers(const bool incoming, const bool outgoing, const std::shared_ptr<WalletBackend> walletBackend);
 
 void printOutgoingTransfer(const WalletTypes::Transaction t);
 

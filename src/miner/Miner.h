@@ -6,19 +6,17 @@
 
 #pragma once
 
-#include <atomic>
-#include <thread>
-#include <mutex>
+#include "CryptoNote.h"
 
+#include <atomic>
+#include <mutex>
 #include <system/Dispatcher.h>
 #include <system/Event.h>
 #include <system/RemoteContext.h>
-
-#include "CryptoNote.h"
+#include <thread>
 
 namespace CryptoNote
 {
-
     struct BlockMiningParameters
     {
         BlockTemplate blockTemplate;
@@ -27,55 +25,45 @@ namespace CryptoNote
 
     class Miner
     {
-        public:
-            Miner(System::Dispatcher &dispatcher);
+      public:
+        Miner(System::Dispatcher &dispatcher);
 
-            BlockTemplate mine(
-                const BlockMiningParameters &blockMiningParameters,
-                size_t threadCount
-            );
+        BlockTemplate mine(const BlockMiningParameters &blockMiningParameters, size_t threadCount);
 
-            uint64_t getHashCount();
+        uint64_t getHashCount();
 
-            //NOTE! this is blocking method
-            void stop();
+        // NOTE! this is blocking method
+        void stop();
 
-        private:
-            System::Dispatcher &m_dispatcher;
+      private:
+        System::Dispatcher &m_dispatcher;
 
-            System::Event m_miningStopped;
+        System::Event m_miningStopped;
 
-            enum class MiningState : uint8_t
-            {
-                    MINING_STOPPED,
-                    BLOCK_FOUND,
-                    MINING_IN_PROGRESS
-            };
+        enum class MiningState : uint8_t
+        {
+            MINING_STOPPED,
+            BLOCK_FOUND,
+            MINING_IN_PROGRESS
+        };
 
-            std::atomic<MiningState> m_state;
+        std::atomic<MiningState> m_state;
 
-            std::vector<std::unique_ptr<System::RemoteContext<void>>> m_workers;
+        std::vector<std::unique_ptr<System::RemoteContext<void>>> m_workers;
 
-            BlockTemplate m_block;
+        BlockTemplate m_block;
 
-            std::atomic<uint64_t> m_hash_count = 0;
+        std::atomic<uint64_t> m_hash_count = 0;
 
-            std::mutex m_hashes_mutex;
+        std::mutex m_hashes_mutex;
 
-            void runWorkers(
-                BlockMiningParameters blockMiningParameters,
-                size_t threadCount
-            );
+        void runWorkers(BlockMiningParameters blockMiningParameters, size_t threadCount);
 
-            void workerFunc(
-                const BlockTemplate &blockTemplate,
-                uint64_t difficulty,
-                uint32_t nonceStep
-            );
+        void workerFunc(const BlockTemplate &blockTemplate, uint64_t difficulty, uint32_t nonceStep);
 
-            bool setStateBlockFound();
+        bool setStateBlockFound();
 
-            void incrementHashCount();
+        void incrementHashCount();
     };
 
-} //namespace CryptoNote
+} // namespace CryptoNote

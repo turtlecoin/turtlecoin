@@ -4,13 +4,12 @@
 
 #include "MainChainStorageSqlite.h"
 
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "sqlite3.h"
+
 #include <common/CryptoNoteTools.h>
 #include <common/FileSystemShim.h>
-
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
-
-#include "sqlite3.h"
 
 using namespace rapidjson;
 
@@ -18,8 +17,7 @@ namespace CryptoNote
 {
     MainChainStorageSqlite::MainChainStorageSqlite(
         const std::string &blocksFilename,
-        const std::string &indexesFilename
-    )
+        const std::string &indexesFilename)
     {
         int resultCode = sqlite3_open(blocksFilename.c_str(), &m_db);
 
@@ -31,8 +29,12 @@ namespace CryptoNote
         }
 
         resultCode = sqlite3_exec(
-            m_db, "CREATE TABLE IF NOT EXISTS `rawBlocks` ( `blockIndex` INTEGER NOT NULL DEFAULT 0 PRIMARY KEY, `rawBlock` TEXT )", NULL, NULL, NULL
-        );
+            m_db,
+            "CREATE TABLE IF NOT EXISTS `rawBlocks` ( `blockIndex` INTEGER NOT NULL DEFAULT 0 PRIMARY KEY, `rawBlock` "
+            "TEXT )",
+            NULL,
+            NULL,
+            NULL);
 
         if (resultCode != SQLITE_OK)
         {
@@ -44,9 +46,7 @@ namespace CryptoNote
            this does run a small risk of corrupting the database in the event of system
            failure or process crash in some rare situations but the performance impact
            of synchronous writes is considerable and a risk we're willing to take */
-        resultCode = sqlite3_exec(
-            m_db, "PRAGMA synchronous = 0", NULL, NULL, NULL
-        );
+        resultCode = sqlite3_exec(m_db, "PRAGMA synchronous = 0", NULL, NULL, NULL);
 
         if (resultCode != SQLITE_OK)
         {
@@ -95,8 +95,7 @@ namespace CryptoNote
     void MainChainStorageSqlite::popBlock()
     {
         const int resultCode = sqlite3_exec(
-            m_db, "DELETE FROM rawBlocks WHERE blockIndex = (SELECT MAX(blockIndex) FROM rawBlocks)", NULL, NULL, NULL
-        );
+            m_db, "DELETE FROM rawBlocks WHERE blockIndex = (SELECT MAX(blockIndex) FROM rawBlocks)", NULL, NULL, NULL);
 
         if (resultCode != SQLITE_OK)
         {
@@ -114,9 +113,7 @@ namespace CryptoNote
         }
 
         sqlite3_stmt *stmt;
-        int resultCode = sqlite3_prepare_v2(
-            m_db, "DELETE FROM rawBlocks WHERE blockIndex >= ?1", -1, &stmt, NULL
-        );
+        int resultCode = sqlite3_prepare_v2(m_db, "DELETE FROM rawBlocks WHERE blockIndex >= ?1", -1, &stmt, NULL);
 
         sqlite3_bind_int(stmt, 1, index);
 
@@ -226,9 +223,7 @@ namespace CryptoNote
 
     void MainChainStorageSqlite::clear()
     {
-        const int resultCode = sqlite3_exec(
-            m_db, "DELETE FROM rawBlocks", NULL, NULL, NULL
-        );
+        const int resultCode = sqlite3_exec(m_db, "DELETE FROM rawBlocks", NULL, NULL, NULL);
 
         if (resultCode != SQLITE_OK)
         {
@@ -237,16 +232,14 @@ namespace CryptoNote
         }
     }
 
-    std::unique_ptr<IMainChainStorage> createSwappedMainChainStorageSqlite(
-        const std::string &dataDir,
-        const Currency &currency
-    )
+    std::unique_ptr<IMainChainStorage>
+        createSwappedMainChainStorageSqlite(const std::string &dataDir, const Currency &currency)
     {
         fs::path blocksFilename = fs::path(dataDir) / currency.blocksFileName();
         fs::path indexesFilename = fs::path(dataDir) / currency.blockIndexesFileName();
 
-        auto storage = std::make_unique<MainChainStorageSqlite>(
-            blocksFilename.string() + ".sqlite3", indexesFilename.string());
+        auto storage =
+            std::make_unique<MainChainStorageSqlite>(blocksFilename.string() + ".sqlite3", indexesFilename.string());
 
         if (storage->getBlockCount() == 0)
         {
@@ -257,4 +250,4 @@ namespace CryptoNote
 
         return storage;
     }
-}
+} // namespace CryptoNote

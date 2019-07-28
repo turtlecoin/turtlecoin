@@ -5,14 +5,14 @@
 
 #pragma once
 
+#include "CryptoNote.h"
+
 #include <limits>
 #include <string>
 #include <vector>
-#include "CryptoNote.h"
 
 namespace CryptoNote
 {
-
     const size_t WALLET_INVALID_TRANSACTION_ID = std::numeric_limits<size_t>::max();
 
     const size_t WALLET_INVALID_TRANSFER_ID = std::numeric_limits<size_t>::max();
@@ -21,11 +21,11 @@ namespace CryptoNote
 
     enum class WalletTransactionState : uint8_t
     {
-            SUCCEEDED = 0,
-            FAILED,
-            CANCELLED,
-            CREATED,
-            DELETED
+        SUCCEEDED = 0,
+        FAILED,
+        CANCELLED,
+        CREATED,
+        DELETED
     };
 
     enum WalletEventType
@@ -39,9 +39,9 @@ namespace CryptoNote
 
     enum class WalletSaveLevel : uint8_t
     {
-            SAVE_KEYS_ONLY,
-            SAVE_KEYS_AND_TRANSACTIONS,
-            SAVE_ALL
+        SAVE_KEYS_ONLY,
+        SAVE_KEYS_AND_TRANSACTIONS,
+        SAVE_ALL
     };
 
     struct WalletTransactionCreatedData
@@ -63,8 +63,7 @@ namespace CryptoNote
     struct WalletEvent
     {
         WalletEventType type;
-        union
-        {
+        union {
             WalletTransactionCreatedData transactionCreated;
             WalletTransactionUpdatedData transactionUpdated;
             WalletSynchronizationProgressUpdated synchronizationProgressUpdated;
@@ -87,9 +86,9 @@ namespace CryptoNote
 
     enum class WalletTransferType : uint8_t
     {
-            USUAL = 0,
-            DONATION,
-            CHANGE
+        USUAL = 0,
+        DONATION,
+        CHANGE
     };
 
     struct WalletOrder
@@ -135,4 +134,4 @@ namespace CryptoNote
         std::vector<WalletTransactionWithTransfers> transactions;
     };
 
-}
+} // namespace CryptoNote

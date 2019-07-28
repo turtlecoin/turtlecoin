@@ -21,8 +21,7 @@ namespace CryptoNote
 {
     namespace error
     {
-
         CoreErrorCategory CoreErrorCategory::INSTANCE;
 
     }
-}
+} // namespace CryptoNote

@@ -5,161 +5,143 @@
 
 #pragma once
 
-#include <mutex>
-#include <atomic>
-#include <unordered_set>
-
+#include "BlockchainExplorerErrors.h"
 #include "IBlockchainExplorer.h"
 #include "INode.h"
-
-#include "BlockchainExplorerErrors.h"
 #include "common/ObserverManager.h"
+#include "logging/LoggerRef.h"
 #include "serialization/BinaryInputStreamSerializer.h"
 #include "serialization/BinaryOutputStreamSerializer.h"
 #include "wallet/WalletAsyncContextCounter.h"
 
-#include "logging/LoggerRef.h"
+#include <atomic>
+#include <mutex>
+#include <unordered_set>
 
 namespace CryptoNote
 {
-
     enum State
     {
         NOT_INITIALIZED,
         INITIALIZED
     };
 
-    class BlockchainExplorer : public IBlockchainExplorer,
-                               public INodeObserver
+    class BlockchainExplorer : public IBlockchainExplorer, public INodeObserver
     {
-        public:
-            BlockchainExplorer(
-                INode &node,
-                std::shared_ptr<Logging::ILogger> logger
-            );
+      public:
+        BlockchainExplorer(INode &node, std::shared_ptr<Logging::ILogger> logger);
 
-            BlockchainExplorer(const BlockchainExplorer &) = delete;
+        BlockchainExplorer(const BlockchainExplorer &) = delete;
 
-            BlockchainExplorer(BlockchainExplorer &&) = delete;
+        BlockchainExplorer(BlockchainExplorer &&) = delete;
 
-            BlockchainExplorer &operator=(const BlockchainExplorer &) = delete;
+        BlockchainExplorer &operator=(const BlockchainExplorer &) = delete;
 
-            BlockchainExplorer &operator=(BlockchainExplorer &&) = delete;
+        BlockchainExplorer &operator=(BlockchainExplorer &&) = delete;
 
-            virtual ~BlockchainExplorer();
+        virtual ~BlockchainExplorer();
 
-            virtual bool addObserver(IBlockchainObserver *observer) override;
+        virtual bool addObserver(IBlockchainObserver *observer) override;
 
-            virtual bool removeObserver(IBlockchainObserver *observer) override;
+        virtual bool removeObserver(IBlockchainObserver *observer) override;
 
-            virtual bool getBlocks(
-                const std::vector<uint32_t> &blockHeights,
-                std::vector<std::vector<BlockDetails>> &blocks
-            ) override;
+        virtual bool getBlocks(
+            const std::vector<uint32_t> &blockHeights,
+            std::vector<std::vector<BlockDetails>> &blocks) override;
 
-            virtual bool getBlocks(
-                const std::vector<Crypto::Hash> &blockHashes,
-                std::vector<BlockDetails> &blocks
-            ) override;
+        virtual bool
+            getBlocks(const std::vector<Crypto::Hash> &blockHashes, std::vector<BlockDetails> &blocks) override;
 
-            virtual bool getBlocks(
-                uint64_t timestampBegin,
-                uint64_t timestampEnd,
-                uint32_t blocksNumberLimit,
-                std::vector<BlockDetails> &blocks,
-                uint32_t &blocksNumberWithinTimestamps
-            ) override;
+        virtual bool getBlocks(
+            uint64_t timestampBegin,
+            uint64_t timestampEnd,
+            uint32_t blocksNumberLimit,
+            std::vector<BlockDetails> &blocks,
+            uint32_t &blocksNumberWithinTimestamps) override;
 
-            virtual bool getBlockchainTop(BlockDetails &topBlock) override;
+        virtual bool getBlockchainTop(BlockDetails &topBlock) override;
 
-            virtual bool getTransactions(
-                const std::vector<Crypto::Hash> &transactionHashes,
-                std::vector<TransactionDetails> &transactions
-            ) override;
+        virtual bool getTransactions(
+            const std::vector<Crypto::Hash> &transactionHashes,
+            std::vector<TransactionDetails> &transactions) override;
 
-            virtual bool getTransactionsByPaymentId(
-                const Crypto::Hash &paymentId,
-                std::vector<TransactionDetails> &transactions
-            ) override;
+        virtual bool getTransactionsByPaymentId(
+            const Crypto::Hash &paymentId,
+            std::vector<TransactionDetails> &transactions) override;
 
-            virtual bool getPoolState(
-                const std::vector<Crypto::Hash> &knownPoolTransactionHashes,
-                Crypto::Hash knownBlockchainTop,
-                bool &isBlockchainActual,
-                std::vector<TransactionDetails> &newTransactions,
-                std::vector<Crypto::Hash> &removedTransactions
-            ) override;
+        virtual bool getPoolState(
+            const std::vector<Crypto::Hash> &knownPoolTransactionHashes,
+            Crypto::Hash knownBlockchainTop,
+            bool &isBlockchainActual,
+            std::vector<TransactionDetails> &newTransactions,
+            std::vector<Crypto::Hash> &removedTransactions) override;
 
-            virtual bool isSynchronized() override;
+        virtual bool isSynchronized() override;
 
-            virtual void init() override;
+        virtual void init() override;
 
-            virtual void shutdown() override;
+        virtual void shutdown() override;
 
-            virtual void poolChanged() override;
+        virtual void poolChanged() override;
 
-            virtual void blockchainSynchronized(uint32_t topIndex) override;
+        virtual void blockchainSynchronized(uint32_t topIndex) override;
 
-            virtual void localBlockchainUpdated(uint32_t index) override;
+        virtual void localBlockchainUpdated(uint32_t index) override;
 
-            typedef WalletAsyncContextCounter AsyncContextCounter;
+        typedef WalletAsyncContextCounter AsyncContextCounter;
 
-        private:
-            void poolUpdateEndHandler();
+      private:
+        void poolUpdateEndHandler();
 
-            class PoolUpdateGuard
+        class PoolUpdateGuard
+        {
+          public:
+            PoolUpdateGuard();
+
+            bool beginUpdate();
+
+            bool endUpdate();
+
+          private:
+            enum class State
             {
-                public:
-                    PoolUpdateGuard();
-
-                    bool beginUpdate();
-
-                    bool endUpdate();
-
-                private:
-                    enum class State
-                    {
-                            NONE,
-                            UPDATING,
-                            UPDATE_REQUIRED
-                    };
-
-                    std::atomic<State> m_state;
+                NONE,
+                UPDATING,
+                UPDATE_REQUIRED
             };
 
-            bool getBlockchainTop(
-                BlockDetails &topBlock,
-                bool checkInitialization
-            );
+            std::atomic<State> m_state;
+        };
 
-            bool getBlocks(
-                const std::vector<uint32_t> &blockHeights,
-                std::vector<std::vector<BlockDetails>> &blocks,
-                bool checkInitialization
-            );
+        bool getBlockchainTop(BlockDetails &topBlock, bool checkInitialization);
 
-            void handleBlockchainUpdatedNotification(const std::vector<std::vector<BlockDetails>> &blocks);
+        bool getBlocks(
+            const std::vector<uint32_t> &blockHeights,
+            std::vector<std::vector<BlockDetails>> &blocks,
+            bool checkInitialization);
 
-            BlockDetails knownBlockchainTop;
+        void handleBlockchainUpdatedNotification(const std::vector<std::vector<BlockDetails>> &blocks);
 
-            std::unordered_map<Crypto::Hash, TransactionDetails> knownPoolState;
+        BlockDetails knownBlockchainTop;
 
-            std::atomic<State> state;
+        std::unordered_map<Crypto::Hash, TransactionDetails> knownPoolState;
 
-            std::atomic<bool> synchronized;
+        std::atomic<State> state;
 
-            std::atomic<uint32_t> observersCounter;
+        std::atomic<bool> synchronized;
 
-            Tools::ObserverManager<IBlockchainObserver> observerManager;
+        std::atomic<uint32_t> observersCounter;
 
-            std::mutex mutex;
+        Tools::ObserverManager<IBlockchainObserver> observerManager;
 
-            INode &node;
+        std::mutex mutex;
 
-            Logging::LoggerRef logger;
+        INode &node;
 
-            AsyncContextCounter asyncContextCounter;
+        Logging::LoggerRef logger;
 
-            PoolUpdateGuard poolUpdateGuard;
+        AsyncContextCounter asyncContextCounter;
+
+        PoolUpdateGuard poolUpdateGuard;
     };
-}
+} // namespace CryptoNote

@@ -1,29 +1,29 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "Dispatcher.h"
+
 #include <cassert>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
-    #define NOMINMAX
+#define NOMINMAX
 #endif
 
-#include <winsock2.h>
 #include "ErrorMessage.h"
+
+#include <winsock2.h>
 
 namespace System
 {
-
     namespace
     {
-
         struct DispatcherContext : public OVERLAPPED
         {
             NativeContext *context;
@@ -32,16 +32,15 @@ namespace System
         const size_t STACK_SIZE = 16384;
 
         const size_t RESERVE_STACK_SIZE = 2097152;
-    }
+    } // namespace
 
     Dispatcher::Dispatcher()
     {
         static_assert(
-            sizeof(CRITICAL_SECTION) ==
-            sizeof(Dispatcher::criticalSection), "CRITICAL_SECTION size doesn't fit sizeof(Dispatcher::criticalSection)"
-        );
-        BOOL
-            result = InitializeCriticalSectionAndSpinCount(reinterpret_cast<LPCRITICAL_SECTION>(criticalSection), 4000);
+            sizeof(CRITICAL_SECTION) == sizeof(Dispatcher::criticalSection),
+            "CRITICAL_SECTION size doesn't fit sizeof(Dispatcher::criticalSection)");
+        BOOL result =
+            InitializeCriticalSectionAndSpinCount(reinterpret_cast<LPCRITICAL_SECTION>(criticalSection), 4000);
         assert(result != FALSE);
         std::string message;
         if (ConvertThreadToFiberEx(NULL, 0) == NULL)
@@ -181,9 +180,9 @@ namespace System
             }
 
             DWORD timeout = timers.empty()
-                            ? INFINITE
-                            : static_cast<DWORD>(std::min(
-                    timers.begin()->first - currentTime, static_cast<uint64_t>(INFINITE - 1)));
+                                ? INFINITE
+                                : static_cast<DWORD>(
+                                    std::min(timers.begin()->first - currentTime, static_cast<uint64_t>(INFINITE - 1)));
             OVERLAPPED_ENTRY entry;
             ULONG actual = 0;
             if (GetQueuedCompletionStatusEx(completionPort, &entry, 1, &actual, timeout, TRUE) == TRUE)
@@ -300,8 +299,8 @@ namespace System
         if (!remoteNotificationSent)
         {
             remoteNotificationSent = true;
-            if (PostQueuedCompletionStatus(
-                completionPort, 0, 0, reinterpret_cast<LPOVERLAPPED>(remoteSpawnOverlapped)) == NULL)
+            if (PostQueuedCompletionStatus(completionPort, 0, 0, reinterpret_cast<LPOVERLAPPED>(remoteSpawnOverlapped))
+                == NULL)
             {
                 LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(criticalSection));
                 throw std::runtime_error(
@@ -406,10 +405,7 @@ namespace System
         }
     }
 
-    void Dispatcher::addTimer(
-        uint64_t time,
-        NativeContext *context
-    )
+    void Dispatcher::addTimer(uint64_t time, NativeContext *context)
     {
         assert(GetCurrentThreadId() == threadId);
         timers.insert(std::make_pair(time, context));
@@ -447,10 +443,7 @@ namespace System
         --runningContextCount;
     }
 
-    void Dispatcher::interruptTimer(
-        uint64_t time,
-        NativeContext *context
-    )
+    void Dispatcher::interruptTimer(uint64_t time, NativeContext *context)
     {
         assert(GetCurrentThreadId() == threadId);
 
@@ -552,4 +545,4 @@ namespace System
         static_cast<Dispatcher *>(context)->contextProcedure();
     }
 
-}
+} // namespace System

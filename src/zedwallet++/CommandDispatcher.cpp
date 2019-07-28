@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 //////////////////////////////////////////
@@ -7,22 +7,19 @@
 //////////////////////////////////////////
 
 #include <iostream>
-
 #include <utilities/ColouredMsg.h>
 #include <utilities/Input.h>
-
 #include <zedwallet++/AddressBook.h>
 #include <zedwallet++/CommandImplementations.h>
+#include <zedwallet++/Fusion.h>
 #include <zedwallet++/Open.h>
 #include <zedwallet++/Transfer.h>
-#include <zedwallet++/Fusion.h>
 #include <zedwallet++/Utilities.h>
 
 bool handleCommand(
     const std::string command,
     const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex
-)
+    const std::shared_ptr<std::mutex> mutex)
 {
     /* Aquire the lock so transactions don't get printed whilst we're handling
        a command */
@@ -59,7 +56,7 @@ bool handleCommand(
 
         transfer(walletBackend, sendAll);
     }
-        /* Advanced commands */
+    /* Advanced commands */
     else if (command == "ab_add")
     {
         addToAddressBook();
@@ -105,7 +102,8 @@ bool handleCommand(
     else if (command == "optimize")
     {
         std::cout << "Attempting to optimize your wallet to allow you to "
-                     "send large amounts at once.\n" << WarningMsg("This may take a very long time!\n");
+                     "send large amounts at once.\n"
+                  << WarningMsg("This may take a very long time!\n");
 
         if (!Utilities::confirm("Do you want to proceed?"))
         {
@@ -153,7 +151,7 @@ bool handleCommand(
     {
         swapNode(walletBackend);
     }
-        /* This should never happen */
+    /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");
@@ -162,10 +160,7 @@ bool handleCommand(
     return true;
 }
 
-std::shared_ptr<WalletBackend> handleLaunchCommand(
-    const std::string launchCommand,
-    const ZedConfig &config
-)
+std::shared_ptr<WalletBackend> handleLaunchCommand(const std::string launchCommand, const ZedConfig &config)
 {
     if (launchCommand == "create")
     {
@@ -187,7 +182,7 @@ std::shared_ptr<WalletBackend> handleLaunchCommand(
     {
         return importViewWallet(config);
     }
-        /* This should never happen */
+    /* This should never happen */
     else
     {
         throw std::runtime_error("Command was defined but not hooked up!");

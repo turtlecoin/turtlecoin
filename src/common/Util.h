@@ -17,4 +17,4 @@ namespace Tools
     bool create_directories_if_necessary(const std::string &path);
 
     bool directoryExists(const std::string &path);
-}
+} // namespace Tools

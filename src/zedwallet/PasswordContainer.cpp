@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 //////////////////////////////
@@ -13,16 +13,16 @@
 #include <stdio.h>
 
 #if defined(_WIN32)
-    #ifndef NOMINMAX
-        #define NOMINMAX
-    #endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 
-    #include <io.h>
-    #include <windows.h>
+#include <io.h>
+#include <windows.h>
 
 #else
-    #include <termios.h>
-    #include <unistd.h>
+#include <termios.h>
+#include <unistd.h>
 #endif
 
 #include <utilities/ColouredMsg.h>
@@ -34,19 +34,13 @@ namespace Tools
         bool is_cin_tty();
     }
 
-    PasswordContainer::PasswordContainer() : m_empty(true)
-    {
-    }
+    PasswordContainer::PasswordContainer(): m_empty(true) {}
 
-    PasswordContainer::PasswordContainer(std::string &&password)
-        : m_empty(false),
-          m_password(std::move(password))
-    {
-    }
+    PasswordContainer::PasswordContainer(std::string &&password): m_empty(false), m_password(std::move(password)) {}
 
-    PasswordContainer::PasswordContainer(PasswordContainer &&rhs)
-        : m_empty(std::move(rhs.m_empty)),
-          m_password(std::move(rhs.m_password))
+    PasswordContainer::PasswordContainer(PasswordContainer &&rhs):
+        m_empty(std::move(rhs.m_empty)),
+        m_password(std::move(rhs.m_password))
     {
     }
 
@@ -98,10 +92,7 @@ namespace Tools
         return validPass;
     }
 
-    bool PasswordContainer::read_password(
-        bool verify,
-        std::string msg
-    )
+    bool PasswordContainer::read_password(bool verify, std::string msg)
     {
         clear();
 
@@ -181,7 +172,7 @@ namespace Tools
         return true;
     }
 
-    #if defined(_WIN32)
+#if defined(_WIN32)
 
     namespace
     {
@@ -189,7 +180,7 @@ namespace Tools
         {
             return 0 != _isatty(_fileno(stdin));
         }
-    }
+    } // namespace
 
     bool PasswordContainer::read_from_tty(std::string &password)
     {
@@ -240,68 +231,68 @@ namespace Tools
         return r;
     }
 
-    #else
+#else
 
     namespace
     {
-      bool is_cin_tty()
-      {
-        return 0 != isatty(fileno(stdin));
-      }
+        bool is_cin_tty()
+        {
+            return 0 != isatty(fileno(stdin));
+        }
 
-      int getch()
-      {
-        struct termios tty_old;
-        tcgetattr(STDIN_FILENO, &tty_old);
+        int getch()
+        {
+            struct termios tty_old;
+            tcgetattr(STDIN_FILENO, &tty_old);
 
-        struct termios tty_new;
-        tty_new = tty_old;
-        tty_new.c_lflag &= ~(ICANON | ECHO);
-        tcsetattr(STDIN_FILENO, TCSANOW, &tty_new);
+            struct termios tty_new;
+            tty_new = tty_old;
+            tty_new.c_lflag &= ~(ICANON | ECHO);
+            tcsetattr(STDIN_FILENO, TCSANOW, &tty_new);
 
-        int ch = getchar();
+            int ch = getchar();
 
-        tcsetattr(STDIN_FILENO, TCSANOW, &tty_old);
+            tcsetattr(STDIN_FILENO, TCSANOW, &tty_old);
 
-        return ch;
-      }
-    }
+            return ch;
+        }
+    } // namespace
 
-    bool PasswordContainer::read_from_tty(std::string& password)
+    bool PasswordContainer::read_from_tty(std::string &password)
     {
-      const char BACKSPACE = 127;
+        const char BACKSPACE = 127;
 
-      password.reserve(max_password_size);
-      while (password.size() < max_password_size)
-      {
-        int ch = getch();
-        if (EOF == ch)
+        password.reserve(max_password_size);
+        while (password.size() < max_password_size)
         {
-          return false;
+            int ch = getch();
+            if (EOF == ch)
+            {
+                return false;
+            }
+            else if (ch == '\n' || ch == '\r')
+            {
+                std::cout << std::endl;
+                break;
+            }
+            else if (ch == BACKSPACE)
+            {
+                if (!password.empty())
+                {
+                    password.back() = '\0';
+                    password.resize(password.size() - 1);
+                    std::cout << "\b \b";
+                }
+            }
+            else
+            {
+                password.push_back(ch);
+                std::cout << '*';
+            }
         }
-        else if (ch == '\n' || ch == '\r')
-        {
-          std::cout << std::endl;
-          break;
-        }
-        else if (ch == BACKSPACE)
-        {
-          if (!password.empty())
-          {
-            password.back() = '\0';
-            password.resize(password.size() - 1);
-            std::cout << "\b \b";
-          }
-        }
-        else
-        {
-          password.push_back(ch);
-          std::cout << '*';
-        }
-      }
 
-      return true;
+        return true;
     }
 
-    #endif
-}
+#endif
+} // namespace Tools

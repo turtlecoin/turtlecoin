@@ -5,14 +5,12 @@
 
 #pragma once
 
+#include <CryptoNote.h>
 #include <cstdint>
 #include <memory>
 
-#include <CryptoNote.h>
-
 namespace CryptoNote
 {
-
     struct P2pMessage
     {
         uint32_t type;
@@ -21,20 +19,20 @@ namespace CryptoNote
 
     class IP2pConnection
     {
-        public:
-            virtual ~IP2pConnection();
+      public:
+        virtual ~IP2pConnection();
 
-            virtual void read(P2pMessage &message) = 0;
+        virtual void read(P2pMessage &message) = 0;
 
-            virtual void write(const P2pMessage &message) = 0;
+        virtual void write(const P2pMessage &message) = 0;
 
-            virtual void stop() = 0;
+        virtual void stop() = 0;
     };
 
     class IP2pNode
     {
-        public:
-            virtual void stop() = 0;
+      public:
+        virtual void stop() = 0;
     };
 
-}
+} // namespace CryptoNote

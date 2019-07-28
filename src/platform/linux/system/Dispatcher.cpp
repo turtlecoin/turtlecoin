@@ -4,23 +4,22 @@
 // Please see the included LICENSE file for more information.
 
 #include "Dispatcher.h"
-#include <cassert>
 
+#include "ErrorMessage.h"
+
+#include <cassert>
+#include <fcntl.h>
+#include <string.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/timerfd.h>
-#include <fcntl.h>
-#include <string.h>
 #include <ucontext.h>
 #include <unistd.h>
-#include "ErrorMessage.h"
 
 namespace System
 {
-
     namespace
     {
-
         struct ContextMakingData
         {
             Dispatcher *dispatcher;
@@ -29,30 +28,30 @@ namespace System
 
         class MutextGuard
         {
-            public:
-                MutextGuard(pthread_mutex_t &_mutex) : mutex(_mutex)
+          public:
+            MutextGuard(pthread_mutex_t &_mutex): mutex(_mutex)
+            {
+                auto ret = pthread_mutex_lock(&mutex);
+                if (ret != 0)
                 {
-                    auto ret = pthread_mutex_lock(&mutex);
-                    if (ret != 0)
-                    {
-                        throw std::runtime_error("pthread_mutex_lock failed, " + errorMessage(ret));
-                    }
+                    throw std::runtime_error("pthread_mutex_lock failed, " + errorMessage(ret));
                 }
+            }
 
-                ~MutextGuard()
-                {
-                    pthread_mutex_unlock(&mutex);
-                }
+            ~MutextGuard()
+            {
+                pthread_mutex_unlock(&mutex);
+            }
 
-            private:
-                pthread_mutex_t &mutex;
+          private:
+            pthread_mutex_t &mutex;
         };
 
         static_assert(Dispatcher::SIZEOF_PTHREAD_MUTEX_T == sizeof(pthread_mutex_t), "invalid pthread mutex size");
 
         const size_t STACK_SIZE = 64 * 1024;
 
-    };
+    }; // namespace
 
     Dispatcher::Dispatcher()
     {
@@ -213,8 +212,8 @@ namespace System
             if (count == 1)
             {
                 ContextPair *contextPair = static_cast<ContextPair *>(event.data.ptr);
-                if (((event.events & (EPOLLIN | EPOLLOUT)) != 0) && contextPair->readContext == nullptr &&
-                    contextPair->writeContext == nullptr)
+                if (((event.events & (EPOLLIN | EPOLLOUT)) != 0) && contextPair->readContext == nullptr
+                    && contextPair->writeContext == nullptr)
                 {
                     uint64_t buf;
                     auto transferred = read(remoteSpawnEvent, &buf, sizeof buf);
@@ -387,8 +386,8 @@ namespace System
                 for (int i = 0; i < count; ++i)
                 {
                     ContextPair *contextPair = static_cast<ContextPair *>(events[i].data.ptr);
-                    if (((events[i].events & (EPOLLIN | EPOLLOUT)) != 0) && contextPair->readContext == nullptr &&
-                        contextPair->writeContext == nullptr)
+                    if (((events[i].events & (EPOLLIN | EPOLLOUT)) != 0) && contextPair->readContext == nullptr
+                        && contextPair->writeContext == nullptr)
                     {
                         uint64_t buf;
                         auto transferred = read(remoteSpawnEvent, &buf, sizeof buf);
@@ -465,7 +464,7 @@ namespace System
         {
             ucontext_t *newlyCreatedContext = new ucontext_t;
             if (getcontext(newlyCreatedContext) == -1)
-            { //makecontext precondition
+            { // makecontext precondition
                 throw std::runtime_error("Dispatcher::getReusableContext, getcontext failed, " + lastErrorMessage());
             }
 
@@ -473,12 +472,12 @@ namespace System
             newlyCreatedContext->uc_stack.ss_sp = stackPointer;
             newlyCreatedContext->uc_stack.ss_size = STACK_SIZE;
 
-            ContextMakingData makingContextData{
-                this,
-                newlyCreatedContext
-            };
+            ContextMakingData makingContextData {this, newlyCreatedContext};
             makecontext(
-                newlyCreatedContext, (void (*)()) contextProcedureStatic, 1, reinterpret_cast<int *>(&makingContextData));
+                newlyCreatedContext,
+                (void (*)())contextProcedureStatic,
+                1,
+                reinterpret_cast<int *>(&makingContextData));
 
             ucontext_t *oldContext = static_cast<ucontext_t *>(currentContext->ucontext);
             if (swapcontext(oldContext, newlyCreatedContext) == -1)
@@ -618,4 +617,4 @@ namespace System
         makingContextData->dispatcher->contextProcedure(makingContextData->ucontext);
     }
 
-}
+} // namespace System

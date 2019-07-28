@@ -4,12 +4,11 @@
 // Please see the included LICENSE file for more information.
 
 #include "Ipv4Resolver.h"
+
 #include <cassert>
+#include <netdb.h>
 #include <random>
 #include <stdexcept>
-
-#include <netdb.h>
-
 #include <system/Dispatcher.h>
 #include <system/ErrorMessage.h>
 #include <system/InterruptedException.h>
@@ -17,16 +16,11 @@
 
 namespace System
 {
+    Ipv4Resolver::Ipv4Resolver(): dispatcher(nullptr) {}
 
-    Ipv4Resolver::Ipv4Resolver() : dispatcher(nullptr)
-    {
-    }
+    Ipv4Resolver::Ipv4Resolver(Dispatcher &dispatcher): dispatcher(&dispatcher) {}
 
-    Ipv4Resolver::Ipv4Resolver(Dispatcher &dispatcher) : dispatcher(&dispatcher)
-    {
-    }
-
-    Ipv4Resolver::Ipv4Resolver(Ipv4Resolver &&other) : dispatcher(other.dispatcher)
+    Ipv4Resolver::Ipv4Resolver(Ipv4Resolver &&other): dispatcher(other.dispatcher)
     {
         if (dispatcher != nullptr)
         {
@@ -34,9 +28,7 @@ namespace System
         }
     }
 
-    Ipv4Resolver::~Ipv4Resolver()
-    {
-    }
+    Ipv4Resolver::~Ipv4Resolver() {}
 
     Ipv4Resolver &Ipv4Resolver::operator=(Ipv4Resolver &&other)
     {
@@ -57,16 +49,7 @@ namespace System
             throw InterruptedException();
         }
 
-        addrinfo hints = {
-            0,
-            AF_INET,
-            SOCK_STREAM,
-            IPPROTO_TCP,
-            0,
-            NULL,
-            NULL,
-            NULL
-        };
+        addrinfo hints = {0, AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
         addrinfo *addressInfos;
         int result = getaddrinfo(host.c_str(), NULL, &hints, &addressInfos);
         if (result != 0)
@@ -80,7 +63,7 @@ namespace System
             ++count;
         }
 
-        std::mt19937 generator{std::random_device()()};
+        std::mt19937 generator {std::random_device()()};
         std::size_t index = std::uniform_int_distribution<std::size_t>(0, count - 1)(generator);
         addrinfo *addressInfo = addressInfos;
         for (std::size_t i = 0; i < index; ++i)
@@ -93,4 +76,4 @@ namespace System
         return address;
     }
 
-}
+} // namespace System

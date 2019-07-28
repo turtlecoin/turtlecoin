@@ -5,15 +5,14 @@
 
 #pragma once
 
-#include <string>
 #include <array>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <string>
 
 #undef ERROR
 
 namespace Logging
 {
-
     enum Level
     {
         FATAL = 0,
@@ -56,27 +55,22 @@ namespace Logging
 
     class ILogger
     {
-        public:
-            virtual ~ILogger()
-            {
-            };
+      public:
+        virtual ~ILogger() {};
 
-            const static char COLOR_DELIMETER;
+        const static char COLOR_DELIMETER;
 
-            const static std::array<
-                std::string, 6
-            > LEVEL_NAMES;
+        const static std::array<std::string, 6> LEVEL_NAMES;
 
-            virtual void operator()(
-                const std::string &category,
-                Level level,
-                boost::posix_time::ptime time,
-                const std::string &body
-            ) = 0;
+        virtual void operator()(
+            const std::string &category,
+            Level level,
+            boost::posix_time::ptime time,
+            const std::string &body) = 0;
     };
 
-    #ifndef ENDL
-        #define ENDL std::endl
-    #endif
+#ifndef ENDL
+#define ENDL std::endl
+#endif
 
-}
+} // namespace Logging

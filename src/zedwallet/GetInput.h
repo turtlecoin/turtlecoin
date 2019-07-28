@@ -1,13 +1,11 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
 #include <string>
-
 #include <vector>
-
 #include <zedwallet/Commands.h>
 #include <zedwallet/Types.h>
 
@@ -20,11 +18,6 @@ std::string getInputAndWorkInBackground(
     const std::vector<T> &availableCommands,
     std::string prompt,
     bool backgroundRefresh,
-    std::shared_ptr<WalletInfo> walletInfo
-);
+    std::shared_ptr<WalletInfo> walletInfo);
 
-template<typename T>
-std::string getInput(
-    const std::vector<T> &availableCommands,
-    std::string prompt
-);
+template<typename T> std::string getInput(const std::vector<T> &availableCommands, std::string prompt);

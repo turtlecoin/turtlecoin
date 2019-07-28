@@ -8,20 +8,16 @@
 #include <arpa/inet.h>
 #include <cassert>
 #include <sys/epoll.h>
-#include <unistd.h>
-
 #include <system/ErrorMessage.h>
 #include <system/InterruptedException.h>
 #include <system/Ipv4Address.h>
+#include <unistd.h>
 
 namespace System
 {
+    TcpConnection::TcpConnection(): dispatcher(nullptr) {}
 
-    TcpConnection::TcpConnection() : dispatcher(nullptr)
-    {
-    }
-
-    TcpConnection::TcpConnection(TcpConnection &&other) : dispatcher(other.dispatcher)
+    TcpConnection::TcpConnection(TcpConnection &&other): dispatcher(other.dispatcher)
     {
         if (other.dispatcher != nullptr)
         {
@@ -72,10 +68,7 @@ namespace System
         return *this;
     }
 
-    size_t TcpConnection::read(
-        uint8_t *data,
-        size_t size
-    )
+    size_t TcpConnection::read(uint8_t *data, size_t size)
     {
         assert(dispatcher != nullptr);
         assert(contextPair.readContext == nullptr);
@@ -85,14 +78,14 @@ namespace System
         }
 
         std::string message;
-        ssize_t transferred = ::recv(connection, (void *) data, size, 0);
+        ssize_t transferred = ::recv(connection, (void *)data, size, 0);
         if (transferred == -1)
         {
-            #pragma GCC diagnostic push
-            #pragma GCC diagnostic ignored "-Wlogical-op"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlogical-op"
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
-                #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                 message = "recv failed, " + lastErrorMessage();
             }
             else
@@ -119,8 +112,7 @@ namespace System
                 }
                 else
                 {
-                    dispatcher->getCurrentContext()->interruptProcedure = [&]()
-                    {
+                    dispatcher->getCurrentContext()->interruptProcedure = [&]() {
                         assert(dispatcher != nullptr);
                         assert(contextPair.readContext != nullptr);
                         epoll_event connectionEvent;
@@ -151,7 +143,7 @@ namespace System
 
                     contextPair.readContext = nullptr;
                     if (contextPair.writeContext != nullptr)
-                    { //write is presented, rearm
+                    { // write is presented, rearm
                         epoll_event connectionEvent;
                         connectionEvent.events = EPOLLOUT | EPOLLONESHOT;
                         connectionEvent.data.ptr = &contextPair;
@@ -168,7 +160,7 @@ namespace System
                         throw std::runtime_error("TcpConnection::read");
                     }
 
-                    ssize_t transferred = ::recv(connection, (void *) data, size, 0);
+                    ssize_t transferred = ::recv(connection, (void *)data, size, 0);
                     if (transferred == -1)
                     {
                         message = "recv failed, " + lastErrorMessage();
@@ -188,10 +180,7 @@ namespace System
         return transferred;
     }
 
-    std::size_t TcpConnection::write(
-        const uint8_t *data,
-        size_t size
-    )
+    std::size_t TcpConnection::write(const uint8_t *data, size_t size)
     {
         assert(dispatcher != nullptr);
         assert(contextPair.writeContext == nullptr);
@@ -211,14 +200,14 @@ namespace System
             return 0;
         }
 
-        ssize_t transferred = ::send(connection, (void *) data, size, MSG_NOSIGNAL);
+        ssize_t transferred = ::send(connection, (void *)data, size, MSG_NOSIGNAL);
         if (transferred == -1)
         {
-            #pragma GCC diagnostic push
-            #pragma GCC diagnostic ignored "-Wlogical-op"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlogical-op"
             if (errno != EAGAIN && errno != EWOULDBLOCK)
             {
-                #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                 message = "send failed, " + lastErrorMessage();
             }
             else
@@ -245,8 +234,7 @@ namespace System
                 }
                 else
                 {
-                    dispatcher->getCurrentContext()->interruptProcedure = [&]()
-                    {
+                    dispatcher->getCurrentContext()->interruptProcedure = [&]() {
                         assert(dispatcher != nullptr);
                         assert(contextPair.writeContext != nullptr);
                         epoll_event connectionEvent;
@@ -277,7 +265,7 @@ namespace System
 
                     contextPair.writeContext = nullptr;
                     if (contextPair.readContext != nullptr)
-                    { //read is presented, rearm
+                    { // read is presented, rearm
                         epoll_event connectionEvent;
                         connectionEvent.events = EPOLLIN | EPOLLONESHOT;
                         connectionEvent.data.ptr = &contextPair;
@@ -294,7 +282,7 @@ namespace System
                         throw std::runtime_error("TcpConnection::write, events & (EPOLLERR | EPOLLHUP) != 0");
                     }
 
-                    ssize_t transferred = ::send(connection, (void *) data, size, 0);
+                    ssize_t transferred = ::send(connection, (void *)data, size, 0);
                     if (transferred == -1)
                     {
                         message = "send failed, " + lastErrorMessage();
@@ -314,9 +302,7 @@ namespace System
         return transferred;
     }
 
-    std::pair<
-        Ipv4Address, uint16_t
-    > TcpConnection::getPeerAddressAndPort() const
+    std::pair<Ipv4Address, uint16_t> TcpConnection::getPeerAddressAndPort() const
     {
         sockaddr_in addr;
         socklen_t size = sizeof(addr);
@@ -329,12 +315,7 @@ namespace System
         return std::make_pair(Ipv4Address(htonl(addr.sin_addr.s_addr)), htons(addr.sin_port));
     }
 
-    TcpConnection::TcpConnection(
-        Dispatcher &dispatcher,
-        int socket
-    )
-        : dispatcher(&dispatcher),
-          connection(socket)
+    TcpConnection::TcpConnection(Dispatcher &dispatcher, int socket): dispatcher(&dispatcher), connection(socket)
     {
         contextPair.readContext = nullptr;
         contextPair.writeContext = nullptr;
@@ -348,4 +329,4 @@ namespace System
         }
     }
 
-}
+} // namespace System

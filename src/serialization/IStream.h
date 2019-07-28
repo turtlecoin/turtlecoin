@@ -10,23 +10,16 @@
 
 namespace CryptoNote
 {
-
     class IInputStream
     {
-        public:
-            virtual uint64_t read(
-                char *data,
-                uint64_t size
-            ) = 0;
+      public:
+        virtual uint64_t read(char *data, uint64_t size) = 0;
     };
 
     class IOutputStream
     {
-        public:
-            virtual void write(
-                const char *data,
-                uint64_t size
-            ) = 0;
+      public:
+        virtual void write(const char *data, uint64_t size) = 0;
     };
 
-}
+} // namespace CryptoNote

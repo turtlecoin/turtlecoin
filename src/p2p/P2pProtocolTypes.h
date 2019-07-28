@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include <common/StringTools.h>
 #include <string.h>
 #include <tuple>
-#include <common/StringTools.h>
 
 struct NetworkAddress
 {
@@ -29,26 +29,17 @@ struct connection_entry
     bool is_income;
 };
 
-inline bool operator<(
-    const NetworkAddress &a,
-    const NetworkAddress &b
-)
+inline bool operator<(const NetworkAddress &a, const NetworkAddress &b)
 {
     return std::tie(a.ip, a.port) < std::tie(b.ip, b.port);
 }
 
-inline bool operator==(
-    const NetworkAddress &a,
-    const NetworkAddress &b
-)
+inline bool operator==(const NetworkAddress &a, const NetworkAddress &b)
 {
     return memcmp(&a, &b, sizeof(a)) == 0;
 }
 
-inline std::ostream &operator<<(
-    std::ostream &s,
-    const NetworkAddress &na
-)
+inline std::ostream &operator<<(std::ostream &s, const NetworkAddress &na)
 {
     return s << Common::ipAddressToString(na.ip) << ":" << std::to_string(na.port);
 }

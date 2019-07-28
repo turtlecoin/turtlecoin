@@ -5,20 +5,18 @@
 
 #pragma once
 
-#include <list>
-#include <ostream>
-#include <unordered_set>
-#include <optional>
-
-#include <boost/uuid/uuid.hpp>
 #include "common/StringTools.h"
 #include "crypto/hash.h"
-
 #include "p2p/PendingLiteBlock.h"
+
+#include <boost/uuid/uuid.hpp>
+#include <list>
+#include <optional>
+#include <ostream>
+#include <unordered_set>
 
 namespace CryptoNote
 {
-
     struct CryptoNoteConnectionContext
     {
         uint8_t version;
@@ -30,7 +28,7 @@ namespace CryptoNote
 
         enum state
         {
-            state_befor_handshake = 0, //default state
+            state_befor_handshake = 0, // default state
             state_synchronizing,
             state_idle,
             state_normal,
@@ -70,19 +68,13 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote
 
 namespace std
 {
-    inline std::ostream &operator<<(
-        std::ostream &s,
-        const CryptoNote::CryptoNoteConnectionContext &context
-    )
+    inline std::ostream &operator<<(std::ostream &s, const CryptoNote::CryptoNoteConnectionContext &context)
     {
-        return s << "[" << Common::ipAddressToString(context.m_remote_ip) << ":" << context.m_remote_port << (
-            context.m_is_income
-            ? " INC"
-            : " OUT"
-        ) << "] ";
+        return s << "[" << Common::ipAddressToString(context.m_remote_ip) << ":" << context.m_remote_port
+                 << (context.m_is_income ? " INC" : " OUT") << "] ";
     }
-}
+} // namespace std

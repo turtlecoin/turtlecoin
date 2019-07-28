@@ -8,31 +8,21 @@
 
 #include <common/CryptoNoteTools.h>
 #include <common/Varint.h>
-
 #include <serialization/CryptoNoteSerialization.h>
 #include <serialization/SerializationTools.h>
 
-std::vector<uint8_t> getParentBlockHashingBinaryArray(
-    const CryptoNote::BlockTemplate &block,
-    const bool headerOnly
-)
+std::vector<uint8_t> getParentBlockHashingBinaryArray(const CryptoNote::BlockTemplate &block, const bool headerOnly)
 {
     return getParentBinaryArray(block, true, headerOnly);
 }
 
-std::vector<uint8_t> getParentBlockBinaryArray(
-    const CryptoNote::BlockTemplate &block,
-    const bool headerOnly
-)
+std::vector<uint8_t> getParentBlockBinaryArray(const CryptoNote::BlockTemplate &block, const bool headerOnly)
 {
     return getParentBinaryArray(block, false, headerOnly);
 }
 
-std::vector<uint8_t> getParentBinaryArray(
-    const CryptoNote::BlockTemplate &block,
-    const bool hashTransaction,
-    const bool headerOnly
-)
+std::vector<uint8_t>
+    getParentBinaryArray(const CryptoNote::BlockTemplate &block, const bool hashTransaction, const bool headerOnly)
 {
     std::vector<uint8_t> binaryArray;
 
@@ -94,8 +84,8 @@ Crypto::Hash getMerkleRoot(const CryptoNote::BlockTemplate &block)
 Crypto::Hash getBlockLongHash(const CryptoNote::BlockTemplate &block)
 {
     const std::vector<uint8_t> rawHashingBlock = block.majorVersion == CryptoNote::BLOCK_MAJOR_VERSION_1
-                                                 ? getBlockHashingBinaryArray(block)
-                                                 : getParentBlockHashingBinaryArray(block, true);
+                                                     ? getBlockHashingBinaryArray(block)
+                                                     : getParentBlockHashingBinaryArray(block, true);
 
     Crypto::Hash hash;
 

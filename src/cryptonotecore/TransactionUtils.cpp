@@ -5,18 +5,17 @@
 
 #include "TransactionUtils.h"
 
-#include <unordered_set>
-
-#include "crypto/crypto.h"
-#include "cryptonotecore/Account.h"
 #include "CryptoNoteFormatUtils.h"
 #include "common/TransactionExtra.h"
+#include "crypto/crypto.h"
+#include "cryptonotecore/Account.h"
+
+#include <unordered_set>
 
 using namespace Crypto;
 
 namespace CryptoNote
 {
-
     bool checkInputsKeyimagesDiff(const CryptoNote::TransactionPrefix &tx)
     {
         std::unordered_set<Crypto::KeyImage> ki;
@@ -71,10 +70,7 @@ namespace CryptoNote
         return TransactionTypes::InputType::Invalid;
     }
 
-    const TransactionInput &getInputChecked(
-        const CryptoNote::TransactionPrefix &transaction,
-        size_t index
-    )
+    const TransactionInput &getInputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index)
     {
         if (transaction.inputs.size() <= index)
         {
@@ -87,8 +83,7 @@ namespace CryptoNote
     const TransactionInput &getInputChecked(
         const CryptoNote::TransactionPrefix &transaction,
         size_t index,
-        TransactionTypes::InputType type
-    )
+        TransactionTypes::InputType type)
     {
         const auto &input = getInputChecked(transaction, index);
         if (getTransactionInputType(input) != type)
@@ -111,10 +106,7 @@ namespace CryptoNote
         return TransactionTypes::OutputType::Invalid;
     }
 
-    const TransactionOutput &getOutputChecked(
-        const CryptoNote::TransactionPrefix &transaction,
-        size_t index
-    )
+    const TransactionOutput &getOutputChecked(const CryptoNote::TransactionPrefix &transaction, size_t index)
     {
         if (transaction.outputs.size() <= index)
         {
@@ -127,8 +119,7 @@ namespace CryptoNote
     const TransactionOutput &getOutputChecked(
         const CryptoNote::TransactionPrefix &transaction,
         size_t index,
-        TransactionTypes::OutputType type
-    )
+        TransactionTypes::OutputType type)
     {
         const auto &output = getOutputChecked(transaction, index);
         if (getTransactionOutputType(output.target) != type)
@@ -144,8 +135,7 @@ namespace CryptoNote
         const AccountPublicAddress &addr,
         const SecretKey &viewSecretKey,
         std::vector<uint32_t> &out,
-        uint64_t &amount
-    )
+        uint64_t &amount)
     {
         AccountKeys keys;
         keys.address = addr;
@@ -181,4 +171,4 @@ namespace CryptoNote
         return true;
     }
 
-}
+} // namespace CryptoNote

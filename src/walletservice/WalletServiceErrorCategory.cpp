@@ -9,8 +9,7 @@ namespace CryptoNote
 {
     namespace error
     {
-
         WalletServiceErrorCategory WalletServiceErrorCategory::INSTANCE;
 
     }
-}
+} // namespace CryptoNote

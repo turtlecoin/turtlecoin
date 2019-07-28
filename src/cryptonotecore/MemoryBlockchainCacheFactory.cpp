@@ -7,19 +7,15 @@
 
 namespace CryptoNote
 {
-
     MemoryBlockchainCacheFactory::MemoryBlockchainCacheFactory(
         const std::string &filename,
-        std::shared_ptr<Logging::ILogger> logger
-    )
-        : filename(filename),
-          logger(logger)
+        std::shared_ptr<Logging::ILogger> logger):
+        filename(filename),
+        logger(logger)
     {
     }
 
-    MemoryBlockchainCacheFactory::~MemoryBlockchainCacheFactory()
-    {
-    }
+    MemoryBlockchainCacheFactory::~MemoryBlockchainCacheFactory() {}
 
     std::unique_ptr<IBlockchainCache> MemoryBlockchainCacheFactory::createRootBlockchainCache(const Currency &currency)
     {
@@ -29,11 +25,9 @@ namespace CryptoNote
     std::unique_ptr<IBlockchainCache> MemoryBlockchainCacheFactory::createBlockchainCache(
         const Currency &currency,
         IBlockchainCache *parent,
-        uint32_t startIndex
-    )
+        uint32_t startIndex)
     {
-
         return std::unique_ptr<IBlockchainCache>(new BlockchainCache(filename, currency, logger, parent, startIndex));
     }
 
-} //namespace CryptoNote
+} // namespace CryptoNote

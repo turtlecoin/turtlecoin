@@ -9,14 +9,11 @@
 
 namespace CryptoNote
 {
-
     struct ITimeProvider
     {
         virtual time_t now() = 0;
 
-        virtual ~ITimeProvider()
-        {
-        }
+        virtual ~ITimeProvider() {}
     };
 
     struct RealTimeProvider : public ITimeProvider
@@ -27,4 +24,4 @@ namespace CryptoNote
         }
     };
 
-}
+} // namespace CryptoNote

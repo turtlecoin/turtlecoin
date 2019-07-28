@@ -1,43 +1,34 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
 #include <iostream>
-
-#include <walletbackend/WalletBackend.h>
-
 #include <utilities/ColouredMsg.h>
+#include <walletbackend/WalletBackend.h>
 #include <zedwallet++/ParseArguments.h>
 
-std::tuple<
-    bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const ZedConfig &config);
+std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const ZedConfig &config);
 
 bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend);
 
 std::string getAction(const ZedConfig &config);
 
-void mainLoop(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex
-);
+void mainLoop(const std::shared_ptr<WalletBackend> walletBackend, const std::shared_ptr<std::mutex> mutex);
 
 template<typename T>
 std::string parseCommand(
     const std::vector<T> &printableCommands,
     const std::vector<T> &availableCommands,
-    const std::string prompt
-)
+    const std::string prompt)
 {
     while (true)
     {
         std::string selection = getInput(availableCommands, prompt);
 
         /* Convert to lower case */
-        std::transform(
-            selection.begin(), selection.end(), selection.begin(), ::tolower
-        );
+        std::transform(selection.begin(), selection.end(), selection.begin(), ::tolower);
 
         /* \n == no-op */
         if (selection == "")
@@ -67,7 +58,7 @@ std::string parseCommand(
             selectionNum = -1;
             isNumericInput = true;
         }
-            /* Input ain't a number */
+        /* Input ain't a number */
         catch (const std::invalid_argument &)
         {
             isNumericInput = false;
@@ -94,16 +85,14 @@ std::string parseCommand(
         else
         {
             /* Find the command by command name */
-            auto it = std::find_if(
-                availableCommands.begin(), availableCommands.end(), [&selection](const auto command)
-            {
-                std::string cmd = command.commandName;
+            auto it =
+                std::find_if(availableCommands.begin(), availableCommands.end(), [&selection](const auto command) {
+                    std::string cmd = command.commandName;
 
-                std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
+                    std::transform(cmd.begin(), cmd.end(), cmd.begin(), ::tolower);
 
-                return cmd == selection;
-            }
-            );
+                    return cmd == selection;
+                });
 
             /* Command doesn't exist in availableCommands */
             if (it == availableCommands.end())
@@ -121,11 +110,7 @@ std::string parseCommand(
     }
 }
 
-template<typename T>
-void printCommands(
-    const std::vector<T> &commands,
-    size_t offset = 0
-)
+template<typename T> void printCommands(const std::vector<T> &commands, size_t offset = 0)
 {
     size_t i = 1 + offset;
 

@@ -5,60 +5,51 @@
 
 #pragma once
 
-#include <queue>
-
 #include "IP2pNodeInternal.h"
 #include "LevinProtocol.h"
 #include "P2pContextOwner.h"
 #include "P2pInterfaces.h"
 
+#include <queue>
+
 namespace CryptoNote
 {
-
     class P2pContext;
 
     class P2pNode;
 
     class P2pConnectionProxy : public IP2pConnection
     {
-        public:
+      public:
+        P2pConnectionProxy(P2pContextOwner &&ctx, IP2pNodeInternal &node);
 
-            P2pConnectionProxy(
-                P2pContextOwner &&ctx,
-                IP2pNodeInternal &node
-            );
+        ~P2pConnectionProxy();
 
-            ~P2pConnectionProxy();
+        bool processIncomingHandshake();
 
-            bool processIncomingHandshake();
+        // IP2pConnection
+        virtual void read(P2pMessage &message) override;
 
-            // IP2pConnection
-            virtual void read(P2pMessage &message) override;
+        virtual void write(const P2pMessage &message) override;
 
-            virtual void write(const P2pMessage &message) override;
+        virtual void stop() override;
 
-            virtual void stop() override;
+      private:
+        void writeHandshake(const P2pMessage &message);
 
-        private:
+        void handleHandshakeRequest(const LevinProtocol::Command &cmd);
 
-            void writeHandshake(const P2pMessage &message);
+        void handleHandshakeResponse(const LevinProtocol::Command &cmd, P2pMessage &message);
 
-            void handleHandshakeRequest(const LevinProtocol::Command &cmd);
+        void handleTimedSync(const LevinProtocol::Command &cmd);
 
-            void handleHandshakeResponse(
-                const LevinProtocol::Command &cmd,
-                P2pMessage &message
-            );
+        std::queue<P2pMessage> m_readQueue;
 
-            void handleTimedSync(const LevinProtocol::Command &cmd);
+        P2pContextOwner m_contextOwner;
 
-            std::queue<P2pMessage> m_readQueue;
+        P2pContext &m_context;
 
-            P2pContextOwner m_contextOwner;
-
-            P2pContext &m_context;
-
-            IP2pNodeInternal &m_node;
+        IP2pNodeInternal &m_node;
     };
 
-}
+} // namespace CryptoNote

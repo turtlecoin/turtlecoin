@@ -3,16 +3,12 @@
 //
 // Please see the included LICENSE file for more information.
 
+#include "groestl.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
-#include "groestl.h"
-
-void hash_extra_groestl(
-    const void *data,
-    size_t length,
-    char *hash
-)
+void hash_extra_groestl(const void *data, size_t length, char *hash)
 {
-    groestl(data, length * 8, (uint8_t *) hash);
+    groestl(data, length * 8, (uint8_t *)hash);
 }

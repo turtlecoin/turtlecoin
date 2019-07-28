@@ -5,19 +5,15 @@
 
 #pragma once
 
-#include <algorithm>
-
-#include <common/StringTools.h>
-
-#include <cstdint>
-
-#include <iterator>
-
 #include "json.hpp"
-
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include <algorithm>
+#include <common/StringTools.h>
+#include <cstdint>
+#include <iterator>
 
 namespace Crypto
 {
@@ -55,9 +51,7 @@ namespace Crypto
 
     struct PublicKey
     {
-        PublicKey()
-        {
-        }
+        PublicKey() {}
 
         PublicKey(std::initializer_list<uint8_t> input)
         {
@@ -99,9 +93,7 @@ namespace Crypto
 
     struct SecretKey
     {
-        SecretKey()
-        {
-        }
+        SecretKey() {}
 
         SecretKey(std::initializer_list<uint8_t> input)
         {
@@ -143,9 +135,7 @@ namespace Crypto
 
     struct KeyDerivation
     {
-        KeyDerivation()
-        {
-        }
+        KeyDerivation() {}
 
         KeyDerivation(std::initializer_list<uint8_t> input)
         {
@@ -180,7 +170,6 @@ namespace Crypto
             {
                 throw std::invalid_argument("Error parsing JSON KeyDerivation, wrong length or not hex");
             }
-
         }
 
         uint8_t data[32];
@@ -188,9 +177,7 @@ namespace Crypto
 
     struct KeyImage
     {
-        KeyImage()
-        {
-        }
+        KeyImage() {}
 
         KeyImage(std::initializer_list<uint8_t> input)
         {
@@ -232,9 +219,7 @@ namespace Crypto
 
     struct Signature
     {
-        Signature()
-        {
-        }
+        Signature() {}
 
         Signature(std::initializer_list<uint8_t> input)
         {
@@ -285,127 +270,86 @@ namespace Crypto
         return reinterpret_cast<const size_t &>(keyImage);
     }
 
-    inline void to_json(
-        nlohmann::json &j,
-        const Hash &h
-    )
+    inline void to_json(nlohmann::json &j, const Hash &h)
     {
         j = Common::podToHex(h);
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        Hash &h
-    )
+    inline void from_json(const nlohmann::json &j, Hash &h)
     {
         if (!Common::podFromHex(j.get<std::string>(), h.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(
-        nlohmann::json &j,
-        const PublicKey &p
-    )
+    inline void to_json(nlohmann::json &j, const PublicKey &p)
     {
         j = Common::podToHex(p);
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        PublicKey &p
-    )
+    inline void from_json(const nlohmann::json &j, PublicKey &p)
     {
         if (!Common::podFromHex(j.get<std::string>(), p.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(
-        nlohmann::json &j,
-        const SecretKey &s
-    )
+    inline void to_json(nlohmann::json &j, const SecretKey &s)
     {
         j = Common::podToHex(s);
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        SecretKey &s
-    )
+    inline void from_json(const nlohmann::json &j, SecretKey &s)
     {
         if (!Common::podFromHex(j.get<std::string>(), s.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(
-        nlohmann::json &j,
-        const KeyDerivation &k
-    )
+    inline void to_json(nlohmann::json &j, const KeyDerivation &k)
     {
         j = Common::podToHex(k);
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        KeyDerivation &k
-    )
+    inline void from_json(const nlohmann::json &j, KeyDerivation &k)
     {
         if (!Common::podFromHex(j.get<std::string>(), k.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
 
-    inline void to_json(
-        nlohmann::json &j,
-        const KeyImage &k
-    )
+    inline void to_json(nlohmann::json &j, const KeyImage &k)
     {
         j = Common::podToHex(k);
     }
 
-    inline void from_json(
-        const nlohmann::json &j,
-        KeyImage &k
-    )
+    inline void from_json(const nlohmann::json &j, KeyImage &k)
     {
         if (!Common::podFromHex(j.get<std::string>(), k.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
-}
+} // namespace Crypto
 
 namespace std
 {
     /* For using in std::unordered_* containers */
-    template<>
-    struct hash<Crypto::Hash>
+    template<> struct hash<Crypto::Hash>
     {
         size_t operator()(const Crypto::Hash &hash) const
         {
@@ -413,8 +357,7 @@ namespace std
         }
     };
 
-    template<>
-    struct hash<Crypto::PublicKey>
+    template<> struct hash<Crypto::PublicKey>
     {
         size_t operator()(const Crypto::PublicKey &publicKey) const
         {
@@ -422,8 +365,7 @@ namespace std
         }
     };
 
-    template<>
-    struct hash<Crypto::SecretKey>
+    template<> struct hash<Crypto::SecretKey>
     {
         size_t operator()(const Crypto::SecretKey &secretKey) const
         {
@@ -431,8 +373,7 @@ namespace std
         }
     };
 
-    template<>
-    struct hash<Crypto::KeyDerivation>
+    template<> struct hash<Crypto::KeyDerivation>
     {
         size_t operator()(const Crypto::KeyDerivation &keyDerivation) const
         {
@@ -440,8 +381,7 @@ namespace std
         }
     };
 
-    template<>
-    struct hash<Crypto::KeyImage>
+    template<> struct hash<Crypto::KeyImage>
     {
         size_t operator()(const Crypto::KeyImage &keyImage) const
         {
@@ -449,8 +389,7 @@ namespace std
         }
     };
 
-    template<>
-    struct hash<Crypto::Signature>
+    template<> struct hash<Crypto::Signature>
     {
         size_t operator()(const Crypto::Signature &signature) const
         {
@@ -459,57 +398,39 @@ namespace std
     };
 
     /* Overloading the << operator */
-    inline ostream &operator<<(
-        ostream &os,
-        const Crypto::Hash &hash
-    )
+    inline ostream &operator<<(ostream &os, const Crypto::Hash &hash)
     {
         os << Common::podToHex(hash);
         return os;
     }
 
-    inline ostream &operator<<(
-        ostream &os,
-        const Crypto::PublicKey &publicKey
-    )
+    inline ostream &operator<<(ostream &os, const Crypto::PublicKey &publicKey)
     {
         os << Common::podToHex(publicKey);
         return os;
     }
 
-    inline ostream &operator<<(
-        ostream &os,
-        const Crypto::SecretKey &secretKey
-    )
+    inline ostream &operator<<(ostream &os, const Crypto::SecretKey &secretKey)
     {
         os << Common::podToHex(secretKey);
         return os;
     }
 
-    inline ostream &operator<<(
-        ostream &os,
-        const Crypto::KeyDerivation &keyDerivation
-    )
+    inline ostream &operator<<(ostream &os, const Crypto::KeyDerivation &keyDerivation)
     {
         os << Common::podToHex(keyDerivation);
         return os;
     }
 
-    inline ostream &operator<<(
-        ostream &os,
-        const Crypto::KeyImage &keyImage
-    )
+    inline ostream &operator<<(ostream &os, const Crypto::KeyImage &keyImage)
     {
         os << Common::podToHex(keyImage);
         return os;
     }
 
-    inline ostream &operator<<(
-        ostream &os,
-        const Crypto::Signature &signature
-    )
+    inline ostream &operator<<(ostream &os, const Crypto::Signature &signature)
     {
         os << Common::podToHex(signature);
         return os;
     }
-}
+} // namespace std

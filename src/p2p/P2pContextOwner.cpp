@@ -4,22 +4,21 @@
 // Please see the included LICENSE file for more information.
 
 #include "P2pContextOwner.h"
-#include <cassert>
+
 #include "P2pContext.h"
+
+#include <cassert>
 
 namespace CryptoNote
 {
-
-    P2pContextOwner::P2pContextOwner(
-        P2pContext *ctx,
-        ContextList &contextList
-    ) : contextList(contextList)
+    P2pContextOwner::P2pContextOwner(P2pContext *ctx, ContextList &contextList): contextList(contextList)
     {
         contextIterator = contextList.insert(contextList.end(), ContextList::value_type(ctx));
     }
 
-    P2pContextOwner::P2pContextOwner(P2pContextOwner &&other) : contextList(other.contextList),
-                                                                contextIterator(other.contextIterator)
+    P2pContextOwner::P2pContextOwner(P2pContextOwner &&other):
+        contextList(other.contextList),
+        contextIterator(other.contextIterator)
     {
         other.contextIterator = contextList.end();
     }
@@ -43,4 +42,4 @@ namespace CryptoNote
         return &get();
     }
 
-}
+} // namespace CryptoNote

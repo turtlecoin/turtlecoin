@@ -5,13 +5,12 @@
 
 #pragma once
 
-#include <boost/utility/value_init.hpp>
-
 #include "CryptoNoteBasic.h"
-
-#include "serialization/BinaryOutputStreamSerializer.h"
 #include "serialization/BinaryInputStreamSerializer.h"
+#include "serialization/BinaryOutputStreamSerializer.h"
 #include "serialization/CryptoNoteSerialization.h"
+
+#include <boost/utility/value_init.hpp>
 
 namespace Logging
 {
@@ -20,33 +19,26 @@ namespace Logging
 
 namespace CryptoNote
 {
-
     bool is_out_to_acc(
         const AccountKeys &acc,
         const KeyOutput &out_key,
         const Crypto::KeyDerivation &derivation,
-        size_t keyIndex
-    );
+        size_t keyIndex);
 
     bool lookup_acc_outs(
         const AccountKeys &acc,
         const Transaction &tx,
         const Crypto::PublicKey &tx_pub_key,
         std::vector<size_t> &outs,
-        uint64_t &money_transfered
-    );
+        uint64_t &money_transfered);
 
     bool lookup_acc_outs(
         const AccountKeys &acc,
         const Transaction &tx,
         std::vector<size_t> &outs,
-        uint64_t &money_transfered
-    );
+        uint64_t &money_transfered);
 
-    bool get_tx_fee(
-        const Transaction &tx,
-        uint64_t &fee
-    );
+    bool get_tx_fee(const Transaction &tx, uint64_t &fee);
 
     uint64_t get_tx_fee(const Transaction &tx);
 
@@ -55,15 +47,11 @@ namespace CryptoNote
         const Crypto::PublicKey &tx_public_key,
         size_t real_output_index,
         KeyPair &in_ephemeral,
-        Crypto::KeyImage &ki
-    );
+        Crypto::KeyImage &ki);
 
     bool checkInputTypesSupported(const TransactionPrefix &tx);
 
-    bool checkOutsValid(
-        const TransactionPrefix &tx,
-        std::string *error = nullptr
-    );
+    bool checkOutsValid(const TransactionPrefix &tx, std::string *error = nullptr);
 
     bool checkInputsOverflow(const TransactionPrefix &tx);
 
@@ -79,23 +67,15 @@ namespace CryptoNote
 
     uint64_t getOutputAmount(const Transaction &transaction);
 
-    void decomposeAmount(
-        uint64_t amount,
-        uint64_t dustThreshold,
-        std::vector<uint64_t> &decomposedAmounts
-    );
+    void decomposeAmount(uint64_t amount, uint64_t dustThreshold, std::vector<uint64_t> &decomposedAmounts);
 
     // 62387455827 -> 455827 + 7000000 + 80000000 + 300000000 + 2000000000 + 60000000000, where 455827 <= dust_threshold
-    template<
-        typename chunk_handler_t,
-        typename dust_handler_t
-    >
+    template<typename chunk_handler_t, typename dust_handler_t>
     void decompose_amount_into_digits(
         uint64_t amount,
         uint64_t dust_threshold,
         const chunk_handler_t &chunk_handler,
-        const dust_handler_t &dust_handler
-    )
+        const dust_handler_t &dust_handler)
     {
         if (0 == amount)
         {
@@ -135,4 +115,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

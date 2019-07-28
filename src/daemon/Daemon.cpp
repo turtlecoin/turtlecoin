@@ -5,26 +5,24 @@
 //
 // Please see the included LICENSE file for more information.
 
-#include <config/CliHeader.h>
-
-#include "DaemonConfiguration.h"
 #include "DaemonCommandsHandler.h"
+#include "DaemonConfiguration.h"
+#include "common/CryptoNoteTools.h"
+#include "common/FileSystemShim.h"
+#include "common/PathTools.h"
 #include "common/ScopeExit.h"
 #include "common/SignalHandler.h"
-#include "common/StdOutputStream.h"
 #include "common/StdInputStream.h"
-#include "common/PathTools.h"
+#include "common/StdOutputStream.h"
 #include "common/Util.h"
-#include "common/FileSystemShim.h"
 #include "crypto/hash.h"
-#include "common/CryptoNoteTools.h"
 #include "cryptonotecore/Core.h"
 #include "cryptonotecore/Currency.h"
 #include "cryptonotecore/DatabaseBlockchainCache.h"
 #include "cryptonotecore/DatabaseBlockchainCacheFactory.h"
 #include "cryptonotecore/MainChainStorage.h"
-#include "cryptonotecore/MainChainStorageSqlite.h"
 #include "cryptonotecore/MainChainStorageRocksdb.h"
+#include "cryptonotecore/MainChainStorageSqlite.h"
 #include "cryptonotecore/RocksDBWrapper.h"
 #include "cryptonoteprotocol/CryptoNoteProtocolHandler.h"
 #include "p2p/NetNode.h"
@@ -33,18 +31,18 @@
 #include "serialization/BinaryInputStreamSerializer.h"
 #include "serialization/BinaryOutputStreamSerializer.h"
 
+#include <common/FileSystemShim.h>
+#include <config/CliHeader.h>
 #include <config/CryptoNoteCheckpoints.h>
 #include <logging/LoggerManager.h>
 
-#include <common/FileSystemShim.h>
-
 #if defined(WIN32)
 
-    #include <crtdbg.h>
-    #include <io.h>
+#include <crtdbg.h>
+#include <io.h>
 
 #else
-    #include <unistd.h>
+#include <unistd.h>
 #endif
 
 using Common::JsonValue;
@@ -52,10 +50,7 @@ using namespace CryptoNote;
 using namespace Logging;
 using namespace DaemonConfig;
 
-void print_genesis_tx_hex(
-    const bool blockExplorerMode,
-    std::shared_ptr<LoggerManager> logManager
-)
+void print_genesis_tx_hex(const bool blockExplorerMode, std::shared_ptr<LoggerManager> logManager)
 {
     CryptoNote::CurrencyBuilder currencyBuilder(logManager);
     currencyBuilder.isBlockexplorer(blockExplorerMode);
@@ -65,17 +60,16 @@ void print_genesis_tx_hex(
     const auto transaction = CryptoNote::CurrencyBuilder(logManager).generateGenesisTransaction();
 
     std::string transactionHex = Common::toHex(CryptoNote::toBinaryArray(transaction));
-    std::cout << getProjectCLIHeader() << std::endl << std::endl
+    std::cout << getProjectCLIHeader() << std::endl
+              << std::endl
               << "Replace the current GENESIS_COINBASE_TX_HEX line in src/config/CryptoNoteConfig.h with this one:"
-              << std::endl << "const char GENESIS_COINBASE_TX_HEX[] = \"" << transactionHex << "\";" << std::endl;
+              << std::endl
+              << "const char GENESIS_COINBASE_TX_HEX[] = \"" << transactionHex << "\";" << std::endl;
 
     return;
 }
 
-JsonValue buildLoggerConfiguration(
-    Level level,
-    const std::string &logfile
-)
+JsonValue buildLoggerConfiguration(Level level, const std::string &logfile)
 {
     JsonValue loggerConfiguration(JsonValue::OBJECT);
     loggerConfiguration.insert("globalLevel", static_cast<int64_t>(level));
@@ -95,17 +89,14 @@ JsonValue buildLoggerConfiguration(
     return loggerConfiguration;
 }
 
-int main(
-    int argc,
-    char *argv[]
-)
+int main(int argc, char *argv[])
 {
     fs::path temp = fs::path(argv[0]).filename();
     DaemonConfiguration config = initConfiguration(temp.string().c_str());
 
-    #ifdef WIN32
-    _CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-    #endif
+#ifdef WIN32
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
 
     const auto logManager = std::make_shared<LoggerManager>();
     LoggerRef logger(logManager, "daemon");
@@ -132,9 +123,11 @@ int main(
         }
         catch (std::runtime_error &e)
         {
-            std::cout << std::endl
-                      << "There was an error parsing the specified configuration file. Please check the file and try again:"
-                      << std::endl << e.what() << std::endl;
+            std::cout
+                << std::endl
+                << "There was an error parsing the specified configuration file. Please check the file and try again:"
+                << std::endl
+                << e.what() << std::endl;
             exit(1);
         }
         catch (std::exception &e)
@@ -148,9 +141,11 @@ int main(
         }
         catch (std::exception &e)
         {
-            std::cout << std::endl
-                      << "There was an error parsing the specified configuration file. Please check the file and try again"
-                      << std::endl << e.what() << std::endl;
+            std::cout
+                << std::endl
+                << "There was an error parsing the specified configuration file. Please check the file and try again"
+                << std::endl
+                << e.what() << std::endl;
             exit(1);
         }
     }
@@ -190,8 +185,7 @@ int main(
             config.dataDirectory + "/" + CryptoNote::parameters::P2P_NET_DATA_FILENAME,
             config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME + ".sqlite3",
             config.dataDirectory + "/" + CryptoNote::parameters::CRYPTONOTE_BLOCKS_FILENAME + ".rocksdb",
-            config.dataDirectory + "/DB"
-        };
+            config.dataDirectory + "/DB"};
 
         for (const auto path : removablePaths)
         {
@@ -232,7 +226,7 @@ int main(
 
         logger(INFO) << "Program Working Directory: " << cwdPath;
 
-        //create objects and link them
+        // create objects and link them
         CryptoNote::CurrencyBuilder currencyBuilder(logManager);
         currencyBuilder.isBlockexplorer(config.enableBlockExplorer);
 
@@ -250,9 +244,12 @@ int main(
 
         DataBaseConfig dbConfig;
         dbConfig.init(
-            config.dataDirectory, config.dbThreads, config.dbMaxOpenFiles, config.dbWriteBufferSizeMB, config
-            .dbReadCacheSizeMB, config.enableDbCompression
-        );
+            config.dataDirectory,
+            config.dbThreads,
+            config.dbMaxOpenFiles,
+            config.dbWriteBufferSizeMB,
+            config.dbReadCacheSizeMB,
+            config.enableDbCompression);
 
         /* If we were told to rewind the blockchain to a certain height
            we will remove blocks until we're back at the height specified */
@@ -305,10 +302,17 @@ int main(
 
         NetNodeConfig netNodeConfig;
         netNodeConfig.init(
-            config.p2pInterface, config.p2pPort, config.p2pExternalPort, config.localIp, config.hideMyPort, config
-            .dataDirectory, config.peers, config.exclusiveNodes, config.priorityNodes, config.seedNodes, config
-                .p2pResetPeerstate
-        );
+            config.p2pInterface,
+            config.p2pPort,
+            config.p2pExternalPort,
+            config.localIp,
+            config.hideMyPort,
+            config.dataDirectory,
+            config.peers,
+            config.exclusiveNodes,
+            config.priorityNodes,
+            config.seedNodes,
+            config.p2pResetPeerstate);
 
         if (!Tools::create_directories_if_necessary(dbConfig.getDataDir()))
         {
@@ -317,12 +321,7 @@ int main(
 
         RocksDBWrapper database(logManager);
         database.init(dbConfig);
-        Tools::ScopeExit dbShutdownOnExit(
-            [&database]()
-            {
-                database.shutdown();
-            }
-        );
+        Tools::ScopeExit dbShutdownOnExit([&database]() { database.shutdown(); });
 
         if (!DatabaseBlockchainCache::checkDBSchemeVersion(database, logManager))
         {
@@ -353,9 +352,12 @@ int main(
         }
 
         CryptoNote::Core ccore(
-            currency, logManager, std::move(checkpoints), dispatcher, std::unique_ptr<IBlockchainCacheFactory>(
-            new DatabaseBlockchainCacheFactory(
-                database, logger.getLogger())), std::move(tmainChainStorage));
+            currency,
+            logManager,
+            std::move(checkpoints),
+            dispatcher,
+            std::unique_ptr<IBlockchainCacheFactory>(new DatabaseBlockchainCacheFactory(database, logger.getLogger())),
+            std::move(tmainChainStorage));
 
         ccore.load();
         logger(INFO) << "Core initialized OK";
@@ -388,13 +390,10 @@ int main(
         rpcServer.start(config.rpcInterface, config.rpcPort);
         logger(INFO) << "Core rpc server started ok";
 
-        Tools::SignalHandler::install(
-            [&dch]
-            {
-                dch.exit({});
-                dch.stop_handling();
-            }
-        );
+        Tools::SignalHandler::install([&dch] {
+            dch.exit({});
+            dch.stop_handling();
+        });
 
         logger(INFO) << "Starting p2p net loop...";
         p2psrv.run();
@@ -402,17 +401,16 @@ int main(
 
         dch.stop_handling();
 
-        //stop components
+        // stop components
         logger(INFO) << "Stopping core rpc server...";
         rpcServer.stop();
 
-        //deinitialize components
+        // deinitialize components
         logger(INFO) << "Deinitializing p2p...";
         p2psrv.deinit();
 
         cprotocol.set_p2p_endpoint(nullptr);
         ccore.save();
-
     }
     catch (const std::exception &e)
     {

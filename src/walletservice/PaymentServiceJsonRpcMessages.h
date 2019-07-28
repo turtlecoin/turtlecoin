@@ -6,26 +6,24 @@
 
 #pragma once
 
+#include "serialization/ISerializer.h"
+
 #include <exception>
 #include <limits>
 #include <vector>
 
-#include "serialization/ISerializer.h"
-
 namespace PaymentService
 {
-
     /* Forward declaration to avoid circular dependency from including "WalletService.h" */
     class WalletService;
 
     class RequestSerializationError : public std::exception
     {
-
-        public:
-            virtual const char *what() const throw() override
-            {
-                return "Request error";
-            }
+      public:
+        virtual const char *what() const throw() override
+        {
+            return "Request error";
+        }
     };
 
     struct Save
@@ -430,10 +428,7 @@ namespace PaymentService
 
             uint64_t unlockTime = 0;
 
-            void serialize(
-                CryptoNote::ISerializer &serializer,
-                const WalletService &service
-            );
+            void serialize(CryptoNote::ISerializer &serializer, const WalletService &service);
         };
 
         struct Response
@@ -464,10 +459,7 @@ namespace PaymentService
 
             uint64_t unlockTime = 0;
 
-            void serialize(
-                CryptoNote::ISerializer &serializer,
-                const WalletService &service
-            );
+            void serialize(CryptoNote::ISerializer &serializer, const WalletService &service);
         };
 
         struct Response
@@ -535,10 +527,7 @@ namespace PaymentService
 
             std::string destinationAddress;
 
-            void serialize(
-                CryptoNote::ISerializer &serializer,
-                const WalletService &service
-            );
+            void serialize(CryptoNote::ISerializer &serializer, const WalletService &service);
         };
 
         struct Response
@@ -606,4 +595,4 @@ namespace PaymentService
         };
     };
 
-} //namespace PaymentService
+} // namespace PaymentService

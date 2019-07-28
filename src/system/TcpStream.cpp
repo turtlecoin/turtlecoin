@@ -4,17 +4,17 @@
 // Please see the included LICENSE file for more information.
 
 #include "TcpStream.h"
+
 #include <system/TcpConnection.h>
 
 namespace System
 {
-
-    TcpStreambuf::TcpStreambuf(TcpConnection &connection) : connection(connection)
+    TcpStreambuf::TcpStreambuf(TcpConnection &connection): connection(connection)
     {
         setg(&readBuf.front(), &readBuf.front(), &readBuf.front());
         setp(
-            reinterpret_cast<char *>(&writeBuf.front()), reinterpret_cast<char *>(&writeBuf.front() +
-                                                                                  writeBuf.max_size()));
+            reinterpret_cast<char *>(&writeBuf.front()),
+            reinterpret_cast<char *>(&writeBuf.front() + writeBuf.max_size()));
     }
 
     TcpStreambuf::~TcpStreambuf()
@@ -42,9 +42,7 @@ namespace System
 
     int TcpStreambuf::sync()
     {
-        return dumpBuffer(true)
-               ? 0
-               : -1;
+        return dumpBuffer(true) ? 0 : -1;
     }
 
     std::streambuf::int_type TcpStreambuf::underflow()
@@ -117,4 +115,4 @@ namespace System
         return true;
     }
 
-}
+} // namespace System

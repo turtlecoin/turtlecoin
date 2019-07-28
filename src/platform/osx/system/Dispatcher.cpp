@@ -4,25 +4,25 @@
 // Please see the included LICENSE file for more information.
 
 #include "Dispatcher.h"
+
+#include "Context.h"
+#include "ErrorMessage.h"
+
 #include <cassert>
+#include <fcntl.h>
+#include <pthread.h>
+#include <stdio.h>
 #include <string>
 #include <sys/errno.h>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <stdio.h>
 #include <unistd.h>
-#include "Context.h"
-#include "ErrorMessage.h"
 
 namespace System
 {
-
     namespace
     {
-
         struct ContextMakingData
         {
             void *uctx;
@@ -31,33 +31,33 @@ namespace System
 
         class MutextGuard
         {
-            public:
-                MutextGuard(pthread_mutex_t &_mutex) : mutex(_mutex)
+          public:
+            MutextGuard(pthread_mutex_t &_mutex): mutex(_mutex)
+            {
+                auto ret = pthread_mutex_lock(&mutex);
+                if (ret != 0)
                 {
-                    auto ret = pthread_mutex_lock(&mutex);
-                    if (ret != 0)
-                    {
-                        throw std::runtime_error(
-                            "MutextGuard::MutextGuard, pthread_mutex_lock failed, " + errorMessage(ret));
-                    }
+                    throw std::runtime_error(
+                        "MutextGuard::MutextGuard, pthread_mutex_lock failed, " + errorMessage(ret));
                 }
+            }
 
-                ~MutextGuard()
-                {
-                    pthread_mutex_unlock(&mutex);
-                }
+            ~MutextGuard()
+            {
+                pthread_mutex_unlock(&mutex);
+            }
 
-            private:
-                pthread_mutex_t &mutex;
+          private:
+            pthread_mutex_t &mutex;
         };
 
         const size_t STACK_SIZE = 64 * 1024;
 
-    }
+    } // namespace
 
     static_assert(Dispatcher::SIZEOF_PTHREAD_MUTEX_T == sizeof(pthread_mutex_t), "invalid pthread mutex size");
 
-    Dispatcher::Dispatcher() : lastCreatedTimer(0)
+    Dispatcher::Dispatcher(): lastCreatedTimer(0)
     {
         std::string message;
         kqueue = ::kqueue();
@@ -232,7 +232,6 @@ namespace System
                     spawn(std::move(remoteSpawningProcedures.front()));
                     remoteSpawningProcedures.pop();
                 }
-
             }
         }
 
@@ -351,10 +350,7 @@ namespace System
 
     void Dispatcher::yield()
     {
-        struct timespec zeroTimeout = {
-            0,
-            0
-        };
+        struct timespec zeroTimeout = {0, 0};
         int updatesCounter = 0;
         for (;;)
         {
@@ -396,9 +392,13 @@ namespace System
                     if (events[i].filter == EVFILT_WRITE)
                     {
                         EV_SET(
-                            &updates[updatesCounter++], events[i].ident, EVFILT_WRITE,
-                            EV_DELETE | EV_DISABLE, 0, 0, NULL
-                        );
+                            &updates[updatesCounter++],
+                            events[i].ident,
+                            EVFILT_WRITE,
+                            EV_DELETE | EV_DISABLE,
+                            0,
+                            0,
+                            NULL);
                     }
                 }
             }
@@ -432,12 +432,11 @@ namespace System
             static_cast<uctx *>(newlyCreatedContext)->uc_stack.ss_sp = stackPointer;
             static_cast<uctx *>(newlyCreatedContext)->uc_stack.ss_size = STACK_SIZE;
 
-            ContextMakingData makingData{
-                newlyCreatedContext,
-                this
-            };
+            ContextMakingData makingData {newlyCreatedContext, this};
             makecontext(
-                static_cast<uctx *>(newlyCreatedContext), reinterpret_cast<void (*)()>(contextProcedureStatic), reinterpret_cast<intptr_t>(&makingData));
+                static_cast<uctx *>(newlyCreatedContext),
+                reinterpret_cast<void (*)()>(contextProcedureStatic),
+                reinterpret_cast<intptr_t>(&makingData));
 
             uctx *oldContext = static_cast<uctx *>(currentContext->uctx);
             if (swapcontext(oldContext, newlyCreatedContext) == -1)
@@ -569,4 +568,4 @@ namespace System
         makingContextData->dispatcher->contextProcedure(makingContextData->uctx);
     }
 
-}
+} // namespace System

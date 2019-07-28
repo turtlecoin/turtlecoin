@@ -4,12 +4,12 @@
 // Please see the included LICENSE file for more information.
 
 #include "ErrorMessage.h"
+
 #include <cerrno>
 #include <cstring>
 
 namespace System
 {
-
     std::string lastErrorMessage()
     {
         return errorMessage(errno);
@@ -20,4 +20,4 @@ namespace System
         return "result=" + std::to_string(err) + ", " + std::strerror(err);
     }
 
-}
+} // namespace System

@@ -4,32 +4,24 @@
 // Please see the included LICENSE file for more information.
 
 #include "Timer.h"
-#include <cassert>
-#include <stdexcept>
-
-#include <sys/timerfd.h>
-#include <sys/epoll.h>
-#include <unistd.h>
 
 #include "Dispatcher.h"
+
+#include <cassert>
+#include <stdexcept>
+#include <sys/epoll.h>
+#include <sys/timerfd.h>
 #include <system/ErrorMessage.h>
 #include <system/InterruptedException.h>
+#include <unistd.h>
 
 namespace System
 {
+    Timer::Timer(): dispatcher(nullptr) {}
 
-    Timer::Timer() : dispatcher(nullptr)
-    {
-    }
+    Timer::Timer(Dispatcher &dispatcher): dispatcher(&dispatcher), context(nullptr), timer(-1) {}
 
-    Timer::Timer(Dispatcher &dispatcher)
-        : dispatcher(&dispatcher),
-          context(nullptr),
-          timer(-1)
-    {
-    }
-
-    Timer::Timer(Timer &&other) : dispatcher(other.dispatcher)
+    Timer::Timer(Timer &&other): dispatcher(other.dispatcher)
     {
         if (other.dispatcher != nullptr)
         {
@@ -100,8 +92,7 @@ namespace System
             {
                 throw std::runtime_error("Timer::sleep, epoll_ctl failed, " + lastErrorMessage());
             }
-            dispatcher->getCurrentContext()->interruptProcedure = [&]()
-            {
+            dispatcher->getCurrentContext()->interruptProcedure = [&]() {
                 assert(dispatcher != nullptr);
                 assert(context != nullptr);
                 OperationContext *timerContext = static_cast<OperationContext *>(context);
@@ -110,11 +101,11 @@ namespace System
                     uint64_t value = 0;
                     if (::read(timer, &value, sizeof value) == -1)
                     {
-                        #pragma GCC diagnostic push
-                        #pragma GCC diagnostic ignored "-Wlogical-op"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wlogical-op"
                         if (errno == EAGAIN || errno == EWOULDBLOCK)
                         {
-                            #pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
                             timerContext->interrupted = true;
                             dispatcher->pushContext(timerContext->context);
                         }
@@ -159,4 +150,4 @@ namespace System
         }
     }
 
-}
+} // namespace System

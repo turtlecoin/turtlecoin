@@ -15,14 +15,7 @@ namespace CryptoNote
     /************************************************************************/
     /* CryptoNote helper functions                                          */
     /************************************************************************/
-    uint64_t getPenalizedAmount(
-        uint64_t amount,
-        size_t medianSize,
-        size_t currentBlockSize
-    );
-}
+    uint64_t getPenalizedAmount(uint64_t amount, size_t medianSize, size_t currentBlockSize);
+} // namespace CryptoNote
 
-bool parse_hash256(
-    const std::string &str_hash,
-    Crypto::Hash &hash
-);
+bool parse_hash256(const std::string &str_hash, Crypto::Hash &hash);

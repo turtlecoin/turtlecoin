@@ -19,79 +19,71 @@
 
 namespace CryptoNote
 {
-
-    //Value must have public method IntrusiveLinkedList<Value>::hook& getHook()
-    template<class Value>
-    class IntrusiveLinkedList
+    // Value must have public method IntrusiveLinkedList<Value>::hook& getHook()
+    template<class Value> class IntrusiveLinkedList
     {
-        public:
-            class hook
-            {
-                public:
-                    friend class IntrusiveLinkedList<Value>;
+      public:
+        class hook
+        {
+          public:
+            friend class IntrusiveLinkedList<Value>;
 
-                    hook();
+            hook();
 
-                private:
-                    Value *prev;
+          private:
+            Value *prev;
 
-                    Value *next;
+            Value *next;
 
-                    bool used;
-            };
+            bool used;
+        };
 
-            class iterator : public std::iterator<std::bidirectional_iterator_tag, Value>
-            {
-                public:
-                    iterator(Value *value);
+        class iterator : public std::iterator<std::bidirectional_iterator_tag, Value>
+        {
+          public:
+            iterator(Value *value);
 
-                    bool operator!=(const iterator &other) const;
+            bool operator!=(const iterator &other) const;
 
-                    bool operator==(const iterator &other) const;
+            bool operator==(const iterator &other) const;
 
-                    iterator &operator++();
+            iterator &operator++();
 
-                    iterator operator++(int);
+            iterator operator++(int);
 
-                    iterator &operator--();
+            iterator &operator--();
 
-                    iterator operator--(int);
+            iterator operator--(int);
 
-                    Value &operator*() const;
+            Value &operator*() const;
 
-                    Value *operator->() const;
+            Value *operator->() const;
 
-                private:
-                    Value *currentElement;
-            };
+          private:
+            Value *currentElement;
+        };
 
-            IntrusiveLinkedList();
+        IntrusiveLinkedList();
 
-            bool insert(Value &value);
+        bool insert(Value &value);
 
-            bool remove(Value &value);
+        bool remove(Value &value);
 
-            bool empty() const;
+        bool empty() const;
 
-            iterator begin();
+        iterator begin();
 
-            iterator end();
+        iterator end();
 
-        private:
-            Value *head;
+      private:
+        Value *head;
 
-            Value *tail;
+        Value *tail;
     };
 
-    template<class Value>
-    IntrusiveLinkedList<Value>::IntrusiveLinkedList()
-        : head(nullptr),
-          tail(nullptr)
-    {
-    }
+    template<class Value> IntrusiveLinkedList<Value>::IntrusiveLinkedList(): head(nullptr), tail(nullptr) {}
 
-    template<class Value>
-    bool IntrusiveLinkedList<Value>::insert(Value &value)
+    template<class Value> bool IntrusiveLinkedList<Value>::insert(Value &value)
     {
         if (!value.getHook().used)
         {
@@ -118,8 +110,7 @@ namespace CryptoNote
         }
     }
 
-    template<class Value>
-    bool IntrusiveLinkedList<Value>::remove(Value &value)
+    template<class Value> bool IntrusiveLinkedList<Value>::remove(Value &value)
     {
         if (value.getHook().used && head != nullptr)
         {
@@ -180,53 +171,35 @@ namespace CryptoNote
         }
     }
 
-    template<class Value>
-    bool IntrusiveLinkedList<Value>::empty() const
+    template<class Value> bool IntrusiveLinkedList<Value>::empty() const
     {
         return head == nullptr;
     }
 
-    template<class Value>
-    typename IntrusiveLinkedList<Value>::iterator IntrusiveLinkedList<Value>::begin()
+    template<class Value> typename IntrusiveLinkedList<Value>::iterator IntrusiveLinkedList<Value>::begin()
     {
         return iterator(head);
     }
 
-    template<class Value>
-    typename IntrusiveLinkedList<Value>::iterator IntrusiveLinkedList<Value>::end()
+    template<class Value> typename IntrusiveLinkedList<Value>::iterator IntrusiveLinkedList<Value>::end()
     {
         return iterator(nullptr);
     }
 
-    template<class Value>
-    IntrusiveLinkedList<Value>::hook::hook()
-        : prev(nullptr),
-          next(nullptr),
-          used(false)
-    {
-    }
+    template<class Value> IntrusiveLinkedList<Value>::hook::hook(): prev(nullptr), next(nullptr), used(false) {}
+
+    template<class Value> IntrusiveLinkedList<Value>::iterator::iterator(Value *value): currentElement(value) {}
 
     template<class Value>
-    IntrusiveLinkedList<Value>::iterator::iterator(Value *value) : currentElement(value)
-    {
-    }
-
-    template<class Value>
-    bool IntrusiveLinkedList<Value>::iterator::operator!=(
-        const typename IntrusiveLinkedList<
-            Value
-        >::iterator &other
-    ) const
+    bool IntrusiveLinkedList<Value>::iterator::
+        operator!=(const typename IntrusiveLinkedList<Value>::iterator &other) const
     {
         return currentElement != other.currentElement;
     }
 
     template<class Value>
-    bool IntrusiveLinkedList<Value>::iterator::operator==(
-        const typename IntrusiveLinkedList<
-            Value
-        >::iterator &other
-    ) const
+    bool IntrusiveLinkedList<Value>::iterator::
+        operator==(const typename IntrusiveLinkedList<Value>::iterator &other) const
     {
         return currentElement == other.currentElement;
     }
@@ -267,18 +240,16 @@ namespace CryptoNote
         return copy;
     }
 
-    template<class Value>
-    Value &IntrusiveLinkedList<Value>::iterator::operator*() const
+    template<class Value> Value &IntrusiveLinkedList<Value>::iterator::operator*() const
     {
         assert(currentElement != nullptr);
 
         return *currentElement;
     }
 
-    template<class Value>
-    Value *IntrusiveLinkedList<Value>::iterator::operator->() const
+    template<class Value> Value *IntrusiveLinkedList<Value>::iterator::operator->() const
     {
         return currentElement;
     }
 
-}
+} // namespace CryptoNote

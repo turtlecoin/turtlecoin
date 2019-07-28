@@ -11,11 +11,8 @@
 #include <common/CryptoNoteTools.h>
 #include <common/StringTools.h>
 #include <common/TransactionExtra.h>
-
 #include <config/CryptoNoteConfig.h>
-
 #include <miner/BlockUtilities.h>
-
 #include <utilities/ColouredMsg.h>
 #include <utilities/FormatTools.h>
 
@@ -23,10 +20,8 @@ using json = nlohmann::json;
 
 namespace Miner
 {
-
     namespace
     {
-
         MinerEvent BlockMinedEvent()
         {
             MinerEvent event;
@@ -62,8 +57,7 @@ namespace Miner
     MinerManager::MinerManager(
         System::Dispatcher &dispatcher,
         const CryptoNote::MiningConfig &config,
-        const std::shared_ptr<httplib::Client> httpClient
-    ) :
+        const std::shared_ptr<httplib::Client> httpClient):
 
         m_contextGroup(dispatcher),
         m_config(config),
@@ -83,10 +77,7 @@ namespace Miner
         isRunning = true;
 
         startBlockchainMonitoring();
-        std::thread reporter(
-            std::bind(&MinerManager
-            ::printHashRate,
-        this));
+        std::thread reporter(std::bind(&MinerManager ::printHashRate, this));
         startMining(params);
 
         eventLoop();
@@ -180,22 +171,16 @@ namespace Miner
 
     void MinerManager::startMining(const CryptoNote::BlockMiningParameters &params)
     {
-        m_contextGroup.spawn(
-            [
-                this,
-                params
-            ]()
+        m_contextGroup.spawn([this, params]() {
+            try
             {
-                try
-                {
-                    m_minedBlock = m_miner.mine(params, m_config.threadCount);
-                    pushEvent(BlockMinedEvent());
-                }
-                catch (const std::exception &)
-                {
-                }
+                m_minedBlock = m_miner.mine(params, m_config.threadCount);
+                pushEvent(BlockMinedEvent());
             }
-        );
+            catch (const std::exception &)
+            {
+            }
+        });
     }
 
     void MinerManager::stopMining()
@@ -205,19 +190,16 @@ namespace Miner
 
     void MinerManager::startBlockchainMonitoring()
     {
-        m_contextGroup.spawn(
-            [this]()
+        m_contextGroup.spawn([this]() {
+            try
             {
-                try
-                {
-                    m_blockchainMonitor.waitBlockchainUpdate();
-                    pushEvent(BlockchainUpdatedEvent());
-                }
-                catch (const std::exception &)
-                {
-                }
+                m_blockchainMonitor.waitBlockchainUpdate();
+                pushEvent(BlockchainUpdatedEvent());
             }
-        );
+            catch (const std::exception &)
+            {
+            }
+        });
     }
 
     void MinerManager::stopBlockchainMonitoring()
@@ -227,9 +209,8 @@ namespace Miner
 
     bool MinerManager::submitBlock(const CryptoNote::BlockTemplate &minedBlock)
     {
-        json j = {{"jsonrpc", "2.0"},
-                  {"method",  "submitblock"},
-                  {"params",  {Common::toHex(toBinaryArray(minedBlock))}}};
+        json j = {
+            {"jsonrpc", "2.0"}, {"method", "submitblock"}, {"params", {Common::toHex(toBinaryArray(minedBlock))}}};
 
         auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
 
@@ -251,9 +232,8 @@ namespace Miner
         while (true)
         {
             json j = {{"jsonrpc", "2.0"},
-                      {"method",  "getblocktemplate"},
-                      {
-                       "params",  {{"wallet_address", m_config.miningAddress}, {"reserve_size", 0}}}};
+                      {"method", "getblocktemplate"},
+                      {"params", {{"wallet_address", m_config.miningAddress}, {"reserve_size", 0}}}};
 
             auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
 
@@ -269,8 +249,8 @@ namespace Miner
             {
                 std::stringstream stream;
 
-                stream << "Failed to get block template - received unexpected http " << "code from server: "
-                       << res->status << std::endl;
+                stream << "Failed to get block template - received unexpected http "
+                       << "code from server: " << res->status << std::endl;
 
                 std::cout << WarningMsg(stream.str()) << std::endl;
 
@@ -299,8 +279,7 @@ namespace Miner
                 CryptoNote::BlockMiningParameters params;
                 params.difficulty = j.at("result").at("difficulty").get<uint64_t>();
 
-                std::vector<uint8_t> blob = Common::fromHex(
-                    j.at("result").at("blocktemplate_blob").get<std::string>());
+                std::vector<uint8_t> blob = Common::fromHex(j.at("result").at("blocktemplate_blob").get<std::string>());
 
                 if (!fromBinaryArray(params.blockTemplate, blob))
                 {
@@ -316,8 +295,8 @@ namespace Miner
             {
                 std::stringstream stream;
 
-                stream << "Failed to parse block template from daemon. Received data:\n" << res->body
-                       << "\nParse error: " << e.what() << std::endl;
+                stream << "Failed to parse block template from daemon. Received data:\n"
+                       << res->body << "\nParse error: " << e.what() << std::endl;
 
                 std::cout << WarningMsg(stream.str());
 
@@ -347,4 +326,4 @@ namespace Miner
         }
     }
 
-} //namespace Miner
+} // namespace Miner

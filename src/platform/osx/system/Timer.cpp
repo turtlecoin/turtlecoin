@@ -4,34 +4,26 @@
 // Please see the included LICENSE file for more information.
 
 #include "Timer.h"
+
+#include "Dispatcher.h"
+
 #include <cassert>
 #include <stdexcept>
 #include <string>
-
 #include <sys/errno.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include <unistd.h>
-
-#include "Dispatcher.h"
 #include <system/ErrorMessage.h>
 #include <system/InterruptedException.h>
+#include <unistd.h>
 
 namespace System
 {
+    Timer::Timer(): dispatcher(nullptr) {}
 
-    Timer::Timer() : dispatcher(nullptr)
-    {
-    }
+    Timer::Timer(Dispatcher &dispatcher): dispatcher(&dispatcher), context(nullptr), timer(-1) {}
 
-    Timer::Timer(Dispatcher &dispatcher)
-        : dispatcher(&dispatcher),
-          context(nullptr),
-          timer(-1)
-    {
-    }
-
-    Timer::Timer(Timer &&other) : dispatcher(other.dispatcher)
+    Timer::Timer(Timer &&other): dispatcher(other.dispatcher)
     {
         if (other.dispatcher != nullptr)
         {
@@ -79,8 +71,13 @@ namespace System
 
         struct kevent event;
         EV_SET(
-            &event, timer, EVFILT_TIMER, EV_ADD | EV_ENABLE | EV_ONESHOT, NOTE_NSECONDS, duration.count(), &timerContext
-        );
+            &event,
+            timer,
+            EVFILT_TIMER,
+            EV_ADD | EV_ENABLE | EV_ONESHOT,
+            NOTE_NSECONDS,
+            duration.count(),
+            &timerContext);
 
         if (kevent(dispatcher->getKqueue(), &event, 1, NULL, 0, NULL) == -1)
         {
@@ -88,8 +85,7 @@ namespace System
         }
 
         context = &timerContext;
-        dispatcher->getCurrentContext()->interruptProcedure = [&]
-        {
+        dispatcher->getCurrentContext()->interruptProcedure = [&] {
             assert(dispatcher != nullptr);
             assert(context != nullptr);
             OperationContext *timerContext = static_cast<OperationContext *>(context);
@@ -122,4 +118,4 @@ namespace System
         }
     }
 
-}
+} // namespace System

@@ -4,26 +4,26 @@
 // Please see the included LICENSE file for more information.
 
 #include "Timer.h"
+
 #include <cassert>
 #include <string>
 
 #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
-    #define NOMINMAX
+#define NOMINMAX
 #endif
 
-#include <windows.h>
-#include <system/InterruptedException.h>
 #include "Dispatcher.h"
+
+#include <system/InterruptedException.h>
+#include <windows.h>
 
 namespace System
 {
-
     namespace
     {
-
         struct TimerContext
         {
             uint64_t time;
@@ -31,19 +31,13 @@ namespace System
             bool interrupted;
         };
 
-    }
+    } // namespace
 
-    Timer::Timer() : dispatcher(nullptr)
-    {
-    }
+    Timer::Timer(): dispatcher(nullptr) {}
 
-    Timer::Timer(Dispatcher &dispatcher)
-        : dispatcher(&dispatcher),
-          context(nullptr)
-    {
-    }
+    Timer::Timer(Dispatcher &dispatcher): dispatcher(&dispatcher), context(nullptr) {}
 
-    Timer::Timer(Timer &&other) : dispatcher(other.dispatcher)
+    Timer::Timer(Timer &&other): dispatcher(other.dispatcher)
     {
         if (dispatcher != nullptr)
         {
@@ -87,15 +81,10 @@ namespace System
         QueryPerformanceFrequency(&frequency);
         uint64_t currentTime = ticks.QuadPart / (frequency.QuadPart / 1000);
         uint64_t time = currentTime + duration.count() / 1000000;
-        TimerContext timerContext{
-            time,
-            dispatcher->getCurrentContext(),
-            false
-        };
+        TimerContext timerContext {time, dispatcher->getCurrentContext(), false};
         context = &timerContext;
         dispatcher->addTimer(time, dispatcher->getCurrentContext());
-        dispatcher->getCurrentContext()->interruptProcedure = [&]()
-        {
+        dispatcher->getCurrentContext()->interruptProcedure = [&]() {
             assert(dispatcher != nullptr);
             assert(context != nullptr);
             TimerContext *timerContext = static_cast<TimerContext *>(context);
@@ -118,4 +107,4 @@ namespace System
         }
     }
 
-}
+} // namespace System

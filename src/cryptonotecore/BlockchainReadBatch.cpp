@@ -5,23 +5,16 @@
 
 #include "BlockchainReadBatch.h"
 
-#include <boost/range/combine.hpp>
-
 #include "DBUtils.h"
 
+#include <boost/range/combine.hpp>
 #include <config/Constants.h>
 
 using namespace CryptoNote;
 
-BlockchainReadBatch::BlockchainReadBatch()
-{
+BlockchainReadBatch::BlockchainReadBatch() {}
 
-}
-
-BlockchainReadBatch::~BlockchainReadBatch()
-{
-
-}
+BlockchainReadBatch::~BlockchainReadBatch() {}
 
 BlockchainReadBatch &BlockchainReadBatch::requestSpentKeyImagesByBlock(uint32_t blockIndex)
 {
@@ -77,8 +70,7 @@ BlockchainReadBatch &BlockchainReadBatch::requestKeyOutputGlobalIndexesCountForA
 
 BlockchainReadBatch &BlockchainReadBatch::requestKeyOutputGlobalIndexForAmount(
     IBlockchainCache::Amount amount,
-    uint32_t outputIndexWithinAmout
-)
+    uint32_t outputIndexWithinAmout)
 {
     state.keyOutputGlobalIndexesForAmounts.emplace(std::make_pair(amount, outputIndexWithinAmout), PackedOutIndex());
     return *this;
@@ -90,10 +82,7 @@ BlockchainReadBatch &BlockchainReadBatch::requestRawBlock(uint32_t blockIndex)
     return *this;
 }
 
-BlockchainReadBatch &BlockchainReadBatch::requestRawBlocks(
-    uint64_t startHeight,
-    uint64_t endHeight
-)
+BlockchainReadBatch &BlockchainReadBatch::requestRawBlocks(uint64_t startHeight, uint64_t endHeight)
 {
     for (uint64_t i = startHeight; i < endHeight; i++)
     {
@@ -129,11 +118,10 @@ BlockchainReadBatch &BlockchainReadBatch::requestTransactionCountByPaymentId(con
 
 BlockchainReadBatch &BlockchainReadBatch::requestTransactionHashByPaymentId(
     const Crypto::Hash &paymentId,
-    uint32_t transactionIndexWithinPaymentId
-)
+    uint32_t transactionIndexWithinPaymentId)
 {
-    state.transactionHashesByPaymentIds
-         .emplace(std::make_pair(paymentId, transactionIndexWithinPaymentId), Constants::NULL_HASH);
+    state.transactionHashesByPaymentIds.emplace(
+        std::make_pair(paymentId, transactionIndexWithinPaymentId), Constants::NULL_HASH);
     return *this;
 }
 
@@ -151,10 +139,9 @@ BlockchainReadBatch &BlockchainReadBatch::requestTransactionsCount()
 
 BlockchainReadBatch &BlockchainReadBatch::requestKeyOutputInfo(
     IBlockchainCache::Amount amount,
-    IBlockchainCache::GlobalOutputIndex globalIndex
-)
+    IBlockchainCache::GlobalOutputIndex globalIndex)
 {
-    state.keyOutputKeys.emplace(std::make_pair(amount, globalIndex), KeyOutputInfo{});
+    state.keyOutputKeys.emplace(std::make_pair(amount, globalIndex), KeyOutputInfo {});
     return *this;
 }
 
@@ -162,13 +149,8 @@ BlockchainReadResult BlockchainReadBatch::extractResult()
 {
     assert(resultSubmitted);
     auto st = std::move(state);
-    state.lastBlockIndex = {
-        0,
-        false
-    };
-    state.keyOutputAmountsCount = {{},
-                                   false
-    };
+    state.lastBlockIndex = {0, false};
+    state.keyOutputAmountsCount = {{}, false};
 
     resultSubmitted = false;
     return BlockchainReadResult(st);
@@ -215,89 +197,65 @@ std::vector<std::string> BlockchainReadBatch::getRawKeys() const
     return rawKeys;
 }
 
-BlockchainReadResult::BlockchainReadResult(BlockchainReadState _state) : state(std::move(_state))
-{
+BlockchainReadResult::BlockchainReadResult(BlockchainReadState _state): state(std::move(_state)) {}
 
-}
+BlockchainReadResult::~BlockchainReadResult() {}
 
-BlockchainReadResult::~BlockchainReadResult()
-{
-
-}
-
-const std::unordered_map<
-    uint32_t, std::vector<Crypto::KeyImage>> &BlockchainReadResult::getSpentKeyImagesByBlock() const
+const std::unordered_map<uint32_t, std::vector<Crypto::KeyImage>> &
+    BlockchainReadResult::getSpentKeyImagesByBlock() const
 {
     return state.spentKeyImagesByBlock;
 }
 
-const std::unordered_map<
-    Crypto::KeyImage, uint32_t
-> &BlockchainReadResult::getBlockIndexesBySpentKeyImages() const
+const std::unordered_map<Crypto::KeyImage, uint32_t> &BlockchainReadResult::getBlockIndexesBySpentKeyImages() const
 {
     return state.blockIndexesBySpentKeyImages;
 }
 
-const std::unordered_map<
-    Crypto::Hash, ExtendedTransactionInfo
-> &BlockchainReadResult::getCachedTransactions() const
+const std::unordered_map<Crypto::Hash, ExtendedTransactionInfo> &BlockchainReadResult::getCachedTransactions() const
 {
     return state.cachedTransactions;
 }
 
-const std::unordered_map<
-    uint32_t, std::vector<Crypto::Hash>> &BlockchainReadResult::getTransactionHashesByBlocks() const
+const std::unordered_map<uint32_t, std::vector<Crypto::Hash>> &
+    BlockchainReadResult::getTransactionHashesByBlocks() const
 {
     return state.transactionHashesByBlocks;
 }
 
-const std::unordered_map<
-    uint32_t, CachedBlockInfo
-> &BlockchainReadResult::getCachedBlocks() const
+const std::unordered_map<uint32_t, CachedBlockInfo> &BlockchainReadResult::getCachedBlocks() const
 {
     return state.cachedBlocks;
 }
 
-const std::unordered_map<
-    Crypto::Hash, uint32_t
-> &BlockchainReadResult::getBlockIndexesByBlockHashes() const
+const std::unordered_map<Crypto::Hash, uint32_t> &BlockchainReadResult::getBlockIndexesByBlockHashes() const
 {
     return state.blockIndexesByBlockHashes;
 }
 
-const std::unordered_map<
-    IBlockchainCache::Amount, uint32_t
-> &BlockchainReadResult::getKeyOutputGlobalIndexesCountForAmounts() const
+const std::unordered_map<IBlockchainCache::Amount, uint32_t> &
+    BlockchainReadResult::getKeyOutputGlobalIndexesCountForAmounts() const
 {
     return state.keyOutputGlobalIndexesCountForAmounts;
 }
 
-const std::unordered_map<
-    std::pair<
-        IBlockchainCache::Amount, uint32_t
-    >, PackedOutIndex
-> &BlockchainReadResult::getKeyOutputGlobalIndexesForAmounts() const
+const std::unordered_map<std::pair<IBlockchainCache::Amount, uint32_t>, PackedOutIndex> &
+    BlockchainReadResult::getKeyOutputGlobalIndexesForAmounts() const
 {
     return state.keyOutputGlobalIndexesForAmounts;
 }
 
-const std::unordered_map<
-    uint32_t, RawBlock
-> &BlockchainReadResult::getRawBlocks() const
+const std::unordered_map<uint32_t, RawBlock> &BlockchainReadResult::getRawBlocks() const
 {
     return state.rawBlocks;
 }
 
-const std::pair<
-    uint32_t, bool
-> &BlockchainReadResult::getLastBlockIndex() const
+const std::pair<uint32_t, bool> &BlockchainReadResult::getLastBlockIndex() const
 {
     return state.lastBlockIndex;
 }
 
-const std::unordered_map<
-    uint64_t, uint32_t
-> &BlockchainReadResult::getClosestTimestampBlockIndex() const
+const std::unordered_map<uint64_t, uint32_t> &BlockchainReadResult::getClosestTimestampBlockIndex() const
 {
     return state.closestTimestampBlockIndex;
 }
@@ -307,31 +265,23 @@ uint32_t BlockchainReadResult::getKeyOutputAmountsCount() const
     return state.keyOutputAmountsCount.first;
 }
 
-const std::unordered_map<
-    Crypto::Hash, uint32_t
-> &BlockchainReadResult::getTransactionCountByPaymentIds() const
+const std::unordered_map<Crypto::Hash, uint32_t> &BlockchainReadResult::getTransactionCountByPaymentIds() const
 {
     return state.transactionCountsByPaymentIds;
 }
 
-const std::unordered_map<
-    std::pair<
-        Crypto::Hash, uint32_t
-    >, Crypto::Hash
-> &BlockchainReadResult::getTransactionHashesByPaymentIds() const
+const std::unordered_map<std::pair<Crypto::Hash, uint32_t>, Crypto::Hash> &
+    BlockchainReadResult::getTransactionHashesByPaymentIds() const
 {
     return state.transactionHashesByPaymentIds;
 }
 
-const std::unordered_map<
-    uint64_t, std::vector<Crypto::Hash>> &BlockchainReadResult::getBlockHashesByTimestamp() const
+const std::unordered_map<uint64_t, std::vector<Crypto::Hash>> &BlockchainReadResult::getBlockHashesByTimestamp() const
 {
     return state.blockHashesByTimestamp;
 }
 
-const std::pair<
-    uint64_t, bool
-> &BlockchainReadResult::getTransactionsCount() const
+const std::pair<uint64_t, bool> &BlockchainReadResult::getTransactionsCount() const
 {
     return state.transactionsCount;
 }
@@ -341,10 +291,7 @@ const KeyOutputKeyResult &BlockchainReadResult::getKeyOutputInfo() const
     return state.keyOutputKeys;
 }
 
-void BlockchainReadBatch::submitRawResult(
-    const std::vector<std::string> &values,
-    const std::vector<bool> &resultStates
-)
+void BlockchainReadBatch::submitRawResult(const std::vector<std::string> &values, const std::vector<bool> &resultStates)
 {
     assert(state.size() == values.size());
     assert(values.size() == resultStates.size());
@@ -376,79 +323,37 @@ void BlockchainReadBatch::submitRawResult(
     resultSubmitted = true;
 }
 
-BlockchainReadState::BlockchainReadState(BlockchainReadState &&state) : spentKeyImagesByBlock(
-    std::move(state.spentKeyImagesByBlock)),
-                                                                        blockIndexesBySpentKeyImages(
-                                                                            std::move(
-                                                                                state.blockIndexesBySpentKeyImages
-                                                                            )),
-                                                                        cachedTransactions(
-                                                                            std::move(
-                                                                                state.cachedTransactions
-                                                                            )),
-                                                                        transactionHashesByBlocks(
-                                                                            std::move(state.transactionHashesByBlocks)),
-                                                                        cachedBlocks(std::move(state.cachedBlocks)),
-                                                                        blockIndexesByBlockHashes(
-                                                                            std::move(state.blockIndexesByBlockHashes)),
-                                                                        keyOutputGlobalIndexesCountForAmounts(
-                                                                            std::move(
-                                                                                state
-                                                                                    .keyOutputGlobalIndexesCountForAmounts
-                                                                            )),
-                                                                        keyOutputGlobalIndexesForAmounts(
-                                                                            std::move(
-                                                                                state.keyOutputGlobalIndexesForAmounts
-                                                                            )),
-                                                                        rawBlocks(std::move(state.rawBlocks)),
-                                                                        blockHashesByTimestamp(
-                                                                            std::move(state.blockHashesByTimestamp)),
-                                                                        keyOutputKeys(std::move(state.keyOutputKeys)),
-                                                                        closestTimestampBlockIndex(
-                                                                            std::move(
-                                                                                state.closestTimestampBlockIndex
-                                                                            )),
-                                                                        lastBlockIndex(std::move(state.lastBlockIndex)),
-                                                                        keyOutputAmountsCount(
-                                                                            std::move(state.keyOutputAmountsCount)),
-                                                                        keyOutputAmounts(
-                                                                            std::move(state.keyOutputAmounts)),
-                                                                        transactionCountsByPaymentIds(
-                                                                            std::move(
-                                                                                state.transactionCountsByPaymentIds
-                                                                            )),
-                                                                        transactionHashesByPaymentIds(
-                                                                            std::move(
-                                                                                state.transactionHashesByPaymentIds
-                                                                            )),
-                                                                        transactionsCount(
-                                                                            std::move(
-                                                                                state.transactionsCount
-                                                                            ))
+BlockchainReadState::BlockchainReadState(BlockchainReadState &&state):
+    spentKeyImagesByBlock(std::move(state.spentKeyImagesByBlock)),
+    blockIndexesBySpentKeyImages(std::move(state.blockIndexesBySpentKeyImages)),
+    cachedTransactions(std::move(state.cachedTransactions)),
+    transactionHashesByBlocks(std::move(state.transactionHashesByBlocks)),
+    cachedBlocks(std::move(state.cachedBlocks)),
+    blockIndexesByBlockHashes(std::move(state.blockIndexesByBlockHashes)),
+    keyOutputGlobalIndexesCountForAmounts(std::move(state.keyOutputGlobalIndexesCountForAmounts)),
+    keyOutputGlobalIndexesForAmounts(std::move(state.keyOutputGlobalIndexesForAmounts)),
+    rawBlocks(std::move(state.rawBlocks)),
+    blockHashesByTimestamp(std::move(state.blockHashesByTimestamp)),
+    keyOutputKeys(std::move(state.keyOutputKeys)),
+    closestTimestampBlockIndex(std::move(state.closestTimestampBlockIndex)),
+    lastBlockIndex(std::move(state.lastBlockIndex)),
+    keyOutputAmountsCount(std::move(state.keyOutputAmountsCount)),
+    keyOutputAmounts(std::move(state.keyOutputAmounts)),
+    transactionCountsByPaymentIds(std::move(state.transactionCountsByPaymentIds)),
+    transactionHashesByPaymentIds(std::move(state.transactionHashesByPaymentIds)),
+    transactionsCount(std::move(state.transactionsCount))
 {
 }
 
 size_t BlockchainReadState::size() const
 {
-    return spentKeyImagesByBlock.size() + blockIndexesBySpentKeyImages.size() + cachedTransactions.size() +
-           transactionHashesByBlocks.size() + cachedBlocks.size() + blockIndexesByBlockHashes.size() +
-           keyOutputGlobalIndexesCountForAmounts.size() + keyOutputGlobalIndexesForAmounts.size() + rawBlocks.size() +
-           closestTimestampBlockIndex.size() + keyOutputAmounts.size() + transactionCountsByPaymentIds.size() +
-           transactionHashesByPaymentIds.size() + blockHashesByTimestamp.size() + keyOutputKeys.size() + (
-               lastBlockIndex.second
-               ? 1
-               : 0
-           ) + (
-               keyOutputAmountsCount.second
-               ? 1
-               : 0
-           ) + (
-               transactionsCount.second
-               ? 1
-               : 0
-           );
+    return spentKeyImagesByBlock.size() + blockIndexesBySpentKeyImages.size() + cachedTransactions.size()
+           + transactionHashesByBlocks.size() + cachedBlocks.size() + blockIndexesByBlockHashes.size()
+           + keyOutputGlobalIndexesCountForAmounts.size() + keyOutputGlobalIndexesForAmounts.size() + rawBlocks.size()
+           + closestTimestampBlockIndex.size() + keyOutputAmounts.size() + transactionCountsByPaymentIds.size()
+           + transactionHashesByPaymentIds.size() + blockHashesByTimestamp.size() + keyOutputKeys.size()
+           + (lastBlockIndex.second ? 1 : 0) + (keyOutputAmountsCount.second ? 1 : 0)
+           + (transactionsCount.second ? 1 : 0);
 }
 
-BlockchainReadResult::BlockchainReadResult(BlockchainReadResult &&result) : state(std::move(result.state))
-{
-}
+BlockchainReadResult::BlockchainReadResult(BlockchainReadResult &&result): state(std::move(result.state)) {}

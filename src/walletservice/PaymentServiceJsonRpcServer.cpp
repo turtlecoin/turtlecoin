@@ -6,227 +6,190 @@
 
 #include "PaymentServiceJsonRpcServer.h"
 
-#include <functional>
-
-#include <CryptoTypes.h>
-#include "crypto/hash.h"
 #include "PaymentServiceJsonRpcMessages.h"
 #include "WalletService.h"
-
+#include "crypto/hash.h"
+#include "rpc/JsonRpc.h"
 #include "serialization/JsonInputValueSerializer.h"
 #include "serialization/JsonOutputStreamSerializer.h"
 
-#include "rpc/JsonRpc.h"
+#include <CryptoTypes.h>
+#include <functional>
 
 namespace PaymentService
 {
-
     PaymentServiceJsonRpcServer::PaymentServiceJsonRpcServer(
         System::Dispatcher &sys,
         System::Event &stopEvent,
         WalletService &service,
         std::shared_ptr<Logging::ILogger> loggerGroup,
-        PaymentService::ConfigurationManager &config
-    )
-        : JsonRpcServer(sys, stopEvent, loggerGroup, config),
-          service(service),
-          logger(loggerGroup, "PaymentServiceJsonRpcServer")
+        PaymentService::ConfigurationManager &config):
+        JsonRpcServer(sys, stopEvent, loggerGroup, config),
+        service(service),
+        logger(loggerGroup, "PaymentServiceJsonRpcServer")
     {
         handlers.emplace(
-            "save", jsonHandler<
-            Save::Request, Save::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleSave, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "save",
+            jsonHandler<Save::Request, Save::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleSave, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "export", jsonHandler<
-            Export::Request, Export::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleExport, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "export",
+            jsonHandler<Export::Request, Export::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleExport, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "reset", jsonHandler<
-            Reset::Request, Reset::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleReset, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "reset",
+            jsonHandler<Reset::Request, Reset::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleReset, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "createAddress", jsonHandler<
-            CreateAddress::Request, CreateAddress::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleCreateAddress, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "createAddress",
+            jsonHandler<CreateAddress::Request, CreateAddress::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleCreateAddress,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "createAddressList", jsonHandler<
-            CreateAddressList::Request, CreateAddressList::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleCreateAddressList, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "createAddressList",
+            jsonHandler<CreateAddressList::Request, CreateAddressList::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleCreateAddressList,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "deleteAddress", jsonHandler<
-            DeleteAddress::Request, DeleteAddress::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleDeleteAddress, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "deleteAddress",
+            jsonHandler<DeleteAddress::Request, DeleteAddress::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleDeleteAddress,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getSpendKeys", jsonHandler<
-            GetSpendKeys::Request, GetSpendKeys::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetSpendKeys, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getSpendKeys",
+            jsonHandler<GetSpendKeys::Request, GetSpendKeys::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetSpendKeys, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "getBalance", jsonHandler<
-            GetBalance::Request, GetBalance::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetBalance, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getBalance",
+            jsonHandler<GetBalance::Request, GetBalance::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetBalance, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "getBlockHashes", jsonHandler<
-            GetBlockHashes::Request, GetBlockHashes::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetBlockHashes, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getBlockHashes",
+            jsonHandler<GetBlockHashes::Request, GetBlockHashes::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetBlockHashes,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getTransactionHashes", jsonHandler<
-            GetTransactionHashes::Request, GetTransactionHashes::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetTransactionHashes, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getTransactionHashes",
+            jsonHandler<GetTransactionHashes::Request, GetTransactionHashes::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetTransactionHashes,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getTransactions", jsonHandler<
-            GetTransactions::Request, GetTransactions::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetTransactions, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getTransactions",
+            jsonHandler<GetTransactions::Request, GetTransactions::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetTransactions,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getUnconfirmedTransactionHashes", jsonHandler<
-            GetUnconfirmedTransactionHashes::Request, GetUnconfirmedTransactionHashes::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetUnconfirmedTransactionHashes, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getUnconfirmedTransactionHashes",
+            jsonHandler<GetUnconfirmedTransactionHashes::Request, GetUnconfirmedTransactionHashes::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetUnconfirmedTransactionHashes,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getTransaction", jsonHandler<
-            GetTransaction::Request, GetTransaction::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetTransaction, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getTransaction",
+            jsonHandler<GetTransaction::Request, GetTransaction::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetTransaction,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "sendTransaction", jsonHandler<
-            SendTransaction::Request, SendTransaction::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleSendTransaction, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "sendTransaction",
+            jsonHandler<SendTransaction::Request, SendTransaction::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleSendTransaction,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "createDelayedTransaction", jsonHandler<
-            CreateDelayedTransaction::Request, CreateDelayedTransaction::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleCreateDelayedTransaction, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "createDelayedTransaction",
+            jsonHandler<CreateDelayedTransaction::Request, CreateDelayedTransaction::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleCreateDelayedTransaction,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getDelayedTransactionHashes", jsonHandler<
-            GetDelayedTransactionHashes::Request, GetDelayedTransactionHashes::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetDelayedTransactionHashes, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getDelayedTransactionHashes",
+            jsonHandler<GetDelayedTransactionHashes::Request, GetDelayedTransactionHashes::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetDelayedTransactionHashes,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "deleteDelayedTransaction", jsonHandler<
-            DeleteDelayedTransaction::Request, DeleteDelayedTransaction::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleDeleteDelayedTransaction, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "deleteDelayedTransaction",
+            jsonHandler<DeleteDelayedTransaction::Request, DeleteDelayedTransaction::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleDeleteDelayedTransaction,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "sendDelayedTransaction", jsonHandler<
-            SendDelayedTransaction::Request, SendDelayedTransaction::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleSendDelayedTransaction, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "sendDelayedTransaction",
+            jsonHandler<SendDelayedTransaction::Request, SendDelayedTransaction::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleSendDelayedTransaction,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getViewKey", jsonHandler<
-            GetViewKey::Request, GetViewKey::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetViewKey, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getViewKey",
+            jsonHandler<GetViewKey::Request, GetViewKey::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetViewKey, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "getMnemonicSeed", jsonHandler<
-            GetMnemonicSeed::Request, GetMnemonicSeed::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetMnemonicSeed, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getMnemonicSeed",
+            jsonHandler<GetMnemonicSeed::Request, GetMnemonicSeed::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetMnemonicSeed,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getStatus", jsonHandler<
-            GetStatus::Request, GetStatus::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetStatus, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getStatus",
+            jsonHandler<GetStatus::Request, GetStatus::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetStatus, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "getAddresses", jsonHandler<
-            GetAddresses::Request, GetAddresses::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleGetAddresses, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getAddresses",
+            jsonHandler<GetAddresses::Request, GetAddresses::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleGetAddresses, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "sendFusionTransaction", jsonHandler<
-            SendFusionTransaction::Request, SendFusionTransaction::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleSendFusionTransaction, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "sendFusionTransaction",
+            jsonHandler<SendFusionTransaction::Request, SendFusionTransaction::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleSendFusionTransaction,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "estimateFusion", jsonHandler<
-            EstimateFusion::Request, EstimateFusion::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleEstimateFusion, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "estimateFusion",
+            jsonHandler<EstimateFusion::Request, EstimateFusion::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleEstimateFusion,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "createIntegratedAddress", jsonHandler<
-            CreateIntegratedAddress::Request, CreateIntegratedAddress::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleCreateIntegratedAddress, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "createIntegratedAddress",
+            jsonHandler<CreateIntegratedAddress::Request, CreateIntegratedAddress::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleCreateIntegratedAddress,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2)));
         handlers.emplace(
-            "getFeeInfo", jsonHandler<
-            NodeFeeInfo::Request, NodeFeeInfo::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getFeeInfo",
+            jsonHandler<NodeFeeInfo::Request, NodeFeeInfo::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2)));
         handlers.emplace(
-            "getNodeFeeInfo", jsonHandler<
-            NodeFeeInfo::Request, NodeFeeInfo::Response
-        >(
-            std::bind(
-                &PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2
-            )));
+            "getNodeFeeInfo",
+            jsonHandler<NodeFeeInfo::Request, NodeFeeInfo::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2)));
     }
 
-    void PaymentServiceJsonRpcServer::processJsonRpcRequest(
-        const Common::JsonValue &req,
-        Common::JsonValue &resp
-    )
+    void PaymentServiceJsonRpcServer::processJsonRpcRequest(const Common::JsonValue &req, Common::JsonValue &resp)
     {
         try
         {
@@ -298,32 +261,26 @@ namespace PaymentService
         }
     }
 
-    std::error_code PaymentServiceJsonRpcServer::handleSave(
-        const Save::Request & /*request*/,
-        Save::Response & /*response*/)
+    std::error_code
+        PaymentServiceJsonRpcServer::handleSave(const Save::Request & /*request*/, Save::Response & /*response*/)
     {
         return service.saveWalletNoThrow();
     }
 
-    std::error_code PaymentServiceJsonRpcServer::handleExport(
-        const Export::Request &request,
-        Export::Response & /*response*/)
+    std::error_code
+        PaymentServiceJsonRpcServer::handleExport(const Export::Request &request, Export::Response & /*response*/)
     {
         return service.exportWallet(request.fileName);
     }
 
-    std::error_code PaymentServiceJsonRpcServer::handleReset(
-        const Reset::Request &request,
-        Reset::Response &response
-    )
+    std::error_code PaymentServiceJsonRpcServer::handleReset(const Reset::Request &request, Reset::Response &response)
     {
         return service.resetWallet(request.scanHeight);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleCreateAddress(
         const CreateAddress::Request &request,
-        CreateAddress::Response &response
-    )
+        CreateAddress::Response &response)
     {
         if (request.spendSecretKey.empty() && request.spendPublicKey.empty())
         {
@@ -332,47 +289,40 @@ namespace PaymentService
         else if (!request.spendSecretKey.empty())
         {
             return service.createAddress(
-                request.spendSecretKey, request.scanHeight, request.newAddress, response.address
-            );
+                request.spendSecretKey, request.scanHeight, request.newAddress, response.address);
         }
         else
         {
             return service.createTrackingAddress(
-                request.spendPublicKey, request.scanHeight, request.newAddress, response.address
-            );
+                request.spendPublicKey, request.scanHeight, request.newAddress, response.address);
         }
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleCreateAddressList(
         const CreateAddressList::Request &request,
-        CreateAddressList::Response &response
-    )
+        CreateAddressList::Response &response)
     {
         return service.createAddressList(
-            request.spendSecretKeys, request.scanHeight, request.newAddress, response.addresses
-        );
+            request.spendSecretKeys, request.scanHeight, request.newAddress, response.addresses);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleDeleteAddress(
         const DeleteAddress::Request &request,
-        DeleteAddress::Response &response
-    )
+        DeleteAddress::Response &response)
     {
         return service.deleteAddress(request.address);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetSpendKeys(
         const GetSpendKeys::Request &request,
-        GetSpendKeys::Response &response
-    )
+        GetSpendKeys::Response &response)
     {
         return service.getSpendkeys(request.address, response.spendPublicKey, response.spendSecretKey);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetBalance(
         const GetBalance::Request &request,
-        GetBalance::Response &response
-    )
+        GetBalance::Response &response)
     {
         if (!request.address.empty())
         {
@@ -386,176 +336,156 @@ namespace PaymentService
 
     std::error_code PaymentServiceJsonRpcServer::handleGetBlockHashes(
         const GetBlockHashes::Request &request,
-        GetBlockHashes::Response &response
-    )
+        GetBlockHashes::Response &response)
     {
         return service.getBlockHashes(request.firstBlockIndex, request.blockCount, response.blockHashes);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetTransactionHashes(
         const GetTransactionHashes::Request &request,
-        GetTransactionHashes::Response &response
-    )
+        GetTransactionHashes::Response &response)
     {
         if (!request.blockHash.empty())
         {
             return service.getTransactionHashes(
-                request.addresses, request.blockHash, request.blockCount, request.paymentId, response.items
-            );
+                request.addresses, request.blockHash, request.blockCount, request.paymentId, response.items);
         }
         else
         {
             return service.getTransactionHashes(
-                request.addresses, request.firstBlockIndex, request.blockCount, request.paymentId, response.items
-            );
+                request.addresses, request.firstBlockIndex, request.blockCount, request.paymentId, response.items);
         }
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetTransactions(
         const GetTransactions::Request &request,
-        GetTransactions::Response &response
-    )
+        GetTransactions::Response &response)
     {
         if (!request.blockHash.empty())
         {
             return service.getTransactions(
-                request.addresses, request.blockHash, request.blockCount, request.paymentId, response.items
-            );
+                request.addresses, request.blockHash, request.blockCount, request.paymentId, response.items);
         }
         else
         {
             return service.getTransactions(
-                request.addresses, request.firstBlockIndex, request.blockCount, request.paymentId, response.items
-            );
+                request.addresses, request.firstBlockIndex, request.blockCount, request.paymentId, response.items);
         }
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetUnconfirmedTransactionHashes(
         const GetUnconfirmedTransactionHashes::Request &request,
-        GetUnconfirmedTransactionHashes::Response &response
-    )
+        GetUnconfirmedTransactionHashes::Response &response)
     {
         return service.getUnconfirmedTransactionHashes(request.addresses, response.transactionHashes);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetTransaction(
         const GetTransaction::Request &request,
-        GetTransaction::Response &response
-    )
+        GetTransaction::Response &response)
     {
         return service.getTransaction(request.transactionHash, response.transaction);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleSendTransaction(
         SendTransaction::Request &request,
-        SendTransaction::Response &response
-    )
+        SendTransaction::Response &response)
     {
         return service.sendTransaction(request, response.transactionHash);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleCreateDelayedTransaction(
         CreateDelayedTransaction::Request &request,
-        CreateDelayedTransaction::Response &response
-    )
+        CreateDelayedTransaction::Response &response)
     {
         return service.createDelayedTransaction(request, response.transactionHash);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetDelayedTransactionHashes(
         const GetDelayedTransactionHashes::Request &request,
-        GetDelayedTransactionHashes::Response &response
-    )
+        GetDelayedTransactionHashes::Response &response)
     {
         return service.getDelayedTransactionHashes(response.transactionHashes);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleDeleteDelayedTransaction(
         const DeleteDelayedTransaction::Request &request,
-        DeleteDelayedTransaction::Response &response
-    )
+        DeleteDelayedTransaction::Response &response)
     {
         return service.deleteDelayedTransaction(request.transactionHash);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleSendDelayedTransaction(
         SendDelayedTransaction::Request &request,
-        SendDelayedTransaction::Response &response
-    )
+        SendDelayedTransaction::Response &response)
     {
         return service.sendDelayedTransaction(request.transactionHash);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetViewKey(
         const GetViewKey::Request &request,
-        GetViewKey::Response &response
-    )
+        GetViewKey::Response &response)
     {
         return service.getViewKey(response.viewSecretKey);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetMnemonicSeed(
         const GetMnemonicSeed::Request &request,
-        GetMnemonicSeed::Response &response
-    )
+        GetMnemonicSeed::Response &response)
     {
         return service.getMnemonicSeed(request.address, response.mnemonicSeed);
     }
 
-    std::error_code PaymentServiceJsonRpcServer::handleGetStatus(
-        const GetStatus::Request &request,
-        GetStatus::Response &response
-    )
+    std::error_code
+        PaymentServiceJsonRpcServer::handleGetStatus(const GetStatus::Request &request, GetStatus::Response &response)
     {
         return service.getStatus(
-            response.blockCount, response.knownBlockCount, response.localDaemonBlockCount, response
-            .lastBlockHash, response.peerCount
-        );
+            response.blockCount,
+            response.knownBlockCount,
+            response.localDaemonBlockCount,
+            response.lastBlockHash,
+            response.peerCount);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleGetAddresses(
         const GetAddresses::Request &request,
-        GetAddresses::Response &response
-    )
+        GetAddresses::Response &response)
     {
         return service.getAddresses(response.addresses);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleSendFusionTransaction(
         const SendFusionTransaction::Request &request,
-        SendFusionTransaction::Response &response
-    )
+        SendFusionTransaction::Response &response)
     {
         return service.sendFusionTransaction(
-            request.threshold, request.anonymity, request.addresses, request.destinationAddress, response
-            .transactionHash
-        );
+            request.threshold,
+            request.anonymity,
+            request.addresses,
+            request.destinationAddress,
+            response.transactionHash);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleEstimateFusion(
         const EstimateFusion::Request &request,
-        EstimateFusion::Response &response
-    )
+        EstimateFusion::Response &response)
     {
         return service.estimateFusion(
-            request.threshold, request.addresses, response.fusionReadyCount, response.totalOutputCount
-        );
+            request.threshold, request.addresses, response.fusionReadyCount, response.totalOutputCount);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleCreateIntegratedAddress(
         const CreateIntegratedAddress::Request &request,
-        CreateIntegratedAddress::Response &response
-    )
+        CreateIntegratedAddress::Response &response)
     {
         return service.createIntegratedAddress(request.address, request.paymentId, response.integratedAddress);
     }
 
     std::error_code PaymentServiceJsonRpcServer::handleNodeFeeInfo(
         const NodeFeeInfo::Request &request,
-        NodeFeeInfo::Response &response
-    )
+        NodeFeeInfo::Response &response)
     {
         return service.getFeeInfo(response.address, response.amount);
     }
 
-}
+} // namespace PaymentService

@@ -4,12 +4,12 @@
 // Please see the included LICENSE file for more information.
 
 #include "EventLock.h"
+
 #include <system/Event.h>
 
 namespace System
 {
-
-    EventLock::EventLock(Event &event) : event(event)
+    EventLock::EventLock(Event &event): event(event)
     {
         while (!event.get())
         {
@@ -24,4 +24,4 @@ namespace System
         event.set();
     }
 
-}
+} // namespace System

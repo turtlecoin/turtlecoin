@@ -5,65 +5,59 @@
 
 #pragma once
 
+#include "DataBaseConfig.h"
+#include "IDataBase.h"
+#include "rocksdb/db.h"
+
 #include <atomic>
+#include <logging/LoggerRef.h>
 #include <memory>
 #include <string>
 
-#include "rocksdb/db.h"
-
-#include "IDataBase.h"
-#include "DataBaseConfig.h"
-
-#include <logging/LoggerRef.h>
-
 namespace CryptoNote
 {
-
     class RocksDBWrapper : public IDataBase
     {
-        public:
-            RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger);
+      public:
+        RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger);
 
-            virtual ~RocksDBWrapper();
+        virtual ~RocksDBWrapper();
 
-            RocksDBWrapper(const RocksDBWrapper &) = delete;
+        RocksDBWrapper(const RocksDBWrapper &) = delete;
 
-            RocksDBWrapper(RocksDBWrapper &&) = delete;
+        RocksDBWrapper(RocksDBWrapper &&) = delete;
 
-            RocksDBWrapper &operator=(const RocksDBWrapper &) = delete;
+        RocksDBWrapper &operator=(const RocksDBWrapper &) = delete;
 
-            RocksDBWrapper &operator=(RocksDBWrapper &&) = delete;
+        RocksDBWrapper &operator=(RocksDBWrapper &&) = delete;
 
-            void init(const DataBaseConfig &config);
+        void init(const DataBaseConfig &config);
 
-            void shutdown();
+        void shutdown();
 
-            void destroy(const DataBaseConfig &config); //Be careful with this method!
+        void destroy(const DataBaseConfig &config); // Be careful with this method!
 
-            std::error_code write(IWriteBatch &batch) override;
+        std::error_code write(IWriteBatch &batch) override;
 
-            std::error_code read(IReadBatch &batch) override;
+        std::error_code read(IReadBatch &batch) override;
 
-        private:
-            std::error_code write(
-                IWriteBatch &batch,
-                bool sync
-            );
+      private:
+        std::error_code write(IWriteBatch &batch, bool sync);
 
-            rocksdb::Options getDBOptions(const DataBaseConfig &config);
+        rocksdb::Options getDBOptions(const DataBaseConfig &config);
 
-            std::string getDataDir(const DataBaseConfig &config);
+        std::string getDataDir(const DataBaseConfig &config);
 
-            enum State
-            {
-                NOT_INITIALIZED,
-                INITIALIZED
-            };
+        enum State
+        {
+            NOT_INITIALIZED,
+            INITIALIZED
+        };
 
-            Logging::LoggerRef logger;
+        Logging::LoggerRef logger;
 
-            std::unique_ptr<rocksdb::DB> db;
+        std::unique_ptr<rocksdb::DB> db;
 
-            std::atomic<State> state;
+        std::atomic<State> state;
     };
-}
+} // namespace CryptoNote

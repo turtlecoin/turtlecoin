@@ -4,34 +4,25 @@
 // Please see the included LICENSE file for more information.
 
 #include "HttpServer.h"
-#include <boost/scope_exit.hpp>
 
+#include <boost/scope_exit.hpp>
 #include <http/HttpParser.h>
 #include <system/InterruptedException.h>
-#include <system/TcpStream.h>
 #include <system/Ipv4Address.h>
+#include <system/TcpStream.h>
 
 using namespace Logging;
 
 namespace CryptoNote
 {
-
-    HttpServer::HttpServer(
-        System::Dispatcher &dispatcher,
-        std::shared_ptr<Logging::ILogger> log
-    ) : m_dispatcher(
-        dispatcher
-    ),
+    HttpServer::HttpServer(System::Dispatcher &dispatcher, std::shared_ptr<Logging::ILogger> log):
+        m_dispatcher(dispatcher),
         workingContextGroup(dispatcher),
         logger(log, "HttpServer")
     {
-
     }
 
-    void HttpServer::start(
-        const std::string &address,
-        uint16_t port
-    )
+    void HttpServer::start(const std::string &address, uint16_t port)
     {
         m_listener = System::TcpListener(m_dispatcher, System::Ipv4Address(address), port);
         workingContextGroup.spawn(std::bind(&HttpServer::acceptLoop, this));
@@ -68,7 +59,8 @@ namespace CryptoNote
             }
 
             m_connections.insert(&connection);
-            BOOST_SCOPE_EXIT_ALL(this, &connection){
+            BOOST_SCOPE_EXIT_ALL(this, &connection)
+            {
                 m_connections.erase(&connection);
             };
 
@@ -101,7 +93,6 @@ namespace CryptoNote
 
             logger(DEBUGGING) << "Closing connection from " << addr.first.toDottedDecimal() << ":" << addr.second
                               << " total=" << m_connections.size();
-
         }
         catch (System::InterruptedException &)
         {
@@ -112,4 +103,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

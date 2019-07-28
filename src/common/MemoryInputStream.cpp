@@ -4,18 +4,15 @@
 // Please see the included LICENSE file for more information.
 
 #include "MemoryInputStream.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstring> // memcpy
 
 namespace Common
 {
-
-    MemoryInputStream::MemoryInputStream(
-        const void *buffer,
-        uint64_t bufferSize
-    ) : buffer(
-        static_cast<const char *>(buffer)),
+    MemoryInputStream::MemoryInputStream(const void *buffer, uint64_t bufferSize):
+        buffer(static_cast<const char *>(buffer)),
         bufferSize(bufferSize),
         position(0)
     {
@@ -26,10 +23,7 @@ namespace Common
         return position == bufferSize;
     }
 
-    uint64_t MemoryInputStream::readSome(
-        void *data,
-        uint64_t size
-    )
+    uint64_t MemoryInputStream::readSome(void *data, uint64_t size)
     {
         assert(position <= bufferSize);
         uint64_t readSize = std::min(size, bufferSize - position);
@@ -43,4 +37,4 @@ namespace Common
         return readSize;
     }
 
-}
+} // namespace Common

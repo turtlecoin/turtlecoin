@@ -3,124 +3,136 @@
 // Please see the included LICENSE file for more information.
 
 #include "WalletServiceConfiguration.h"
-#include <cxxopts.hpp>
-#include <string>
 
-#include <rapidjson/document.h>
-#include <rapidjson/istreamwrapper.h>
-#include <rapidjson/ostreamwrapper.h>
 #include "rapidjson/stringbuffer.h"
-#include <rapidjson/writer.h>
-#include <rapidjson/prettywriter.h>
-#include <fstream>
 
 #include <config/CliHeader.h>
 #include <config/CryptoNoteConfig.h>
+#include <cxxopts.hpp>
+#include <fstream>
 #include <logging/ILogger.h>
+#include <rapidjson/document.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/writer.h>
+#include <string>
 
 using namespace rapidjson;
 
 namespace PaymentService
 {
-
-    void handleSettings(
-        int argc,
-        char *argv[],
-        WalletServiceConfiguration &config
-    )
+    void handleSettings(int argc, char *argv[], WalletServiceConfiguration &config)
     {
         cxxopts::Options options(argv[0], CryptoNote::getProjectCLIHeader());
 
         options.add_options("Core")(
             "h,help", "Display this help message", cxxopts::value<bool>()->implicit_value("true"))(
-            "v,version", "Output software version information", cxxopts::value<bool>()->default_value(
-            "false"
-        )->implicit_value("true"));
+            "v,version",
+            "Output software version information",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"));
 
         options.add_options("Daemon")(
-            "daemon-address", "The daemon host to use for node operations", cxxopts::value<std::string>()
-            ->default_value(config.daemonAddress), "<ip>"
-        )(
-            "daemon-port", "The daemon RPC port to use for node operations", cxxopts::value<int>()
-            ->default_value(std::to_string(config.daemonPort)), "<port>"
-        );
+            "daemon-address",
+            "The daemon host to use for node operations",
+            cxxopts::value<std::string>()->default_value(config.daemonAddress),
+            "<ip>")(
+            "daemon-port",
+            "The daemon RPC port to use for node operations",
+            cxxopts::value<int>()->default_value(std::to_string(config.daemonPort)),
+            "<port>");
 
         options.add_options("Service")(
-            "c,config", "Specify the configuration <file> to use instead of CLI arguments", cxxopts::value<
-            std::string
-        >(), "<file>"
-        )(
-            "dump-config", "Prints the current configuration to the screen", cxxopts::value<bool>()
-            ->default_value("false")->implicit_value("true"))(
-            "l,log-file", "Specify log <file> location", cxxopts::value<std::string>()->default_value(
-            config.logFile
-        ), "<file>"
-        )("log-level", "Specify log level", cxxopts::value<int>()->default_value(std::to_string(config.logLevel)), "#")(
-            "server-root", "The service will use this <path> as the working directory", cxxopts::value<
-            std::string
-        >(), "<path>"
-        )("save-config", "Save the configuration to the specified <file>", cxxopts::value<std::string>(), "<file>")(
-            "init-timeout", "Amount of time in seconds to wait for initial connection", cxxopts::value<int>()
-            ->default_value("10"), "<seconds>"
-        );
+            "c,config",
+            "Specify the configuration <file> to use instead of CLI arguments",
+            cxxopts::value<std::string>(),
+            "<file>")(
+            "dump-config",
+            "Prints the current configuration to the screen",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"))(
+            "l,log-file",
+            "Specify log <file> location",
+            cxxopts::value<std::string>()->default_value(config.logFile),
+            "<file>")(
+            "log-level",
+            "Specify log level",
+            cxxopts::value<int>()->default_value(std::to_string(config.logLevel)),
+            "#")(
+            "server-root",
+            "The service will use this <path> as the working directory",
+            cxxopts::value<std::string>(),
+            "<path>")(
+            "save-config", "Save the configuration to the specified <file>", cxxopts::value<std::string>(), "<file>")(
+            "init-timeout",
+            "Amount of time in seconds to wait for initial connection",
+            cxxopts::value<int>()->default_value("10"),
+            "<seconds>");
 
         options.add_options("Wallet")(
-            "address", "Print the wallet addresses and then exit", cxxopts::value<bool>()->default_value("false")
-                                                                                         ->implicit_value("true"))(
-            "w,container-file", "Wallet container <file>", cxxopts::value<std::string>(), "<file>"
-        )("p,container-password", "Wallet container <password>", cxxopts::value<std::string>(), "<password>")(
-            "g,generate-container", "Generate a new wallet container", cxxopts::value<bool>()->default_value("false")
-                                                                                             ->implicit_value("true"))(
-            "view-key", "Generate a wallet container with this secret view <key>", cxxopts::value<
-            std::string
-        >(), "<key>"
-        )(
-            "spend-key", "Generate a wallet container with this secret spend <key>", cxxopts::value<
-            std::string
-        >(), "<key>"
-        )(
-            "mnemonic-seed", "Generate a wallet container with this Mnemonic <seed>", cxxopts::value<
-            std::string
-        >(), "<seed>"
-        )(
-            "scan-height", "Start scanning for transactions from this Blockchain height", cxxopts::value<uint64_t>()
-            ->default_value("0"), "#"
-        )(
-            "SYNC_FROM_ZERO", "Force the wallet to sync from 0", cxxopts::value<bool>()->default_value("false")
-                                                                                       ->implicit_value("true"));
+            "address",
+            "Print the wallet addresses and then exit",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"))(
+            "w,container-file", "Wallet container <file>", cxxopts::value<std::string>(), "<file>")(
+            "p,container-password", "Wallet container <password>", cxxopts::value<std::string>(), "<password>")(
+            "g,generate-container",
+            "Generate a new wallet container",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"))(
+            "view-key",
+            "Generate a wallet container with this secret view <key>",
+            cxxopts::value<std::string>(),
+            "<key>")(
+            "spend-key",
+            "Generate a wallet container with this secret spend <key>",
+            cxxopts::value<std::string>(),
+            "<key>")(
+            "mnemonic-seed",
+            "Generate a wallet container with this Mnemonic <seed>",
+            cxxopts::value<std::string>(),
+            "<seed>")(
+            "scan-height",
+            "Start scanning for transactions from this Blockchain height",
+            cxxopts::value<uint64_t>()->default_value("0"),
+            "#")(
+            "SYNC_FROM_ZERO",
+            "Force the wallet to sync from 0",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"));
 
         options.add_options("Network")(
-            "bind-address", "Interface IP address for the RPC service", cxxopts::value<std::string>()
-            ->default_value(config.bindAddress), "<ip>"
-        )(
-            "bind-port", "TCP port for the RPC service", cxxopts::value<int>()
-            ->default_value(std::to_string(config.bindPort)), "<port>"
-        );
+            "bind-address",
+            "Interface IP address for the RPC service",
+            cxxopts::value<std::string>()->default_value(config.bindAddress),
+            "<ip>")(
+            "bind-port",
+            "TCP port for the RPC service",
+            cxxopts::value<int>()->default_value(std::to_string(config.bindPort)),
+            "<port>");
 
         options.add_options("RPC")(
-            "enable-cors", "Adds header 'Access-Control-Allow-Origin' to the RPC responses. Uses the value specified as the domain. Use * for all.", cxxopts::value<
-            std::string
-        >(), "<domain>"
-        )(
-            "rpc-legacy-security", "Enable legacy mode (no password for RPC). WARNING: INSECURE. USE ONLY AS A LAST RESORT.", cxxopts::value<
-            bool
-        >()->default_value("false")->implicit_value("true"))(
-            "rpc-password", "Specify the <password> to access the RPC server.", cxxopts::value<
-            std::string
-        >(), "<password>"
-        );
+            "enable-cors",
+            "Adds header 'Access-Control-Allow-Origin' to the RPC responses. Uses the value specified as the domain. "
+            "Use * for all.",
+            cxxopts::value<std::string>(),
+            "<domain>")(
+            "rpc-legacy-security",
+            "Enable legacy mode (no password for RPC). WARNING: INSECURE. USE ONLY AS A LAST RESORT.",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"))(
+            "rpc-password",
+            "Specify the <password> to access the RPC server.",
+            cxxopts::value<std::string>(),
+            "<password>");
 
-        #ifdef WIN32
+#ifdef WIN32
         options.add_options("Windows Only")(
-            "daemonize", "Run the service as a daemon", cxxopts::value<bool>()->default_value("false")
-                                                                              ->implicit_value("true"))(
-            "register-service", "Registers this program as a Windows service", cxxopts::value<bool>()
-            ->default_value("false")->implicit_value("true"))(
-            "unregister-service", "Unregisters this program from being a Windows service", cxxopts::value<bool>()
-            ->default_value(
-                "false"
-            )->implicit_value("true"));
-        #endif
+            "daemonize",
+            "Run the service as a daemon",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"))(
+            "register-service",
+            "Registers this program as a Windows service",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"))(
+            "unregister-service",
+            "Unregisters this program from being a Windows service",
+            cxxopts::value<bool>()->default_value("false")->implicit_value("true"));
+#endif
 
         try
         {
@@ -279,31 +291,28 @@ namespace PaymentService
         }
         catch (const cxxopts::OptionException &e)
         {
-            std::cout << "Error: Unable to parse command line argument options: " << e.what() << std::endl << std::endl
+            std::cout << "Error: Unable to parse command line argument options: " << e.what() << std::endl
+                      << std::endl
                       << options.help({}) << std::endl;
             exit(1);
         }
     }
 
-    bool updateConfigFormat(
-        const std::string configFile,
-        WalletServiceConfiguration &config
-    )
+    bool updateConfigFormat(const std::string configFile, WalletServiceConfiguration &config)
     {
         std::ifstream data(configFile);
 
         if (!data.good())
         {
             throw std::runtime_error(
-                "The --config-file you specified does not exist, please check the filename and try again."
-            );
+                "The --config-file you specified does not exist, please check the filename and try again.");
         }
         // find key=value pair, respect whitespace before/after "="
         // g0: full match, g1: match key, g2: match value
-        static const std::regex cfgItem{R"x(\s*(\S[^ \t=]*)\s*=\s*((\s?\S+)+)\s*$)x"};
+        static const std::regex cfgItem {R"x(\s*(\S[^ \t=]*)\s*=\s*((\s?\S+)+)\s*$)x"};
 
         // comments, first non space starts with # or ;
-        static const std::regex cfgComment{R"x(\s*[;#])x"};
+        static const std::regex cfgComment {R"x(\s*[;#])x"};
         std::smatch item;
         std::string cfgKey;
         std::string cfgValue;
@@ -406,9 +415,7 @@ namespace PaymentService
                 }
                 else if (cfgKey.compare("rpc-legacy-security") == 0)
                 {
-                    config.legacySecurity = cfgValue.at(0) == '1'
-                                            ? true
-                                            : false;
+                    config.legacySecurity = cfgValue.at(0) == '1' ? true : false;
                     updated = true;
                 }
                 else if (cfgKey.compare("rpc-password") == 0)
@@ -423,7 +430,7 @@ namespace PaymentService
                 }
                 else
                 {
-                    for (auto c: cfgKey)
+                    for (auto c : cfgKey)
                     {
                         if (static_cast<unsigned char>(c) > 127)
                         {
@@ -453,18 +460,14 @@ namespace PaymentService
         return updated;
     }
 
-    void handleSettings(
-        const std::string configFile,
-        WalletServiceConfiguration &config
-    )
+    void handleSettings(const std::string configFile, WalletServiceConfiguration &config)
     {
         std::ifstream data(configFile);
 
         if (!data.good())
         {
             throw std::runtime_error(
-                "The --config-file you specified does not exist, please check the filename and try again."
-            );
+                "The --config-file you specified does not exist, please check the filename and try again.");
         }
 
         IStreamWrapper isw(data);
@@ -569,10 +572,7 @@ namespace PaymentService
         return strbuf.GetString();
     }
 
-    void asFile(
-        const WalletServiceConfiguration &config,
-        const std::string &filename
-    )
+    void asFile(const WalletServiceConfiguration &config, const std::string &filename)
     {
         Document j = asJSON(config);
         std::ofstream data(filename);
@@ -580,4 +580,4 @@ namespace PaymentService
         PrettyWriter<OStreamWrapper> writer(osw);
         j.Accept(writer);
     }
-}
+} // namespace PaymentService

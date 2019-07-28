@@ -4,8 +4,10 @@
 // Please see the included LICENSE file for more information.
 
 #include "MemoryBlockchainStorage.h"
-#include <cassert>
+
 #include "serialization/SerializationOverloads.h"
+
+#include <cassert>
 
 using namespace CryptoNote;
 
@@ -14,9 +16,7 @@ MemoryBlockchainStorage::MemoryBlockchainStorage(uint32_t reserveSize)
     blocks.reserve(reserveSize);
 }
 
-MemoryBlockchainStorage::~MemoryBlockchainStorage()
-{
-}
+MemoryBlockchainStorage::~MemoryBlockchainStorage() {}
 
 void MemoryBlockchainStorage::pushBlock(RawBlock &&rawBlock)
 {
@@ -34,11 +34,10 @@ uint32_t MemoryBlockchainStorage::getBlockCount() const
     return static_cast<uint32_t>(blocks.size());
 }
 
-//Returns MemoryBlockchainStorage with elements from [splitIndex, blocks.size() - 1].
-//Original MemoryBlockchainStorage will contain elements from [0, splitIndex - 1].
-std::unique_ptr<
-    BlockchainStorage::IBlockchainStorageInternal
-> MemoryBlockchainStorage::splitStorage(uint32_t splitIndex)
+// Returns MemoryBlockchainStorage with elements from [splitIndex, blocks.size() - 1].
+// Original MemoryBlockchainStorage will contain elements from [0, splitIndex - 1].
+std::unique_ptr<BlockchainStorage::IBlockchainStorageInternal>
+    MemoryBlockchainStorage::splitStorage(uint32_t splitIndex)
 {
     assert(splitIndex > 0);
     assert(splitIndex < blocks.size());

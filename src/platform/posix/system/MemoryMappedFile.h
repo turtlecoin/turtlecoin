@@ -11,76 +11,53 @@
 
 namespace System
 {
-
     class MemoryMappedFile
     {
-        public:
-            MemoryMappedFile();
+      public:
+        MemoryMappedFile();
 
-            ~MemoryMappedFile();
+        ~MemoryMappedFile();
 
-            void create(
-                const std::string &path,
-                uint64_t size,
-                bool overwrite,
-                std::error_code &ec
-            );
+        void create(const std::string &path, uint64_t size, bool overwrite, std::error_code &ec);
 
-            void create(
-                const std::string &path,
-                uint64_t size,
-                bool overwrite
-            );
+        void create(const std::string &path, uint64_t size, bool overwrite);
 
-            void open(
-                const std::string &path,
-                std::error_code &ec
-            );
+        void open(const std::string &path, std::error_code &ec);
 
-            void open(const std::string &path);
+        void open(const std::string &path);
 
-            void close(std::error_code &ec);
+        void close(std::error_code &ec);
 
-            void close();
+        void close();
 
-            const std::string &path() const;
+        const std::string &path() const;
 
-            uint64_t size() const;
+        uint64_t size() const;
 
-            const uint8_t *data() const;
+        const uint8_t *data() const;
 
-            uint8_t *data();
+        uint8_t *data();
 
-            bool isOpened() const;
+        bool isOpened() const;
 
-            void rename(
-                const std::string &newPath,
-                std::error_code &ec
-            );
+        void rename(const std::string &newPath, std::error_code &ec);
 
-            void rename(const std::string &newPath);
+        void rename(const std::string &newPath);
 
-            void flush(
-                uint8_t *data,
-                uint64_t size,
-                std::error_code &ec
-            );
+        void flush(uint8_t *data, uint64_t size, std::error_code &ec);
 
-            void flush(
-                uint8_t *data,
-                uint64_t size
-            );
+        void flush(uint8_t *data, uint64_t size);
 
-            void swap(MemoryMappedFile &other);
+        void swap(MemoryMappedFile &other);
 
-        private:
-            int m_file;
+      private:
+        int m_file;
 
-            std::string m_path;
+        std::string m_path;
 
-            uint64_t m_size;
+        uint64_t m_size;
 
-            uint8_t *m_data;
+        uint8_t *m_data;
     };
 
-}
+} // namespace System

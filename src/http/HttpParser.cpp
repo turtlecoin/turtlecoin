@@ -5,13 +5,12 @@
 
 #include "HttpParser.h"
 
-#include <algorithm>
-
 #include "HttpParserErrorCodes.h"
+
+#include <algorithm>
 
 namespace
 {
-
     void throwIfNotGood(std::istream &stream)
     {
         if (!stream.good())
@@ -27,11 +26,10 @@ namespace
         }
     }
 
-}
+} // namespace
 
 namespace CryptoNote
 {
-
     HttpResponse::HTTP_STATUS HttpParser::parseResponseStatusFromString(const std::string &status)
     {
         if (status == "200 OK" || status == "200 Ok")
@@ -49,15 +47,12 @@ namespace CryptoNote
         else
         {
             throw std::system_error(
-                make_error_code(CryptoNote::error::HttpParserErrorCodes::UNEXPECTED_SYMBOL), "Unknown HTTP status code is given"
-            );
+                make_error_code(CryptoNote::error::HttpParserErrorCodes::UNEXPECTED_SYMBOL),
+                "Unknown HTTP status code is given");
         }
     }
 
-    void HttpParser::receiveRequest(
-        std::istream &stream,
-        HttpRequest &request
-    )
+    void HttpParser::receiveRequest(std::istream &stream, HttpRequest &request)
     {
         readWord(stream, request.method);
         readWord(stream, request.url);
@@ -74,10 +69,7 @@ namespace CryptoNote
         }
     }
 
-    void HttpParser::receiveResponse(
-        std::istream &stream,
-        HttpResponse &response
-    )
+    void HttpParser::receiveResponse(std::istream &stream, HttpResponse &response)
     {
         std::string httpVersion;
         readWord(stream, httpVersion);
@@ -87,7 +79,7 @@ namespace CryptoNote
 
         stream.get(c);
         while (stream.good() && c != '\r')
-        { //Till the end
+        { // Till the end
             status += c;
             stream.get(c);
         }
@@ -133,10 +125,7 @@ namespace CryptoNote
         response.setBody(body);
     }
 
-    void HttpParser::readWord(
-        std::istream &stream,
-        std::string &word
-    )
+    void HttpParser::readWord(std::istream &stream, std::string &word)
     {
         char c;
 
@@ -159,29 +148,22 @@ namespace CryptoNote
         }
     }
 
-    void HttpParser::readHeaders(
-        std::istream &stream,
-        HttpRequest::Headers &headers
-    )
+    void HttpParser::readHeaders(std::istream &stream, HttpRequest::Headers &headers)
     {
         std::string name;
         std::string value;
 
         while (readHeader(stream, name, value))
         {
-            headers[name] = value; //use insert
+            headers[name] = value; // use insert
             name.clear();
             value.clear();
         }
 
-        headers[name] = value; //use insert
+        headers[name] = value; // use insert
     }
 
-    bool HttpParser::readHeader(
-        std::istream &stream,
-        std::string &name,
-        std::string &value
-    )
+    bool HttpParser::readHeader(std::istream &stream, std::string &name, std::string &value)
     {
         char c;
         bool isName = true;
@@ -240,7 +222,7 @@ namespace CryptoNote
                 throw std::system_error(make_error_code(CryptoNote::error::HttpParserErrorCodes::UNEXPECTED_SYMBOL));
             }
 
-            return false; //no more headers
+            return false; // no more headers
         }
 
         return true;
@@ -258,11 +240,7 @@ namespace CryptoNote
         return 0;
     }
 
-    void HttpParser::readBody(
-        std::istream &stream,
-        std::string &body,
-        const size_t bodyLen
-    )
+    void HttpParser::readBody(std::istream &stream, std::string &body, const size_t bodyLen)
     {
         size_t read = 0;
 
@@ -275,4 +253,4 @@ namespace CryptoNote
         throwIfNotGood(stream);
     }
 
-}
+} // namespace CryptoNote

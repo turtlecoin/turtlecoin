@@ -5,16 +5,16 @@
 
 #include "BlockchainSynchronizer.h"
 
-#include <functional>
-#include <iostream>
-#include <sstream>
-#include <unordered_set>
-
 #include "common/StreamTools.h"
 #include "common/StringTools.h"
 #include "cryptonotecore/CryptoNoteBasicImpl.h"
 #include "cryptonotecore/CryptoNoteFormatUtils.h"
 #include "cryptonotecore/TransactionApi.h"
+
+#include <functional>
+#include <iostream>
+#include <sstream>
+#include <unordered_set>
 
 using namespace Common;
 using namespace Crypto;
@@ -22,62 +22,56 @@ using namespace Logging;
 
 namespace
 {
-
     const int RETRY_TIMEOUT = 5;
 
     class TransactionReaderListFormatter
     {
-        public:
-            explicit TransactionReaderListFormatter(
-                const std::vector<std::unique_ptr<CryptoNote::ITransactionReader>> &transactionList
-            ) : m_transactionList(transactionList)
-            {
-            }
+      public:
+        explicit TransactionReaderListFormatter(
+            const std::vector<std::unique_ptr<CryptoNote::ITransactionReader>> &transactionList):
+            m_transactionList(transactionList)
+        {
+        }
 
-            void print(std::ostream &os) const
-            {
-                os << '{';
+        void print(std::ostream &os) const
+        {
+            os << '{';
 
-                if (!m_transactionList.empty())
+            if (!m_transactionList.empty())
+            {
+                os << m_transactionList.front()->getTransactionHash();
+                for (auto it = std::next(m_transactionList.begin()); it != m_transactionList.end(); ++it)
                 {
-                    os << m_transactionList.front()->getTransactionHash();
-                    for (auto it = std::next(m_transactionList.begin()); it != m_transactionList.end(); ++it)
-                    {
-                        os << ", " << (*it)->getTransactionHash();
-                    }
+                    os << ", " << (*it)->getTransactionHash();
                 }
-
-                os << '}';
             }
 
-            friend std::ostream &operator<<(
-                std::ostream &os,
-                const TransactionReaderListFormatter &formatter
-            )
-            {
-                formatter.print(os);
-                return os;
-            }
+            os << '}';
+        }
 
-        private:
-            const std::vector<std::unique_ptr<CryptoNote::ITransactionReader>> &m_transactionList;
+        friend std::ostream &operator<<(std::ostream &os, const TransactionReaderListFormatter &formatter)
+        {
+            formatter.print(os);
+            return os;
+        }
+
+      private:
+        const std::vector<std::unique_ptr<CryptoNote::ITransactionReader>> &m_transactionList;
     };
 
-}
+} // namespace
 
 namespace CryptoNote
 {
-
     BlockchainSynchronizer::BlockchainSynchronizer(
         INode &node,
         std::shared_ptr<Logging::ILogger> logger,
-        const Hash &genesisBlockHash
-    )
-        : m_logger(logger, "BlockchainSynchronizer"),
-          m_node(node),
-          m_genesisBlockHash(genesisBlockHash),
-          m_currentState(State::stopped),
-          m_futureState(State::stopped)
+        const Hash &genesisBlockHash):
+        m_logger(logger, "BlockchainSynchronizer"),
+        m_node(node),
+        m_genesisBlockHash(genesisBlockHash),
+        m_currentState(State::stopped),
+        m_futureState(State::stopped)
     {
     }
 
@@ -148,9 +142,8 @@ namespace CryptoNote
         return state->getKnownBlockHashes();
     }
 
-    std::future<
-        std::error_code
-    > BlockchainSynchronizer::addUnconfirmedTransaction(const ITransactionReader &transaction)
+    std::future<std::error_code>
+        BlockchainSynchronizer::addUnconfirmedTransaction(const ITransactionReader &transaction)
     {
         m_logger(INFO, BRIGHT_WHITE) << "Adding unconfirmed transaction, hash " << transaction.getTransactionHash();
 
@@ -203,9 +196,9 @@ namespace CryptoNote
             ec = addIt->first->addUnconfirmedTransaction(transaction);
             if (ec)
             {
-                m_logger(ERROR, BRIGHT_RED) << "Failed to add unconfirmed transaction to consumer: " << ec << ", "
-                                            << ec.message() << ", consumer " << addIt->first << ", hash "
-                                            << transaction.getTransactionHash();
+                m_logger(ERROR, BRIGHT_RED)
+                    << "Failed to add unconfirmed transaction to consumer: " << ec << ", " << ec.message()
+                    << ", consumer " << addIt->first << ", hash " << transaction.getTransactionHash();
                 break;
             }
         }
@@ -265,21 +258,10 @@ namespace CryptoNote
 
     bool BlockchainSynchronizer::setFutureState(State s)
     {
-        return setFutureStateIf(
-            s, [
-            this,
-            s
-        ]
-        {
-            return s > m_futureState;
-        }
-        );
+        return setFutureStateIf(s, [this, s] { return s > m_futureState; });
     }
 
-    bool BlockchainSynchronizer::setFutureStateIf(
-        State s,
-        std::function<bool(void)> &&pred
-    )
+    bool BlockchainSynchronizer::setFutureStateIf(State s, std::function<bool(void)> &&pred)
     {
         std::unique_lock<std::mutex> lk(m_stateMutex);
         if (pred())
@@ -295,8 +277,8 @@ namespace CryptoNote
     void BlockchainSynchronizer::actualizeFutureState()
     {
         std::unique_lock<std::mutex> lk(m_stateMutex);
-        if (m_currentState == State::stopped &&
-            (m_futureState == State::deleteOldTxs || m_futureState == State::blockchainSync))
+        if (m_currentState == State::stopped
+            && (m_futureState == State::deleteOldTxs || m_futureState == State::blockchainSync))
         { // start(), immideately attach observer
             m_node.addObserver(this);
         }
@@ -339,8 +321,8 @@ namespace CryptoNote
             }
             catch (...)
             {
-                m_logger(ERROR, BRIGHT_RED) << "Failed to add unconfirmed transaction, hash "
-                                            << transaction.getTransactionHash();
+                m_logger(ERROR, BRIGHT_RED)
+                    << "Failed to add unconfirmed transaction, hash " << transaction.getTransactionHash();
                 detachedPromise.set_exception(std::current_exception());
             }
         }
@@ -367,13 +349,10 @@ namespace CryptoNote
                 break;
             case State::idle:
                 m_logger(DEBUGGING) << "Idle";
-                m_hasWork.wait(
-                    lk, [this]
-                {
-                    return m_futureState != State::idle || !m_removeTransactionTasks.empty() ||
-                           !m_addTransactionTasks.empty();
-                }
-                );
+                m_hasWork.wait(lk, [this] {
+                    return m_futureState != State::idle || !m_removeTransactionTasks.empty()
+                           || !m_addTransactionTasks.empty();
+                });
                 m_logger(DEBUGGING) << "Resume";
                 lk.unlock();
                 break;
@@ -431,24 +410,14 @@ namespace CryptoNote
         }
 
         if (!setFutureStateIf(
-            nextState, [this]
-        {
-            return m_currentState == State::stopped && m_futureState == State::stopped;
-        }
-        ))
+                nextState, [this] { return m_currentState == State::stopped && m_futureState == State::stopped; }))
         {
             auto message = "Failed to start: already started";
             m_logger(ERROR, BRIGHT_RED) << message;
             throw std::runtime_error(message);
         }
 
-        workingThread.reset(
-            new std::thread(
-                [this]
-                {
-                    workingProcedure();
-                }
-            ));
+        workingThread.reset(new std::thread([this] { workingProcedure(); }));
     }
 
     void BlockchainSynchronizer::stop()
@@ -487,8 +456,7 @@ namespace CryptoNote
 
     void BlockchainSynchronizer::getPoolUnionAndIntersection(
         std::unordered_set<Crypto::Hash> &poolUnion,
-        std::unordered_set<Crypto::Hash> &poolIntersection
-    ) const
+        std::unordered_set<Crypto::Hash> &poolIntersection) const
     {
         std::unique_lock<std::mutex> lk(m_consumersMutex);
 
@@ -571,25 +539,21 @@ namespace CryptoNote
                 auto queryBlocksWaitFuture = queryBlocksCompleted.get_future();
 
                 m_node.queryBlocks(
-                    std::move(req.knownBlocks), req.syncStart.timestamp, response.newBlocks, response
-                    .startHeight, [&queryBlocksCompleted](std::error_code ec)
-                    {
+                    std::move(req.knownBlocks),
+                    req.syncStart.timestamp,
+                    response.newBlocks,
+                    response.startHeight,
+                    [&queryBlocksCompleted](std::error_code ec) {
                         auto detachedPromise = std::move(queryBlocksCompleted);
                         detachedPromise.set_value(ec);
-                    }
-                );
+                    });
 
                 std::error_code ec = queryBlocksWaitFuture.get();
 
                 if (ec)
                 {
                     m_logger(ERROR, BRIGHT_RED) << "Failed to query blocks: " << ec << ", " << ec.message();
-                    setFutureStateIf(
-                        State::idle, [this]
-                    {
-                        return m_futureState != State::stopped;
-                    }
-                    );
+                    setFutureStateIf(State::idle, [this] { return m_futureState != State::stopped; });
                     m_observerManager.notify(&IBlockchainSynchronizerObserver::synchronizationCompleted, ec);
                 }
                 else
@@ -603,14 +567,10 @@ namespace CryptoNote
         catch (const std::exception &e)
         {
             m_logger(ERROR, BRIGHT_RED) << "Failed to query and process blocks: " << e.what();
-            setFutureStateIf(
-                State::idle, [this]
-            {
-                return m_futureState != State::stopped;
-            }
-            );
+            setFutureStateIf(State::idle, [this] { return m_futureState != State::stopped; });
             m_observerManager.notify(
-                &IBlockchainSynchronizerObserver::synchronizationCompleted, std::make_error_code(std::errc::invalid_argument));
+                &IBlockchainSynchronizerObserver::synchronizationCompleted,
+                std::make_error_code(std::errc::invalid_argument));
         }
     }
 
@@ -641,22 +601,17 @@ namespace CryptoNote
                 {
                     for (const auto &txShortInfo : block.txsShortInfo)
                     {
-                        completeBlock.transactions.push_back(
-                            createTransactionPrefix(
-                                txShortInfo.txPrefix, reinterpret_cast<const Hash &>(txShortInfo.txId)));
+                        completeBlock.transactions.push_back(createTransactionPrefix(
+                            txShortInfo.txPrefix, reinterpret_cast<const Hash &>(txShortInfo.txId)));
                     }
                 }
                 catch (const std::exception &e)
                 {
                     m_logger(ERROR, BRIGHT_RED) << "Failed to process blocks: " << e.what();
-                    setFutureStateIf(
-                        State::idle, [this]
-                    {
-                        return m_futureState != State::stopped;
-                    }
-                    );
+                    setFutureStateIf(State::idle, [this] { return m_futureState != State::stopped; });
                     m_observerManager.notify(
-                        &IBlockchainSynchronizerObserver::synchronizationCompleted, std::make_error_code(std::errc::invalid_argument));
+                        &IBlockchainSynchronizerObserver::synchronizationCompleted,
+                        std::make_error_code(std::errc::invalid_argument));
                     return;
                 }
             }
@@ -676,15 +631,11 @@ namespace CryptoNote
             switch (result)
             {
                 case UpdateConsumersResult::errorOccurred:
-                    if (setFutureStateIf(
-                        State::idle, [this]
-                    {
-                        return m_futureState != State::stopped;
-                    }
-                    ))
+                    if (setFutureStateIf(State::idle, [this] { return m_futureState != State::stopped; }))
                     {
                         m_observerManager.notify(
-                            &IBlockchainSynchronizerObserver::synchronizationCompleted, std::make_error_code(std::errc::invalid_argument));
+                            &IBlockchainSynchronizerObserver::synchronizationCompleted,
+                            std::make_error_code(std::errc::invalid_argument));
                     }
                     break;
 
@@ -699,25 +650,26 @@ namespace CryptoNote
                 case UpdateConsumersResult::addedNewBlocks:
                     setFutureState(State::blockchainSync);
                     m_observerManager.notify(
-                        &IBlockchainSynchronizerObserver::synchronizationProgressUpdated, processedBlockCount, std::max(
-                        m_node.getKnownBlockCount(), m_node.getLocalBlockCount()));
+                        &IBlockchainSynchronizerObserver::synchronizationProgressUpdated,
+                        processedBlockCount,
+                        std::max(m_node.getKnownBlockCount(), m_node.getLocalBlockCount()));
                     break;
             }
         }
 
         if (checkIfShouldStop())
-        { //Sic!
+        { // Sic!
             m_logger(WARNING, BRIGHT_YELLOW) << "Block processing is interrupted";
             m_observerManager.notify(
-                &IBlockchainSynchronizerObserver::synchronizationCompleted, std::make_error_code(std::errc::interrupted));
+                &IBlockchainSynchronizerObserver::synchronizationCompleted,
+                std::make_error_code(std::errc::interrupted));
         }
     }
 
     /// \pre m_consumersMutex is locked
     BlockchainSynchronizer::UpdateConsumersResult BlockchainSynchronizer::updateConsumers(
         const BlockchainInterval &interval,
-        const std::vector<CompleteBlock> &blocks
-    )
+        const std::vector<CompleteBlock> &blocks)
     {
         assert(interval.blocks.size() == blocks.size());
 
@@ -752,9 +704,8 @@ namespace CryptoNote
                 // update consumer
                 m_logger(DEBUGGING) << "Adding blocks to consumer, consumer " << kv.first << ", start index "
                                     << result.newBlockHeight << ", count " << blockCount;
-                uint32_t addedCount = kv.first->onNewBlocks(
-                    blocks.data() + startOffset, result.newBlockHeight, blockCount
-                );
+                uint32_t addedCount =
+                    kv.first->onNewBlocks(blocks.data() + startOffset, result.newBlockHeight, blockCount);
                 if (addedCount > 0)
                 {
                     if (addedCount < blockCount)
@@ -842,8 +793,8 @@ namespace CryptoNote
         }
         else
         {
-            m_logger(DEBUGGING, BRIGHT_RED) << "Failed to query outdated pool transaction: " << ec << ", "
-                                            << ec.message();
+            m_logger(DEBUGGING, BRIGHT_RED)
+                << "Failed to query outdated pool transaction: " << ec << ", " << ec.message();
         }
 
         if (!ec)
@@ -857,11 +808,7 @@ namespace CryptoNote
             m_logger(INFO, BRIGHT_WHITE) << "Retry in " << RETRY_TIMEOUT << " seconds...";
             std::unique_lock<std::mutex> lock(m_stateMutex);
             bool stopped = m_hasWork.wait_for(
-                lock, std::chrono::seconds(RETRY_TIMEOUT), [this]
-            {
-                return m_futureState == State::stopped;
-            }
-            );
+                lock, std::chrono::seconds(RETRY_TIMEOUT), [this] { return m_futureState == State::stopped; });
 
             if (!stopped)
             {
@@ -890,18 +837,13 @@ namespace CryptoNote
         if (ec)
         {
             m_logger(ERROR, BRIGHT_RED) << "Failed to query transaction pool changes: " << ec << ", " << ec.message();
-            setFutureStateIf(
-                State::idle, [this]
-            {
-                return m_futureState != State::stopped;
-            }
-            );
+            setFutureStateIf(State::idle, [this] { return m_futureState != State::stopped; });
             m_observerManager.notify(&IBlockchainSynchronizerObserver::synchronizationCompleted, ec);
         }
         else
-        { //get union ok
+        { // get union ok
             if (!unionResponse.isLastKnownBlockActual)
-            { //bc outdated
+            { // bc outdated
                 m_logger(DEBUGGING) << "Transaction pool changes received, but blockchain has been changed";
                 setFutureState(State::blockchainSync);
             }
@@ -911,7 +853,7 @@ namespace CryptoNote
                                     << ", deleted " << unionResponse.deletedTxIds.size();
 
                 if (unionPoolHistory == intersectedPoolHistory)
-                { //usual case, start pool processing
+                { // usual case, start pool processing
                     m_observerManager.notify(
                         &IBlockchainSynchronizerObserver::synchronizationCompleted, processPoolTxs(unionResponse));
                 }
@@ -924,25 +866,20 @@ namespace CryptoNote
                     GetPoolResponse intersectionResponse;
                     intersectionResponse.isLastKnownBlockActual = false;
 
-                    std::error_code
-                        ec2 = getPoolSymmetricDifferenceSync(std::move(intersectionRequest), intersectionResponse);
+                    std::error_code ec2 =
+                        getPoolSymmetricDifferenceSync(std::move(intersectionRequest), intersectionResponse);
 
                     if (ec2)
                     {
-                        m_logger(ERROR, BRIGHT_RED) << "Failed to query transaction pool changes, stage 2: " << ec
-                                                    << ", " << ec.message();
-                        setFutureStateIf(
-                            State::idle, [this]
-                        {
-                            return m_futureState != State::stopped;
-                        }
-                        );
+                        m_logger(ERROR, BRIGHT_RED)
+                            << "Failed to query transaction pool changes, stage 2: " << ec << ", " << ec.message();
+                        setFutureStateIf(State::idle, [this] { return m_futureState != State::stopped; });
                         m_observerManager.notify(&IBlockchainSynchronizerObserver::synchronizationCompleted, ec2);
                     }
                     else
-                    { //get intersection ok
+                    { // get intersection ok
                         if (!intersectionResponse.isLastKnownBlockActual)
-                        { //bc outdated
+                        { // bc outdated
                             m_logger(DEBUGGING)
                                 << "Transaction pool changes at stage 2 received, but blockchain has been changed";
                             setFutureState(State::blockchainSync);
@@ -956,7 +893,7 @@ namespace CryptoNote
                                 unionResponse.deletedTxIds.begin(), unionResponse.deletedTxIds.end());
                             std::error_code ec3 = processPoolTxs(intersectionResponse);
 
-                            //notify about error, or success
+                            // notify about error, or success
                             m_observerManager.notify(&IBlockchainSynchronizerObserver::synchronizationCompleted, ec3);
                         }
                     }
@@ -965,22 +902,22 @@ namespace CryptoNote
         }
     }
 
-    std::error_code BlockchainSynchronizer::getPoolSymmetricDifferenceSync(
-        GetPoolRequest &&request,
-        GetPoolResponse &response
-    )
+    std::error_code
+        BlockchainSynchronizer::getPoolSymmetricDifferenceSync(GetPoolRequest &&request, GetPoolResponse &response)
     {
         auto promise = std::promise<std::error_code>();
         auto future = promise.get_future();
 
         m_node.getPoolSymmetricDifference(
-            std::move(request.knownTxIds), std::move(request.lastKnownBlock), response.isLastKnownBlockActual, response
-            .newTxs, response.deletedTxIds, [&promise](std::error_code ec)
-            {
+            std::move(request.knownTxIds),
+            std::move(request.lastKnownBlock),
+            response.isLastKnownBlockActual,
+            response.newTxs,
+            response.deletedTxIds,
+            [&promise](std::error_code ec) {
                 auto detachedPromise = std::move(promise);
                 detachedPromise.set_value(ec);
-            }
-        );
+            });
 
         return future.get();
     }
@@ -998,7 +935,7 @@ namespace CryptoNote
             for (auto &consumer : m_consumers)
             {
                 if (checkIfShouldStop())
-                { //if stop, return immediately, without notification
+                { // if stop, return immediately, without notification
                     m_logger(WARNING, BRIGHT_YELLOW) << "Pool transactions processing is interrupted";
                     return std::make_error_code(std::errc::interrupted);
                 }
@@ -1021,7 +958,7 @@ namespace CryptoNote
         return error;
     }
 
-    ///pre: m_consumersMutex is locked
+    /// pre: m_consumersMutex is locked
     SynchronizationState *BlockchainSynchronizer::getConsumerSynchronizationState(IBlockchainConsumer *consumer) const
     {
         assert(consumer != nullptr);
@@ -1066,4 +1003,4 @@ namespace CryptoNote
         return shortest->second->getShortHistory(m_node.getLastLocalBlockHeight());
     }
 
-}
+} // namespace CryptoNote

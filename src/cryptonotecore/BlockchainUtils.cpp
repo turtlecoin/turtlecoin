@@ -9,11 +9,9 @@ namespace CryptoNote
 {
     namespace Utils
     {
-
         bool restoreCachedTransactions(
             const std::vector<BinaryArray> &binaryTransactions,
-            std::vector<CachedTransaction> &transactions
-        )
+            std::vector<CachedTransaction> &transactions)
         {
             transactions.reserve(binaryTransactions.size());
 
@@ -31,5 +29,5 @@ namespace CryptoNote
             return true;
         }
 
-    }
-}
+    } // namespace Utils
+} // namespace CryptoNote

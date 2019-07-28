@@ -5,18 +5,16 @@
 
 #pragma once
 
-#include <array>
-#include <memory>
-#include <cstdint>
-
-#include <boost/optional.hpp>
-
 #include "INode.h"
 #include "ITransaction.h"
 
+#include <array>
+#include <boost/optional.hpp>
+#include <cstdint>
+#include <memory>
+
 namespace CryptoNote
 {
-
     struct BlockchainInterval
     {
         uint32_t startHeight;
@@ -31,4 +29,4 @@ namespace CryptoNote
         std::list<std::shared_ptr<ITransactionReader>> transactions;
     };
 
-}
+} // namespace CryptoNote

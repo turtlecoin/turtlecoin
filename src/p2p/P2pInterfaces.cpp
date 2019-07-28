@@ -7,9 +7,6 @@
 
 namespace CryptoNote
 {
+    IP2pConnection::~IP2pConnection() {}
 
-    IP2pConnection::~IP2pConnection()
-    {
-    }
-
-}
+} // namespace CryptoNote

@@ -11,185 +11,172 @@
 
 namespace System
 {
-
-    template<typename ResultType = void>
-    class Context
+    template<typename ResultType = void> class Context
     {
-        public:
-            Context(
-                Dispatcher &dispatcher,
-                std::function<ResultType()> &&target
-            )
-                : dispatcher(dispatcher),
-                  target(std::move(target)),
-                  ready(dispatcher),
-                  bindingContext(
-                      dispatcher.getReusableContext())
-            {
-                bindingContext.interrupted = false;
-                bindingContext.groupNext = nullptr;
-                bindingContext.groupPrev = nullptr;
-                bindingContext.group = nullptr;
-                bindingContext.procedure = [this]
+      public:
+        Context(Dispatcher &dispatcher, std::function<ResultType()> &&target):
+            dispatcher(dispatcher),
+            target(std::move(target)),
+            ready(dispatcher),
+            bindingContext(dispatcher.getReusableContext())
+        {
+            bindingContext.interrupted = false;
+            bindingContext.groupNext = nullptr;
+            bindingContext.groupPrev = nullptr;
+            bindingContext.group = nullptr;
+            bindingContext.procedure = [this] {
+                try
                 {
-                    try
-                    {
-                        new(resultStorage) ResultType(this->target());
-                    }
-                    catch (...)
-                    {
-                        exceptionPointer = std::current_exception();
-                    }
-
-                    ready.set();
-                };
-
-                dispatcher.pushContext(&bindingContext);
-            }
-
-            Context(const Context &) = delete;
-
-            Context &operator=(const Context &) = delete;
-
-            ~Context()
-            {
-                interrupt();
-                wait();
-                dispatcher.pushReusableContext(bindingContext);
-            }
-
-            ResultType &get()
-            {
-                wait();
-                if (exceptionPointer != nullptr)
+                    new (resultStorage) ResultType(this->target());
+                }
+                catch (...)
                 {
-                    std::rethrow_exception(exceptionPointer);
+                    exceptionPointer = std::current_exception();
                 }
 
-                return *reinterpret_cast<ResultType *>(resultStorage);
+                ready.set();
+            };
+
+            dispatcher.pushContext(&bindingContext);
+        }
+
+        Context(const Context &) = delete;
+
+        Context &operator=(const Context &) = delete;
+
+        ~Context()
+        {
+            interrupt();
+            wait();
+            dispatcher.pushReusableContext(bindingContext);
+        }
+
+        ResultType &get()
+        {
+            wait();
+            if (exceptionPointer != nullptr)
+            {
+                std::rethrow_exception(exceptionPointer);
             }
 
-            void interrupt()
-            {
-                dispatcher.interrupt(&bindingContext);
-            }
+            return *reinterpret_cast<ResultType *>(resultStorage);
+        }
 
-            void wait()
+        void interrupt()
+        {
+            dispatcher.interrupt(&bindingContext);
+        }
+
+        void wait()
+        {
+            for (;;)
             {
-                for (;;)
+                try
                 {
-                    try
-                    {
-                        ready.wait();
-                        break;
-                    }
-                    catch (InterruptedException &)
-                    {
-                        interrupt();
-                    }
+                    ready.wait();
+                    break;
+                }
+                catch (InterruptedException &)
+                {
+                    interrupt();
                 }
             }
+        }
 
-        private:
-            uint8_t resultStorage[sizeof(ResultType)];
+      private:
+        uint8_t resultStorage[sizeof(ResultType)];
 
-            Dispatcher &dispatcher;
+        Dispatcher &dispatcher;
 
-            std::function<ResultType()> target;
+        std::function<ResultType()> target;
 
-            Event ready;
+        Event ready;
 
-            NativeContext &bindingContext;
+        NativeContext &bindingContext;
 
-            std::exception_ptr exceptionPointer;
+        std::exception_ptr exceptionPointer;
     };
 
-    template<>
-    class Context<void>
+    template<> class Context<void>
     {
-        public:
-            Context(
-                Dispatcher &dispatcher,
-                std::function<void()> &&target
-            )
-                : dispatcher(dispatcher),
-                  target(std::move(target)),
-                  ready(dispatcher),
-                  bindingContext(
-                      dispatcher.getReusableContext())
-            {
-                bindingContext.interrupted = false;
-                bindingContext.groupNext = nullptr;
-                bindingContext.groupPrev = nullptr;
-                bindingContext.group = nullptr;
-                bindingContext.procedure = [this]
+      public:
+        Context(Dispatcher &dispatcher, std::function<void()> &&target):
+            dispatcher(dispatcher),
+            target(std::move(target)),
+            ready(dispatcher),
+            bindingContext(dispatcher.getReusableContext())
+        {
+            bindingContext.interrupted = false;
+            bindingContext.groupNext = nullptr;
+            bindingContext.groupPrev = nullptr;
+            bindingContext.group = nullptr;
+            bindingContext.procedure = [this] {
+                try
                 {
-                    try
-                    {
-                        this->target();
-                    }
-                    catch (...)
-                    {
-                        exceptionPointer = std::current_exception();
-                    }
-
-                    ready.set();
-                };
-
-                dispatcher.pushContext(&bindingContext);
-            }
-
-            Context(const Context &) = delete;
-
-            Context &operator=(const Context &) = delete;
-
-            ~Context()
-            {
-                interrupt();
-                wait();
-                dispatcher.pushReusableContext(bindingContext);
-            }
-
-            void get()
-            {
-                wait();
-                if (exceptionPointer != nullptr)
+                    this->target();
+                }
+                catch (...)
                 {
-                    std::rethrow_exception(exceptionPointer);
+                    exceptionPointer = std::current_exception();
+                }
+
+                ready.set();
+            };
+
+            dispatcher.pushContext(&bindingContext);
+        }
+
+        Context(const Context &) = delete;
+
+        Context &operator=(const Context &) = delete;
+
+        ~Context()
+        {
+            interrupt();
+            wait();
+            dispatcher.pushReusableContext(bindingContext);
+        }
+
+        void get()
+        {
+            wait();
+            if (exceptionPointer != nullptr)
+            {
+                std::rethrow_exception(exceptionPointer);
+            }
+        }
+
+        void interrupt()
+        {
+            dispatcher.interrupt(&bindingContext);
+        }
+
+        void wait()
+        {
+            for (;;)
+            {
+                try
+                {
+                    ready.wait();
+                    break;
+                }
+                catch (InterruptedException &)
+                {
+                    interrupt();
                 }
             }
+        }
 
-            void interrupt()
-            {
-                dispatcher.interrupt(&bindingContext);
-            }
+      private:
+        Dispatcher &dispatcher;
 
-            void wait()
-            {
-                for (;;)
-                {
-                    try
-                    {
-                        ready.wait();
-                        break;
-                    }
-                    catch (InterruptedException &)
-                    {
-                        interrupt();
-                    }
-                }
-            }
+        std::function<void()> target;
 
-        private:
-            Dispatcher &dispatcher;
+        Event ready;
 
-            std::function<void()> target;
+        NativeContext &bindingContext;
 
-            Event ready;
-
-            NativeContext &bindingContext;
-
-            std::exception_ptr exceptionPointer;
+        std::exception_ptr exceptionPointer;
     };
 
-}
+} // namespace System

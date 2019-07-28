@@ -8,7 +8,6 @@
 
 namespace CryptoNote
 {
-
     const std::string &HttpRequest::getMethod() const
     {
         return method;
@@ -29,10 +28,7 @@ namespace CryptoNote
         return body;
     }
 
-    void HttpRequest::addHeader(
-        const std::string &name,
-        const std::string &value
-    )
+    void HttpRequest::addHeader(const std::string &name, const std::string &value)
     {
         headers[name] = value;
     }
@@ -61,7 +57,9 @@ namespace CryptoNote
         auto host = headers.find("Host");
         if (host == headers.end())
         {
-            os << "Host: " << "127.0.0.1" << "\r\n";
+            os << "Host: "
+               << "127.0.0.1"
+               << "\r\n";
         }
 
         for (auto pair : headers)
@@ -77,4 +75,4 @@ namespace CryptoNote
 
         return os;
     }
-}
+} // namespace CryptoNote

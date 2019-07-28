@@ -9,8 +9,7 @@ namespace CryptoNote
 {
     namespace error
     {
-
         TransactionValidationErrorCategory TransactionValidationErrorCategory::INSTANCE;
 
     }
-}
+} // namespace CryptoNote

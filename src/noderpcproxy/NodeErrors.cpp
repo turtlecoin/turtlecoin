@@ -9,8 +9,7 @@ namespace CryptoNote
 {
     namespace NodeError
     {
-
         NodeErrorCategory NodeErrorCategory::INSTANCE;
 
     }
-}
+} // namespace CryptoNote

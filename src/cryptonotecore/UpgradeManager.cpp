@@ -9,19 +9,11 @@
 
 namespace CryptoNote
 {
+    UpgradeManager::UpgradeManager() {}
 
-    UpgradeManager::UpgradeManager()
-    {
-    }
+    UpgradeManager::~UpgradeManager() {}
 
-    UpgradeManager::~UpgradeManager()
-    {
-    }
-
-    void UpgradeManager::addMajorBlockVersion(
-        uint8_t targetVersion,
-        uint32_t upgradeHeight
-    )
+    void UpgradeManager::addMajorBlockVersion(uint8_t targetVersion, uint32_t upgradeHeight)
     {
         assert(m_upgradeDetectors.empty() || m_upgradeDetectors.back()->targetVersion() < targetVersion);
         m_upgradeDetectors.emplace_back(makeUpgradeDetector(targetVersion, upgradeHeight));
@@ -40,4 +32,4 @@ namespace CryptoNote
         return BLOCK_MAJOR_VERSION_1;
     }
 
-}
+} // namespace CryptoNote

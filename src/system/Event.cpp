@@ -4,16 +4,15 @@
 // Please see the included LICENSE file for more information.
 
 #include "Event.h"
+
 #include <cassert>
 #include <system/Dispatcher.h>
 #include <system/InterruptedException.h>
 
 namespace System
 {
-
     namespace
     {
-
         struct EventWaiter
         {
             bool interrupted;
@@ -22,20 +21,13 @@ namespace System
             NativeContext *context;
         };
 
-    }
+    } // namespace
 
-    Event::Event() : dispatcher(nullptr)
-    {
-    }
+    Event::Event(): dispatcher(nullptr) {}
 
-    Event::Event(Dispatcher &dispatcher)
-        : dispatcher(&dispatcher),
-          state(false),
-          first(nullptr)
-    {
-    }
+    Event::Event(Dispatcher &dispatcher): dispatcher(&dispatcher), state(false), first(nullptr) {}
 
-    Event::Event(Event &&other) : dispatcher(other.dispatcher)
+    Event::Event(Event &&other): dispatcher(other.dispatcher)
     {
         if (dispatcher != nullptr)
         {
@@ -114,14 +106,8 @@ namespace System
 
         if (!state)
         {
-            EventWaiter waiter = {
-                false,
-                nullptr,
-                nullptr,
-                dispatcher->getCurrentContext()
-            };
-            waiter.context->interruptProcedure = [&]
-            {
+            EventWaiter waiter = {false, nullptr, nullptr, dispatcher->getCurrentContext()};
+            waiter.context->interruptProcedure = [&] {
                 if (waiter.next != nullptr)
                 {
                     assert(waiter.next->prev == &waiter);
@@ -171,4 +157,4 @@ namespace System
         }
     }
 
-}
+} // namespace System

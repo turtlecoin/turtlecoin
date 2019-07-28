@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include <rapidjson/document.h>
-#include <string>
 #include <config/CryptoNoteConfig.h>
 #include <logging/ILogger.h>
+#include <rapidjson/document.h>
+#include <string>
 
 using namespace rapidjson;
 
@@ -15,9 +15,7 @@ namespace PaymentService
 {
     struct WalletServiceConfiguration
     {
-        WalletServiceConfiguration()
-        {
-        };
+        WalletServiceConfiguration() {};
 
         /* Address for the daemon RPC */
         std::string daemonAddress = "127.0.0.1";
@@ -99,28 +97,15 @@ namespace PaymentService
         uint64_t scanHeight;
     };
 
-    bool updateConfigFormat(
-        const std::string configFile,
-        WalletServiceConfiguration &config
-    );
+    bool updateConfigFormat(const std::string configFile, WalletServiceConfiguration &config);
 
-    void handleSettings(
-        int argc,
-        char *argv[],
-        WalletServiceConfiguration &config
-    );
+    void handleSettings(int argc, char *argv[], WalletServiceConfiguration &config);
 
-    void handleSettings(
-        const std::string configFile,
-        WalletServiceConfiguration &config
-    );
+    void handleSettings(const std::string configFile, WalletServiceConfiguration &config);
 
     Document asJSON(const WalletServiceConfiguration &config);
 
     std::string asString(const WalletServiceConfiguration &config);
 
-    void asFile(
-        const WalletServiceConfiguration &config,
-        const std::string &filename
-    );
-}
+    void asFile(const WalletServiceConfiguration &config, const std::string &filename);
+} // namespace PaymentService

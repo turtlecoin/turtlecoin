@@ -30,13 +30,7 @@ namespace Utilities
 
     ParsedExtra parseExtra(const std::vector<uint8_t> &extra)
     {
-        ParsedExtra parsed{
-            Constants::NULL_PUBLIC_KEY,
-            std::string(),
-            {
-                0,
-                Constants::NULL_HASH
-            }};
+        ParsedExtra parsed {Constants::NULL_PUBLIC_KEY, std::string(), {0, Constants::NULL_HASH}};
 
         bool seenPubKey = false;
         bool seenPaymentID = false;
@@ -83,8 +77,8 @@ namespace Utilities
                [...data...] 0x02 [size of extra nonce] 0x00 [payment ID] [...data...]
 
             */
-            if (c == Constants::TX_EXTRA_NONCE_IDENTIFIER && elementsRemaining > 1 + 1 + 32 &&
-                *(it + 2) == Constants::TX_EXTRA_PAYMENT_ID_IDENTIFIER && !seenPaymentID)
+            if (c == Constants::TX_EXTRA_NONCE_IDENTIFIER && elementsRemaining > 1 + 1 + 32
+                && *(it + 2) == Constants::TX_EXTRA_PAYMENT_ID_IDENTIFIER && !seenPaymentID)
             {
                 const auto dataBegin = it + 3;
 
@@ -97,9 +91,7 @@ namespace Utilities
                 std::string paymentID = Common::podToHex(paymentIDHash);
 
                 /* Convert it to lower case */
-                std::transform(
-                    paymentID.begin(), paymentID.end(), paymentID.begin(), ::tolower
-                );
+                std::transform(paymentID.begin(), paymentID.end(), paymentID.begin(), ::tolower);
 
                 parsed.paymentID = paymentID;
 
@@ -143,4 +135,4 @@ namespace Utilities
 
         return parsed;
     }
-}
+} // namespace Utilities

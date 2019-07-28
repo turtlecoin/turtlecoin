@@ -12,7 +12,6 @@
 
 namespace System
 {
-
     struct NativeContextGroup;
 
     struct NativeContext
@@ -38,84 +37,78 @@ namespace System
 
     class Dispatcher
     {
-        public:
-            Dispatcher();
+      public:
+        Dispatcher();
 
-            Dispatcher(const Dispatcher &) = delete;
+        Dispatcher(const Dispatcher &) = delete;
 
-            ~Dispatcher();
+        ~Dispatcher();
 
-            Dispatcher &operator=(const Dispatcher &) = delete;
+        Dispatcher &operator=(const Dispatcher &) = delete;
 
-            void clear();
+        void clear();
 
-            void dispatch();
+        void dispatch();
 
-            NativeContext *getCurrentContext() const;
+        NativeContext *getCurrentContext() const;
 
-            void interrupt();
+        void interrupt();
 
-            void interrupt(NativeContext *context);
+        void interrupt(NativeContext *context);
 
-            bool interrupted();
+        bool interrupted();
 
-            void pushContext(NativeContext *context);
+        void pushContext(NativeContext *context);
 
-            void remoteSpawn(std::function<void()> &&procedure);
+        void remoteSpawn(std::function<void()> &&procedure);
 
-            void yield();
+        void yield();
 
-            // Platform-specific
-            void addTimer(
-                uint64_t time,
-                NativeContext *context
-            );
+        // Platform-specific
+        void addTimer(uint64_t time, NativeContext *context);
 
-            void *getCompletionPort() const;
+        void *getCompletionPort() const;
 
-            NativeContext &getReusableContext();
+        NativeContext &getReusableContext();
 
-            void pushReusableContext(NativeContext &);
+        void pushReusableContext(NativeContext &);
 
-            void interruptTimer(
-                uint64_t time,
-                NativeContext *context
-            );
+        void interruptTimer(uint64_t time, NativeContext *context);
 
-        private:
-            void spawn(std::function<void()> &&procedure);
+      private:
+        void spawn(std::function<void()> &&procedure);
 
-            void *completionPort;
+        void *completionPort;
 
-            uint8_t criticalSection[2 * sizeof(long) + 4 * sizeof(void *)];
+        uint8_t criticalSection[2 * sizeof(long) + 4 * sizeof(void *)];
 
-            bool remoteNotificationSent;
+        bool remoteNotificationSent;
 
-            std::queue<std::function<void()>> remoteSpawningProcedures;
+        std::queue<std::function<void()>> remoteSpawningProcedures;
 
-            uint8_t remoteSpawnOverlapped[4 * sizeof(void *)];
+        uint8_t remoteSpawnOverlapped[4 * sizeof(void *)];
 
-            uint32_t threadId;
+        uint32_t threadId;
 
-            std::multimap<uint64_t, NativeContext *> timers;
+        std::multimap<uint64_t, NativeContext *> timers;
 
-            NativeContext mainContext;
+        NativeContext mainContext;
 
-            NativeContextGroup contextGroup;
+        NativeContextGroup contextGroup;
 
-            NativeContext *currentContext;
+        NativeContext *currentContext;
 
-            NativeContext *firstResumingContext;
+        NativeContext *firstResumingContext;
 
-            NativeContext *lastResumingContext;
+        NativeContext *lastResumingContext;
 
-            NativeContext *firstReusableContext;
+        NativeContext *firstReusableContext;
 
-            size_t runningContextCount;
+        size_t runningContextCount;
 
-            void contextProcedure();
+        void contextProcedure();
 
-            static void __stdcall contextProcedureStatic(void *context);
+        static void __stdcall contextProcedureStatic(void *context);
     };
 
-}
+} // namespace System

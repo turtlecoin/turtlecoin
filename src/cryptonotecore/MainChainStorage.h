@@ -5,42 +5,36 @@
 
 #pragma once
 
-#include "IMainChainStorage.h"
 #include "Currency.h"
+#include "IMainChainStorage.h"
 #include "SwappedVector.h"
 
 namespace CryptoNote
 {
-
     class MainChainStorage : public IMainChainStorage
     {
-        public:
-            MainChainStorage(
-                const std::string &blocksFilame,
-                const std::string &indexesFilename
-            );
+      public:
+        MainChainStorage(const std::string &blocksFilame, const std::string &indexesFilename);
 
-            virtual ~MainChainStorage();
+        virtual ~MainChainStorage();
 
-            virtual void pushBlock(const RawBlock &rawBlock) override;
+        virtual void pushBlock(const RawBlock &rawBlock) override;
 
-            virtual void popBlock() override;
+        virtual void popBlock() override;
 
-            void rewindTo(const uint32_t index) const override;
+        void rewindTo(const uint32_t index) const override;
 
-            virtual RawBlock getBlockByIndex(uint32_t index) const override;
+        virtual RawBlock getBlockByIndex(uint32_t index) const override;
 
-            virtual uint32_t getBlockCount() const override;
+        virtual uint32_t getBlockCount() const override;
 
-            virtual void clear() override;
+        virtual void clear() override;
 
-        private:
-            mutable SwappedVector<RawBlock> storage;
+      private:
+        mutable SwappedVector<RawBlock> storage;
     };
 
-    std::unique_ptr<IMainChainStorage> createSwappedMainChainStorage(
-        const std::string &dataDir,
-        const Currency &currency
-    );
+    std::unique_ptr<IMainChainStorage>
+        createSwappedMainChainStorage(const std::string &dataDir, const Currency &currency);
 
-}
+} // namespace CryptoNote

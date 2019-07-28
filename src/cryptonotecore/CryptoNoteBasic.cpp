@@ -4,11 +4,11 @@
 // Please see the included LICENSE file for more information.
 
 #include "CryptoNoteBasic.h"
+
 #include "crypto/crypto.h"
 
 namespace CryptoNote
 {
-
     KeyPair generateKeyPair()
     {
         KeyPair k;
@@ -16,4 +16,4 @@ namespace CryptoNote
         return k;
     }
 
-}
+} // namespace CryptoNote

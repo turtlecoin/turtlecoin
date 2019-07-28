@@ -8,17 +8,13 @@
 /////////////////////////////
 
 #include <config/CryptoNoteConfig.h>
-
 #include <sstream>
-
 #include <tuple>
 
 namespace Utilities
 {
     /* Returns {minMixin, maxMixin, defaultMixin} */
-    std::tuple<
-        uint64_t, uint64_t, uint64_t
-    > getMixinAllowableRange(const uint64_t height)
+    std::tuple<uint64_t, uint64_t, uint64_t> getMixinAllowableRange(const uint64_t height)
     {
         uint64_t minMixin = 0;
         uint64_t maxMixin = std::numeric_limits<uint64_t>::max();
@@ -51,10 +47,6 @@ namespace Utilities
             defaultMixin = CryptoNote::parameters::DEFAULT_MIXIN_V1;
         }
 
-        return {
-            minMixin,
-            maxMixin,
-            defaultMixin
-        };
+        return {minMixin, maxMixin, defaultMixin};
     }
-}
+} // namespace Utilities

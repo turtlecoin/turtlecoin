@@ -10,16 +10,13 @@ namespace
     const std::string RAW_BLOCK_NAME = "raw_block";
 
     const std::string RAW_TXS_NAME = "raw_txs";
-}
+} // namespace
 
 namespace CryptoNote
 {
     namespace DB
     {
-        std::string serialize(
-            const RawBlock &value,
-            const std::string &name
-        )
+        std::string serialize(const RawBlock &value, const std::string &name)
         {
             std::stringstream ss;
             Common::StdOutputStream stream(ss);
@@ -31,11 +28,7 @@ namespace CryptoNote
             return ss.str();
         }
 
-        void deserialize(
-            const std::string &serialized,
-            RawBlock &value,
-            const std::string &name
-        )
+        void deserialize(const std::string &serialized, RawBlock &value, const std::string &name)
         {
             std::stringstream ss(serialized);
             Common::StdInputStream stream(ss);
@@ -43,5 +36,5 @@ namespace CryptoNote
             serializer(value.block, RAW_BLOCK_NAME);
             serializer(value.transactions, RAW_TXS_NAME);
         }
-    }
-}
+    } // namespace DB
+} // namespace CryptoNote

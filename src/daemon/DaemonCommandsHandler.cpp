@@ -1,35 +1,26 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
-
-#include <boost/format.hpp>
-
-#include <ctime>
-
-#include <cryptonotecore/Core.h>
-#include <cryptonotecore/CryptoNoteFormatUtils.h>
-#include <cryptonotecore/Currency.h>
-
-#include <cryptonoteprotocol/CryptoNoteProtocolHandler.h>
-
-#include <daemon/DaemonCommandsHandler.h>
-
-#include <p2p/NetNode.h>
-
-#include <rpc/JsonRpc.h>
-
-#include <serialization/SerializationTools.h>
-
-#include <utilities/FormatTools.h>
-#include <utilities/ColouredMsg.h>
 
 #include "version.h"
 
+#include <boost/format.hpp>
+#include <cryptonotecore/Core.h>
+#include <cryptonotecore/CryptoNoteFormatUtils.h>
+#include <cryptonotecore/Currency.h>
+#include <cryptonoteprotocol/CryptoNoteProtocolHandler.h>
+#include <ctime>
+#include <daemon/DaemonCommandsHandler.h>
+#include <p2p/NetNode.h>
+#include <rpc/JsonRpc.h>
+#include <serialization/SerializationTools.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/FormatTools.h>
+
 namespace
 {
-    template<typename T>
-    static bool print_as_json(const T &obj)
+    template<typename T> static bool print_as_json(const T &obj)
     {
         std::cout << CryptoNote::storeToJson(obj) << ENDL;
         return true;
@@ -55,44 +46,48 @@ namespace
         return ss.str();
     }
 
-}
+} // namespace
 
 DaemonCommandsHandler::DaemonCommandsHandler(
     CryptoNote::Core &core,
     CryptoNote::NodeServer &srv,
     std::shared_ptr<Logging::LoggerManager> log,
-    CryptoNote::RpcServer *prpc_server
-)
-    : m_core(core),
-      m_srv(srv),
-      logger(log, "daemon"),
-      m_logManager(log),
-      m_prpc_server(prpc_server)
+    CryptoNote::RpcServer *prpc_server):
+    m_core(core),
+    m_srv(srv),
+    logger(log, "daemon"),
+    m_logManager(log),
+    m_prpc_server(prpc_server)
 {
     m_consoleHandler.setHandler("exit", boost::bind(&DaemonCommandsHandler::exit, this, _1), "Shutdown the daemon");
     m_consoleHandler.setHandler("help", boost::bind(&DaemonCommandsHandler::help, this, _1), "Show this help");
     m_consoleHandler.setHandler("print_pl", boost::bind(&DaemonCommandsHandler::print_pl, this, _1), "Print peer list");
     m_consoleHandler.setHandler(
-        "print_cn", boost::bind(&DaemonCommandsHandler::print_cn, this, _1), "Print connections"
-    );
+        "print_cn", boost::bind(&DaemonCommandsHandler::print_cn, this, _1), "Print connections");
     m_consoleHandler.setHandler(
-        "print_bc", boost::bind(&DaemonCommandsHandler::print_bc, this, _1), "Print blockchain info in a given blocks range, print_bc <begin_height> [<end_height>]"
-    );
+        "print_bc",
+        boost::bind(&DaemonCommandsHandler::print_bc, this, _1),
+        "Print blockchain info in a given blocks range, print_bc <begin_height> [<end_height>]");
     m_consoleHandler.setHandler(
-        "print_block", boost::bind(&DaemonCommandsHandler::print_block, this, _1), "Print block, print_block <block_hash> | <block_height>"
-    );
+        "print_block",
+        boost::bind(&DaemonCommandsHandler::print_block, this, _1),
+        "Print block, print_block <block_hash> | <block_height>");
     m_consoleHandler.setHandler(
-        "print_tx", boost::bind(&DaemonCommandsHandler::print_tx, this, _1), "Print transaction, print_tx <transaction_hash>"
-    );
+        "print_tx",
+        boost::bind(&DaemonCommandsHandler::print_tx, this, _1),
+        "Print transaction, print_tx <transaction_hash>");
     m_consoleHandler.setHandler(
-        "print_pool", boost::bind(&DaemonCommandsHandler::print_pool, this, _1), "Print transaction pool (long format)"
-    );
+        "print_pool",
+        boost::bind(&DaemonCommandsHandler::print_pool, this, _1),
+        "Print transaction pool (long format)");
     m_consoleHandler.setHandler(
-        "print_pool_sh", boost::bind(&DaemonCommandsHandler::print_pool_sh, this, _1), "Print transaction pool (short format)"
-    );
+        "print_pool_sh",
+        boost::bind(&DaemonCommandsHandler::print_pool_sh, this, _1),
+        "Print transaction pool (short format)");
     m_consoleHandler.setHandler(
-        "set_log", boost::bind(&DaemonCommandsHandler::set_log, this, _1), "set_log <level> - Change current log level, <level> is a number 0-4"
-    );
+        "set_log",
+        boost::bind(&DaemonCommandsHandler::set_log, this, _1),
+        "set_log <level> - Change current log level, <level> is a number 0-4");
     m_consoleHandler.setHandler("status", boost::bind(&DaemonCommandsHandler::status, this, _1), "Show daemon status");
 }
 
@@ -112,11 +107,9 @@ std::string DaemonCommandsHandler::get_commands_str()
 //--------------------------------------------------------------------------------
 bool DaemonCommandsHandler::exit(const std::vector<std::string> &args)
 {
-    std::cout << InformationMsg(
-        "================= EXITING ==================\n"
-        "== PLEASE WAIT, THIS MAY TAKE A LONG TIME ==\n"
-        "============================================\n"
-    );
+    std::cout << InformationMsg("================= EXITING ==================\n"
+                                "== PLEASE WAIT, THIS MAY TAKE A LONG TIME ==\n"
+                                "============================================\n");
 
     /* Set log to max when exiting. Sometimes this takes a while, and it helps
        to let users know the daemon is still doing stuff */
@@ -215,12 +208,13 @@ bool DaemonCommandsHandler::print_bc(const std::vector<std::string> &args)
             first = false;
         }
 
-        std::cout << "height: " << header.height << ", timestamp: " << header.timestamp << ", difficulty: "
-                  << header.difficulty << ", size: " << header.block_size << ", transactions: " << header.num_txes
-                  << ENDL << "major version: " << unsigned(header.major_version) << ", minor version: "
-                  << unsigned(header.minor_version) << ENDL << "block id: " << header.hash << ", previous block id: "
-                  << header.prev_hash << ENDL << "difficulty: " << header.difficulty << ", nonce: " << header.nonce
-                  << ", reward: " << currency.formatAmount(header.reward) << ENDL;
+        std::cout << "height: " << header.height << ", timestamp: " << header.timestamp
+                  << ", difficulty: " << header.difficulty << ", size: " << header.block_size
+                  << ", transactions: " << header.num_txes << ENDL
+                  << "major version: " << unsigned(header.major_version)
+                  << ", minor version: " << unsigned(header.minor_version) << ENDL << "block id: " << header.hash
+                  << ", previous block id: " << header.prev_hash << ENDL << "difficulty: " << header.difficulty
+                  << ", nonce: " << header.nonce << ", reward: " << currency.formatAmount(header.reward) << ENDL;
     }
 
     return true;
@@ -357,7 +351,7 @@ bool DaemonCommandsHandler::print_pool(const std::vector<std::string> &args)
     std::cout << "Pool state: \n";
     auto pool = m_core.getPoolTransactions();
 
-    for (const auto &tx: pool)
+    for (const auto &tx : pool)
     {
         CryptoNote::CachedTransaction ctx(tx);
         std::cout << printTransactionFullInfo(ctx) << "\n";
@@ -374,7 +368,7 @@ bool DaemonCommandsHandler::print_pool_sh(const std::vector<std::string> &args)
     std::cout << "Pool short state: \n";
     auto pool = m_core.getPoolTransactions();
 
-    for (const auto &tx: pool)
+    for (const auto &tx : pool)
     {
         CryptoNote::CachedTransaction ctx(tx);
         std::cout << printTransactionShortInfo(ctx) << "\n";

@@ -4,20 +4,20 @@
 // Please see the included LICENSE file for more information.
 
 #include "PathTools.h"
+
 #include <algorithm>
 
 namespace
 {
-
     const char GENERIC_PATH_SEPARATOR = '/';
 
-    #ifdef _WIN32
+#ifdef _WIN32
 
     const char NATIVE_PATH_SEPARATOR = '\\';
 
-    #else
+#else
     const char NATIVE_PATH_SEPARATOR = '/';
-    #endif
+#endif
 
     std::string::size_type findExtensionPosition(const std::string &filename)
     {
@@ -39,7 +39,6 @@ namespace
 
 namespace Common
 {
-
     std::string NativePathToGeneric(const std::string &nativePath)
     {
         if (GENERIC_PATH_SEPARATOR == NATIVE_PATH_SEPARATOR)
@@ -61,18 +60,12 @@ namespace Common
         return path.substr(0, slashPos);
     }
 
-    std::string CombinePath(
-        const std::string &path1,
-        const std::string &path2
-    )
+    std::string CombinePath(const std::string &path1, const std::string &path2)
     {
         return path1 + GENERIC_PATH_SEPARATOR + path2;
     }
 
-    std::string ReplaceExtenstion(
-        const std::string &path,
-        const std::string &extension
-    )
+    std::string ReplaceExtenstion(const std::string &path, const std::string &extension)
     {
         return RemoveExtension(path) + extension;
     }
@@ -94,4 +87,4 @@ namespace Common
         return path.find(GENERIC_PATH_SEPARATOR) != std::string::npos;
     }
 
-}
+} // namespace Common

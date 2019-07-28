@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include <boost/uuid/uuid.hpp>
-
 #include "CryptoNote.h"
 #include "P2pProtocolTypes.h"
 
+#include <boost/uuid/uuid.hpp>
+
 namespace CryptoNote
 {
-
     struct CryptoNoteConnectionContext;
 
     struct IP2pEndpoint
@@ -20,38 +19,28 @@ namespace CryptoNote
         virtual void relay_notify_to_all(
             int command,
             const BinaryArray &data_buff,
-            const boost::uuids::uuid *excludeConnection
-        ) = 0;
+            const boost::uuids::uuid *excludeConnection) = 0;
 
         virtual bool invoke_notify_to_peer(
             int command,
             const BinaryArray &req_buff,
-            const CryptoNote::CryptoNoteConnectionContext &context
-        ) = 0;
+            const CryptoNote::CryptoNoteConnectionContext &context) = 0;
 
         virtual uint64_t get_connections_count() = 0;
 
-        virtual void for_each_connection(
-            std::function<
-                void(
-                    CryptoNote::CryptoNoteConnectionContext &,
-                    uint64_t
-                )
-            > f
-        ) = 0;
+        virtual void
+            for_each_connection(std::function<void(CryptoNote::CryptoNoteConnectionContext &, uint64_t)> f) = 0;
 
         // can be called from external threads
         virtual void externalRelayNotifyToAll(
             int command,
             const BinaryArray &data_buff,
-            const boost::uuids::uuid *excludeConnection
-        ) = 0;
+            const boost::uuids::uuid *excludeConnection) = 0;
 
         virtual void externalRelayNotifyToList(
             int command,
             const BinaryArray &data_buff,
-            const std::list<boost::uuids::uuid> relayList
-        ) = 0;
+            const std::list<boost::uuids::uuid> relayList) = 0;
     };
 
     struct p2p_endpoint_stub : public IP2pEndpoint
@@ -59,28 +48,20 @@ namespace CryptoNote
         virtual void relay_notify_to_all(
             int command,
             const BinaryArray &data_buff,
-            const boost::uuids::uuid *excludeConnection
-        ) override
+            const boost::uuids::uuid *excludeConnection) override
         {
         }
 
         virtual bool invoke_notify_to_peer(
             int command,
             const BinaryArray &req_buff,
-            const CryptoNote::CryptoNoteConnectionContext &context
-        ) override
+            const CryptoNote::CryptoNoteConnectionContext &context) override
         {
             return true;
         }
 
-        virtual void for_each_connection(
-            std::function<
-                void(
-                    CryptoNote::CryptoNoteConnectionContext &,
-                    uint64_t
-                )
-            > f
-        ) override
+        virtual void
+            for_each_connection(std::function<void(CryptoNote::CryptoNoteConnectionContext &, uint64_t)> f) override
         {
         }
 
@@ -92,17 +73,15 @@ namespace CryptoNote
         virtual void externalRelayNotifyToAll(
             int command,
             const BinaryArray &data_buff,
-            const boost::uuids::uuid *excludeConnection
-        ) override
+            const boost::uuids::uuid *excludeConnection) override
         {
         }
 
         virtual void externalRelayNotifyToList(
             int command,
             const BinaryArray &data_buff,
-            const std::list<boost::uuids::uuid> relayList
-        ) override
+            const std::list<boost::uuids::uuid> relayList) override
         {
         }
     };
-}
+} // namespace CryptoNote

@@ -5,74 +5,56 @@
 
 #pragma once
 
-#include <memory>
+#include "serialization/SerializationTools.h"
 
 #include <http/HttpRequest.h>
 #include <http/HttpResponse.h>
+#include <memory>
 #include <system/TcpConnection.h>
 #include <system/TcpStream.h>
 
-#include "serialization/SerializationTools.h"
-
 namespace CryptoNote
 {
-
     class ConnectException : public std::runtime_error
     {
-        public:
-            ConnectException(const std::string &whatArg);
+      public:
+        ConnectException(const std::string &whatArg);
     };
 
     class HttpClient
     {
-        public:
+      public:
+        HttpClient(System::Dispatcher &dispatcher, const std::string &address, uint16_t port);
 
-            HttpClient(
-                System::Dispatcher &dispatcher,
-                const std::string &address,
-                uint16_t port
-            );
+        ~HttpClient();
 
-            ~HttpClient();
+        void request(const HttpRequest &req, HttpResponse &res);
 
-            void request(
-                const HttpRequest &req,
-                HttpResponse &res
-            );
+        bool isConnected() const;
 
-            bool isConnected() const;
+      private:
+        void connect();
 
-        private:
-            void connect();
+        void disconnect();
 
-            void disconnect();
+        const std::string m_address;
 
-            const std::string m_address;
+        const uint16_t m_port;
 
-            const uint16_t m_port;
+        bool m_connected = false;
 
-            bool m_connected = false;
+        System::Dispatcher &m_dispatcher;
 
-            System::Dispatcher &m_dispatcher;
+        System::TcpConnection m_connection;
 
-            System::TcpConnection m_connection;
+        std::unique_ptr<System::TcpStreambuf> m_streamBuf;
 
-            std::unique_ptr<System::TcpStreambuf> m_streamBuf;
-
-            /* Don't send two requests at once */
-            std::mutex m_mutex;
+        /* Don't send two requests at once */
+        std::mutex m_mutex;
     };
 
-    template<
-        typename Request,
-        typename Response
-    >
-    void invokeJsonCommand(
-        HttpClient &client,
-        const std::string &url,
-        const Request &req,
-        Response &res
-    )
+    template<typename Request, typename Response>
+    void invokeJsonCommand(HttpClient &client, const std::string &url, const Request &req, Response &res)
     {
         HttpRequest hreq;
         HttpResponse hres;
@@ -93,16 +75,8 @@ namespace CryptoNote
         }
     }
 
-    template<
-        typename Request,
-        typename Response
-    >
-    void invokeBinaryCommand(
-        HttpClient &client,
-        const std::string &url,
-        const Request &req,
-        Response &res
-    )
+    template<typename Request, typename Response>
+    void invokeBinaryCommand(HttpClient &client, const std::string &url, const Request &req, Response &res)
     {
         HttpRequest hreq;
         HttpResponse hres;
@@ -117,4 +91,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

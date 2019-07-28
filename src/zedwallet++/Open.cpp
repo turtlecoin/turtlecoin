@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 /////////////////////////////
@@ -7,19 +7,13 @@
 /////////////////////////////
 
 #include <common/FileSystemShim.h>
-
 #include <config/WalletConfig.h>
-
-#include <iostream>
-
-#include <mnemonics/Mnemonics.h>
-
 #include <errors/ValidateParameters.h>
-
+#include <iostream>
+#include <mnemonics/Mnemonics.h>
 #include <utilities/ColouredMsg.h>
-#include <utilities/String.h>
 #include <utilities/Input.h>
-
+#include <utilities/String.h>
 #include <zedwallet++/CommandImplementations.h>
 #include <zedwallet++/PasswordContainer.h>
 #include <zedwallet++/Utilities.h>
@@ -73,10 +67,16 @@ std::shared_ptr<WalletBackend> importViewWallet(const ZedConfig &config)
 
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    auto[error, walletBackend] = WalletBackend::importViewWallet(
-        privateViewKey, address, walletFileName, walletPass, scanHeight, config.host, config.port, config.ssl, config
-        .threads
-    );
+    auto [error, walletBackend] = WalletBackend::importViewWallet(
+        privateViewKey,
+        address,
+        walletFileName,
+        walletPass,
+        scanHeight,
+        config.host,
+        config.port,
+        config.ssl,
+        config.threads);
 
     if (error)
     {
@@ -112,10 +112,16 @@ std::shared_ptr<WalletBackend> importWalletFromKeys(const ZedConfig &config)
 
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    const auto[error, walletBackend] = WalletBackend::importWalletFromKeys(
-        privateSpendKey, privateViewKey, walletFileName, walletPass, scanHeight, config.host, config.port, config
-        .ssl, config.threads
-    );
+    const auto [error, walletBackend] = WalletBackend::importWalletFromKeys(
+        privateSpendKey,
+        privateViewKey,
+        walletFileName,
+        walletPass,
+        scanHeight,
+        config.host,
+        config.port,
+        config.ssl,
+        config.threads);
 
     if (error)
     {
@@ -146,7 +152,7 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const ZedConfig &config)
         Utilities::trim(mnemonicSeed);
 
         /* Just to check if it's valid */
-        auto[error, privateSpendKey] = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
+        auto [error, privateSpendKey] = Mnemonics::MnemonicToPrivateKey(mnemonicSeed);
 
         if (!error)
         {
@@ -166,9 +172,8 @@ std::shared_ptr<WalletBackend> importWalletFromSeed(const ZedConfig &config)
 
     const uint64_t scanHeight = ZedUtilities::getScanHeight();
 
-    auto[error, walletBackend] = WalletBackend::importWalletFromSeed(
-        mnemonicSeed, walletFileName, walletPass, scanHeight, config.host, config.port, config.ssl, config.threads
-    );
+    auto [error, walletBackend] = WalletBackend::importWalletFromSeed(
+        mnemonicSeed, walletFileName, walletPass, scanHeight, config.host, config.port, config.ssl, config.threads);
 
     if (error)
     {
@@ -196,9 +201,8 @@ std::shared_ptr<WalletBackend> createWallet(const ZedConfig &config)
 
     const std::string walletPass = getWalletPassword(verifyPassword, msg);
 
-    const auto[error, walletBackend] = WalletBackend::createWallet(
-        walletFileName, walletPass, config.host, config.port, config.ssl, config.threads
-    );
+    const auto [error, walletBackend] =
+        WalletBackend::createWallet(walletFileName, walletPass, config.host, config.port, config.ssl, config.threads);
 
     if (error)
     {
@@ -240,9 +244,8 @@ std::shared_ptr<WalletBackend> openWallet(const ZedConfig &config)
             walletPass = getWalletPassword(verifyPassword, "Enter password: ");
         }
 
-        const auto[error, walletBackend] = WalletBackend::openWallet(
-            walletFileName, walletPass, config.host, config.port, config.ssl, config.threads
-        );
+        const auto [error, walletBackend] =
+            WalletBackend::openWallet(walletFileName, walletPass, config.host, config.port, config.ssl, config.threads);
 
         if (error == WRONG_PASSWORD)
         {
@@ -290,29 +293,33 @@ Crypto::SecretKey getPrivateKey(const std::string outputMsg)
 
         if (privateKeyString.length() != privateKeyLen)
         {
-            std::cout << std::endl << WarningMsg("Invalid private key, should be 64 ")
-                      << WarningMsg("characters! Try again.") << std::endl << std::endl;
+            std::cout << std::endl
+                      << WarningMsg("Invalid private key, should be 64 ") << WarningMsg("characters! Try again.")
+                      << std::endl
+                      << std::endl;
 
             continue;
         }
-        else if (!Common::fromHex(
-            privateKeyString, &privateKeyHash, sizeof(privateKeyHash), size
-        ) || size != sizeof(privateKeyHash))
+        else if (
+            !Common::fromHex(privateKeyString, &privateKeyHash, sizeof(privateKeyHash), size)
+            || size != sizeof(privateKeyHash))
         {
             std::cout << WarningMsg("Invalid private key, it is not a valid ") << WarningMsg("hex string! Try again.")
-                      << std::endl << std::endl;
+                      << std::endl
+                      << std::endl;
 
             continue;
         }
 
-        privateKey = *(struct Crypto::SecretKey *) &privateKeyHash;
+        privateKey = *(struct Crypto::SecretKey *)&privateKeyHash;
 
         /* Just used for verification */
         if (!Crypto::secret_key_to_public_key(privateKey, publicKey))
         {
-            std::cout << std::endl << WarningMsg("Invalid private key, is not on the ") << WarningMsg("ed25519 curve!")
-                      << std::endl << WarningMsg("Probably a typo - ensure you entered ") << WarningMsg("it correctly.")
-                      << std::endl << std::endl;
+            std::cout << std::endl
+                      << WarningMsg("Invalid private key, is not on the ") << WarningMsg("ed25519 curve!") << std::endl
+                      << WarningMsg("Probably a typo - ensure you entered ") << WarningMsg("it correctly.") << std::endl
+                      << std::endl;
 
             continue;
         }
@@ -351,7 +358,7 @@ std::string getExistingWalletFileName(const ZedConfig &config)
             {
                 std::cout << WarningMsg("\nWallet name can't be blank! Try again.\n\n");
             }
-                /* Allow people to enter wallet name with or without file extension */
+            /* Allow people to enter wallet name with or without file extension */
             else if (fs::exists(walletName))
             {
                 return walletName;
@@ -390,13 +397,16 @@ std::string getNewWalletFileName()
         {
             if (fs::exists(walletFileName))
             {
-                std::cout << std::endl << WarningMsg("A wallet with the filename ") << InformationMsg(walletFileName)
-                          << WarningMsg(" already exists!") << std::endl << "Try another name." << std::endl
+                std::cout << std::endl
+                          << WarningMsg("A wallet with the filename ") << InformationMsg(walletFileName)
+                          << WarningMsg(" already exists!") << std::endl
+                          << "Try another name." << std::endl
                           << std::endl;
             }
             else if (walletName == "")
             {
-                std::cout << std::endl << WarningMsg("Wallet name can't be blank! Try again.") << std::endl
+                std::cout << std::endl
+                          << WarningMsg("Wallet name can't be blank! Try again.") << std::endl
                           << std::endl;
             }
             else
@@ -411,10 +421,7 @@ std::string getNewWalletFileName()
     }
 }
 
-std::string getWalletPassword(
-    const bool verifyPwd,
-    const std::string msg
-)
+std::string getWalletPassword(const bool verifyPwd, const std::string msg)
 {
     Tools::PasswordContainer pwdContainer;
     pwdContainer.read_password(verifyPwd, msg);
@@ -423,19 +430,21 @@ std::string getWalletPassword(
 
 void viewWalletMsg()
 {
-    std::cout << InformationMsg(
-        "Please remember that when using a view wallet "
-        "you can only view incoming transactions!"
-    ) << std::endl << InformationMsg("Therefore, if you have recieved transactions ")
+    std::cout << InformationMsg("Please remember that when using a view wallet "
+                                "you can only view incoming transactions!")
+              << std::endl
+              << InformationMsg("Therefore, if you have recieved transactions ")
               << InformationMsg("which you then spent, your balance will ") << InformationMsg("appear inflated.")
               << std::endl;
 }
 
 void promptSaveKeys(const std::shared_ptr<WalletBackend> walletBackend)
 {
-    std::cout << "Welcome to your new wallet, here is your payment address:" << "\n"
+    std::cout << "Welcome to your new wallet, here is your payment address:"
+              << "\n"
               << InformationMsg(walletBackend->getPrimaryAddress())
-              << "\n\nPlease copy your secret keys and mnemonic seed and store " << "them in a secure location:\n\n";
+              << "\n\nPlease copy your secret keys and mnemonic seed and store "
+              << "them in a secure location:\n\n";
 
     printPrivateKeys(walletBackend);
 

@@ -7,20 +7,19 @@
 
 namespace System
 {
-
     class Event;
 
     class EventLock
     {
-        public:
-            explicit EventLock(Event &event);
+      public:
+        explicit EventLock(Event &event);
 
-            ~EventLock();
+        ~EventLock();
 
-            EventLock &operator=(const EventLock &) = delete;
+        EventLock &operator=(const EventLock &) = delete;
 
-        private:
-            Event &event;
+      private:
+        Event &event;
     };
 
-}
+} // namespace System

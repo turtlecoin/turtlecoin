@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 /////////////////////////////////
@@ -7,7 +7,6 @@
 /////////////////////////////////
 
 #include <config/WalletConfig.h>
-
 #include <utilities/Container.h>
 
 std::vector<Command> startupCommands()
@@ -48,9 +47,7 @@ std::vector<AdvancedCommand> allCommands()
         AdvancedCommand("ab_add", "Add a person to your address book", true, true),
         AdvancedCommand("ab_delete", "Delete a person in your address book", true, true),
         AdvancedCommand("ab_list", "List everyone in your address book", true, true),
-        AdvancedCommand(
-            "ab_send", "Send " + WalletConfig::ticker + " to someone in your address book", false, true
-        ),
+        AdvancedCommand("ab_send", "Send " + WalletConfig::ticker + " to someone in your address book", false, true),
         AdvancedCommand("change_password", "Change your wallet password", true, true),
         AdvancedCommand("get_tx_private_key", "Get the private key of a transaction", true, true),
         AdvancedCommand("make_integrated_address", "Make a combined address + payment ID", true, true),
@@ -70,50 +67,25 @@ std::vector<AdvancedCommand> allCommands()
 
 std::vector<AdvancedCommand> basicCommands()
 {
-    return Utilities::filter(
-        allCommands(), [](AdvancedCommand c)
-    {
-        return !c.advanced;
-    }
-    );
+    return Utilities::filter(allCommands(), [](AdvancedCommand c) { return !c.advanced; });
 }
 
 std::vector<AdvancedCommand> advancedCommands()
 {
-    return Utilities::filter(
-        allCommands(), [](AdvancedCommand c)
-    {
-        return c.advanced;
-    }
-    );
+    return Utilities::filter(allCommands(), [](AdvancedCommand c) { return c.advanced; });
 }
 
 std::vector<AdvancedCommand> basicViewWalletCommands()
 {
-    return Utilities::filter(
-        basicCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    }
-    );
+    return Utilities::filter(basicCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }
 
 std::vector<AdvancedCommand> advancedViewWalletCommands()
 {
-    return Utilities::filter(
-        advancedCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    }
-    );
+    return Utilities::filter(advancedCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }
 
 std::vector<AdvancedCommand> allViewWalletCommands()
 {
-    return Utilities::filter(
-        allCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    }
-    );
+    return Utilities::filter(allCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }

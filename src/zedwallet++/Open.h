@@ -1,11 +1,10 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
 #include <walletbackend/WalletBackend.h>
-
 #include <zedwallet++/ParseArguments.h>
 
 std::shared_ptr<WalletBackend> openWallet(const ZedConfig &config);
@@ -24,10 +23,7 @@ std::string getNewWalletFileName();
 
 std::string getExistingWalletFileName(const ZedConfig &config);
 
-std::string getWalletPassword(
-    const bool verifyPwd,
-    const std::string msg
-);
+std::string getWalletPassword(const bool verifyPwd, const std::string msg);
 
 void viewWalletMsg();
 

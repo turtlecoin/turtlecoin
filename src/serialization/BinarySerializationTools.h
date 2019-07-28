@@ -3,7 +3,6 @@
 //
 // Please see the included LICENSE file for more information.
 
-#include <CryptoNote.h>
 #include "BinaryInputStreamSerializer.h"
 #include "BinaryOutputStreamSerializer.h"
 #include "common/MemoryInputStream.h"
@@ -11,13 +10,12 @@
 #include "common/StdOutputStream.h"
 #include "common/VectorOutputStream.h"
 
+#include <CryptoNote.h>
 #include <fstream>
 
 namespace CryptoNote
 {
-
-    template<typename T>
-    BinaryArray storeToBinary(const T &obj)
+    template<typename T> BinaryArray storeToBinary(const T &obj)
     {
         BinaryArray result;
         Common::VectorOutputStream stream(result);
@@ -26,22 +24,14 @@ namespace CryptoNote
         return result;
     }
 
-    template<typename T>
-    void loadFromBinary(
-        T &obj,
-        const BinaryArray &blob
-    )
+    template<typename T> void loadFromBinary(T &obj, const BinaryArray &blob)
     {
         Common::MemoryInputStream stream(blob.data(), blob.size());
         BinaryInputStreamSerializer ba(stream);
         serialize(obj, ba);
     }
 
-    template<typename T>
-    bool storeToBinaryFile(
-        const T &obj,
-        const std::string &filename
-    )
+    template<typename T> bool storeToBinaryFile(const T &obj, const std::string &filename)
     {
         try
         {
@@ -71,11 +61,7 @@ namespace CryptoNote
         return true;
     }
 
-    template<class T>
-    bool loadFromBinaryFile(
-        T &obj,
-        const std::string &filename
-    )
+    template<class T> bool loadFromBinaryFile(T &obj, const std::string &filename)
     {
         try
         {
@@ -97,4 +83,4 @@ namespace CryptoNote
         }
     }
 
-}
+} // namespace CryptoNote

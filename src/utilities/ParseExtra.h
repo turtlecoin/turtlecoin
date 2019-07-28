@@ -5,9 +5,7 @@
 #pragma once
 
 #include <CryptoTypes.h>
-
 #include <string>
-
 #include <vector>
 
 namespace Utilities
@@ -32,4 +30,4 @@ namespace Utilities
     MergedMiningTag getMergedMiningTagFromExtra(const std::vector<uint8_t> &extra);
 
     ParsedExtra parseExtra(const std::vector<uint8_t> &extra);
-}
+} // namespace Utilities

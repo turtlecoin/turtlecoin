@@ -13,7 +13,6 @@
 
 namespace System
 {
-
     struct NativeContextGroup;
 
     struct NativeContext
@@ -46,83 +45,83 @@ namespace System
 
     class Dispatcher
     {
-        public:
-            Dispatcher();
+      public:
+        Dispatcher();
 
-            Dispatcher(const Dispatcher &) = delete;
+        Dispatcher(const Dispatcher &) = delete;
 
-            ~Dispatcher();
+        ~Dispatcher();
 
-            Dispatcher &operator=(const Dispatcher &) = delete;
+        Dispatcher &operator=(const Dispatcher &) = delete;
 
-            void clear();
+        void clear();
 
-            void dispatch();
+        void dispatch();
 
-            NativeContext *getCurrentContext() const;
+        NativeContext *getCurrentContext() const;
 
-            void interrupt();
+        void interrupt();
 
-            void interrupt(NativeContext *context);
+        void interrupt(NativeContext *context);
 
-            bool interrupted();
+        bool interrupted();
 
-            void pushContext(NativeContext *context);
+        void pushContext(NativeContext *context);
 
-            void remoteSpawn(std::function<void()> &&procedure);
+        void remoteSpawn(std::function<void()> &&procedure);
 
-            void yield();
+        void yield();
 
-            int getKqueue() const;
+        int getKqueue() const;
 
-            NativeContext &getReusableContext();
+        NativeContext &getReusableContext();
 
-            void pushReusableContext(NativeContext &);
+        void pushReusableContext(NativeContext &);
 
-            int getTimer();
+        int getTimer();
 
-            void pushTimer(int timer);
+        void pushTimer(int timer);
 
-            #ifdef __LP64__
-            static const int SIZEOF_PTHREAD_MUTEX_T = 56 + sizeof(long);
-            #else
+#ifdef __LP64__
+        static const int SIZEOF_PTHREAD_MUTEX_T = 56 + sizeof(long);
+#else
 
-            static const int SIZEOF_PTHREAD_MUTEX_T = 40 + sizeof(long);
+        static const int SIZEOF_PTHREAD_MUTEX_T = 40 + sizeof(long);
 
-            #endif
+#endif
 
-        private:
-            void spawn(std::function<void()> &&procedure);
+      private:
+        void spawn(std::function<void()> &&procedure);
 
-            int kqueue;
+        int kqueue;
 
-            int lastCreatedTimer;
+        int lastCreatedTimer;
 
-            alignas(std::max_align_t) uint8_t mutex[SIZEOF_PTHREAD_MUTEX_T];
+        alignas(std::max_align_t) uint8_t mutex[SIZEOF_PTHREAD_MUTEX_T];
 
-            std::atomic<bool> remoteSpawned;
+        std::atomic<bool> remoteSpawned;
 
-            std::queue<std::function<void()>> remoteSpawningProcedures;
+        std::queue<std::function<void()>> remoteSpawningProcedures;
 
-            std::stack<int> timers;
+        std::stack<int> timers;
 
-            NativeContext mainContext;
+        NativeContext mainContext;
 
-            NativeContextGroup contextGroup;
+        NativeContextGroup contextGroup;
 
-            NativeContext *currentContext;
+        NativeContext *currentContext;
 
-            NativeContext *firstResumingContext;
+        NativeContext *firstResumingContext;
 
-            NativeContext *lastResumingContext;
+        NativeContext *lastResumingContext;
 
-            NativeContext *firstReusableContext;
+        NativeContext *firstReusableContext;
 
-            size_t runningContextCount;
+        size_t runningContextCount;
 
-            void contextProcedure(void *uctx);
+        void contextProcedure(void *uctx);
 
-            static void contextProcedureStatic(intptr_t context);
+        static void contextProcedureStatic(intptr_t context);
     };
 
-}
+} // namespace System

@@ -4,6 +4,7 @@
 // Please see the included LICENSE file for more information.
 
 #include "ContextGroupTimeout.h"
+
 #include <system/InterruptedException.h>
 
 using namespace System;
@@ -11,25 +12,18 @@ using namespace System;
 ContextGroupTimeout::ContextGroupTimeout(
     Dispatcher &dispatcher,
     ContextGroup &contextGroup,
-    std::chrono::nanoseconds timeout
-)
-    : workingContextGroup(dispatcher),
-      timeoutTimer(dispatcher)
+    std::chrono::nanoseconds timeout):
+    workingContextGroup(dispatcher),
+    timeoutTimer(dispatcher)
 {
-    workingContextGroup.spawn(
-        [
-            &,
-            timeout
-        ]
+    workingContextGroup.spawn([&, timeout] {
+        try
         {
-            try
-            {
-                timeoutTimer.sleep(timeout);
-                contextGroup.interrupt();
-            }
-            catch (InterruptedException &)
-            {
-            }
+            timeoutTimer.sleep(timeout);
+            contextGroup.interrupt();
         }
-    );
+        catch (InterruptedException &)
+        {
+        }
+    });
 }

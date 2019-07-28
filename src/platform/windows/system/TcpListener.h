@@ -10,7 +10,6 @@
 
 namespace System
 {
-
     class Dispatcher;
 
     class Ipv4Address;
@@ -19,33 +18,29 @@ namespace System
 
     class TcpListener
     {
-        public:
-            TcpListener();
+      public:
+        TcpListener();
 
-            TcpListener(
-                Dispatcher &dispatcher,
-                const Ipv4Address &address,
-                uint16_t port
-            );
+        TcpListener(Dispatcher &dispatcher, const Ipv4Address &address, uint16_t port);
 
-            TcpListener(const TcpListener &) = delete;
+        TcpListener(const TcpListener &) = delete;
 
-            TcpListener(TcpListener &&other);
+        TcpListener(TcpListener &&other);
 
-            ~TcpListener();
+        ~TcpListener();
 
-            TcpListener &operator=(const TcpListener &) = delete;
+        TcpListener &operator=(const TcpListener &) = delete;
 
-            TcpListener &operator=(TcpListener &&other);
+        TcpListener &operator=(TcpListener &&other);
 
-            TcpConnection accept();
+        TcpConnection accept();
 
-        private:
-            Dispatcher *dispatcher;
+      private:
+        Dispatcher *dispatcher;
 
-            size_t listener;
+        size_t listener;
 
-            void *context;
+        void *context;
     };
 
-}
+} // namespace System

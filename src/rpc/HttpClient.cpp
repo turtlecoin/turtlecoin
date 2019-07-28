@@ -6,20 +6,14 @@
 #include "HttpClient.h"
 
 #include <http/HttpParser.h>
-#include <system/Ipv4Resolver.h>
 #include <system/Ipv4Address.h>
+#include <system/Ipv4Resolver.h>
 #include <system/TcpConnector.h>
 
 namespace CryptoNote
 {
-
-    HttpClient::HttpClient(
-        System::Dispatcher &dispatcher,
-        const std::string &address,
-        uint16_t port
-    ) : m_dispatcher(
-        dispatcher
-    ),
+    HttpClient::HttpClient(System::Dispatcher &dispatcher, const std::string &address, uint16_t port):
+        m_dispatcher(dispatcher),
         m_address(address),
         m_port(port)
     {
@@ -33,10 +27,7 @@ namespace CryptoNote
         }
     }
 
-    void HttpClient::request(
-        const HttpRequest &req,
-        HttpResponse &res
-    )
+    void HttpClient::request(const HttpRequest &req, HttpResponse &res)
     {
         std::scoped_lock lock(m_mutex);
 
@@ -85,11 +76,11 @@ namespace CryptoNote
         m_streamBuf.reset();
         try
         {
-            m_connection.write(nullptr, 0); //Socket shutdown.
+            m_connection.write(nullptr, 0); // Socket shutdown.
         }
         catch (std::exception &)
         {
-            //Ignoring possible exception.
+            // Ignoring possible exception.
         }
 
         try
@@ -98,14 +89,12 @@ namespace CryptoNote
         }
         catch (std::exception &)
         {
-            //Ignoring possible exception.
+            // Ignoring possible exception.
         }
 
         m_connected = false;
     }
 
-    ConnectException::ConnectException(const std::string &whatArg) : std::runtime_error(whatArg.c_str())
-    {
-    }
+    ConnectException::ConnectException(const std::string &whatArg): std::runtime_error(whatArg.c_str()) {}
 
-}
+} // namespace CryptoNote

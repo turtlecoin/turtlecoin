@@ -6,14 +6,10 @@
 #include <nigel/Nigel.h>
 ////////////////////////
 
-#include <config/CryptoNoteConfig.h>
-
 #include <common/CryptoNoteTools.h>
-
+#include <config/CryptoNoteConfig.h>
 #include <errors/ValidateParameters.h>
-
 #include <logger/Logger.h>
-
 #include <utilities/Utilities.h>
 
 using json = nlohmann::json;
@@ -26,32 +22,28 @@ inline std::shared_ptr<httplib::Client> getClient(
     const std::string daemonHost,
     const uint16_t daemonPort,
     const bool daemonSSL,
-    const std::chrono::seconds timeout
-)
+    const std::chrono::seconds timeout)
 {
-    #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     if (daemonSSL)
     {
         return std::make_shared<httplib::SSLClient>(daemonHost.c_str(), daemonPort, timeout.count());
     }
     else
     {
-        #endif
+#endif
         return std::make_shared<httplib::Client>(daemonHost.c_str(), daemonPort, timeout.count());
-        #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
+#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
     }
-    #endif
+#endif
 }
 
 ////////////////////////////////
 /* Constructors / Destructors */
 ////////////////////////////////
 
-Nigel::Nigel(
-    const std::string daemonHost,
-    const uint16_t daemonPort,
-    const bool daemonSSL
-) : Nigel(daemonHost, daemonPort, daemonSSL, std::chrono::seconds(10))
+Nigel::Nigel(const std::string daemonHost, const uint16_t daemonPort, const bool daemonSSL):
+    Nigel(daemonHost, daemonPort, daemonSSL, std::chrono::seconds(10))
 {
 }
 
@@ -59,12 +51,11 @@ Nigel::Nigel(
     const std::string daemonHost,
     const uint16_t daemonPort,
     const bool daemonSSL,
-    const std::chrono::seconds timeout
-)
-    : m_timeout(timeout),
-      m_daemonHost(daemonHost),
-      m_daemonPort(daemonPort),
-      m_daemonSSL(daemonSSL)
+    const std::chrono::seconds timeout):
+    m_timeout(timeout),
+    m_daemonHost(daemonHost),
+    m_daemonPort(daemonPort),
+    m_daemonSSL(daemonSSL)
 {
     m_nodeClient = getClient(m_daemonHost, m_daemonPort, m_daemonSSL, m_timeout);
 }
@@ -78,11 +69,7 @@ Nigel::~Nigel()
 /* Member functions */
 //////////////////////
 
-void Nigel::swapNode(
-    const std::string daemonHost,
-    const uint16_t daemonPort,
-    const bool daemonSSL
-)
+void Nigel::swapNode(const std::string daemonHost, const uint16_t daemonPort, const bool daemonSSL)
 {
     stop();
 
@@ -117,32 +104,23 @@ void Nigel::resetRequestedBlockCount()
     m_blockCount = CryptoNote::BLOCKS_SYNCHRONIZING_DEFAULT_COUNT;
 }
 
-std::tuple<
-    bool, std::vector<WalletTypes::WalletBlockInfo>, std::optional<WalletTypes::TopBlock>
-> Nigel::getWalletSyncData(
+std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>, std::optional<WalletTypes::TopBlock>>
+    Nigel::getWalletSyncData(
 
-    const std::vector<Crypto::Hash> blockHashCheckpoints,
-    const uint64_t startHeight,
-    const uint64_t startTimestamp,
-    const bool skipCoinbaseTransactions
-) const
+        const std::vector<Crypto::Hash> blockHashCheckpoints,
+        const uint64_t startHeight,
+        const uint64_t startTimestamp,
+        const bool skipCoinbaseTransactions) const
 {
-    Logger::logger.log(
-        "Fetching blocks from the daemon", Logger::DEBUG, {
-        Logger::SYNC,
-        Logger::DAEMON
-    }
-    );
+    Logger::logger.log("Fetching blocks from the daemon", Logger::DEBUG, {Logger::SYNC, Logger::DAEMON});
 
-    json j = {{"blockHashCheckpoints",     blockHashCheckpoints},
-              {"startHeight",              startHeight},
-              {"startTimestamp",           startTimestamp},
-              {"blockCount",               m_blockCount.load()},
+    json j = {{"blockHashCheckpoints", blockHashCheckpoints},
+              {"startHeight", startHeight},
+              {"startTimestamp", startTimestamp},
+              {"blockCount", m_blockCount.load()},
               {"skipCoinbaseTransactions", skipCoinbaseTransactions}};
 
-    auto res = m_nodeClient->Post(
-        "/getwalletsyncdata", j.dump(), "application/json"
-    );
+    auto res = m_nodeClient->Post("/getwalletsyncdata", j.dump(), "application/json");
 
     if (res && res->status == 200)
     {
@@ -152,46 +130,28 @@ std::tuple<
 
             if (j.at("status").get<std::string>() != "OK")
             {
-                return {
-                    false,
-                    {},
-                    std::nullopt
-                };
+                return {false, {}, std::nullopt};
             }
 
             const auto items = j.at("items").get<std::vector<WalletTypes::WalletBlockInfo>>();
 
             if (j.find("synced") != j.end() && j.find("topBlock") != j.end() && j.at("synced").get<bool>())
             {
-                return {
-                    true,
-                    items,
-                    j.at("topBlock").get<WalletTypes::TopBlock>()
-                };
+                return {true, items, j.at("topBlock").get<WalletTypes::TopBlock>()};
             }
 
-            return {
-                true,
-                items,
-                std::nullopt
-            };
+            return {true, items, std::nullopt};
         }
         catch (const json::exception &e)
         {
             Logger::logger.log(
-                std::string("Failed to fetch blocks from daemon: ") + e.what(), Logger::INFO, {
-                Logger::SYNC,
-                Logger::DAEMON
-            }
-            );
+                std::string("Failed to fetch blocks from daemon: ") + e.what(),
+                Logger::INFO,
+                {Logger::SYNC, Logger::DAEMON});
         }
     }
 
-    return {
-        false,
-        {},
-        std::nullopt
-    };
+    return {false, {}, std::nullopt};
 }
 
 void Nigel::stop()
@@ -221,12 +181,7 @@ void Nigel::init()
 
 bool Nigel::getDaemonInfo()
 {
-    Logger::logger.log(
-        "Updating daemon info", Logger::DEBUG, {
-        Logger::SYNC,
-        Logger::DAEMON
-    }
-    );
+    Logger::logger.log("Updating daemon info", Logger::DEBUG, {Logger::SYNC, Logger::DAEMON});
 
     auto res = m_nodeClient->Get("/info");
 
@@ -271,11 +226,7 @@ bool Nigel::getDaemonInfo()
         catch (const json::exception &e)
         {
             Logger::logger.log(
-                std::string("Failed to update daemon info: ") + e.what(), Logger::INFO, {
-                Logger::SYNC,
-                Logger::DAEMON
-            }
-            );
+                std::string("Failed to update daemon info: ") + e.what(), Logger::INFO, {Logger::SYNC, Logger::DAEMON});
         }
     }
 
@@ -284,9 +235,7 @@ bool Nigel::getDaemonInfo()
 
 bool Nigel::getFeeInfo()
 {
-    Logger::logger.log(
-        "Fetching fee info", Logger::DEBUG, {Logger::DAEMON}
-    );
+    Logger::logger.log("Fetching fee info", Logger::DEBUG, {Logger::DAEMON});
 
     auto res = m_nodeClient->Get("/fee");
 
@@ -315,11 +264,7 @@ bool Nigel::getFeeInfo()
         catch (const json::exception &e)
         {
             Logger::logger.log(
-                std::string("Failed to update fee info: ") + e.what(), Logger::INFO, {
-                Logger::SYNC,
-                Logger::DAEMON
-            }
-            );
+                std::string("Failed to update fee info: ") + e.what(), Logger::INFO, {Logger::SYNC, Logger::DAEMON});
         }
     }
 
@@ -361,39 +306,25 @@ uint64_t Nigel::hashrate() const
     return m_lastKnownHashrate;
 }
 
-std::tuple<
-    uint64_t, std::string
-> Nigel::nodeFee() const
+std::tuple<uint64_t, std::string> Nigel::nodeFee() const
 {
-    return {
-        m_nodeFeeAmount,
-        m_nodeFeeAddress
-    };
+    return {m_nodeFeeAmount, m_nodeFeeAddress};
 }
 
-std::tuple<
-    std::string, uint16_t, bool
-> Nigel::nodeAddress() const
+std::tuple<std::string, uint16_t, bool> Nigel::nodeAddress() const
 {
-    return {
-        m_daemonHost,
-        m_daemonPort,
-        m_daemonSSL
-    };
+    return {m_daemonHost, m_daemonPort, m_daemonSSL};
 }
 
 bool Nigel::getTransactionsStatus(
     const std::unordered_set<Crypto::Hash> transactionHashes,
     std::unordered_set<Crypto::Hash> &transactionsInPool,
     std::unordered_set<Crypto::Hash> &transactionsInBlock,
-    std::unordered_set<Crypto::Hash> &transactionsUnknown
-) const
+    std::unordered_set<Crypto::Hash> &transactionsUnknown) const
 {
     json j = {{"transactionHashes", transactionHashes}};
 
-    auto res = m_nodeClient->Post(
-        "/get_transactions_status", j.dump(), "application/json"
-    );
+    auto res = m_nodeClient->Post("/get_transactions_status", j.dump(), "application/json");
 
     if (res && res->status == 200)
     {
@@ -419,14 +350,10 @@ bool Nigel::getTransactionsStatus(
     return false;
 }
 
-std::tuple<
-    bool, std::vector<CryptoNote::RandomOuts>> Nigel::getRandomOutsByAmounts(
-    const std::vector<uint64_t> amounts,
-    const uint64_t requestedOuts
-) const
+std::tuple<bool, std::vector<CryptoNote::RandomOuts>>
+    Nigel::getRandomOutsByAmounts(const std::vector<uint64_t> amounts, const uint64_t requestedOuts) const
 {
-    json j = {{"amounts",    amounts},
-              {"outs_count", requestedOuts}};
+    json j = {{"amounts", amounts}, {"outs_count", requestedOuts}};
 
     /* The blockchain cache doesn't call it outs_count
        it calls it mixin */
@@ -437,9 +364,7 @@ std::tuple<
 
         /* We also need to handle the request and response a bit
            differently so we'll do this here */
-        auto res = m_nodeClient->Post(
-            "/randomOutputs", j.dump(), "application/json"
-        );
+        auto res = m_nodeClient->Post("/randomOutputs", j.dump(), "application/json");
 
         if (res && res->status == 200)
         {
@@ -449,10 +374,7 @@ std::tuple<
 
                 const auto outs = j.get<std::vector<CryptoNote::RandomOuts>>();
 
-                return {
-                    true,
-                    outs
-                };
+                return {true, outs};
             }
             catch (const json::exception &)
             {
@@ -461,9 +383,7 @@ std::tuple<
     }
     else
     {
-        auto res = m_nodeClient->Post(
-            "/getrandom_outs", j.dump(), "application/json"
-        );
+        auto res = m_nodeClient->Post("/getrandom_outs", j.dump(), "application/json");
 
         if (res && res->status == 200)
         {
@@ -478,10 +398,7 @@ std::tuple<
 
                 const auto outs = j.at("outs").get<std::vector<CryptoNote::RandomOuts>>();
 
-                return {
-                    true,
-                    outs
-                };
+                return {true, outs};
             }
             catch (const json::exception &)
             {
@@ -489,22 +406,14 @@ std::tuple<
         }
     }
 
-    return {
-        false,
-        {}};
+    return {false, {}};
 }
 
-std::tuple<
-    bool, bool
-> Nigel::sendTransaction(
-    const CryptoNote::Transaction tx
-) const
+std::tuple<bool, bool> Nigel::sendTransaction(const CryptoNote::Transaction tx) const
 {
     json j = {{"tx_as_hex", Common::toHex(CryptoNote::toBinaryArray(tx))}};
 
-    auto res = m_nodeClient->Post(
-        "/sendrawtransaction", j.dump(), "application/json"
-    );
+    auto res = m_nodeClient->Post("/sendrawtransaction", j.dump(), "application/json");
 
     bool success = false;
     bool connectionError = true;
@@ -524,51 +433,35 @@ std::tuple<
         }
     }
 
-    return {
-        success,
-        connectionError
-    };
+    return {success, connectionError};
 }
 
-std::tuple<
-    bool, std::unordered_map<
-        Crypto::Hash, std::vector<uint64_t>>
-> Nigel::getGlobalIndexesForRange(
-    const uint64_t startHeight,
-    const uint64_t endHeight
-) const
+std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
+    Nigel::getGlobalIndexesForRange(const uint64_t startHeight, const uint64_t endHeight) const
 {
     /* Blockchain cache API does not support this method and we
        don't need it to because it returns the global indexes
        with the key outputs when we get the wallet sync data */
     if (m_isBlockchainCache)
     {
-        return {
-            false,
-            {}};
+        return {false, {}};
     }
 
-    json j = {{"startHeight", startHeight},
-              {"endHeight",   endHeight}};
+    json j = {{"startHeight", startHeight}, {"endHeight", endHeight}};
 
-    auto res = m_nodeClient->Post(
-        "/get_global_indexes_for_range", j.dump(), "application/json"
-    );
+    auto res = m_nodeClient->Post("/get_global_indexes_for_range", j.dump(), "application/json");
 
     if (res && res->status == 200)
     {
         try
         {
-            std::unordered_map<
-                Crypto::Hash, std::vector<uint64_t>> result;
+            std::unordered_map<Crypto::Hash, std::vector<uint64_t>> result;
 
             json j = json::parse(res->body);
 
             if (j.at("status").get<std::string>() != "OK")
             {
-                return {
-                    false,
-                    {}};
+                return {false, {}};
             }
 
             /* The daemon doesn't serialize the way nlohmann::json does, so
@@ -580,17 +473,12 @@ std::tuple<
                 result[index.at("key").get<Crypto::Hash>()] = index.at("value").get<std::vector<uint64_t>>();
             }
 
-            return {
-                true,
-                result
-            };
+            return {true, result};
         }
         catch (const json::exception &)
         {
         }
     }
 
-    return {
-        false,
-        {}};
+    return {false, {}};
 }

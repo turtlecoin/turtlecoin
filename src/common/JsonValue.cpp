@@ -4,22 +4,20 @@
 // Please see the included LICENSE file for more information.
 
 #include "JsonValue.h"
+
 #include <iomanip>
 #include <sstream>
 
 namespace Common
 {
-
-    JsonValue::JsonValue() : type(NIL)
-    {
-    }
+    JsonValue::JsonValue(): type(NIL) {}
 
     JsonValue::JsonValue(const JsonValue &other)
     {
         switch (other.type)
         {
             case ARRAY:
-                new(valueArray)Array(*reinterpret_cast<const Array *>(other.valueArray));
+                new (valueArray) Array(*reinterpret_cast<const Array *>(other.valueArray));
                 break;
             case BOOL:
                 valueBool = other.valueBool;
@@ -30,13 +28,13 @@ namespace Common
             case NIL:
                 break;
             case OBJECT:
-                new(valueObject)Object(*reinterpret_cast<const Object *>(other.valueObject));
+                new (valueObject) Object(*reinterpret_cast<const Object *>(other.valueObject));
                 break;
             case REAL:
                 valueReal = other.valueReal;
                 break;
             case STRING:
-                new(valueString)String(*reinterpret_cast<const String *>(other.valueString));
+                new (valueString) String(*reinterpret_cast<const String *>(other.valueString));
                 break;
         }
 
@@ -48,7 +46,7 @@ namespace Common
         switch (other.type)
         {
             case ARRAY:
-                new(valueArray)Array(std::move(*reinterpret_cast<Array *>(other.valueArray)));
+                new (valueArray) Array(std::move(*reinterpret_cast<Array *>(other.valueArray)));
                 reinterpret_cast<Array *>(other.valueArray)->~Array();
                 break;
             case BOOL:
@@ -60,14 +58,14 @@ namespace Common
             case NIL:
                 break;
             case OBJECT:
-                new(valueObject)Object(std::move(*reinterpret_cast<Object *>(other.valueObject)));
+                new (valueObject) Object(std::move(*reinterpret_cast<Object *>(other.valueObject)));
                 reinterpret_cast<Object *>(other.valueObject)->~Object();
                 break;
             case REAL:
                 valueReal = other.valueReal;
                 break;
             case STRING:
-                new(valueString)String(std::move(*reinterpret_cast<String *>(other.valueString)));
+                new (valueString) String(std::move(*reinterpret_cast<String *>(other.valueString)));
                 reinterpret_cast<String *>(other.valueString)->~String();
                 break;
         }
@@ -81,15 +79,15 @@ namespace Common
         switch (valueType)
         {
             case ARRAY:
-                new(valueArray)Array;
+                new (valueArray) Array;
                 break;
             case NIL:
                 break;
             case OBJECT:
-                new(valueObject)Object;
+                new (valueObject) Object;
                 break;
             case STRING:
-                new(valueString)String;
+                new (valueString) String;
                 break;
             default:
                 throw std::runtime_error("Invalid JsonValue type for constructor");
@@ -100,59 +98,45 @@ namespace Common
 
     JsonValue::JsonValue(const Array &value)
     {
-        new(valueArray)Array(value);
+        new (valueArray) Array(value);
         type = ARRAY;
     }
 
     JsonValue::JsonValue(Array &&value)
     {
-        new(valueArray)Array(std::move(value));
+        new (valueArray) Array(std::move(value));
         type = ARRAY;
     }
 
-    JsonValue::JsonValue(Bool value)
-        : type(BOOL),
-          valueBool(value)
-    {
-    }
+    JsonValue::JsonValue(Bool value): type(BOOL), valueBool(value) {}
 
-    JsonValue::JsonValue(Integer value)
-        : type(INTEGER),
-          valueInteger(value)
-    {
-    }
+    JsonValue::JsonValue(Integer value): type(INTEGER), valueInteger(value) {}
 
-    JsonValue::JsonValue(Nil) : type(NIL)
-    {
-    }
+    JsonValue::JsonValue(Nil): type(NIL) {}
 
     JsonValue::JsonValue(const Object &value)
     {
-        new(valueObject)Object(value);
+        new (valueObject) Object(value);
         type = OBJECT;
     }
 
     JsonValue::JsonValue(Object &&value)
     {
-        new(valueObject)Object(std::move(value));
+        new (valueObject) Object(std::move(value));
         type = OBJECT;
     }
 
-    JsonValue::JsonValue(Real value)
-        : type(REAL),
-          valueReal(value)
-    {
-    }
+    JsonValue::JsonValue(Real value): type(REAL), valueReal(value) {}
 
     JsonValue::JsonValue(const String &value)
     {
-        new(valueString)String(value);
+        new (valueString) String(value);
         type = STRING;
     }
 
     JsonValue::JsonValue(String &&value)
     {
-        new(valueString)String(std::move(value));
+        new (valueString) String(std::move(value));
         type = STRING;
     }
 
@@ -170,7 +154,7 @@ namespace Common
             {
                 case ARRAY:
                     type = NIL;
-                    new(valueArray)Array(*reinterpret_cast<const Array *>(other.valueArray));
+                    new (valueArray) Array(*reinterpret_cast<const Array *>(other.valueArray));
                     break;
                 case BOOL:
                     valueBool = other.valueBool;
@@ -182,14 +166,14 @@ namespace Common
                     break;
                 case OBJECT:
                     type = NIL;
-                    new(valueObject)Object(*reinterpret_cast<const Object *>(other.valueObject));
+                    new (valueObject) Object(*reinterpret_cast<const Object *>(other.valueObject));
                     break;
                 case REAL:
                     valueReal = other.valueReal;
                     break;
                 case STRING:
                     type = NIL;
-                    new(valueString)String(*reinterpret_cast<const String *>(other.valueString));
+                    new (valueString) String(*reinterpret_cast<const String *>(other.valueString));
                     break;
             }
 
@@ -234,7 +218,7 @@ namespace Common
             {
                 case ARRAY:
                     type = NIL;
-                    new(valueArray)Array(std::move(*reinterpret_cast<const Array *>(other.valueArray)));
+                    new (valueArray) Array(std::move(*reinterpret_cast<const Array *>(other.valueArray)));
                     reinterpret_cast<Array *>(other.valueArray)->~Array();
                     break;
                 case BOOL:
@@ -247,7 +231,7 @@ namespace Common
                     break;
                 case OBJECT:
                     type = NIL;
-                    new(valueObject)Object(std::move(*reinterpret_cast<const Object *>(other.valueObject)));
+                    new (valueObject) Object(std::move(*reinterpret_cast<const Object *>(other.valueObject)));
                     reinterpret_cast<Object *>(other.valueObject)->~Object();
                     break;
                 case REAL:
@@ -255,7 +239,7 @@ namespace Common
                     break;
                 case STRING:
                     type = NIL;
-                    new(valueString)String(std::move(*reinterpret_cast<const String *>(other.valueString)));
+                    new (valueString) String(std::move(*reinterpret_cast<const String *>(other.valueString)));
                     reinterpret_cast<String *>(other.valueString)->~String();
                     break;
             }
@@ -305,7 +289,7 @@ namespace Common
         {
             destructValue();
             type = NIL;
-            new(valueArray)Array(value);
+            new (valueArray) Array(value);
             type = ARRAY;
         }
         else
@@ -322,7 +306,7 @@ namespace Common
         {
             destructValue();
             type = NIL;
-            new(valueArray)Array(std::move(value));
+            new (valueArray) Array(std::move(value));
             type = ARRAY;
         }
         else
@@ -333,7 +317,7 @@ namespace Common
         return *this;
     }
 
-    //JsonValue& JsonValue::operator=(Bool value) {
+    // JsonValue& JsonValue::operator=(Bool value) {
     //  if (type != BOOL) {
     //    destructValue();
     //    type = BOOL;
@@ -372,7 +356,7 @@ namespace Common
         {
             destructValue();
             type = NIL;
-            new(valueObject)Object(value);
+            new (valueObject) Object(value);
             type = OBJECT;
         }
         else
@@ -389,7 +373,7 @@ namespace Common
         {
             destructValue();
             type = NIL;
-            new(valueObject)Object(std::move(value));
+            new (valueObject) Object(std::move(value));
             type = OBJECT;
         }
         else
@@ -418,7 +402,7 @@ namespace Common
         {
             destructValue();
             type = NIL;
-            new(valueString)String(value);
+            new (valueString) String(value);
             type = STRING;
         }
         else
@@ -435,7 +419,7 @@ namespace Common
         {
             destructValue();
             type = NIL;
-            new(valueString)String(std::move(value));
+            new (valueString) String(std::move(value));
             type = STRING;
         }
         else
@@ -601,35 +585,23 @@ namespace Common
         return getObject().count(key) > 0;
     }
 
-    JsonValue &JsonValue::insert(
-        const Key &key,
-        const JsonValue &value
-    )
+    JsonValue &JsonValue::insert(const Key &key, const JsonValue &value)
     {
         return getObject().emplace(key, value).first->second;
     }
 
-    JsonValue &JsonValue::insert(
-        const Key &key,
-        JsonValue &&value
-    )
+    JsonValue &JsonValue::insert(const Key &key, JsonValue &&value)
     {
         return getObject().emplace(key, std::move(value)).first->second;
     }
 
-    JsonValue &JsonValue::set(
-        const Key &key,
-        const JsonValue &value
-    )
+    JsonValue &JsonValue::set(const Key &key, const JsonValue &value)
     {
         getObject()[key] = value;
         return *this;
     }
 
-    JsonValue &JsonValue::set(
-        const Key &key,
-        JsonValue &&value
-    )
+    JsonValue &JsonValue::set(const Key &key, JsonValue &&value)
     {
         getObject()[key] = std::move(value);
         return *this;
@@ -660,10 +632,7 @@ namespace Common
         return stream.str();
     }
 
-    std::ostream &operator<<(
-        std::ostream &out,
-        const JsonValue &jsonValue
-    )
+    std::ostream &operator<<(std::ostream &out, const JsonValue &jsonValue)
     {
         switch (jsonValue.type)
         {
@@ -684,11 +653,7 @@ namespace Common
                 break;
             }
             case JsonValue::BOOL:
-                out << (
-                    jsonValue.valueBool
-                    ? "true"
-                    : "false"
-                );
+                out << (jsonValue.valueBool ? "true" : "false");
                 break;
             case JsonValue::INTEGER:
                 out << jsonValue.valueInteger;
@@ -737,7 +702,6 @@ namespace Common
 
     namespace
     {
-
         char readChar(std::istream &in)
         {
             char c;
@@ -788,12 +752,9 @@ namespace Common
             return value;
         }
 
-    }
+    } // namespace
 
-    std::istream &operator>>(
-        std::istream &in,
-        JsonValue &jsonValue
-    )
+    std::istream &operator>>(std::istream &in, JsonValue &jsonValue)
     {
         char c = readNonWsChar(in);
 
@@ -881,7 +842,7 @@ namespace Common
         {
             destructValue();
             type = JsonValue::NIL;
-            new(valueArray)JsonValue::Array;
+            new (valueArray) JsonValue::Array;
             type = JsonValue::ARRAY;
         }
 
@@ -940,10 +901,7 @@ namespace Common
         }
     }
 
-    void JsonValue::readNumber(
-        std::istream &in,
-        char c
-    )
+    void JsonValue::readNumber(std::istream &in, char c)
     {
         std::string text;
         text += c;
@@ -1081,7 +1039,7 @@ namespace Common
         {
             destructValue();
             type = JsonValue::NIL;
-            new(valueObject)JsonValue::Object;
+            new (valueObject) JsonValue::Object;
             type = JsonValue::OBJECT;
         }
 
@@ -1096,11 +1054,11 @@ namespace Common
         {
             destructValue();
             type = JsonValue::NIL;
-            new(valueString)String;
+            new (valueString) String;
             type = JsonValue::STRING;
         }
 
         reinterpret_cast<String *>(valueString)->swap(value);
     }
 
-}
+} // namespace Common
