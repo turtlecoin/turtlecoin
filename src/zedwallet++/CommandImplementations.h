@@ -1,10 +1,10 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
-#include <WalletBackend/WalletBackend.h>
+#include <walletbackend/WalletBackend.h>
 
 void changePassword(const std::shared_ptr<WalletBackend> walletBackend);
 
@@ -39,10 +39,7 @@ void saveCSV(const std::shared_ptr<WalletBackend> walletBackend);
 
 void save(const std::shared_ptr<WalletBackend> walletBackend);
 
-void listTransfers(
-    const bool incoming,
-    const bool outgoing, 
-    const std::shared_ptr<WalletBackend> walletBackend);
+void listTransfers(const bool incoming, const bool outgoing, const std::shared_ptr<WalletBackend> walletBackend);
 
 void printOutgoingTransfer(const WalletTypes::Transaction t);
 
@@ -57,3 +54,5 @@ void advanced(const std::shared_ptr<WalletBackend> walletBackend);
 void swapNode(const std::shared_ptr<WalletBackend> walletBackend);
 
 void getTxPrivateKey(const std::shared_ptr<WalletBackend> walletBackend);
+
+void setLogLevel();

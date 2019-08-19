@@ -1,5 +1,5 @@
 // Copyright (c) 2018-2019, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 /////////////////////////////
@@ -7,14 +7,12 @@
 /////////////////////////////
 
 #include <config/WalletConfig.h>
-
-#include <Utilities/FormatTools.h>
-
+#include <utilities/FormatTools.h>
 #include <zedwallet++/CommandDispatcher.h>
 #include <zedwallet++/Commands.h>
 #include <zedwallet++/GetInput.h>
 
-std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Config &config)
+std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const ZedConfig &config)
 {
     while (true)
     {
@@ -30,15 +28,12 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Con
         }
 
         /* Handle the user input */
-        std::shared_ptr<WalletBackend> walletBackend = handleLaunchCommand(
-            launchCommand, config
-        );
+        std::shared_ptr<WalletBackend> walletBackend = handleLaunchCommand(launchCommand, config);
 
         /* Action failed, for example wallet file is corrupted. */
         if (walletBackend == nullptr)
         {
-            std::cout << InformationMsg("Returning to selection screen...")
-                      << std::endl;
+            std::cout << InformationMsg("Returning to selection screen...") << std::endl;
 
             continue;
         }
@@ -64,8 +59,7 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Con
                    << " per transaction.\n\n"
                       "If you don't want to pay the node fee, please "
                       "relaunch "
-                   << WalletConfig::walletName
-                   << " and specify a different node or run your own.";
+                   << WalletConfig::walletName << " and specify a different node or run your own.";
 
             std::cout << WarningMsg(feemsg.str()) << std::endl;
         }
@@ -76,12 +70,10 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Con
             std::stringstream str;
 
             str << std::endl
-                << "Your wallet is syncing with the network in the background."
-                << std::endl
+                << "Your wallet is syncing with the network in the background." << std::endl
                 << "Until this is completed new transactions might not show "
                 << "up." << std::endl
-                << "Use the status command to check the progress."
-                << std::endl;
+                << "Use the status command to check the progress." << std::endl;
 
             std::cout << InformationMsg(str.str());
 
@@ -91,7 +83,7 @@ std::tuple<bool, bool, std::shared_ptr<WalletBackend>> selectionScreen(const Con
         }
 
         const bool exit(false), sync(true);
-    
+
         /* Return the wallet info */
         return {exit, sync, walletBackend};
     }
@@ -109,13 +101,12 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend)
         std::stringstream msg;
 
         msg << "It looks like " << WalletConfig::daemonName << " isn't open!\n\n"
-            << "Ensure " << WalletConfig::daemonName
-            << " is open and has finished syncing. "
+            << "Ensure " << WalletConfig::daemonName << " is open and has finished syncing. "
             << "(It will often not respond when syncing)\n"
-            << "If it's still not working, try restarting "
-            << WalletConfig::daemonName << " (or try a different remote node)."
-            << "\nThe daemon sometimes gets stuck.\nAlternatively, perhaps "
-            << WalletConfig::daemonName << " can't communicate with any peers."
+            << "If it's still not working, try restarting " << WalletConfig::daemonName
+            << " (or try a different remote node)."
+            << "\nThe daemon sometimes gets stuck.\nAlternatively, perhaps " << WalletConfig::daemonName
+            << " can't communicate with any peers."
             << "\n\nThe wallet can't function fully until it can communicate with "
             << "the network.";
 
@@ -125,10 +116,7 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend)
         printCommands(nodeDownCommands());
 
         /* See what the user wants to do */
-        std::string command = parseCommand(
-            nodeDownCommands(), nodeDownCommands(),
-            "What would you like to do?: "
-        );
+        std::string command = parseCommand(nodeDownCommands(), nodeDownCommands(), "What would you like to do?: ");
 
         /* If they want to try again, check the node height again */
         if (command == "try_again")
@@ -163,7 +151,7 @@ bool checkNodeStatus(const std::shared_ptr<WalletBackend> walletBackend)
     return true;
 }
 
-std::string getAction(const Config &config)
+std::string getAction(const ZedConfig &config)
 {
     if (config.walletGiven || config.passGiven)
     {
@@ -172,14 +160,10 @@ std::string getAction(const Config &config)
 
     printCommands(startupCommands());
 
-    return parseCommand(
-        startupCommands(), startupCommands(), "What would you like to do?: "
-    );
+    return parseCommand(startupCommands(), startupCommands(), "What would you like to do?: ");
 }
 
-void mainLoop(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const std::shared_ptr<std::mutex> mutex)
+void mainLoop(const std::shared_ptr<WalletBackend> walletBackend, const std::shared_ptr<std::mutex> mutex)
 {
     if (walletBackend->isViewWallet())
     {
@@ -189,23 +173,18 @@ void mainLoop(
     {
         printCommands(basicCommands());
     }
-    
+
     while (true)
     {
         std::string command;
 
         if (walletBackend->isViewWallet())
         {
-            command = parseCommand(
-                basicViewWalletCommands(), allViewWalletCommands(),
-                getPrompt(walletBackend)
-            );
+            command = parseCommand(basicViewWalletCommands(), allViewWalletCommands(), getPrompt(walletBackend));
         }
         else
         {
-            command = parseCommand(
-                basicCommands(), allCommands(), getPrompt(walletBackend)
-            );
+            command = parseCommand(basicCommands(), allCommands(), getPrompt(walletBackend));
         }
 
         /* User exited */

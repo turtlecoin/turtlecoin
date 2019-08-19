@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 ///////////////////////////////////////////
@@ -7,18 +7,14 @@
 ///////////////////////////////////////////
 
 #include <iostream>
-
-#include <Utilities/ColouredMsg.h>
+#include <utilities/ColouredMsg.h>
 #include <zedwallet++/CommandImplementations.h>
 #include <zedwallet++/GetInput.h>
 
 void TransactionMonitor::start()
 {
     /* Grab new transactions and push them into a queue for processing */
-    m_walletBackend->m_eventHandler->onTransaction.subscribe([this](const auto tx)
-    {
-        m_queuedTransactions.push(tx);
-    });
+    m_walletBackend->m_eventHandler->onTransaction.subscribe([this](const auto tx) { m_queuedTransactions.push(tx); });
 
     const std::string prompt = getPrompt(m_walletBackend);
 

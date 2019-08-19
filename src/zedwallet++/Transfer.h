@@ -1,14 +1,12 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
 
-#include <WalletBackend/WalletBackend.h>
+#include <walletbackend/WalletBackend.h>
 
-void transfer(
-    const std::shared_ptr<WalletBackend> walletBackend,
-    const bool sendAll);
+void transfer(const std::shared_ptr<WalletBackend> walletBackend, const bool sendAll);
 
 void sendTransaction(
     const std::shared_ptr<WalletBackend> walletBackend,

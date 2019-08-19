@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 //////////////////////////////////////////
@@ -7,15 +7,13 @@
 //////////////////////////////////////////
 
 #include <iostream>
-
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/Input.h>
-
+#include <utilities/ColouredMsg.h>
+#include <utilities/Input.h>
 #include <zedwallet++/AddressBook.h>
 #include <zedwallet++/CommandImplementations.h>
+#include <zedwallet++/Fusion.h>
 #include <zedwallet++/Open.h>
 #include <zedwallet++/Transfer.h>
-#include <zedwallet++/Fusion.h>
 #include <zedwallet++/Utilities.h>
 
 bool handleCommand(
@@ -141,6 +139,10 @@ bool handleCommand(
 
         transfer(walletBackend, sendAll);
     }
+    else if (command == "set_log_level")
+    {
+        setLogLevel();
+    }
     else if (command == "status")
     {
         status(walletBackend);
@@ -158,9 +160,7 @@ bool handleCommand(
     return true;
 }
 
-std::shared_ptr<WalletBackend> handleLaunchCommand(
-    const std::string launchCommand,
-    const Config &config)
+std::shared_ptr<WalletBackend> handleLaunchCommand(const std::string launchCommand, const ZedConfig &config)
 {
     if (launchCommand == "create")
     {

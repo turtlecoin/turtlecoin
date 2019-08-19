@@ -14,6 +14,12 @@ If you would like to compile yourself, read on.
 
 ### How To Compile
 
+#### Build Optimization
+
+The CMake build system will, by default, create optimized *native* builds for your particular system type when you build the software. Using this method, the binaries created provide a better experience and all together faster performance.
+
+However, if you wish to create *portable* binaries that can be shared between systems, specify `-DARCH=default` in your CMake arguments during the build process. Note that *portable* binaries will have a noticable difference in performance than *native* binaries. For this reason, it is always best to build for your particular system if possible.
+
 #### Linux
 
 ##### Prerequisites
@@ -100,30 +106,6 @@ The binaries will be in the `src` folder when you are complete.
 - `cd src`
 - `./TurtleCoind --version`
 
-#### OSX/Apple, using GCC
-
-##### Prerequisites
-
-- Install XCode and Developer Tools.
-
-##### Building
-
-- `which brew || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-- `brew install --force cmake boost llvm gcc@8 openssl`
-- `export CC=gcc-8`
-- `export CXX=g++-8`
-- `git clone -b master --single-branch https://github.com/turtlecoin/turtlecoin`
-- `cd turtlecoin`
-- `mkdir build`
-- `cd build`
-- `cmake ..`
-- `make`
-
-The binaries will be in the `src` folder when you are complete.
-
-- `cd src`
-- `./TurtleCoind --version`
-
 #### OSX/Apple, using Clang
 
 ##### Prerequisites
@@ -148,41 +130,38 @@ The binaries will be in the `src` folder when you are complete.
 - `cd src`
 - `./TurtleCoind --version`
 
-
 #### Windows
 
 ##### Prerequisites
 
 You can build for 32-bit or 64-bit Windows. **If you're not sure, pick 64-bit.**
 
-- Install [Visual Studio 2017 Community Edition](https://www.visualstudio.com/thank-you-downloading-visual-studio/?sku=Community&rel=15&page=inlineinstall)
-- When installing Visual Studio, it is **required** that you install **Desktop development with C++**
-- Install the latest version of Boost (currently Boost 1.68). Select the appropriate version for your system:
-  - [Boost 64-bit](https://bintray.com/boostorg/release/download_file?file_path=1.68.0%2Fbinaries%2Fboost_1_68_0-msvc-14.1-64.exe)
-  - [Boost 32-bit](https://bintray.com/boostorg/release/download_file?file_path=1.68.0%2Fbinaries%2Fboost_1_68_0-msvc-14.1-32.exe)
-- Install the latest full version of OpenSSL (currently OpenSSL 1.1.1b). Select the appropriate version for your system:
-  - [OpenSSL 64-bit](https://slproweb.com/download/Win64OpenSSL-1_1_1b.exe)
-  - [OpenSSL 32-bit](https://slproweb.com/download/Win32OpenSSL-1_1_1b.exe)
+- Download the [Build Tools for Visual Studio 2019](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=16) Installer
+- When it opens up select **C++ build tools**, it automatically selects the needed parts
+- Install Boost (1.69 works the latest is 1.70 and doesn't work). Select the appropriate version for your system:
+  - [Boost 64-bit](https://bintray.com/boostorg/release/download_file?file_path=1.69.0%2Fbinaries%2Fboost_1_69_0-msvc-14.1-64.exe)
+  - [Boost 32-bit](https://bintray.com/boostorg/release/download_file?file_path=1.69.0%2Fbinaries%2Fboost_1_69_0-msvc-14.1-32.exe)
+- Install the latest full version of OpenSSL (currently OpenSSL 1.1.1c). Select the appropriate version for your system:
+  - [OpenSSL 64-bit](https://slproweb.com/download/Win64OpenSSL-1_1_1c.exe)
+  - [OpenSSL 32-bit](https://slproweb.com/download/Win32OpenSSL-1_1_1c.exe)
 
 ##### Building
 
 For 64-bit:
-- From the start menu, open 'x64 Native Tools Command Prompt for vs2017'.
+- From the start menu, open 'x64 Native Tools Command Prompt for VS 2019'.
 - `cd <your_turtlecoin_directory>`
 - `mkdir build`
 - `cd build`
-- `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
-- `cmake -G "Visual Studio 15 2017 Win64" .. -DBOOST_ROOT=C:/local/boost_1_68_0`
-- `MSBuild TurtleCoin.sln /p:Configuration=Release /m`
+- `cmake -G "Visual Studio 16 2019" -A x64 .. -DBOOST_ROOT=C:/local/boost_1_69_0`
+- `MSBuild TurtleCoin.sln /p:Configuration=Release /m` or `MSBuild src\cli.vcxproj /p:Configuration=Release /m`
 
 For 32-bit:
-- From the start menu, open 'x86 Native Tools Command Prompt for vs2017'.
+- From the start menu, open 'x86 Native Tools Command Prompt for VS 2019'.
 - `cd <your_turtlecoin_directory>`
 - `mkdir build`
 - `cd build`
-- `set PATH="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin";%PATH%`
-- `cmake -G "Visual Studio 15 2017" .. -DBOOST_ROOT=C:/local/boost_1_68_0`
-- `MSBuild TurtleCoin.sln /p:Configuration=Release /p:Platform=Win32 /m`
+- `cmake -G "Visual Studio 16 2019" -A Win32 .. -DBOOST_ROOT=C:/local/boost_1_69_0`
+- `MSBuild TurtleCoin.sln /p:Configuration=Release /p:Platform=Win32 /m` 
 
 The binaries will be in the `src/Release` folder when you are complete.
 

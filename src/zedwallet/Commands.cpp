@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////////
@@ -10,8 +10,7 @@
 
 std::vector<Command> startupCommands()
 {
-    return 
-    {
+    return {
         Command("open", "Open a wallet already on your system"),
         Command("create", "Create a new wallet"),
         Command("seed_restore", "Restore a wallet using a seed phrase of words"),
@@ -23,8 +22,7 @@ std::vector<Command> startupCommands()
 
 std::vector<Command> nodeDownCommands()
 {
-    return
-    {
+    return {
         Command("try_again", "Try to connect to the node again"),
         Command("continue", "Continue to the wallet interface regardless"),
         Command("exit", "Exit the program"),
@@ -33,8 +31,7 @@ std::vector<Command> nodeDownCommands()
 
 std::vector<AdvancedCommand> allCommands()
 {
-    return
-    {
+    return {
         /* Basic commands */
         AdvancedCommand("advanced", "List available advanced commands", true, false),
         AdvancedCommand("address", "Display your payment address", true, false),
@@ -43,7 +40,7 @@ std::vector<AdvancedCommand> allCommands()
         AdvancedCommand("exit", "Exit and save your wallet", true, false),
         AdvancedCommand("help", "List this help message", true, false),
         AdvancedCommand("transfer", "Send " + WalletConfig::ticker + " to someone", false, false),
-        
+
         /* Advanced commands */
         AdvancedCommand("ab_add", "Add a person to your address book", true, true),
         AdvancedCommand("ab_delete", "Delete a person in your address book", true, true),
@@ -65,40 +62,25 @@ std::vector<AdvancedCommand> allCommands()
 
 std::vector<AdvancedCommand> basicCommands()
 {
-    return filter(allCommands(), [](AdvancedCommand c)
-    {
-        return !c.advanced;
-    });
+    return filter(allCommands(), [](AdvancedCommand c) { return !c.advanced; });
 }
 
 std::vector<AdvancedCommand> advancedCommands()
 {
-    return filter(allCommands(), [](AdvancedCommand c)
-    {
-        return c.advanced;
-    });
+    return filter(allCommands(), [](AdvancedCommand c) { return c.advanced; });
 }
 
 std::vector<AdvancedCommand> basicViewWalletCommands()
 {
-    return filter(basicCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    });
+    return filter(basicCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }
 
 std::vector<AdvancedCommand> advancedViewWalletCommands()
 {
-    return filter(advancedCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    });
+    return filter(advancedCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }
 
 std::vector<AdvancedCommand> allViewWalletCommands()
 {
-    return filter(allCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    });
+    return filter(allCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }

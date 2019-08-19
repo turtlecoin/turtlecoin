@@ -1,26 +1,24 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 #include <string>
 #include <vector>
-#include <WalletBackend/WalletBackend.h>
-
+#include <walletbackend/WalletBackend.h>
 
 struct AddressBookEntry
 {
     AddressBookEntry() {}
 
     /* Used for quick comparison with strings */
-    AddressBookEntry(const std::string friendlyName) : friendlyName(friendlyName) {}
+    AddressBookEntry(const std::string friendlyName): friendlyName(friendlyName) {}
 
-    AddressBookEntry(
-        const std::string friendlyName,
-        const std::string address,
-        const std::string paymentID) :
+    AddressBookEntry(const std::string friendlyName, const std::string address, const std::string paymentID):
         friendlyName(friendlyName),
         address(address),
-        paymentID(paymentID) {}
+        paymentID(paymentID)
+    {
+    }
 
     /* Friendly name for this address book entry */
     std::string friendlyName;
@@ -37,8 +35,7 @@ struct AddressBookEntry
         return rhs.friendlyName == friendlyName;
     }
 
-    template <typename Writer>
-    void toJSON(Writer &writer) const
+    template<typename Writer> void toJSON(Writer &writer) const
     {
         writer.StartObject();
 
@@ -70,8 +67,7 @@ void deleteFromAddressBook();
 
 void listAddressBook();
 
-const std::tuple<bool, AddressBookEntry> getAddressBookEntry(
-    const std::vector<AddressBookEntry> addressBook);
+const std::tuple<bool, AddressBookEntry> getAddressBookEntry(const std::vector<AddressBookEntry> addressBook);
 
 const std::string getAddressBookName(const std::vector<AddressBookEntry> addressBook);
 

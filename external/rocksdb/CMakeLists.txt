@@ -34,6 +34,8 @@
 
 cmake_minimum_required(VERSION 2.8.12)
 
+message(STATUS "Setting up build environment for RocksDB")
+
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
   message(STATUS "Found ccache package... Activating...")
@@ -51,6 +53,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/modules/")
 
+set(ARCH native CACHE STRING "CPU to build for: -march value or native")
 option(WITH_JEMALLOC "build with JeMalloc" OFF)
 option(WITH_SNAPPY "build with SNAPPY" OFF)
 option(WITH_LZ4 "build with lz4" OFF)
@@ -62,7 +65,7 @@ if(MSVC)
   option(WITH_GFLAGS "build with GFlags" OFF)
   option(WITH_XPRESS "build with windows built in compression" OFF)
   include(${CMAKE_CURRENT_SOURCE_DIR}/thirdparty.inc)
-  
+
   if(WITH_LZ4)
     SET(LZ4_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../lz4")
     SET(LZ4_LIBRARIES lz4)
@@ -179,8 +182,6 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /nologo /EHsc /GS /Gd /GR /GF /fp:precise /Zc:wchar_t /Zc:forScope /errorReport:queue")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FC /d2Zi+ /W4 /wd4127 /wd4800 /wd4996 /wd4351 /wd4100 /wd4204 /wd4324")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wextra -Wall")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsign-compare -Wshadow -Wno-unused-parameter -Wno-unused-variable -Woverloaded-virtual -Wnon-virtual-dtor -Wno-missing-field-initializers -Wno-strict-aliasing")
   if(MINGW)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
   endif()
@@ -188,7 +189,7 @@ else()
   if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
     include(CheckCXXCompilerFlag)
-    if(ENABLE_LEAF_FRAME)
+    if(NOT "${ARCH}" STREQUAL "default")
       CHECK_CXX_COMPILER_FLAG("-momit-leaf-frame-pointer" HAVE_OMIT_LEAF_FRAME_POINTER)
       if(HAVE_OMIT_LEAF_FRAME_POINTER)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -momit-leaf-frame-pointer")
@@ -234,7 +235,7 @@ else()
 endif()
 
 include(CheckCXXSourceCompiles)
-if(ENABLE_SSE42)
+if(NOT "${ARCH}" STREQUAL "default")
   if(NOT MSVC)
     set(CMAKE_REQUIRED_FLAGS "-msse4.2 -mpclmul")
   endif()
@@ -259,7 +260,7 @@ if(ENABLE_SSE42)
   endif()
 endif()
 
-if(ENABLE_THREAD_LOCAL)
+if(NOT "${ARCH}" STREQUAL "default")
   CHECK_CXX_SOURCE_COMPILES("
   #if defined(_MSC_VER) && !defined(__thread)
   #define __thread __declspec(thread)
@@ -436,7 +437,7 @@ int main() {
   endif()
 endif()
 
-if(ENABLE_SYNC_FILE_RANGE_WRITE)
+if(NOT "${ARCH}" STREQUAL "default")
   CHECK_CXX_SOURCE_COMPILES("
   #include <fcntl.h>
   int main() {
@@ -449,7 +450,7 @@ if(ENABLE_SYNC_FILE_RANGE_WRITE)
   endif()
 endif()
 
-if(ENABLE_PTHREAD_MUTEX_ADAPTIVE_NP)
+if(NOT "${ARCH}" STREQUAL "default")
   CHECK_CXX_SOURCE_COMPILES("
   #include <pthread.h>
   int main() {
@@ -462,14 +463,14 @@ if(ENABLE_PTHREAD_MUTEX_ADAPTIVE_NP)
 endif()
 
 include(CheckCXXSymbolExists)
-if(ENABLE_MALLOC_USABLE_SIZE)
+if(NOT "${ARCH}" STREQUAL "default")
   check_cxx_symbol_exists(malloc_usable_size malloc.h HAVE_MALLOC_USABLE_SIZE)
   if(HAVE_MALLOC_USABLE_SIZE)
     add_definitions(-DROCKSDB_MALLOC_USABLE_SIZE)
   endif()
 endif()
 
-if(ENABLE_SCHED_GETCPU)
+if(NOT "${ARCH}" STREQUAL "default")
   check_cxx_symbol_exists(sched_getcpu sched.h HAVE_SCHED_GETCPU)
   if(HAVE_SCHED_GETCPU)
     add_definitions(-DROCKSDB_SCHED_GETCPU_PRESENT)
@@ -1096,9 +1097,9 @@ if(MSVC)
   string (REPLACE "/arch:AVX2" ""     CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
   string (REPLACE "/arch:AVX" ""     CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
-  if(ENABLE_AVX)
+  if(NOT "${ARCH}" STREQUAL "default")
     include(CheckCXXSourceRuns)
-    
+
     # Check AVX
     check_cxx_source_runs("
       #include <immintrin.h>

@@ -1,35 +1,19 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018-2019, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
-#include <algorithm>
-
-#include <Common/StringTools.h>
-
-#include <cstdint>
-
-#include <iterator>
-
 #include "json.hpp"
-
 #include "rapidjson/document.h"
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
+
+#include <algorithm>
+#include <common/StringTools.h>
+#include <cstdint>
+#include <iterator>
 
 namespace Crypto
 {
@@ -46,7 +30,7 @@ namespace Crypto
         {
             return !(*this == other);
         }
-        
+
         uint8_t data[32];
 
         /* Converts the class to a json object */
@@ -76,7 +60,7 @@ namespace Crypto
 
         PublicKey(const uint8_t input[32])
         {
-            std::copy(input, input+32, std::begin(data));
+            std::copy(input, input + 32, std::begin(data));
         }
 
         bool operator==(const PublicKey &other) const
@@ -103,7 +87,7 @@ namespace Crypto
                 throw std::invalid_argument("Error parsing JSON PublicKey, wrong length or not hex");
             }
         }
-        
+
         uint8_t data[32];
     };
 
@@ -118,14 +102,14 @@ namespace Crypto
 
         SecretKey(const uint8_t input[32])
         {
-            std::copy(input, input+32, std::begin(data));
+            std::copy(input, input + 32, std::begin(data));
         }
 
         bool operator==(const SecretKey &other) const
         {
             return std::equal(std::begin(data), std::end(data), std::begin(other.data));
         }
-        
+
         bool operator!=(const SecretKey &other) const
         {
             return !(*this == other);
@@ -160,7 +144,7 @@ namespace Crypto
 
         KeyDerivation(const uint8_t input[32])
         {
-            std::copy(input, input+32, std::begin(data));
+            std::copy(input, input + 32, std::begin(data));
         }
 
         bool operator==(const KeyDerivation &other) const
@@ -186,7 +170,6 @@ namespace Crypto
             {
                 throw std::invalid_argument("Error parsing JSON KeyDerivation, wrong length or not hex");
             }
-
         }
 
         uint8_t data[32];
@@ -203,7 +186,7 @@ namespace Crypto
 
         KeyImage(const uint8_t input[32])
         {
-            std::copy(input, input+32, std::begin(data));
+            std::copy(input, input + 32, std::begin(data));
         }
 
         bool operator==(const KeyImage &other) const
@@ -245,7 +228,7 @@ namespace Crypto
 
         Signature(const uint8_t input[64])
         {
-            std::copy(input, input+64, std::begin(data));
+            std::copy(input, input + 64, std::begin(data));
         }
 
         bool operator==(const Signature &other) const
@@ -265,27 +248,27 @@ namespace Crypto
     inline size_t hash_value(const Hash &hash)
     {
         return reinterpret_cast<const size_t &>(hash);
-    } 
+    }
 
     inline size_t hash_value(const PublicKey &publicKey)
     {
         return reinterpret_cast<const size_t &>(publicKey);
-    } 
+    }
 
     inline size_t hash_value(const SecretKey &secretKey)
     {
         return reinterpret_cast<const size_t &>(secretKey);
-    } 
+    }
 
     inline size_t hash_value(const KeyDerivation &keyDerivation)
     {
         return reinterpret_cast<const size_t &>(keyDerivation);
-    } 
+    }
 
     inline size_t hash_value(const KeyImage &keyImage)
     {
         return reinterpret_cast<const size_t &>(keyImage);
-    } 
+    }
 
     inline void to_json(nlohmann::json &j, const Hash &h)
     {
@@ -296,9 +279,7 @@ namespace Crypto
     {
         if (!Common::podFromHex(j.get<std::string>(), h.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
@@ -313,9 +294,7 @@ namespace Crypto
     {
         if (!Common::podFromHex(j.get<std::string>(), p.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
@@ -330,14 +309,12 @@ namespace Crypto
     {
         if (!Common::podFromHex(j.get<std::string>(), s.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
-    
+
     inline void to_json(nlohmann::json &j, const KeyDerivation &k)
     {
         j = Common::podToHex(k);
@@ -347,9 +324,7 @@ namespace Crypto
     {
         if (!Common::podFromHex(j.get<std::string>(), k.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
@@ -364,14 +339,12 @@ namespace Crypto
     {
         if (!Common::podFromHex(j.get<std::string>(), k.data))
         {
-            const auto err = nlohmann::detail::parse_error::create(
-                100, 0, "Wrong length or not hex!"
-            );
+            const auto err = nlohmann::detail::parse_error::create(100, 0, "Wrong length or not hex!");
 
             throw nlohmann::json::parse_error(err);
         }
     }
-}
+} // namespace Crypto
 
 namespace std
 {
@@ -460,4 +433,4 @@ namespace std
         os << Common::podToHex(signature);
         return os;
     }
-}
+} // namespace std

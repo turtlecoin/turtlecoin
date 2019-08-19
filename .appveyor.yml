@@ -1,10 +1,13 @@
-os: Visual Studio 2017
+image:
+  - Visual Studio 2019
 
-cache: c:\users\appveyor\clcache
+cache:
+  - c:\users\appveyor\clcache
+  - c:\local\boost_1_69_0
 
 environment:
-  BOOST_ROOT: C:\Libraries\boost_1_67_0
-  BOOST_LIBRARYDIR: C:\Libraries\boost_1_67_0\lib64-msvc-14
+  BOOST_ROOT: C:\local\boost_1_69_0
+  BOOST_LIBRARYDIR: C:\local\boost_1_69_0\lib64-msvc-14
 
 init:
   - set PATH=c:\Python37;c:\Python37\Scripts;%PATH%
@@ -13,10 +16,13 @@ init:
 before_build:
   - clcache -s
 
+install:
+  - ps: Write-Host "Checking for Boost 1.69.0 x64...";$boostdir  = Test-Path $Env:BOOST_ROOT;If ($boostdir -eq $False) {Write-Host "Downloading Boost 1.69.0 x64...";$exePath = "$Env:TEMP\boost_1_69_0-msvc-14.1-64.exe";(New-Object Net.WebClient).DownloadFile('https://bintray.com/boostorg/release/download_file?file_path=1.69.0%2Fbinaries%2Fboost_1_69_0-msvc-14.1-64.exe', $exePath);Write-Host "Installing Boost 1.69.0 x64...";cmd /c start /wait "$exePath" /verysilent;del $exePath};Write-Host "Boost 1.69.0 x64 installed!" -ForegroundColor Green
+
 build_script:
   - md build
   - cd build
-  - cmake -G "Visual Studio 15 2017 Win64" .. -DOPENSSL_ROOT_DIR=C:\OpenSSL-v111-Win64
+  - cmake -G "Visual Studio 16 2019" -A x64 .. -DARCH=default -DOPENSSL_ROOT_DIR=C:\OpenSSL-v111-Win64
   - MSBuild TurtleCoin.sln /p:CLToolExe=clcache.exe /p:CLToolPath=c:\Python37\Scripts\ /p:Configuration=Release /m
   - src\Release\cryptotest.exe
 

@@ -1,5 +1,5 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 /////////////////////////////////
@@ -7,13 +7,11 @@
 /////////////////////////////////
 
 #include <config/WalletConfig.h>
-
-#include <Utilities/Container.h>
+#include <utilities/Container.h>
 
 std::vector<Command> startupCommands()
 {
-    return 
-    {
+    return {
         Command("open", "Open a wallet already on your system"),
         Command("create", "Create a new wallet"),
         Command("seed_restore", "Restore a wallet using a seed phrase of words"),
@@ -25,8 +23,7 @@ std::vector<Command> startupCommands()
 
 std::vector<Command> nodeDownCommands()
 {
-    return
-    {
+    return {
         Command("try_again", "Try to connect to the node again"),
         Command("continue", "Continue to the wallet interface regardless"),
         Command("swap_node", "Specify a new daemon address/port to connect to"),
@@ -36,8 +33,7 @@ std::vector<Command> nodeDownCommands()
 
 std::vector<AdvancedCommand> allCommands()
 {
-    return
-    {
+    return {
         /* Basic commands */
         AdvancedCommand("advanced", "List available advanced commands", true, false),
         AdvancedCommand("address", "Display your payment address", true, false),
@@ -46,7 +42,7 @@ std::vector<AdvancedCommand> allCommands()
         AdvancedCommand("exit", "Exit and save your wallet", true, false),
         AdvancedCommand("help", "List this help message", true, false),
         AdvancedCommand("transfer", "Send " + WalletConfig::ticker + " to someone", false, false),
-        
+
         /* Advanced commands */
         AdvancedCommand("ab_add", "Add a person to your address book", true, true),
         AdvancedCommand("ab_delete", "Delete a person in your address book", true, true),
@@ -63,6 +59,7 @@ std::vector<AdvancedCommand> allCommands()
         AdvancedCommand("save", "Save your wallet state", true, true),
         AdvancedCommand("save_csv", "Save all wallet transactions to a CSV file", true, true),
         AdvancedCommand("send_all", "Send all your balance to someone", false, true),
+        AdvancedCommand("set_log_level", "Alter the logging level", true, true),
         AdvancedCommand("status", "Display sync status and network hashrate", true, true),
         AdvancedCommand("swap_node", "Specify a new daemon address/port to sync from", true, true),
     };
@@ -70,40 +67,25 @@ std::vector<AdvancedCommand> allCommands()
 
 std::vector<AdvancedCommand> basicCommands()
 {
-    return Utilities::filter(allCommands(), [](AdvancedCommand c)
-    {
-        return !c.advanced;
-    });
+    return Utilities::filter(allCommands(), [](AdvancedCommand c) { return !c.advanced; });
 }
 
 std::vector<AdvancedCommand> advancedCommands()
 {
-    return Utilities::filter(allCommands(), [](AdvancedCommand c)
-    {
-        return c.advanced;
-    });
+    return Utilities::filter(allCommands(), [](AdvancedCommand c) { return c.advanced; });
 }
 
 std::vector<AdvancedCommand> basicViewWalletCommands()
 {
-    return Utilities::filter(basicCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    });
+    return Utilities::filter(basicCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }
 
 std::vector<AdvancedCommand> advancedViewWalletCommands()
 {
-    return Utilities::filter(advancedCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    });
+    return Utilities::filter(advancedCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }
 
 std::vector<AdvancedCommand> allViewWalletCommands()
 {
-    return Utilities::filter(allCommands(), [](AdvancedCommand c)
-    {
-        return c.viewWalletSupport;
-    });
+    return Utilities::filter(allCommands(), [](AdvancedCommand c) { return c.viewWalletSupport; });
 }

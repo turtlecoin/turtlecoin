@@ -1,21 +1,19 @@
-// Copyright (c) 2018, The TurtleCoin Developers
-// 
+// Copyright (c) 2018-2019, The TurtleCoin Developers
+//
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////////////////
 #include <zedwallet/CommandDispatcher.h>
 ////////////////////////////////////////
 
+#include <utilities/ColouredMsg.h>
 #include <zedwallet/AddressBook.h>
-#include <Utilities/ColouredMsg.h>
 #include <zedwallet/CommandImplementations.h>
 #include <zedwallet/Fusion.h>
 #include <zedwallet/Open.h>
 #include <zedwallet/Transfer.h>
 
-bool handleCommand(const std::string command,
-                   std::shared_ptr<WalletInfo> walletInfo,
-                   CryptoNote::INode &node)
+bool handleCommand(const std::string command, std::shared_ptr<WalletInfo> walletInfo, CryptoNote::INode &node)
 {
     /* Basic commands */
     if (command == "advanced")
@@ -44,8 +42,7 @@ bool handleCommand(const std::string command,
     }
     else if (command == "transfer")
     {
-        transfer(walletInfo, node.getLastKnownBlockHeight(), false,
-                 node.feeAddress(), node.feeAmount());
+        transfer(walletInfo, node.getLastKnownBlockHeight(), false, node.feeAddress(), node.feeAmount());
     }
     /* Advanced commands */
     else if (command == "ab_add")
@@ -62,8 +59,7 @@ bool handleCommand(const std::string command,
     }
     else if (command == "ab_send")
     {
-        sendFromAddressBook(walletInfo, node.getLastKnownBlockHeight(),
-                            node.feeAddress(), node.feeAmount());
+        sendFromAddressBook(walletInfo, node.getLastKnownBlockHeight(), node.feeAddress(), node.feeAmount());
     }
     else if (command == "change_password")
     {
@@ -103,8 +99,7 @@ bool handleCommand(const std::string command,
     }
     else if (command == "send_all")
     {
-        transfer(walletInfo, node.getLastKnownBlockHeight(), true,
-                 node.feeAddress(), node.feeAmount());
+        transfer(walletInfo, node.getLastKnownBlockHeight(), true, node.feeAddress(), node.feeAmount());
     }
     else if (command == "status")
     {
@@ -119,9 +114,8 @@ bool handleCommand(const std::string command,
     return true;
 }
 
-std::shared_ptr<WalletInfo> handleLaunchCommand(CryptoNote::WalletGreen &wallet,
-                                                std::string launchCommand,
-                                                Config &config)
+std::shared_ptr<WalletInfo>
+    handleLaunchCommand(CryptoNote::WalletGreen &wallet, std::string launchCommand, Config &config)
 {
     if (launchCommand == "create")
     {

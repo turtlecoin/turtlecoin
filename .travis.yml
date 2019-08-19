@@ -10,6 +10,7 @@ matrix:
 
   # Ubuntu, g++-8
   - os: linux
+    dist: trusty
     compiler: gcc
     addons:
       apt:
@@ -28,6 +29,7 @@ matrix:
 
   # Ubuntu, g++-7
   - os: linux
+    dist: trusty
     compiler: gcc
     addons:
       apt:
@@ -45,6 +47,7 @@ matrix:
 
   # Ubuntu, clang-6
   - os: linux
+    dist: trusty
     compiler: clang
     addons:
       apt:
@@ -59,24 +62,6 @@ matrix:
     env:
     - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
     - LABEL="linux-clang-6"
-    - STRIP="strip"
-
-  ## OSX, g++-8
-  - os: osx
-    osx_image: xcode10
-    compiler: gcc
-    env:
-    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-    - LABEL="osx-g++-8"
-    - STRIP="strip"
-
-  # OSX, g++-7
-  - os: osx
-    osx_image: xcode10
-    compiler: gcc
-    env:
-    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-    - LABEL="osx-g++-7"
     - STRIP="strip"
 
   # OSX, clang
@@ -116,17 +101,13 @@ install:
 - if [[ "${LABEL:0:3}" == "osx" ]]; then travis_retry brew install ccache ; fi
 - if [[ "${LABEL:0:3}" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH" ; fi
 
-# Install the correct gcc version
-- if [[ "$LABEL" == "osx-g++-8" ]]; then travis_retry brew install gcc@8 ; fi
-- if [[ "$LABEL" == "osx-g++-7" ]]; then travis_retry brew install gcc@7 ; fi
-
 script:
 - eval $MATRIX_EVAL
 # If we're cross compiling aarch64, make sure our build enivornment is setup
 # we do this in the script stage because this happens after the repo is cloned
 - if [[ "$LABEL" == "aarch64" ]]; then source scripts/prep-aarch64.sh ; fi
 - mkdir build && cd build
-- cmake -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
+- cmake -DARCH=default -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
 - make -j2
 - if [[ "$LABEL" != "aarch64" ]]; then ./src/cryptotest ; fi
 

@@ -8,18 +8,15 @@
 #include <zedwallet++/GetInput.h>
 /////////////////////////////////
 
-#include <config/WalletConfig.h>
-
-#include <Errors/ValidateParameters.h>
-
 #include "linenoise.hpp"
 
-#include <Utilities/ColouredMsg.h>
-#include <Utilities/FormatTools.h>
-#include <Utilities/Input.h>
-#include <Utilities/String.h>
-#include <Utilities/Utilities.h>
-
+#include <config/WalletConfig.h>
+#include <errors/ValidateParameters.h>
+#include <utilities/ColouredMsg.h>
+#include <utilities/FormatTools.h>
+#include <utilities/Input.h>
+#include <utilities/String.h>
+#include <utilities/Utilities.h>
 #include <zedwallet++/Commands.h>
 
 /* Note: this is not portable, it only works with terminals that support ANSI
@@ -55,14 +52,9 @@ std::string getPrompt(std::shared_ptr<WalletBackend> walletBackend)
     return "[" + WalletConfig::ticker + " " + shortName + "]: ";
 }
 
-template<typename T>
-std::string getInput(
-    const std::vector<T> &availableCommands,
-    const std::string prompt)
+template<typename T> std::string getInput(const std::vector<T> &availableCommands, const std::string prompt)
 {
-    linenoise::SetCompletionCallback(
-    [availableCommands](const char *input, std::vector<std::string> &completions)
-    {
+    linenoise::SetCompletionCallback([availableCommands](const char *input, std::vector<std::string> &completions) {
         /* Convert to std::string */
         std::string c = input;
 
@@ -103,10 +95,7 @@ std::string getInput(
     return command;
 }
 
-std::string getAddress(
-    const std::string msg,
-    const bool integratedAddressesAllowed,
-    const bool cancelAllowed)
+std::string getAddress(const std::string msg, const bool integratedAddressesAllowed, const bool cancelAllowed)
 {
     while (true)
     {
@@ -135,8 +124,7 @@ std::string getAddress(
 
         if (Error error = validateAddresses({address}, integratedAddressesAllowed); error != SUCCESS)
         {
-            std::cout << WarningMsg("Invalid address: ")
-                      << WarningMsg(error) << std::endl;
+            std::cout << WarningMsg("Invalid address: ") << WarningMsg(error) << std::endl;
         }
         else
         {
@@ -145,9 +133,7 @@ std::string getAddress(
     }
 }
 
-std::string getPaymentID(
-    const std::string msg,
-    const bool cancelAllowed)
+std::string getPaymentID(const std::string msg, const bool cancelAllowed)
 {
     while (true)
     {
@@ -179,8 +165,7 @@ std::string getPaymentID(
         /* Validate the payment ID */
         if (Error error = validatePaymentID(paymentID); error != SUCCESS)
         {
-            std::cout << WarningMsg("Invalid payment ID: ")
-                      << WarningMsg(error) << std::endl;
+            std::cout << WarningMsg("Invalid payment ID: ") << WarningMsg(error) << std::endl;
         }
         else
         {
@@ -189,9 +174,7 @@ std::string getPaymentID(
     }
 }
 
-std::string getHash(
-    const std::string msg,
-    const bool cancelAllowed)
+std::string getHash(const std::string msg, const bool cancelAllowed)
 {
     while (true)
     {
@@ -215,8 +198,7 @@ std::string getHash(
         /* Validate the hash */
         if (Error error = validateHash(hash); error != SUCCESS)
         {
-            std::cout << WarningMsg("Invalid hash: ")
-                      << WarningMsg(error) << std::endl;
+            std::cout << WarningMsg("Invalid hash: ") << WarningMsg(error) << std::endl;
         }
         else
         {
@@ -225,10 +207,7 @@ std::string getHash(
     }
 }
 
-
-std::tuple<bool, uint64_t> getAmountToAtomic(
-    const std::string msg,
-    const bool cancelAllowed)
+std::tuple<bool, uint64_t> getAmountToAtomic(const std::string msg, const bool cancelAllowed)
 {
     while (true)
     {
@@ -262,8 +241,8 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
         const uint64_t decimalPos = amountString.find_last_of('.');
 
         /* Get the length of the decimal part */
-        const uint64_t decimalLength = decimalPos == std::string::npos ? 0 :
-            amountString.substr(decimalPos + 1, amountString.length()).length();
+        const uint64_t decimalLength =
+            decimalPos == std::string::npos ? 0 : amountString.substr(decimalPos + 1, amountString.length()).length();
 
         /* Can't send amounts with more decimal places than supported */
         if (decimalLength > WalletConfig::numDecimalPlaces)
@@ -271,8 +250,7 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
             std::stringstream stream;
 
             stream << CryptoNote::CRYPTONOTE_NAME << " transfers can have "
-                   << "a max of " << WalletConfig::numDecimalPlaces
-                   << " decimal places.\n";
+                   << "a max of " << WalletConfig::numDecimalPlaces << " decimal places.\n";
 
             std::cout << WarningMsg(stream.str());
 
@@ -293,8 +271,7 @@ std::tuple<bool, uint64_t> getAmountToAtomic(
             if (amount < WalletConfig::minimumSend)
             {
                 std::cout << WarningMsg("The minimum send allowed is ")
-                          << WarningMsg(Utilities::formatAmount(WalletConfig::minimumSend))
-                          << WarningMsg("!\n");
+                          << WarningMsg(Utilities::formatAmount(WalletConfig::minimumSend)) << WarningMsg("!\n");
             }
             else
             {
@@ -319,8 +296,7 @@ std::tuple<std::string, uint16_t, bool> getDaemonAddress()
     {
         std::cout << InformationMsg("\nEnter the daemon address you want to use.\n"
                                     "You can omit the port, and it will default to ")
-                  << InformationMsg(CryptoNote::RPC_DEFAULT_PORT)
-                  << ".\n\nHit enter for the default of localhost: ";
+                  << InformationMsg(CryptoNote::RPC_DEFAULT_PORT) << ".\n\nHit enter for the default of localhost: ";
 
         std::string address;
 
@@ -354,10 +330,6 @@ std::tuple<std::string, uint16_t, bool> getDaemonAddress()
 
 /* Template instantations that we are going to use - this allows us to have
    the template implementation in the .cpp file. */
-template
-std::string getInput(const std::vector<Command> &availableCommands,
-                     std::string prompt);
+template std::string getInput(const std::vector<Command> &availableCommands, std::string prompt);
 
-template
-std::string getInput(const std::vector<AdvancedCommand> &availableCommands,
-                     std::string prompt);
+template std::string getInput(const std::vector<AdvancedCommand> &availableCommands, std::string prompt);
