@@ -525,7 +525,7 @@ namespace CryptoNote
         m_listener =
             System::TcpListener(m_dispatcher, System::Ipv4Address(m_bind_ip), static_cast<uint16_t>(m_listeningPort));
 
-        logger(INFO) << "Net service binded on " << m_bind_ip << ":" << m_listeningPort;
+        logger(INFO) << "Net service bound on " << m_bind_ip << ":" << m_listeningPort;
 
         if (m_external_port)
         {
