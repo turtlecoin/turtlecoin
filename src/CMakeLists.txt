@@ -162,7 +162,7 @@ target_link_libraries(Wallet NodeRpcProxy Transfers CryptoNoteCore Common Wallet
 target_link_libraries(WalletApi WalletBackend)
 target_link_libraries(WalletBackend Serialization Mnemonics Nigel cryptopp-static __filesystem Utilities SubWallets Logger Config Wallet)
 target_link_libraries(WalletService JsonRpcServer Wallet Mnemonics Errors)
-target_link_libraries(WalletUpgrader Utilities WalletBackend)
+target_link_libraries(WalletUpgrader Utilities WalletBackend Common)
 target_link_libraries(zedwallet Mnemonics Wallet Utilities Errors)
 target_link_libraries(zedwallet++ WalletBackend)
 
