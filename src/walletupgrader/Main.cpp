@@ -67,15 +67,13 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    bool initial = true;
-
     while (true)
     {
         std::string filename;
 
         while (true)
         {
-            if (!walletGiven || !initial)
+            if (!walletGiven)
             {
                 std::cout << InformationMsg("What is the name of the wallet ") << InformationMsg("you want to upgrade?: ");
 
@@ -83,8 +81,6 @@ int main(int argc, char **argv)
             }
 
             const std::string walletFileName = walletName + ".wallet";
-
-            initial = false;
 
             try
             {
@@ -114,6 +110,11 @@ int main(int argc, char **argv)
             {
                 std::cout << WarningMsg("\nInvalid wallet filename! Try again.\n\n");
             }
+
+            if (walletGiven)
+            {
+                return 1;
+            }
         }
 
         if (!passGiven)
@@ -142,6 +143,7 @@ int main(int argc, char **argv)
             std::cout << WarningMsg(error) << std::endl;
             std::cout << WarningMsg("Or, maybe you just typed your password wrong.") << std::endl;
             std::cout << InformationMsg("Try again.\n") << std::endl;
+            return 1;
         }
     }
 
