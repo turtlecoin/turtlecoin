@@ -247,6 +247,12 @@ class WalletBackend
 
     std::vector<std::tuple<std::string, uint64_t, uint64_t>> getBalances() const;
 
+    static bool tryUpgradeWalletFormat(
+        const std::string filename,
+        const std::string password,
+        const std::string daemonHost,
+        const uint16_t daemonPort);
+
     /////////////////////////////
     /* Public member variables */
     /////////////////////////////
@@ -291,12 +297,7 @@ class WalletBackend
 
     void init();
 
-    static bool tryUpgradeWalletFormat(
-        const std::string filename,
-        const std::string password,
-        const std::string daemonHost,
-        const uint16_t daemonPort);
-
+    
     //////////////////////////////
     /* Private member variables */
     //////////////////////////////

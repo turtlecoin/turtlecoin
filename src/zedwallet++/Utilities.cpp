@@ -12,7 +12,7 @@
 #include <iostream>
 #include <utilities/ColouredMsg.h>
 #include <utilities/String.h>
-#include <zedwallet++/PasswordContainer.h>
+#include <utilities/PasswordContainer.h>
 
 namespace ZedUtilities
 {

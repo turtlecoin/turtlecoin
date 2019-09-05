@@ -17,7 +17,7 @@
 #include <iostream>
 #include <utilities/Addresses.h>
 #include <utilities/ColouredMsg.h>
-#include <zedwallet/PasswordContainer.h>
+#include <utilities/PasswordContainer.h>
 
 void confirmPassword(const std::string &walletPass, const std::string &msg)
 {

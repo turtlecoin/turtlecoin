@@ -15,7 +15,7 @@
 #include <utilities/Input.h>
 #include <utilities/String.h>
 #include <zedwallet++/CommandImplementations.h>
-#include <zedwallet++/PasswordContainer.h>
+#include <utilities/PasswordContainer.h>
 #include <zedwallet++/Utilities.h>
 
 std::shared_ptr<WalletBackend> importViewWallet(const ZedConfig &config)
