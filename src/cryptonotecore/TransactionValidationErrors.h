@@ -42,6 +42,7 @@ namespace CryptoNote
             EXTRA_TOO_LARGE,
             BASE_INVALID_SIGNATURES_COUNT,
             INPUT_INVALID_SIGNATURES_COUNT,
+            OUTPUT_AMOUNT_TOO_LARGE
         };
 
         // custom category:
@@ -120,6 +121,8 @@ namespace CryptoNote
                         return "Coinbase transactions must not have input signatures";
                     case TransactionValidationError::INPUT_INVALID_SIGNATURES_COUNT:
                         return "The number of input signatures is not correct";
+                    case TransactionValidationError::OUTPUT_AMOUNT_TOO_LARGE:
+                        return "Transaction has output exceeding max output size";
                     default:
                         return "Unknown error";
                 }

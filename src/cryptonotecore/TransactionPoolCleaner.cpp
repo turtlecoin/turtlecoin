@@ -89,6 +89,11 @@ namespace CryptoNote
         return transactionPool->getTransactionHashesByPaymentId(paymentId);
     }
 
+    void TransactionPoolCleanWrapper::flush()
+    {
+        return transactionPool->flush();
+    }
+
     std::vector<Crypto::Hash> TransactionPoolCleanWrapper::clean(const uint32_t height)
     {
         try

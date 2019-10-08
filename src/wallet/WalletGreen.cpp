@@ -47,6 +47,7 @@
 #include <wallet/WalletSerializationV2.h>
 #include <wallet/WalletUtils.h>
 #include <walletbackend/Constants.h>
+#include <walletbackend/Transfer.h>
 #include <walletbackend/WalletBackend.h>
 
 #undef ERROR
@@ -3068,7 +3069,7 @@ namespace CryptoNote
         ReceiverAmounts receiverAmounts;
 
         receiverAmounts.receiver = destination;
-        decomposeAmount(amount, dustThreshold, receiverAmounts.amounts);
+        receiverAmounts.amounts = SendTransaction::splitAmountIntoDenominations(amount);
         return receiverAmounts;
     }
 
@@ -3965,9 +3966,10 @@ namespace CryptoNote
         WalletGreen::decomposeFusionOutputs(const AccountPublicAddress &address, uint64_t inputsAmount)
     {
         WalletGreen::ReceiverAmounts outputs;
-        outputs.receiver = address;
 
-        decomposeAmount(inputsAmount, 0, outputs.amounts);
+        outputs.receiver = address;
+        outputs.amounts = SendTransaction::splitAmountIntoDenominations(inputsAmount);
+
         std::sort(outputs.amounts.begin(), outputs.amounts.end());
 
         return outputs;

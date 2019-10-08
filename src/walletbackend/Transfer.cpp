@@ -899,7 +899,7 @@ namespace SendTransaction
 
     /* Split each amount into uniform amounts, e.g.
        1234567 = 1000000 + 200000 + 30000 + 4000 + 500 + 60 + 7 */
-    std::vector<uint64_t> splitAmountIntoDenominations(uint64_t amount)
+    std::vector<uint64_t> splitAmountIntoDenominations(uint64_t amount, bool preventTooLargeOutputs)
     {
         std::vector<uint64_t> splitAmounts;
 
@@ -909,9 +909,27 @@ namespace SendTransaction
         {
             uint64_t denomination = multiplier * (amount % 10);
 
+            /* Denomination will make a too large output */
+            if (denomination > CryptoNote::parameters::MAX_OUTPUT_SIZE_CLIENT && preventTooLargeOutputs)
+            {
+                /* Split amount into ten chunks */
+                uint64_t numSplitAmounts = 10;
+
+                uint64_t splitAmount = denomination / 10;
+
+                /* If still too large, split each chunk into another 10 */
+                while (splitAmount > CryptoNote::parameters::MAX_OUTPUT_SIZE_CLIENT)
+                {
+                    splitAmount /= 10;
+                    numSplitAmounts *= 10;
+                }
+
+                /* Add the split amounts */
+                std::fill_n(std::back_inserter(splitAmounts), numSplitAmounts, splitAmount);
+            }
             /* If we have for example, 1010 - we want 1000 + 10,
                not 1000 + 0 + 10 + 0 */
-            if (denomination != 0)
+            else if (denomination != 0)
             {
                 splitAmounts.push_back(denomination);
             }

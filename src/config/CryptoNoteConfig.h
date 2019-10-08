@@ -162,6 +162,18 @@ namespace CryptoNote
 
         const uint64_t MAX_EXTRA_SIZE_V2_HEIGHT = 1300000;
 
+        /* 25 trillion atomic, or 250 billion TRTL -> Max supply / mixin+1 outputs */
+        /* This is enforced on the daemon side. An output > 250 billion causes
+         * an invalid block. */
+        const uint64_t MAX_OUTPUT_SIZE_NODE   = 250'000'000'000'00;
+
+        /* 100 billion atomic, or 1 billion TRTL */
+        /* This is enforced on the client side. An output > 1 billion will not
+         * be created in a transaction */
+        const uint64_t MAX_OUTPUT_SIZE_CLIENT = 1'000'000'000'00;
+
+        const uint64_t MAX_OUTPUT_SIZE_HEIGHT = 2000000;
+
         /* For new projects forked from this code base, the values immediately below
            should be changed to 0 to prevent issues with transaction processing
            and other possible unexpected behavior */
@@ -349,6 +361,8 @@ namespace CryptoNote
         "142.44.242.106:11897", // tom
         "165.227.252.132:11897", // iburnmycd
         "148.251.178.238:11897", // hv
-        "45.32.138.7:11897" // extra
+        "45.32.138.7:11897", // extra
+        "46.214.70.196:11897", // CuveeRO
+        "91.239.237.54:11897" // CuveeCZ
     };
 } // namespace CryptoNote

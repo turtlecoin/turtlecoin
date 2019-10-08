@@ -38,6 +38,8 @@ namespace CryptoNote
         virtual uint64_t getTransactionReceiveTime(const Crypto::Hash &hash) const = 0;
 
         virtual std::vector<Crypto::Hash> getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const = 0;
+
+        virtual void flush() = 0;
     };
 
 } // namespace CryptoNote

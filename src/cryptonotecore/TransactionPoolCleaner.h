@@ -60,6 +60,8 @@ namespace CryptoNote
 
         virtual std::vector<Crypto::Hash> getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const override;
 
+        virtual void flush() override;
+
         virtual std::vector<Crypto::Hash> clean(const uint32_t height) override;
 
       private:

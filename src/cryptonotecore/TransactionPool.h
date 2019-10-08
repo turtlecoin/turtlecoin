@@ -50,6 +50,8 @@ namespace CryptoNote
 
         virtual std::vector<Crypto::Hash> getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const override;
 
+        virtual void flush() override;
+
       private:
         TransactionValidatorState poolState;
 

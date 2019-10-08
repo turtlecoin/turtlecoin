@@ -72,15 +72,6 @@ namespace Utilities
         return stream.str();
     }
 
-    enum ForkStatus
-    {
-        UpToDate,
-        ForkLater,
-        ForkSoonReady,
-        ForkSoonNotReady,
-        OutOfDate
-    };
-
     ForkStatus get_fork_status(
         const uint64_t height,
         const std::vector<uint64_t> upgrade_heights,
@@ -155,45 +146,46 @@ namespace Utilities
 
         stream << std::setprecision(2) << std::fixed;
 
+        if (next_fork == 0)
+        {
+            stream << "No Fork Planned";
+        }
         if (height == next_fork)
         {
-            stream << " (forking now),";
+            stream << "Now!";
         }
         else if (days < 1)
         {
-            stream << " (next fork in " << days * 24 << " hours),";
+            stream << days * 24 << " Hours";
         }
         else
         {
-            stream << " (next fork in " << days << " days),";
+            stream << days << " Days";
         }
 
         return stream.str();
     }
 
-    std::string get_update_status(
-        const ForkStatus forkStatus,
-        const uint64_t height,
-        const std::vector<uint64_t> upgrade_heights)
+    std::string get_update_status(const ForkStatus forkStatus)
     {
         switch (forkStatus)
         {
             case UpToDate:
             case ForkLater:
             {
-                return " up to date";
+                return "Up To Date";
             }
             case ForkSoonReady:
             {
-                return get_fork_time(height, upgrade_heights) + " up to date";
+                return "Forking Soon";
             }
             case ForkSoonNotReady:
             {
-                return get_fork_time(height, upgrade_heights) + " update needed";
+                return "Update Needed";
             }
             case OutOfDate:
             {
-                return " out of date, likely forked";
+                return "Likely Forked";
             }
             default:
             {
@@ -215,31 +207,6 @@ namespace Utilities
 
         /* This shouldnt happen */
         return std::string();
-    }
-
-    std::string get_status_string(CryptoNote::COMMAND_RPC_GET_INFO::response iresp)
-    {
-        std::stringstream ss;
-        std::time_t uptime = std::time(nullptr) - iresp.start_time;
-        auto forkStatus = get_fork_status(iresp.network_height, iresp.upgrade_heights, iresp.supported_height);
-
-        ss << "Height: " << iresp.height << "/" << iresp.network_height << " ("
-           << get_sync_percentage(iresp.height, iresp.network_height) << "%) "
-           << "on mainnet " << (iresp.synced ? "synced, " : "syncing, ") << "net hash "
-           << get_mining_speed(iresp.hashrate) << ", "
-           << "v" << +iresp.major_version << ","
-           << get_update_status(forkStatus, iresp.network_height, iresp.upgrade_heights) << ", "
-           << iresp.outgoing_connections_count << "(out)+" << iresp.incoming_connections_count << "(in) connections, "
-           << "uptime " << (unsigned int)floor(uptime / 60.0 / 60.0 / 24.0) << "d "
-           << (unsigned int)floor(fmod((uptime / 60.0 / 60.0), 24.0)) << "h "
-           << (unsigned int)floor(fmod((uptime / 60.0), 60.0)) << "m " << (unsigned int)fmod(uptime, 60.0) << "s";
-
-        if (forkStatus == OutOfDate)
-        {
-            ss << std::endl << get_upgrade_info(iresp.supported_height, iresp.upgrade_heights);
-        }
-
-        return ss.str();
     }
 
     /* Get the amount we need to divide to convert from atomic to pretty print,

@@ -368,10 +368,8 @@ namespace CryptoNote
 
         void copyTransactionsToPool(IBlockchainCache *alt);
 
-        void actualizePoolTransactions();
-
-        void actualizePoolTransactionsLite(
-            const TransactionValidatorState &validatorState); // Checks pool txs only for double spend.
+        void checkAndRemoveInvalidPoolTransactions(
+            const TransactionValidatorState blockTransactionsState);
 
         void transactionPoolCleaningProcedure();
 
