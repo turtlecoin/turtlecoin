@@ -1,5 +1,12 @@
 name: Build
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+
+env:
+  TAG: ${{ github.ref }}
 
 jobs:
   # Common Build matrix for builds on Ubuntu VM
@@ -15,13 +22,24 @@ jobs:
             package_name: 'gcc-7 g++-7'
             cc: gcc-7
             cxx: g++-7
+            label: linux-g++-7
+            deployable: false
           - build_name: 'Ubuntu GCC 8'
             package_name: 'gcc-8 g++-8'
             cc: gcc-8
             cxx: g++-8
+            label: linux
+            deployable: true
           - build_name: 'Ubuntu Clang 6'
             cc: clang-6.0
             cxx: clang++-6.0
+            label: linux-clang-6
+            deployable: false
+          - build_name: 'aarch64'
+            label: aarch64
+            deployable: true
+    env:
+      LABEL: ${{ matrix.label }}
     steps:
       - uses: actions/checkout@v1
 
@@ -52,13 +70,14 @@ jobs:
       # Build for aarch64
       - name: Prepare and Build (aarch64)
         if: matrix.build_name == 'aarch64'
-        env:
-          LABEL: aarch64
         run: |
           source scripts/prep-aarch64.sh
           mkdir build && cd build
           cmake -DARCH=default -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
           make -j2
+          cd src
+          TARGETS="TurtleCoind miner zedwallet turtle-service zedwallet-beta cryptotest wallet-api wallet-upgrader"
+          ${STRIP} ${TARGETS}
       
       # Test the crypto
       - name: Test Crypto
@@ -66,6 +85,51 @@ jobs:
         run: |
           cd build/src
           ./cryptotest
+      
+      # Prepare for deploy
+      - name: Prepare for Deploy
+        id: before_deploy
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [[ "${TAG:5:4}" == "tags" ]]; then export TAG=${TAG:10}; else export TAG=${COMMIT_SHA}; fi
+          cd build/src
+          TARGETS="TurtleCoind miner zedwallet turtle-service zedwallet-beta cryptotest wallet-api wallet-upgrader"
+          if [[ "${LABEL}" != "aarch64" ]]; then strip ${TARGETS}; fi
+          rm -rf turtlecoin-${TAG}
+          mkdir turtlecoin-${TAG}
+          cp ${TARGETS} turtlecoin-${TAG}/
+          cp ../../LICENSE turtlecoin-${TAG}/
+          tar cvfz turtlecoin-${TAG}-${LABEL}.tar.gz turtlecoin-${TAG}/
+          rm -rf builds
+          mkdir builds
+          cp turtlecoin-${TAG}-${LABEL}.tar.gz builds
+          echo ::set-output name=file_name::turtlecoin-${TAG}-${LABEL}.tar.gz
+      
+      # Upload to GH Release
+      - name: Upload to GH Release
+        if: github.event_name == 'release' && github.repository == 'turtlecoin/turtlecoin' && matrix.deployable
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/src/${{ steps.before_deploy.outputs.file_name }}
+          asset_name: ${{ steps.before_deploy.outputs.file_name }}
+          asset_content_type: application/zip
+      
+      # Upload to S3
+      - name: Upload to S3
+        if: github.event_name != 'pull_request' && github.repository == 'turtlecoin/turtlecoin'
+        uses: opspresso/action-s3-sync@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "us-east-2"
+          FROM_PATH: "build/src/builds"
+          DEST_PATH: "s3://turtlecoin/turtlecoin/"
+          OPTIONS: "--acl public-read"
+
 
   # Mac builds on Mojave VM
   macos_build:
@@ -74,6 +138,7 @@ jobs:
     env:
       CC: /usr/local/opt/llvm@8/bin/clang
       CXX: /usr/local/opt/llvm@8/bin/clang++
+      LABEL: osx
     steps:
       - uses: actions/checkout@v1
       
@@ -101,6 +166,51 @@ jobs:
         run: |
           cd build/src
           ./cryptotest
+      
+      # Prepare for deploy
+      - name: Prepare for Deploy
+        id: before_deploy
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [[ "${TAG:5:4}" == "tags" ]]; then export TAG=${TAG:10}; else export TAG=${COMMIT_SHA}; fi
+          cd build/src
+          TARGETS="TurtleCoind miner zedwallet turtle-service zedwallet-beta cryptotest wallet-api wallet-upgrader"
+          strip ${TARGETS}
+          rm -rf turtlecoin-${TAG}
+          mkdir turtlecoin-${TAG}
+          cp ${TARGETS} turtlecoin-${TAG}/
+          cp ../../LICENSE turtlecoin-${TAG}/
+          tar cvfz turtlecoin-${TAG}-${LABEL}.tar.gz turtlecoin-${TAG}/
+          rm -rf builds
+          mkdir builds
+          cp turtlecoin-${TAG}-${LABEL}.tar.gz builds
+          echo ::set-output name=file_name::turtlecoin-${TAG}-${LABEL}.tar.gz
+      
+
+      # Upload to GH Release
+      - name: Upload to GH Release
+        if: github.event_name == 'release' && github.repository == 'turtlecoin/turtlecoin'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/src/${{ steps.before_deploy.outputs.file_name }}
+          asset_name: ${{ steps.before_deploy.outputs.file_name }}
+          asset_content_type: application/zip
+      
+      # Upload to S3
+      - name: Upload to S3
+        if: github.event_name != 'pull_request' && github.repository == 'turtlecoin/turtlecoin'
+        uses: opspresso/action-s3-sync@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "us-east-2"
+          FROM_PATH: "build/src/builds"
+          DEST_PATH: "s3://turtlecoin/turtlecoin/"
+          OPTIONS: "--acl public-read"
 
   # Windows Builds on Windows Server 2019
   windows_build:
@@ -108,6 +218,7 @@ jobs:
     runs-on: windows-2019
     env:
       MSBUILD_PATH: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin"
+      LABEL: windows
     steps:
       - uses: actions/checkout@v1
 
@@ -130,3 +241,47 @@ jobs:
         run: |
           cd build/src/Release
           ./cryptotest.exe
+      
+      # Prepare for deploy
+      - name: Prepare for Deploy
+        shell: bash
+        id: before_deploy
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [[ "${TAG:5:4}" == "tags" ]]; then export TAG=${TAG:10}; else export TAG=${COMMIT_SHA}; fi
+          cd build/src/Release
+          rm -rf turtlecoin-${TAG}
+          mkdir turtlecoin-${TAG}
+          cp *.exe turtlecoin-${TAG}/
+          cp ../../../LICENSE turtlecoin-${TAG}/
+          7z a turtlecoin-${TAG}-${LABEL}.zip turtlecoin-${TAG}/
+          rm -rf builds
+          mkdir builds
+          cp turtlecoin-${TAG}-${LABEL}.zip builds
+          echo ::set-output name=file_name::turtlecoin-${TAG}-${LABEL}.zip
+      
+
+      # Upload to GH Release
+      - name: Upload to GH Release
+        if: github.event_name == 'release' && github.repository == 'turtlecoin/turtlecoin'
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./build/src/${{ steps.before_deploy.outputs.file_name }}
+          asset_name: ${{ steps.before_deploy.outputs.file_name }}
+          asset_content_type: application/zip
+      
+      # Upload to S3
+      - name: Upload to S3
+        if: github.event_name != 'pull_request' && github.repository == 'turtlecoin/turtlecoin'
+        uses: opspresso/action-s3-sync@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "us-east-2"
+          FROM_PATH: "build/src/Release/builds"
+          DEST_PATH: "s3://turtlecoin/turtlecoin/"
+          OPTIONS: "--acl public-read"
