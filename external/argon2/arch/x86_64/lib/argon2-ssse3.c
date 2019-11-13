@@ -1,6 +1,9 @@
 #include "argon2-ssse3.h"
 
-#ifdef HAVE_SSSE3
+#include "sse_shim.h"
+
+#ifdef __SSSE3__
+#pragma message ("info: ACTIVATING SSSE3 in argon2-ssse3.c")
 #include <string.h>
 
 #include <immintrin.h>

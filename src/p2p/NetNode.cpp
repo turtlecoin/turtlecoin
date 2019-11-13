@@ -1132,9 +1132,7 @@ namespace CryptoNote
         {
             return false;
         }
-        logger(Logging::TRACE) << context << "REMOTE PEERLIST: TIME_DELTA: " << delta
-                               << ", remote peerlist size=" << peerlist_.size();
-        logger(Logging::TRACE) << context << "REMOTE PEERLIST: " << print_peerlist_to_string(peerlist_);
+
         return m_peerlist.merge_peerlist(peerlist_);
     }
     //-----------------------------------------------------------------------------------

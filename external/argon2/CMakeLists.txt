@@ -60,6 +60,7 @@ if(USE_AVX512F OR USE_AVX2 OR USE_SSE3 OR USE_SSE2 OR USE_XOP)
     list(APPEND ARGON2_SRC
         arch/x86_64/lib/argon2-sse2.c
         arch/x86_64/lib/argon2-sse3.c
+        arch/x86_64/lib/argon2-ssse3.c
         arch/x86_64/lib/argon2-xop.c
         arch/x86_64/lib/argon2-avx2.c
         arch/x86_64/lib/argon2-avx512f.c

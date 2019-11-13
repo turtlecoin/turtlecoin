@@ -49,7 +49,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libboost-all-dev libssl-dev ${{ matrix.package_name }}
-      
+
       # Configure the project with cmake
       - name: Configure
         if: matrix.build_name != 'aarch64'
@@ -59,7 +59,7 @@ jobs:
         run: |
           mkdir build && cd build
           cmake -DARCH=default -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
-      
+
       # Build for linux
       - name: Build
         if: matrix.build_name != 'aarch64'
@@ -75,6 +75,7 @@ jobs:
           mkdir build && cd build
           cmake -DARCH=default -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
           make -j2
+
           cd src
           TARGETS="TurtleCoind miner zedwallet turtle-service zedwallet-beta cryptotest wallet-api wallet-upgrader"
           ${STRIP} ${TARGETS}
@@ -134,7 +135,7 @@ jobs:
   # Mac builds on Mojave VM
   macos_build:
     name: macOS
-    runs-on: macOS-10.14
+    runs-on: macOS-latest
     env:
       CC: /usr/local/opt/llvm@8/bin/clang
       CXX: /usr/local/opt/llvm@8/bin/clang++
@@ -163,6 +164,7 @@ jobs:
       
       # Test the crypto
       - name: Test Crypto
+        if: matrix.build_name != 'aarch64'
         run: |
           cd build/src
           ./cryptotest
@@ -222,19 +224,22 @@ jobs:
     steps:
       - uses: actions/checkout@v1
 
+      - name: Setup MSBuild.exe
+        uses: warrenbuckley/Setup-MSBuild@v1
+
       # Configure project with cmake
       - name: Configure
         run: |
-          mkdir build && cd build
+          mkdir build
+          cd build
           cmake -G "Visual Studio 16 2019" -A x64 .. -DARCH=default
-      
+
       # Build for Windows
       - name: Build
         run: |
-          set PATH=%MSBUILD_PATH%;%PATH%
           cd build
           MSBuild TurtleCoin.sln /p:Configuration=Release /m
-      
+
       # Test the crypto
       - name: Test Crypto
         shell: bash
