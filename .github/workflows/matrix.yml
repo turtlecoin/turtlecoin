@@ -4,6 +4,8 @@ on:
   pull_request:
   release:
     types: [published]
+  schedule:
+    - cron: '30 3 * * 0'
 
 env:
   TAG: ${{ github.ref }}
@@ -14,6 +16,7 @@ jobs:
     name: ${{ matrix.build_name }}
     runs-on: ubuntu-18.04
     strategy:
+      fail-fast: false
       matrix:
         # Add more compilers here if you need them
         build_name: ['Ubuntu GCC 7', 'Ubuntu GCC 8', 'Ubuntu Clang 6', 'aarch64']
@@ -22,7 +25,7 @@ jobs:
             package_name: 'gcc-7 g++-7'
             cc: gcc-7
             cxx: g++-7
-            label: linux-g++-7
+            label: linux-gcc-7
             deployable: false
           - build_name: 'Ubuntu GCC 8'
             package_name: 'gcc-8 g++-8'
@@ -39,6 +42,7 @@ jobs:
             label: aarch64
             deployable: true
     env:
+      CCACHE_DIR: $GITHUB_WORKSPACE/.ccache
       LABEL: ${{ matrix.label }}
     steps:
       - uses: actions/checkout@v1
@@ -49,6 +53,16 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libboost-all-dev libssl-dev ${{ matrix.package_name }}
+      
+      - name: Setup ccache
+        run: |
+          sudo apt install ccache
+      
+      - name: Retrieve ccache
+        uses: actions/cache@v1.0.1
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.label }}
 
       # Configure the project with cmake
       - name: Configure
@@ -117,7 +131,7 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/src/${{ steps.before_deploy.outputs.file_name }}
           asset_name: ${{ steps.before_deploy.outputs.file_name }}
-          asset_content_type: application/zip
+          asset_content_type: application/gzip
       
       # Upload to S3
       - name: Upload to S3
@@ -131,7 +145,6 @@ jobs:
           DEST_PATH: "s3://turtlecoin/turtlecoin/"
           OPTIONS: "--acl public-read"
 
-
   # Mac builds on Mojave VM
   macos_build:
     name: macOS
@@ -140,15 +153,22 @@ jobs:
       CC: /usr/local/opt/llvm@8/bin/clang
       CXX: /usr/local/opt/llvm@8/bin/clang++
       LABEL: osx
+      CCACHE_DIR: $GITHUB_WORKSPACE/.ccache
     steps:
       - uses: actions/checkout@v1
       
       # Fetch Dependencies
       - name: Dependencies
         run: |
-          brew install --force boost llvm@8
+          brew install --force boost llvm@8 ccache
           brew link --force llvm@8
           ln -s /usr/local/opt/llvm@8 /usr/local/opt/llvm
+      
+      - name: Retrieve ccache
+        uses: actions/cache@v1.0.1
+        with:
+          path: .ccache
+          key: ccache-osx
       
       # Configure project with cmake
       - name: Configure
@@ -200,7 +220,7 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./build/src/${{ steps.before_deploy.outputs.file_name }}
           asset_name: ${{ steps.before_deploy.outputs.file_name }}
-          asset_content_type: application/zip
+          asset_content_type: application/gzip
       
       # Upload to S3
       - name: Upload to S3
@@ -226,6 +246,15 @@ jobs:
 
       - name: Setup MSBuild.exe
         uses: warrenbuckley/Setup-MSBuild@v1
+      
+      - name: Setup clcache
+        run: pip install clcache
+
+      - name: Retrieve clcache
+        uses: actions/cache@v1.0.1
+        with:
+          path: clcache
+          key: clcache-windows
 
       # Configure project with cmake
       - name: Configure
@@ -237,8 +266,9 @@ jobs:
       # Build for Windows
       - name: Build
         run: |
+          $env:CLCACHE_DIR = "$env:GITHUB_WORKSPACE\clcache"
           cd build
-          MSBuild TurtleCoin.sln /p:Configuration=Release /m
+          MSBuild TurtleCoin.sln /p:CLToolExe=clcache.exe /p:CLToolPath=c:\hostedtoolcache\windows\Python\3.6.8\x64\Scripts\ /p:Configuration=Release /m
 
       # Test the crypto
       - name: Test Crypto
