@@ -89,7 +89,6 @@ jobs:
           mkdir build && cd build
           cmake -DARCH=default -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
           make -j2
-
           cd src
           TARGETS="TurtleCoind miner zedwallet turtle-service zedwallet-beta cryptotest wallet-api wallet-upgrader"
           ${STRIP} ${TARGETS}
@@ -145,7 +144,7 @@ jobs:
           DEST_PATH: "s3://turtlecoin/turtlecoin/"
           OPTIONS: "--acl public-read"
 
-  # Mac builds on Mojave VM
+  # Mac builds on Catalina VM
   macos_build:
     name: macOS
     runs-on: macOS-latest
@@ -243,9 +242,6 @@ jobs:
       LABEL: windows
     steps:
       - uses: actions/checkout@v1
-
-      - name: Setup MSBuild.exe
-        uses: warrenbuckley/Setup-MSBuild@v1
       
       - name: Setup clcache
         run: pip install clcache
@@ -267,6 +263,7 @@ jobs:
       - name: Build
         run: |
           $env:CLCACHE_DIR = "$env:GITHUB_WORKSPACE\clcache"
+          $env:PATH = "$env:PATH;$env:MSBUILD_PATH"
           cd build
           MSBuild TurtleCoin.sln /p:CLToolExe=clcache.exe /p:CLToolPath=c:\hostedtoolcache\windows\Python\3.6.8\x64\Scripts\ /p:Configuration=Release /m
 
@@ -305,7 +302,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./build/src/${{ steps.before_deploy.outputs.file_name }}
+          asset_path: ./build/src/Release/${{ steps.before_deploy.outputs.file_name }}
           asset_name: ${{ steps.before_deploy.outputs.file_name }}
           asset_content_type: application/zip
       
