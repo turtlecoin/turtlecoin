@@ -9,10 +9,10 @@
 #include "common/StdOutputStream.h"
 #include "serialization/BinaryInputStreamSerializer.h"
 #include "serialization/BinaryOutputStreamSerializer.h"
-
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <list>
@@ -256,9 +256,17 @@ bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &
         {
             uint32_t itemSize;
             m_indexesFile.read(reinterpret_cast<char *>(&itemSize), sizeof itemSize);
+
             if (!m_indexesFile)
             {
-                return false;
+				if (!m_indexesFile.eof()) { //fail it only if the other IO occured
+					return false;
+				}
+				else {
+					i--;
+					std::cout<<"Detected EOF before all indexes begin logged. Adjusting index counts to "<<i<<std::endl;
+					break;
+				}
             }
 
             offsets.emplace_back(itemsFileSize);
