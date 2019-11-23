@@ -569,7 +569,7 @@ namespace CryptoNote
 
         if (getTopBlockIndex() == 0)
         {
-            logger(Logging::DEBUGGING) << "top block index is nill, add genesis block";
+            logger(Logging::DEBUGGING) << "top block index is null, add genesis block";
             addGenesisBlock(CachedBlock(currency.genesisBlock()));
         }
     }

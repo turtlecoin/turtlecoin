@@ -9,10 +9,10 @@
 #include "common/StdOutputStream.h"
 #include "serialization/BinaryInputStreamSerializer.h"
 #include "serialization/BinaryOutputStreamSerializer.h"
+#include "logger/Logger.h"
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <cstdio>
 #include <iomanip>
 #include <iostream>
 #include <list>
@@ -234,7 +234,7 @@ template<class T> SwappedVector<T>::~SwappedVector()
 template<class T>
 bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &indexFileName, size_t poolSize)
 {
-    if (poolSize == 0)
+	if (poolSize == 0)
     {
         return false;
     }
@@ -263,8 +263,8 @@ bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &
 					return false;
 				}
 				else {
-					i--;
-					std::cout<<"Detected EOF before all indexes begin logged. Adjusting index counts to "<<i<<std::endl;
+					Logger::logger.log("Blockchain indexes file appears to be corrupted. Attempting automatic recovery by rewinding to " + std::to_string(i),
+						Logger::WARNING, { Logger::FILESYSTEM});
 					break;
 				}
             }
@@ -272,7 +272,7 @@ bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &
             offsets.emplace_back(itemsFileSize);
             itemsFileSize += itemSize;
         }
-
+		
         m_offsets.swap(offsets);
         m_itemsFileSize = itemsFileSize;
     }
