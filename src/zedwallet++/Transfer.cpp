@@ -32,14 +32,25 @@ void transfer(const std::shared_ptr<WalletBackend> walletBackend, const bool sen
 
     const auto unlockedBalance = walletBackend->getTotalUnlockedBalance();
 
-    if (sendAll && unlockedBalance <= WalletConfig::minimumSend)
+    /* nodeFee will be zero if using a node without a fee, so we can add this
+       safely */
+    const auto [nodeFee, nodeAddress] = walletBackend->getNodeFee();
+
+    const uint64_t fee = WalletConfig::defaultFee;
+
+    int64_t fundsRemainingAfterFee = unlockedBalance - nodeFee - fee;
+
+    /* Verify that we have enough balance to send the network fee and node fee
+     * when sending all. Don't really need to check for <= 0, but helps to be
+     * safe. */
+    if (sendAll && (fundsRemainingAfterFee <= static_cast<int64_t>(WalletConfig::minimumSend) || fundsRemainingAfterFee <= 0))
     {
-        std::stringstream stream;
-
-        stream << "The minimum send allowed is " << Utilities::formatAmount(WalletConfig::minimumSend)
-               << ", but you have " << Utilities::formatAmount(unlockedBalance) << "!\n";
-
-        std::cout << WarningMsg(stream.str());
+        std::cout << WarningMsg("You don't have enough funds to cover "
+                                "this transaction!\n\n")
+                  << "Funds needed: " << InformationMsg(Utilities::formatAmount(fee + nodeFee + WalletConfig::minimumSend))
+                  << " (Includes a network fee of " << InformationMsg(Utilities::formatAmount(fee))
+                  << " and a node fee of " << InformationMsg(Utilities::formatAmount(nodeFee))
+                  << ")\nFunds available: " << SuccessMsg(Utilities::formatAmount(unlockedBalance)) << "\n\n";
 
         return cancel();
     }
@@ -71,15 +82,9 @@ void transfer(const std::shared_ptr<WalletBackend> walletBackend, const bool sen
         std::cout << "\n";
     }
 
-    /* nodeFee will be zero if using a node without a fee, so we can add this
-       safely */
-    const auto [nodeFee, nodeAddress] = walletBackend->getNodeFee();
-
-    const uint64_t fee = WalletConfig::defaultFee;
-
     /* Default amount if we're sending everything */
-    uint64_t amount = unlockedBalance - nodeFee - fee;
-
+    uint64_t amount = static_cast<uint64_t>(fundsRemainingAfterFee);
+    
     if (!sendAll)
     {
         bool success;
