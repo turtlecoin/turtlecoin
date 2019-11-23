@@ -26,6 +26,7 @@ namespace Logger
         FILESYSTEM,
         SAVE,
         DAEMON,
+		DATABASE,
     };
 
     std::string logLevelToString(const LogLevel level);
