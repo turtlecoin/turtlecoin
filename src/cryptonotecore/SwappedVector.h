@@ -264,7 +264,7 @@ bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &
 				}
 				else {
 					Logger::logger.log("Blockchain indexes file appears to be corrupted. Attempting automatic recovery by rewinding to " + std::to_string(i),
-						Logger::WARNING, { Logger::FILESYSTEM});
+						Logger::WARNING, {Logger::FILESYSTEM,Logger::DATABASE});
 					break;
 				}
             }
