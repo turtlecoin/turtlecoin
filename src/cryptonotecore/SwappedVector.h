@@ -265,9 +265,10 @@ bool SwappedVector<T>::open(const std::string &itemFileName, const std::string &
 				else {
 					Logger::logger.log("Blockchain indexes file appears to be corrupted. Attempting automatic recovery by rewinding to " + std::to_string(i),
 						Logger::WARNING, {Logger::FILESYSTEM,Logger::DATABASE});
-					//Reopen the indexes file to force changes to be commited
-					m_indexesFile.close();
-					m_indexesFile.open(indexFileName, std::ios::in | std::ios::out | std::ios::binary);
+					m_indexesFile.clear(); //clear the error
+					m_indexesFile.seekp(0); //retain compability with C98
+					m_indexesFile.write(reinterpret_cast<char*>(&i), sizeof i); //update the count
+					m_indexesFile.flush(); //commit
 					break;
 				}
             }
