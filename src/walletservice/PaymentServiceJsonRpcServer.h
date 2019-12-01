@@ -173,6 +173,8 @@ namespace PaymentService
             CreateIntegratedAddress::Response &response);
 
         std::error_code handleNodeFeeInfo(const NodeFeeInfo::Request &request, NodeFeeInfo::Response &response);
+
+        std::error_code handleValidateAddress(const ValidateAddress::Request &request, ValidateAddress::Response &response);
     };
 
 } // namespace PaymentService

@@ -185,6 +185,12 @@ namespace PaymentService
 
         std::error_code getFeeInfo(std::string &address, uint32_t &amount);
 
+        std::error_code validateAddress(
+                const std::string &address,
+                bool &isIntegrated,
+                std::string &paymentID,
+                std::string &actualAddress);
+
         uint64_t getDefaultMixin() const;
 
       private:

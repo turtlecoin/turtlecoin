@@ -595,4 +595,20 @@ namespace PaymentService
         };
     };
 
+    struct ValidateAddress {
+        struct Request {
+            std::string address;
+
+            void serialize(CryptoNote::ISerializer &serializer);
+        };
+
+        struct Response {
+            bool isIntegrated;
+            std::string paymentID;
+            std::string actualAddress;
+
+            void serialize(CryptoNote::ISerializer &serializer);
+        };
+    };
+
 } // namespace PaymentService

@@ -14,3 +14,4 @@ src/build/
 src/cmake_install.cmake
 *.swp
 .vscode
+cmake-build-debug/

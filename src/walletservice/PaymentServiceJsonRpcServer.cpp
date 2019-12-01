@@ -488,4 +488,11 @@ namespace PaymentService
         return service.getFeeInfo(response.address, response.amount);
     }
 
+    std::error_code PaymentServiceJsonRpcServer::handleValidateAddress(
+        const ValidateAddress::Request &request,
+        ValidateAddress::Response &response)
+    {
+        return service.validateAddress(request.address,response.isIntegrated, response.paymentID,response.actualAddress);
+    }
+
 } // namespace PaymentService
