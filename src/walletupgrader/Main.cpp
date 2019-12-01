@@ -10,6 +10,7 @@
 #include <cxxopts.hpp>
 #include <utilities/PasswordContainer.h>
 #include <utilities/ColouredMsg.h>
+#include <utilities/Input.h>
 #include <walletbackend/WalletBackend.h>
 
 int main(int argc, char **argv)
@@ -91,6 +92,29 @@ int main(int argc, char **argv)
                 /* Allow people to enter wallet name with or without file extension */
                 else if (fs::exists(walletName))
                 {
+                    /* We don't want to prompt the user about the rename if the wallet and
+                     * password are given, otherwise it will break non-interactive upgrade
+                     */
+                    if (!walletGiven && !passGiven)
+                    {
+                        bool appendExtension = Utilities::confirm("Wallet does not end in the .wallet extension. This may break compatability with some wallets. Do you want to add the .wallet extension?");
+                        if (appendExtension)
+                        {
+                            int renameSuccess = std::rename(walletName.c_str(), walletFileName.c_str());
+                            if (renameSuccess != 0)
+                            {
+                                std::cout << WarningMsg("Failed to rename file. Do we have permissions to write files in this folder? Exiting.\n");
+                                return 1;
+                            }
+                            filename = walletFileName;
+                            break;
+                        } 
+                        else
+                        {
+                            filename = walletName;
+                            break;
+                        }
+                    }
                     filename = walletName;
                     break;
                 }
