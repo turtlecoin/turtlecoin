@@ -1723,6 +1723,41 @@ namespace PaymentService
         return std::error_code();
     }
 
+    std::error_code WalletService::validateAddress(
+        const std::string &address,
+        bool &isIntegrated,
+        std::string &paymentID,
+        std::string &actualAddress)
+    {
+        if (!CryptoNote::validateAddress(address, currency))
+        {
+            try
+            {
+                [actualAddress, paymentID] = decodeIntegratedAddress(address, currency, logger);
+                isIntegrated = true;
+            }
+            catch (std::system_error &x)
+            {
+                logger(Logging::DEBUGGING, Logging::BRIGHT_YELLOW)
+                        << "Error while validate address " << address << ": " << x.what();
+                return x.code();
+            }
+            catch (std::exception &x)
+            {
+                logger(Logging::WARNING, Logging::BRIGHT_YELLOW)
+                        << "Error while validate address " << address << ": " << x.what();
+                return make_error_code(CryptoNote::error::INTERNAL_WALLET_ERROR);
+            }
+        }
+        else
+        {
+            isIntegrated = false;
+            actualAddress = address;
+        }
+
+        return std::error_code();
+    }
+
     uint64_t WalletService::getDefaultMixin() const
     {
         return CryptoNote::getDefaultMixinByHeight(node.getLastKnownBlockHeight());
