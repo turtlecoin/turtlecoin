@@ -595,14 +595,17 @@ namespace PaymentService
         };
     };
 
-    struct ValidateAddress {
-        struct Request {
+    struct ValidateAddress
+    {
+        struct Request
+        {
             std::string address;
 
             void serialize(CryptoNote::ISerializer &serializer);
         };
 
-        struct Response {
+        struct Response
+        {
             bool isIntegrated;
             std::string paymentID;
             std::string actualAddress;

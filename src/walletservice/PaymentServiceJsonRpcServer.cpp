@@ -187,6 +187,10 @@ namespace PaymentService
             "getNodeFeeInfo",
             jsonHandler<NodeFeeInfo::Request, NodeFeeInfo::Response>(std::bind(
                 &PaymentServiceJsonRpcServer::handleNodeFeeInfo, this, std::placeholders::_1, std::placeholders::_2)));
+        handlers.emplace(
+            "validateAddress",
+            jsonHandler<ValidateAddress::Request, ValidateAddress::Response>(std::bind(
+                &PaymentServiceJsonRpcServer::handleValidateAddress, this, std::placeholders::_1, std::placeholders::_2)));
     }
 
     void PaymentServiceJsonRpcServer::processJsonRpcRequest(const Common::JsonValue &req, Common::JsonValue &resp)
