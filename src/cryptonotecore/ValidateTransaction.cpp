@@ -432,15 +432,15 @@ bool ValidateTransaction::validateTransactionInputsExpensive()
     uint64_t inputIndex = 0;
 
     std::vector<std::future<bool>> validationResult;
-    std::atomic<bool> cancelVerification=false;
+    std::atomic<bool> cancelValidation=false;
     const Crypto::Hash prefixHash = m_cachedTransaction.getTransactionPrefixHash();
 
     for (const auto &input : m_transaction.inputs)
     {
         /* Validate each input on a separate thread in our thread pool */
-        validationResult.push_back(m_threadPool.addJob([inputIndex, &input, &prefixHash, this]{
+        validationResult.push_back(m_threadPool.addJob([inputIndex, &input, &prefixHash,&cancelValidation, this]{
             const CryptoNote::KeyInput &in = boost::get<CryptoNote::KeyInput>(input);
-	    if(cancelVerification)return false; //fail the verification immediately if cancel requested
+	    if(cancelValidation)return false; //fail the validation immediately if cancel requested
             if (m_blockchainCache->checkIfSpent(in.keyImage, m_blockHeight))
             {
                 m_validationResult.errorCode = CryptoNote::error::TransactionValidationError::INPUT_KEYIMAGE_ALREADY_SPENT;
@@ -519,7 +519,7 @@ bool ValidateTransaction::validateTransactionInputsExpensive()
         if (!result.get())
         {
             valid = false;
-	    cancelVerification = true;
+	    cancelValidation = true;
         }
     }
 
