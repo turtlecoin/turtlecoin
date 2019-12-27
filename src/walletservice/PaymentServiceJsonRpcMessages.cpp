@@ -450,7 +450,8 @@ namespace PaymentService
 
     void ValidateAddress::Request::serialize(CryptoNote::ISerializer &serializer)
     {
-        if (!serializer(address, "address")) {
+        if (!serializer(address, "address"))
+        {
             throw RequestSerializationError();
         }
     }
