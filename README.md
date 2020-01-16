@@ -39,7 +39,9 @@ Everyone starts somewhere. If you're new or returning, you'll probably want to g
 
 ### A note for contributing developers
 
-Hello, and thank you for helping us! Our work makes use of many brilliant projects from other communities who contributed their code and helped us where we are now. To make sure we're always doing the right thing, we try to make sure we get the proper license header in every file we modify. By the terms of the license any open source project may use our software, but please do not alter the licenses already in place. [src/config/CryptoNoteConfig.h](https://github.com/turtlecoin/turtlecoin/commit/28cfef2575f2d767f6e512f2a4017adbf44e610e) for an example.
+Hello, and thank you for helping us! Our work makes use of many brilliant projects from other communities who contributed their code which helped us get to where we are now. To make sure we're always doing things the right way, we try to make sure we get the proper license header in every file we modify. By the terms of this project's license, any open source project may use our software, but the licenses may only be appended to, not altered. 
+
+See [src/config/CryptoNoteConfig.h](https://github.com/turtlecoin/turtlecoin/commit/28cfef2575f2d767f6e512f2a4017adbf44e610e) for an example.
 
 ```
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
