@@ -197,5 +197,7 @@ namespace CryptoNote
             getBlockHashesByTimestamps(uint64_t timestampBegin, size_t secondsCount) const = 0;
 
         virtual std::vector<Crypto::Hash> getTransactionHashesByPaymentId(const Crypto::Hash &paymentId) const = 0;
+
+        virtual void rewind(const uint64_t blockIndex) = 0;
     };
 } // namespace CryptoNote

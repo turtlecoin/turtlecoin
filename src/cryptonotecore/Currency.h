@@ -277,21 +277,6 @@ namespace CryptoNote
             return voteCompleteHeight + m_upgradeWindow;
         }
 
-        const std::string &blocksFileName() const
-        {
-            return m_blocksFileName;
-        }
-
-        const std::string &blockIndexesFileName() const
-        {
-            return m_blockIndexesFileName;
-        }
-
-        const std::string &txPoolFileName() const
-        {
-            return m_txPoolFileName;
-        }
-
         bool isBlockexplorer() const
         {
             return m_isBlockexplorer;
@@ -472,12 +457,6 @@ namespace CryptoNote
         uint32_t m_upgradeVotingWindow;
 
         uint32_t m_upgradeWindow;
-
-        std::string m_blocksFileName;
-
-        std::string m_blockIndexesFileName;
-
-        std::string m_txPoolFileName;
 
         bool m_isBlockexplorer;
 
@@ -738,24 +717,6 @@ namespace CryptoNote
         }
 
         CurrencyBuilder &upgradeWindow(uint32_t val);
-
-        CurrencyBuilder &blocksFileName(const std::string &val)
-        {
-            m_currency.m_blocksFileName = val;
-            return *this;
-        }
-
-        CurrencyBuilder &blockIndexesFileName(const std::string &val)
-        {
-            m_currency.m_blockIndexesFileName = val;
-            return *this;
-        }
-
-        CurrencyBuilder &txPoolFileName(const std::string &val)
-        {
-            m_currency.m_txPoolFileName = val;
-            return *this;
-        }
 
         CurrencyBuilder &isBlockexplorer(const bool val)
         {

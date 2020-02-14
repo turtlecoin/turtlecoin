@@ -796,9 +796,6 @@ namespace CryptoNote
         m_upgradeVotingThreshold(currency.m_upgradeVotingThreshold),
         m_upgradeVotingWindow(currency.m_upgradeVotingWindow),
         m_upgradeWindow(currency.m_upgradeWindow),
-        m_blocksFileName(currency.m_blocksFileName),
-        m_blockIndexesFileName(currency.m_blockIndexesFileName),
-        m_txPoolFileName(currency.m_txPoolFileName),
         m_zawyDifficultyBlockIndex(currency.m_zawyDifficultyBlockIndex),
         m_zawyDifficultyV2(currency.m_zawyDifficultyV2),
         m_zawyDifficultyBlockVersion(currency.m_zawyDifficultyBlockVersion),
@@ -863,10 +860,6 @@ namespace CryptoNote
         upgradeVotingThreshold(parameters::UPGRADE_VOTING_THRESHOLD);
         upgradeVotingWindow(parameters::UPGRADE_VOTING_WINDOW);
         upgradeWindow(parameters::UPGRADE_WINDOW);
-
-        blocksFileName(parameters::CRYPTONOTE_BLOCKS_FILENAME);
-        blockIndexesFileName(parameters::CRYPTONOTE_BLOCKINDEXES_FILENAME);
-        txPoolFileName(parameters::CRYPTONOTE_POOLDATA_FILENAME);
 
         isBlockexplorer(false);
     }
