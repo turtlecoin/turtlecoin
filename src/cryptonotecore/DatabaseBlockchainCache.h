@@ -62,6 +62,8 @@ namespace CryptoNote
          */
         std::unique_ptr<IBlockchainCache> split(uint32_t splitBlockIndex) override;
 
+        void rewind(const uint64_t height) override;
+
         void pushBlock(
             const CachedBlock &cachedBlock,
             const std::vector<CachedTransaction> &cachedTransactions,

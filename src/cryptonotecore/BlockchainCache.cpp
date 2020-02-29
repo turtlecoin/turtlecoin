@@ -337,6 +337,28 @@ namespace CryptoNote
         return newCache;
     }
 
+    /* TODO */
+    void BlockchainCache::rewind(const uint64_t height)
+    {
+        std::unique_ptr<BlockchainStorage> newStorage = storage->splitStorage(height - startIndex);
+
+        std::unique_ptr<BlockchainCache> newCache(
+            new BlockchainCache(filename, currency, logger.getLogger(), this, height));
+
+        newCache->storage = std::move(newStorage);
+
+        splitSpentKeyImages(*newCache, height);
+        splitTransactions(*newCache, height);
+        splitBlocks(*newCache, height);
+        splitKeyOutputsGlobalIndexes(*newCache, height);
+
+        fixChildrenParent(newCache.get());
+        newCache->children = children;
+        children = {newCache.get()};
+
+        logger(Logging::DEBUGGING) << "Split successfully completed";
+    }
+
     void BlockchainCache::splitSpentKeyImages(BlockchainCache &newCache, uint32_t splitBlockIndex)
     {
         // Key images with blockIndex == splitBlockIndex remain in upper segment

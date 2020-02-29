@@ -747,6 +747,103 @@ namespace CryptoNote
         return cache;
     }
 
+    void DatabaseBlockchainCache::rewind(const uint64_t height)
+    {
+        /* 0 height, much much faster to just remove DB and recreate it than
+         * remove everything. */
+        if (height <= 1)
+        {
+            database.recreate();
+            return;
+        }
+
+        BlockchainWriteBatch writeBatch;
+        auto currentTop = getTopBlockIndex();
+
+        if (height >= currentTop)
+        {
+            return;
+        }
+
+        //for (uint32_t blockIndex = height; blockIndex <= currentTop; ++blockIndex)
+        //{
+         //   /* Get block info */
+          //  ExtendedPushedBlockInfo extendedInfo = getExtendedPushedBlockInfo(blockIndex);
+//
+ //           /* Schedule deletion of cached block and raw block */
+  //          writeBatch.removeCachedBlock(extendedInfo.pushedBlockInfo.cachedBlock.blockHash, blockIndex).removeRawBlock(blockIndex);
+//
+ //           /* Schedule deletion of spent outputs in block */
+  //          requestDeleteSpentOutputs(writeBatch, blockIndex, extendedInfo.pushedBlockInfo.validatorState);
+//
+ //           /* Schedule deletion of timestamp data in block */
+  //          requestRemoveTimestamp(writeBatch, extendedInfo.timestamp, extendedInfo.pushedBlockInfo.cachedBlock.blockHash);
+//
+ //           logger(Logging::DEBUGGING) << "Scheduling deletion of block " << blockIndex;
+  //      }
+
+        const auto blockHashes = getBlockHashes(height, currentTop - height);
+
+        uint64_t blockIndex = height;
+
+        for (const auto &hash : blockHashes)
+        {
+            writeBatch.removeCachedBlock(hash, blockIndex).removeRawBlock(blockIndex);
+            blockIndex++;
+            logger(Logging::DEBUGGING) << "Scheduling deletion of block " << blockIndex;
+        }
+
+        /* Get transaction hashes in blocks starting at height */
+        auto deletingTransactionHashes = requestTransactionHashesFromBlockIndex(height);
+
+        /* Delete those transaction. */
+        requestDeleteTransactions(writeBatch, deletingTransactionHashes);
+
+        /* Delete payment IDs for transaction hashes */
+        requestDeletePaymentIds(writeBatch, deletingTransactionHashes);
+
+        /* Get extended transaction data */
+        std::vector<ExtendedTransactionInfo> extendedTransactions;
+        if (!requestExtendedTransactionInfos(deletingTransactionHashes, database, extendedTransactions))
+        {
+            logger(Logging::ERROR) << "Error while rewinding: failed to request extended transaction info";
+            throw std::runtime_error("Error while rewinding: Failed to request extended transaction info from database.");
+        }
+
+        std::map<IBlockchainCache::Amount, IBlockchainCache::GlobalOutputIndex> keyIndexSplitBoundaries;
+        for (const auto &transaction : extendedTransactions)
+        {
+            auto txkeyBoundaries = getMinGlobalIndexesByAmount(transaction.amountToKeyIndexes);
+            mergeOutputsSplitBoundaries(keyIndexSplitBoundaries, txkeyBoundaries);
+        }
+
+        /* Remove outputs for transactions */
+        requestDeleteKeyOutputs(writeBatch, keyIndexSplitBoundaries);
+
+        deleteClosestTimestampBlockIndex(writeBatch, height);
+
+        logger(Logging::DEBUGGING) << "Performing delete operations";
+
+        // all data and indexes are now copied, no errors detected, can now erase data from database
+        auto err = database.write(writeBatch);
+
+        if (err)
+        {
+            logger(Logging::ERROR) << "split write failed, " << err.message();
+            throw std::runtime_error(err.message());
+        }
+
+        /* Remove cached blocks */
+        cutTail(unitsCache, currentTop + 1 - height);
+
+        logger(Logging::TRACE) << "Delete successful";
+
+        // invalidate top block index and hash
+        topBlockIndex = boost::none;
+        topBlockHash = boost::none;
+        transactionsCount = boost::none;
+    }
+
     // returns hash of pushed block
     Crypto::Hash
         DatabaseBlockchainCache::pushBlockToAnotherCache(IBlockchainCache &segment, PushedBlockInfo &&pushedBlockInfo)
@@ -2156,6 +2253,7 @@ namespace CryptoNote
 
         ExtendedPushedBlockInfo extendedInfo;
 
+        extendedInfo.pushedBlockInfo.cachedBlock = blockInfo;
         extendedInfo.pushedBlockInfo.rawBlock = dbResult.getRawBlocks().at(blockIndex);
         extendedInfo.pushedBlockInfo.blockSize = blockInfo.blockSize;
         extendedInfo.pushedBlockInfo.blockDifficulty =

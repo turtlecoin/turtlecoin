@@ -53,23 +53,6 @@ namespace CryptoNote
         void serialize(ISerializer &s);
     };
 
-    struct CachedBlockInfo
-    {
-        Crypto::Hash blockHash;
-
-        uint64_t timestamp;
-
-        uint64_t cumulativeDifficulty;
-
-        uint64_t alreadyGeneratedCoins;
-
-        uint64_t alreadyGeneratedTransactions;
-
-        uint32_t blockSize;
-
-        void serialize(ISerializer &s);
-    };
-
     struct OutputGlobalIndexesForAmount
     {
         uint32_t startIndex = 0;
@@ -107,6 +90,8 @@ namespace CryptoNote
         // Returns upper part of segment. [this] remains lower part.
         // All of indexes on blockIndex == splitBlockIndex belong to upper part
         std::unique_ptr<IBlockchainCache> split(uint32_t splitBlockIndex) override;
+
+        void rewind(const uint64_t height) override;
 
         virtual void pushBlock(
             const CachedBlock &cachedBlock,

@@ -27,6 +27,7 @@
 #include <system/ContextGroup.h>
 #include <unordered_map>
 #include <utilities/ThreadPool.h>
+#include <utilities/ThreadSafeQueue.h>
 #include <vector>
 
 namespace CryptoNote
@@ -220,6 +221,20 @@ namespace CryptoNote
 
         static WalletTypes::RawTransaction getRawTransaction(const std::vector<uint8_t> &rawTX);
 
+        virtual std::string exportBlockchain(
+            uint64_t startIndex,
+            const uint64_t endIndex,
+            const std::string filePath) override;
+
+        virtual std::tuple<Crypto::Hash, std::string> importRawBlock(
+            RawBlock &rawBlock,
+            const Crypto::Hash previousBlockHash,
+            const uint64_t height) override;
+
+        virtual std::string importBlockchain(
+            const std::string filePath,
+            const bool performExpensiveValidation) override;
+
         virtual void rewind(const uint64_t blockIndex) override;
 
       private:
@@ -399,6 +414,14 @@ namespace CryptoNote
         void initRootSegment();
 
         void cutSegment(IBlockchainCache &segment, uint32_t startIndex);
+
+        /*
+        void writeBlockchain(
+            ThreadSafeQueue<std::future<std::vector<RawBlock>>> &blockQueue,
+            std::ofstream &blockchainDump,
+            const uint64_t startIndex,
+            const uint64_t endIndex);
+            */
     };
 
 } // namespace CryptoNote

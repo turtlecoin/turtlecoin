@@ -213,8 +213,10 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    /*
     try
     {
+    */
         fs::path cwdPath = fs::current_path();
         auto modulePath = cwdPath / temp;
         auto cfgLogFile = fs::path(config.logFile);
@@ -348,8 +350,8 @@ int main(int argc, char *argv[])
             throw std::runtime_error("Can't create directory: " + dbConfig.getDataDir());
         }
 
-        RocksDBWrapper database(logManager);
-        database.init(dbConfig);
+        RocksDBWrapper database(logManager, dbConfig);
+        database.init();
         Tools::ScopeExit dbShutdownOnExit([&database]() { database.shutdown(); });
 
         if (!DatabaseBlockchainCache::checkDBSchemeVersion(database, logManager))
@@ -357,9 +359,9 @@ int main(int argc, char *argv[])
             dbShutdownOnExit.cancel();
             database.shutdown();
 
-            database.destroy(dbConfig);
+            database.destroy();
 
-            database.init(dbConfig);
+            database.init();
             dbShutdownOnExit.resume();
         }
 
@@ -378,6 +380,44 @@ int main(int argc, char *argv[])
         ccore->load();
 
         logger(INFO) << "Core initialized OK";
+
+        const bool importChain = true;
+        const bool performExpensiveValidation = false;
+        const uint64_t startIndex = 0;
+        const uint64_t endIndex = 10000;
+
+        std::string error;
+        std::string filepath = "blockchain.dump";
+
+        auto startTimer = std::chrono::high_resolution_clock::now();
+
+        if (importChain)
+        {
+            logger(INFO) << "Importing blockchain...";
+            error = ccore->importBlockchain(filepath, performExpensiveValidation);
+        }
+        else
+        {
+            logger(INFO) << "Exporting blockchain...";
+            error = ccore->exportBlockchain(startIndex, endIndex, filepath);
+        }
+
+        auto elapsedTime = std::chrono::high_resolution_clock::now() - startTimer;
+        
+        if (error != "")
+        {
+            logger(ERROR) << "Failed to " << (importChain ? "import " : " export ")
+                          << "blockchain: " << error;
+        }
+        else
+        {
+            std::cout << "Time to " << (importChain ? "import " : "export ")
+                      << (endIndex - startIndex) << " blocks: " 
+                      << std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count()
+                      << " seconds." << std::endl
+                      << "Blocks per second: " << ((endIndex - startIndex) / std::chrono::duration_cast<std::chrono::seconds>(elapsedTime).count())
+                      << std::endl;
+        }
 
         /* If we were told to rewind the blockchain to a certain height
            we will remove blocks until we're back at the height specified */
@@ -488,12 +528,14 @@ int main(int argc, char *argv[])
 
         cprotocol->set_p2p_endpoint(nullptr);
         ccore->save();
+    /*
     }
     catch (const std::exception &e)
     {
         logger(ERROR, BRIGHT_RED) << "Exception: " << e.what();
         return 1;
     }
+    */
 
     logger(INFO) << "Node stopped.";
     return 0;

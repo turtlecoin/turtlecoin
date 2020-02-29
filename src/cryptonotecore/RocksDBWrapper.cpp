@@ -19,28 +19,31 @@ namespace
     const std::string DB_NAME = "DB";
 }
 
-RocksDBWrapper::RocksDBWrapper(std::shared_ptr<Logging::ILogger> logger):
+RocksDBWrapper::RocksDBWrapper(
+    std::shared_ptr<Logging::ILogger> logger,
+    const DataBaseConfig &config):
     logger(logger, "RocksDBWrapper"),
+    m_config(config),
     state(NOT_INITIALIZED)
 {
 }
 
 RocksDBWrapper::~RocksDBWrapper() {}
 
-void RocksDBWrapper::init(const DataBaseConfig &config)
+void RocksDBWrapper::init()
 {
     if (state.load() != NOT_INITIALIZED)
     {
         throw std::system_error(make_error_code(CryptoNote::error::DataBaseErrorCodes::ALREADY_INITIALIZED));
     }
 
-    std::string dataDir = getDataDir(config);
+    std::string dataDir = getDataDir(m_config);
 
     logger(INFO) << "Opening DB in " << dataDir;
 
     rocksdb::DB *dbPtr;
 
-    rocksdb::Options dbOptions = getDBOptions(config);
+    rocksdb::Options dbOptions = getDBOptions(m_config);
     rocksdb::Status status = rocksdb::DB::Open(dbOptions, dataDir, &dbPtr);
     if (status.ok())
     {
@@ -86,18 +89,18 @@ void RocksDBWrapper::shutdown()
     state.store(NOT_INITIALIZED);
 }
 
-void RocksDBWrapper::destroy(const DataBaseConfig &config)
+void RocksDBWrapper::destroy()
 {
     if (state.load() != NOT_INITIALIZED)
     {
         throw std::system_error(make_error_code(CryptoNote::error::DataBaseErrorCodes::ALREADY_INITIALIZED));
     }
 
-    std::string dataDir = getDataDir(config);
+    std::string dataDir = getDataDir(m_config);
 
     logger(WARNING) << "Destroying DB in " << dataDir;
 
-    rocksdb::Options dbOptions = getDBOptions(config);
+    rocksdb::Options dbOptions = getDBOptions(m_config);
     rocksdb::Status status = rocksdb::DestroyDB(dataDir, dbOptions);
 
     if (status.ok())
@@ -284,4 +287,15 @@ rocksdb::Options RocksDBWrapper::getDBOptions(const DataBaseConfig &config)
 std::string RocksDBWrapper::getDataDir(const DataBaseConfig &config)
 {
     return config.getDataDir() + '/' + DB_NAME;
+}
+
+void RocksDBWrapper::recreate()
+{
+    if (state.load() == INITIALIZED)
+    {
+        shutdown();
+    }
+
+    destroy();
+    init();
 }

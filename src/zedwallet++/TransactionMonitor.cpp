@@ -20,7 +20,7 @@ void TransactionMonitor::start()
 
     while (!m_shouldStop)
     {
-        const auto tx = m_queuedTransactions.peek();
+        const auto tx = m_queuedTransactions.front();
 
         /* Make sure we're not printing a garbage tx */
         if (m_shouldStop)

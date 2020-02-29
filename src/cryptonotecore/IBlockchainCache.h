@@ -40,8 +40,26 @@ namespace CryptoNote
 
     const uint32_t INVALID_BLOCK_INDEX = std::numeric_limits<uint32_t>::max();
 
+    struct CachedBlockInfo
+    {
+        Crypto::Hash blockHash;
+
+        uint64_t timestamp;
+
+        uint64_t cumulativeDifficulty;
+
+        uint64_t alreadyGeneratedCoins;
+
+        uint64_t alreadyGeneratedTransactions;
+
+        uint32_t blockSize;
+
+        void serialize(ISerializer &s);
+    };
+
     struct PushedBlockInfo
     {
+        CachedBlockInfo cachedBlock;
         RawBlock rawBlock;
         TransactionValidatorState validatorState;
         size_t blockSize;
@@ -64,7 +82,6 @@ namespace CryptoNote
         bool use = false;
     };
 
-    struct CachedBlockInfo;
     struct CachedTransactionInfo;
 
     class ITransactionPool;
@@ -83,6 +100,8 @@ namespace CryptoNote
         virtual BinaryArray getRawTransaction(uint32_t blockIndex, uint32_t transactionIndex) const = 0;
 
         virtual std::unique_ptr<IBlockchainCache> split(uint32_t splitBlockIndex) = 0;
+
+        virtual void rewind(const uint64_t blockIndex) = 0;
 
         virtual void pushBlock(
             const CachedBlock &cachedBlock,

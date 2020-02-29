@@ -16,6 +16,30 @@ template<typename T> class ThreadSafeQueue
 
     ThreadSafeQueue(bool startStopped): m_shouldStop(startStopped) {}
 
+    bool pushMove(T &&item)
+    {
+        /* Acquire the lock */
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        /* Stopping, don't push data */
+        if (m_shouldStop)
+        {
+            return false;
+        }
+
+        /* Add the item to the front of the queue */
+        m_queue.push(std::move(item));
+
+        /* Unlock the mutex before notifying, so it doesn't block after
+           waking up */
+        lock.unlock();
+
+        /* Notify the consumer that we have some data */
+        m_haveData.notify_all();
+
+        return true;
+    }
+
     bool push(T item)
     {
         /* Acquire the lock */
@@ -68,46 +92,31 @@ template<typename T> class ThreadSafeQueue
 
         m_consumedData.notify_all();
     }
-
-    T getFirstItem(bool removeFromQueue)
+    
+    /* Take an item from the front of the queue, and do NOT remove it */
+    T &front()
     {
         /* Acquire the lock */
         std::unique_lock<std::mutex> lock(m_mutex);
 
-        T item;
+        return getFirstItem(lock);
+    }
 
-        /* Stopping, don't return data */
+    /* Take and remove an item from the front of the queue */
+    T pop()
+    {
+        /* Acquire the lock */
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        T item = std::move(getFirstItem(lock));
+
         if (m_shouldStop)
         {
-            return item;
+            return T();
         }
 
-        /* Wait for data to become available (releases the lock whilst
-           it's not, so we don't block the producer) */
-        m_haveData.wait(lock, [&] {
-            /* Stopping, don't block */
-            if (m_shouldStop)
-            {
-                return true;
-            }
-
-            return !m_queue.empty();
-        });
-
-        /* Stopping, don't return data */
-        if (m_shouldStop)
-        {
-            return item;
-        }
-
-        /* Get the first item in the queue */
-        item = m_queue.front();
-
-        /* Remove the first item from the queue */
-        if (removeFromQueue)
-        {
-            m_queue.pop();
-        }
+        /* Remove item */
+        m_queue.pop();
 
         /* Unlock the mutex before notifying, so it doesn't block after
            waking up */
@@ -115,22 +124,7 @@ template<typename T> class ThreadSafeQueue
 
         m_consumedData.notify_all();
 
-        /* Return the item */
         return item;
-    }
-
-    /* Take an item from the front of the queue, and do NOT remove it */
-    T peek()
-    {
-        bool removeFromQueue = false;
-        return getFirstItem(removeFromQueue);
-    }
-
-    /* Take and remove an item from the front of the queue */
-    T pop()
-    {
-        bool removeFromQueue = true;
-        return getFirstItem(removeFromQueue);
     }
 
     /* Stop the queue if something is waiting on it, so we don't block
@@ -154,12 +148,50 @@ template<typename T> class ThreadSafeQueue
         m_shouldStop = false;
     }
 
+    size_t size() const
+    {
+        std::scoped_lock lock(m_mutex);
+        return m_queue.size();
+    }
+
   private:
+    T &getFirstItem(std::unique_lock<std::mutex> &lock)
+    {
+        /* Stopping, don't return data */
+        if (m_shouldStop)
+        {
+            T item;
+            return item;
+        }
+
+        /* Wait for data to become available (releases the lock whilst
+           it's not, so we don't block the producer) */
+        m_haveData.wait(lock, [&] {
+            /* Stopping, don't block */
+            if (m_shouldStop)
+            {
+                return true;
+            }
+
+            return !m_queue.empty();
+        });
+
+        /* Stopping, don't return data */
+        if (m_shouldStop)
+        {
+            T item;
+            return item;
+        }
+
+        /* Get the first item in the queue */
+        return m_queue.front();
+    }
+
     /* The deque data structure */
     std::queue<T> m_queue;
 
     /* The mutex, to ensure we have atomic access to the queue */
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
 
     /* Whether we have data or not */
     std::condition_variable m_haveData;

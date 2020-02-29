@@ -28,6 +28,7 @@
 #include <cryptonotecore/UpgradeManager.h>
 #include <cryptonotecore/ValidateTransaction.h>
 #include <cryptonoteprotocol/CryptoNoteProtocolHandlerCommon.h>
+#include <fstream>
 #include <numeric>
 #include <set>
 #include <system/Timer.h>
@@ -36,6 +37,7 @@
 #include <utilities/FormatTools.h>
 #include <utilities/LicenseCanary.h>
 #include <utilities/ParseExtra.h>
+#include <utilities/ThreadSafeQueue.h>
 
 using namespace Crypto;
 
@@ -150,6 +152,47 @@ namespace CryptoNote
             }
 
             return spentOutputs;
+        }
+
+        TransactionValidatorState extractSpentOutputs(const std::vector<CachedTransaction> &transactions)
+        {
+            TransactionValidatorState resultOutputs;
+            for (const auto &transaction : transactions)
+            {
+                auto transactionOutputs = extractSpentOutputs(transaction);
+                mergeStates(resultOutputs, transactionOutputs);
+            }
+
+            return resultOutputs;
+        }
+
+        int64_t getEmissionChange(
+            const Currency &currency,
+            IBlockchainCache &segment,
+            uint32_t previousBlockIndex,
+            const CachedBlock &cachedBlock,
+            uint64_t cumulativeSize,
+            uint64_t cumulativeFee)
+        {
+            uint64_t reward = 0;
+            int64_t emissionChange = 0;
+            auto alreadyGeneratedCoins = segment.getAlreadyGeneratedCoins(previousBlockIndex);
+            auto lastBlocksSizes =
+                segment.getLastBlocksSizes(currency.rewardBlocksWindow(), previousBlockIndex, addGenesisBlock);
+            auto blocksSizeMedian = Common::medianValue(lastBlocksSizes);
+            if (!currency.getBlockReward(
+                    cachedBlock.getBlock().majorVersion,
+                    blocksSizeMedian,
+                    cumulativeSize,
+                    alreadyGeneratedCoins,
+                    cumulativeFee,
+                    reward,
+                    emissionChange))
+            {
+                throw std::system_error(make_error_code(error::BlockValidationError::CUMULATIVE_BLOCK_SIZE_TOO_BIG));
+            }
+
+            return emissionChange;
         }
 
         const std::chrono::seconds OUTDATED_TRANSACTION_POLLING_INTERVAL = std::chrono::seconds(60);
@@ -2365,9 +2408,379 @@ namespace CryptoNote
         chainsLeaves[0]->load();
     }
 
+    void writeBlockchain(
+        ThreadSafeQueue<std::future<std::vector<RawBlock>>> &blockQueue,
+        std::fstream &blockchainDump,
+        const uint64_t startIndex,
+        const uint64_t endIndex)
+    {
+        uint64_t height = startIndex;
+
+        while (true)
+        {
+            /* Loop through promises */
+            for (auto &block : blockQueue.pop().get())
+            {
+                const auto blockBinary = toBinaryArray(block);
+                const std::string blockBinaryStr = std::string(blockBinary.begin(), blockBinary.end());
+
+                /* Height - Size of following block - Block */
+                const std::string line = std::to_string(height) + " " + std::to_string(blockBinaryStr.size()) + " " + blockBinaryStr + " ";
+
+                blockchainDump.write(line.c_str(), line.size());
+
+                height++;
+            }
+
+            /* All blocks exported. */
+            if (height == endIndex)
+            {
+                return;
+            }
+        }
+
+        /* Not strictly necessary, but i'd rather ensure the data gets flushed
+         * ASAP */
+        blockchainDump.close();
+    }
+
+    /* Note: Final block height will be endIndex - 1 */
+    std::string Core::exportBlockchain(
+        uint64_t startIndex,
+        const uint64_t endIndex,
+        const std::string filePath)
+    {
+        IBlockchainCache *mainChain = chainsLeaves[0];
+        uint64_t currentIndex = mainChain->getTopBlockIndex() + 1;
+
+        if (startIndex == 0)
+        {
+            startIndex = 1;
+        }
+
+        if (startIndex >= endIndex)
+        {
+            return "Start index is greater or equal to end index, aborting";
+        }
+
+        if (currentIndex < endIndex)
+        {
+            return "Requested end height is greater than current chain height of " + std::to_string(currentIndex);
+        }
+
+        std::fstream blockchainDump(filePath, std::ios::out | std::ios_base::binary);
+
+        if (!blockchainDump)
+        {
+            return "Failed to open filepath specified: " + std::string(strerror(errno));
+        }
+
+        uint64_t threadCount = std::thread::hardware_concurrency();
+
+        /* Could not detect thread count */
+        if (threadCount == 0)
+        {
+            threadCount = 1;
+        }
+
+        const uint64_t batchSizePerThread = 1000;
+        const uint64_t batchSizePerLoop = batchSizePerThread * threadCount;
+
+        Utilities::ThreadPool<std::vector<RawBlock>> threadPool(threadCount);
+
+        ThreadSafeQueue<std::future<std::vector<RawBlock>>> pendingBlocks;
+
+        std::thread writeThread(writeBlockchain, std::ref(pendingBlocks), std::ref(blockchainDump), startIndex, endIndex);
+
+        for (uint64_t index = startIndex; index < endIndex; index += batchSizePerLoop)
+        {
+            while (pendingBlocks.size() > threadCount)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+
+            for (uint64_t threadNum = 0; threadNum < threadCount; threadNum++)
+            {
+                const uint64_t batchStart = index + (batchSizePerThread * threadNum);
+
+                if (batchStart >= endIndex)
+                {
+                    break;
+                }
+
+                /* Ensure we don't overshoot the endIndex */
+                const uint64_t batchEnd = std::min(batchStart + batchSizePerThread, endIndex);
+
+                /* Fetch a batch of blocks on each thread. Ensure we take the
+                 * args we capture by value, not reference here, or the batches
+                 * will get all messed up. */
+                pendingBlocks.pushMove(std::move(threadPool.addJob([batchStart, batchEnd, &mainChain] {
+                    return mainChain->getBlocksByHeight(batchStart, batchEnd);
+                })));
+            }
+
+            auto time = std::time(nullptr);
+
+            std::cout << "Progress [" << index << " / " << endIndex << "]" 
+                      << " @ Time [" << std::put_time(std::localtime(&time), "%H:%M:%S") 
+                      << "]" << std::endl;
+        }
+
+        writeThread.join();
+
+        return std::string();
+    }
+
+    std::tuple<uint64_t, RawBlock, std::string> readRawBlock(std::ifstream &blockchainDump, uint64_t prevBlockHeight)
+    {
+        std::string blockIndexStr;
+        std::string rawBlockLenStr;
+
+        /* Read in the block height and the length of the following raw block */
+        blockchainDump >> blockIndexStr >> rawBlockLenStr;
+
+        try
+        {
+            uint64_t blockIndex = std::stoull(blockIndexStr);
+            uint64_t rawBlockLen = std::stoull(rawBlockLenStr);
+
+            /* Verify block height is previous height + 1. If importing
+             * initial block, we don't know the previous block height, so don't
+             * verify this. */
+            if (blockIndex != prevBlockHeight + 1 && prevBlockHeight != 0)
+            {
+                std::stringstream stream;
+
+                stream << "Blockchain import file is invalid, found block "
+                       << "height of " << blockIndex << " after previous block "
+                       << "height of " << prevBlockHeight;
+
+                return { 0, RawBlock(), stream.str() };
+            }
+
+            /* Allocate space for us to read in the raw block */
+            std::string rawBlockStr;
+            rawBlockStr.resize(rawBlockLen);
+
+            /* Advance stream by one char to skip space character */
+            blockchainDump.ignore();
+
+            /* Read raw block */
+            if (!blockchainDump.read(rawBlockStr.data(), rawBlockLen))
+            {
+                std::stringstream stream;
+
+                stream << "Blockchain import file is invalid, rawBlockLen "
+                       << "exceeds end of file while parsing block with height "
+                       << blockIndex << ". Error: " << strerror(errno) << ", rawBlockLen: " << rawBlockLen;
+
+                return { 0, RawBlock(), stream.str() };
+            }
+
+            RawBlock rawBlock;
+
+            /* Parse raw block */
+            if (!fromBinaryArray(rawBlock, std::vector<uint8_t>(rawBlockStr.begin(), rawBlockStr.end())))
+            {
+                std::stringstream stream;
+
+                stream << "Blockchain import file is invalid, cannot parse "
+                       << "rawBlock at height " << blockIndex;
+
+                return { 0, RawBlock(), stream.str() };
+            }
+
+            /* Advance stream by one char to skip space character */
+            blockchainDump.ignore();
+
+            return { blockIndex, rawBlock, std::string() };
+        }
+        catch (const std::exception &)
+        {
+            std::stringstream stream;
+
+            stream << "Blockchain import file is invalid, cannot parse block "
+                   << "index at height " << prevBlockHeight + 1;
+
+            return { 0, RawBlock(), stream.str() };
+        }
+    }
+
+    std::tuple<Crypto::Hash, std::string> Core::importRawBlock(
+        RawBlock &rawBlock,
+        const Crypto::Hash previousBlockHash,
+        const uint64_t height)
+    {
+        std::cout << "Importing block " << height << std::endl;
+
+        const BlockTemplate blockTemplate = extractBlockTemplate(rawBlock);
+        const CachedBlock cachedBlock(blockTemplate);
+
+        if (blockTemplate.previousBlockHash != previousBlockHash && height != 0)
+        {
+            std::stringstream stream;
+
+            stream << "Blockchain import file is invalid, previous block hash "
+                   << "of rawBlock at height " << height
+                   << " does not match calculated block hash for rawBlock at "
+                   << "height " << (height - 1);
+
+            return { Crypto::Hash(), stream.str() };
+        }
+
+        std::vector<CachedTransaction> transactions;
+        uint64_t cumulativeSize = 0;
+
+        /* Parse transactions from raw block, get cumulative size of them */
+        if (!extractTransactions(rawBlock.transactions, transactions, cumulativeSize))
+        {
+            std::stringstream stream;
+
+            stream << "Blockchain import file is invalid, cannot parse rawBlock "
+                   << "transactions at height " << height;
+
+            return { Crypto::Hash(), stream.str() };
+        }
+
+        /* Append cumulative size of the block itself */
+        cumulativeSize += getObjectBinarySize(blockTemplate.baseTransaction);
+
+        const TransactionValidatorState spentOutputs = extractSpentOutputs(transactions);
+        const uint64_t currentDifficulty = chainsLeaves[0]->getDifficultyForNextBlock(height - 1);
+
+        /* Total fee of transactions in block */
+        uint64_t cumulativeFee = 0;
+
+        for (const auto &tx : transactions)
+        {
+            cumulativeFee += tx.getTransactionFee();
+        }
+
+        const int64_t emissionChange = getEmissionChange(
+            currency,
+            *chainsLeaves[0],
+            height - 1,
+            cachedBlock,
+            cumulativeSize,
+            cumulativeFee
+        );
+
+        chainsLeaves[0]->pushBlock(
+            cachedBlock,
+            transactions,
+            spentOutputs, 
+            cumulativeSize,
+            emissionChange,
+            currentDifficulty,
+            std::move(rawBlock)
+        );
+
+        return { cachedBlock.getBlockHash(), std::string() };
+    }
+
+    std::string Core::importBlockchain(
+        const std::string filePath,
+        const bool performExpensiveValidation)
+    {
+        IBlockchainCache *mainChain = chainsLeaves[0];
+
+        uint64_t currentIndex = chainsLeaves[0]->getTopBlockIndex() + 1;
+
+        std::ifstream blockchainDump(filePath);
+
+        if (!blockchainDump)
+        {
+            return "Failed to open filepath specified: " + std::string(strerror(errno));
+        }
+
+        RawBlock rawBlock;
+        uint64_t startHeight;
+        std::string err;
+        Crypto::Hash previousBlockHash;
+
+        /* Read in first block to figure out start height */
+        std::tie(startHeight, rawBlock, err) = readRawBlock(blockchainDump, 0);
+
+        if (err != "")
+        {
+            return err;
+        }
+
+        /* Blockchain import file starts at a greater height than our database.
+         * Cannot import if there are gaps in the chain. */
+        if (startHeight > currentIndex && currentIndex != 1)
+        {
+            return "Blockchain import file starts at block height of " + std::to_string(startHeight)
+                + ", while database is at block height of " + std::to_string(currentIndex)
+                + ". Cannot import until database is at same height or higher than blockchain import file.";
+        }
+        /* Blockchain import file starts before current height in DB, rewind
+         * DB to height import starts at. */
+        else if (startHeight < currentIndex)
+        {
+            rewind(startHeight + 1);
+        }
+
+        uint64_t blockHeight = startHeight;
+
+        /* Import the first block */
+        std::tie(previousBlockHash, err) = importRawBlock(rawBlock, getBlockHashByIndex(blockHeight - 1), blockHeight);
+
+        if (err != "")
+        {
+            return err;
+        }
+
+        /* Read rest of blocks line by line. */
+        while (blockchainDump)
+        {
+            /* Read block */
+            std::tie(blockHeight, rawBlock, err) = readRawBlock(blockchainDump, blockHeight);
+
+            if (err != "")
+            {
+                return err;
+            }
+
+            if (performExpensiveValidation)
+            {
+                const auto errorCode = addBlock(std::move(rawBlock));
+
+                if (errorCode)
+                {
+                    return "Blockchain import file is invalid, " + errorCode.message();
+                }
+            }
+            else
+            {
+                /* Add block to chain */
+                std::tie(previousBlockHash, err) = importRawBlock(rawBlock, previousBlockHash, blockHeight);
+
+                if (err != "")
+                {
+                    return err;
+                }
+            }
+        }
+
+        if (!blockchainDump.eof())
+        {
+            return "Blockchain import failed, failed to read from file but file has more data to be read.";
+        }
+
+        return std::string();
+    }
+
     void Core::rewind(const uint64_t blockIndex)
     {
-        cutSegment(*chainsLeaves[0], blockIndex);
+        IBlockchainCache *mainChain = chainsLeaves[0];
+
+        if (mainChain->getTopBlockIndex() < blockIndex)
+        {
+            return;
+        }
+
+        mainChain->rewind(blockIndex);
     }
 
     void Core::cutSegment(IBlockchainCache &segment, uint32_t startIndex)
