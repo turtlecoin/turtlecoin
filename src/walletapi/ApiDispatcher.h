@@ -271,6 +271,16 @@ class ApiDispatcher
     std::tuple<Error, uint16_t>
         getTransactionDetails(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
 
+    std::tuple<Error, uint16_t> getTransactionsByPaymentId(
+        const httplib::Request &req,
+        httplib::Response &res,
+        const nlohmann::json &body) const;
+
+    std::tuple<Error, uint16_t> getTransactionsWithPaymentId(
+        const httplib::Request &req,
+        httplib::Response &res,
+        const nlohmann::json &body) const;
+
     std::tuple<Error, uint16_t>
         getBalance(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
 

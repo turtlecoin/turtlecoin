@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -270,7 +270,7 @@ namespace CryptoNote
         };
 
         /* MAKE SURE TO UPDATE THIS VALUE WITH EVERY MAJOR RELEASE BEFORE A FORK */
-        const uint64_t SOFTWARE_SUPPORTED_FORK_INDEX = 13;
+        const uint64_t SOFTWARE_SUPPORTED_FORK_INDEX = 14;
 
         const uint64_t FORK_HEIGHTS_SIZE = sizeof(FORK_HEIGHTS) / sizeof(*FORK_HEIGHTS);
 
@@ -337,9 +337,9 @@ namespace CryptoNote
 
     // P2P Network Configuration Section - This defines our current P2P network version
     // and the minimum version for communication between nodes
-    const uint8_t P2P_CURRENT_VERSION = 8;
+    const uint8_t P2P_CURRENT_VERSION = 9;
 
-    const uint8_t P2P_MINIMUM_VERSION = 7;
+    const uint8_t P2P_MINIMUM_VERSION = 8;
 
     // This defines the minimum P2P version required for lite blocks propogation
     const uint8_t P2P_LITE_BLOCKS_PROPOGATION_VERSION = 4;
@@ -377,8 +377,7 @@ namespace CryptoNote
 
     const char *const SEED_NODES[] = {
         "206.189.142.142:11897", // rock
-        "145.239.88.119:11999", // cision
-        "142.44.242.106:11897", // tom
+        "145.239.88.119:11897", // cision
         "165.227.252.132:11897", // iburnmycd
         "148.251.178.238:11897", // hv
         "45.32.138.7:11897", // extra

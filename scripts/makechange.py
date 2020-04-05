@@ -12,7 +12,7 @@ $ sudo apt install python3.6
 $ python3.6 makechange.py
 
 Make two wallets and fill one or both with some funds, or start mining to it.
-Open the wallets with turtle-serivce like so:
+Open the wallets with turtle-service like so:
 
 ./turtle-service -w walletA.wallet -p yourpass --rpc-password test --bind-port 8070
 ./turtle-service -w walletB.wallet -p yourpass --rpc-password test --bind-port 8071

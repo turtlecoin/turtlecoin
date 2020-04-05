@@ -65,14 +65,14 @@ export BOOST_ROOT=$TOOLCHAIN_DIR/boost_1_55_0
 
 # Check to see if we have OpenSSL ready in our toolchain, if
 # not we'll download and build it
-echo -n "Checking for OpenSSL 1.0.2r..."
+echo -n "Checking for OpenSSL 1.1.1f..."
 if [ ! -f $TOOLCHAIN_DIR/openssl/lib/libcrypto.a ]; then
   echo "Not found... Installing..."
-  wget https://www.openssl.org/source/openssl-1.0.2r.tar.gz
-  tar zxvf openssl-1.0.2r.tar.gz >/dev/null
-  cd openssl-1.0.2r
+  wget https://www.openssl.org/source/openssl-1.1.1f.tar.gz
+  tar zxvf openssl-1.1.1f.tar.gz >/dev/null
+  cd openssl-1.1.1f
   ./Configure linux-aarch64 --prefix=$TOOLCHAIN_DIR/openssl --openssldir=$TOOLCHAIN_DIR/openssl >/dev/null
-  echo -n "Building OpenSSL 1.0.2r... "
+  echo -n "Building OpenSSL 1.1.1f... "
   make PROCESSOR=ARM install >/dev/null
   echo "Complete"
 else

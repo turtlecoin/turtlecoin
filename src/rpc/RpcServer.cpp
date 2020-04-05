@@ -291,7 +291,12 @@ void RpcServer::middleware(
         return;
     }
 
-    if (syncRequired && !m_p2p->get_payload_object().isSynchronized())
+    const uint64_t height = m_core->getTopBlockIndex() + 1;
+    const uint64_t networkHeight = std::max(1u, m_syncManager->getBlockchainHeight());
+
+    const bool areSynced = m_p2p->get_payload_object().isSynchronized() && height >= networkHeight;
+
+    if (syncRequired && !areSynced)
     {
         failRequest(200, "Daemon must be synced to process this RPC method call, please retry when synced", res);
         return;

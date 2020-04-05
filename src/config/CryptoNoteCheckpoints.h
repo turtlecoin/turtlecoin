@@ -1,19 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Please see the included LICENSE file for more information.
 
 #pragma once
 
@@ -459,5 +447,44 @@ namespace CryptoNote
         {2130000, "e0f0424cd6b96cfa767d19796358503b04904ae6b78f94de7846d08482f08cd4"},
         {2135000, "d121725ee678d275bcdbfdde374fe3e0ca513a7ac96f5f5585a1d738058e9a79"},
         {2140000, "a80a527ba4afc6a4ba0425b63ab6285f59372d2288b1e8237b6b2cff4d7d8265"},
-        {2145000, "dedda18e76244fc34929468cebead414c966876739dbe71b9b8f739209eb4ffd"}};
+        {2145000, "dedda18e76244fc34929468cebead414c966876739dbe71b9b8f739209eb4ffd"},
+        {2150000, "f2c4331f68363c13ee35c75b8ade70cbee51cd5adc8854dc5410f334431917c8"},
+        {2155000, "60c136e86280173fd05f21730ca957c81bf7e5b52136d6f1fbb77fff74b4a5f6"},
+        {2160000, "d53dcd615cc8046f1631e714b0c3f08364657372df8a7aa8a535017a73e5b567"},
+        {2165000, "b57f37b59e945eb8bd74f160093424e6b5c77de23203b20233d39214e7a4812e"},
+        {2170000, "cceddae91d62555ed6c571dede194d510b97ebd501320d2e946338311089970b"},
+        {2175000, "d46c24754cbf939009edbf52d509a762533f056c787879446ca4fe7d772b0b5c"},
+        {2180000, "5d9b4c5d5496bd1c6a8f256d709edb84ac2e0bf1ae5dfea791c9a080fce60736"},
+        {2185000, "376e1e57abb0aa7211f3938fcefd3a3e6798b6f6025271b7616bbafc3d7bcf5b"},
+        {2190000, "44170d4b5a0cda48b2f4f20b746479401305e891cfbfb0e17ba38423ec7f7fe6"},
+        {2195000, "a45e55d381f13e53660c24849c7c1df728a308baf06d5537b1d6de5a45719995"},
+        {2200000, "699be016a3aec69722e57e80d8af96f9f891ede6b7797d7b24869b40c350d0c2"},
+        {2205000, "b9edff0fd1c36dc70bd437fe704f23f7b47045aedad126cd6136063507e9f88c"},
+        {2210000, "859d569b7168bec3050c9aba714c67090cd03ff0c4c22884b7842fa596bdc2f2"},
+        {2215000, "6cdc059fc7c38d42b639a744893258e70a5df2c14ce7a6c5446512f586b009a3"},
+        {2220000, "207ee7fe4afd09673e593f06142842f959f3c3a74ba835fad0632a4492547f56"},
+        {2225000, "56a98feba4716d9fd4e5ed2b46dbd8e50ead6f8548844c6ae8d347e02ea7ae4e"},
+        {2230000, "30e743955c668eae72a6f379616dadee858a6e6b69fdac2af3fd374c889a94de"},
+        {2235000, "40c2cf855c33de9be73eee429f6a920e8db9e48527056b950694d0337a57c70a"},
+        {2240000, "06c746a35eaee5278f7044fd38af9607bf2c364b17418094330a161e1d26d0f8"},
+        {2245000, "526b94cec81140d3ec9dbb470b921185294512478cd1f7ee1f0a2421434002be"},
+        {2250000, "881d725ce8cf5c5a476258c1f4e94cd5cae2267055f493e28b3ec8831644f9da"},
+        {2255000, "6c0e7f3d393b01aeea793cdd73c7643b2f2d27f0c23d903ef08657dc055dc0fc"},
+        {2260000, "5753886bca10f75952164bd681540717c293b48c888fd9c8b1e6d8afa6465984"},
+        {2265000, "4137cd2b8cbfed6b188157100795543fd444da755fb3fe9ba083f6061fc9c456"},
+        {2270000, "3db83d277c8fc0431647bf1c805e5ce2944b9440a47c4813efb0e0bb44ca1578"},
+        {2275000, "ffae2d4dc37767077510df2918da7ead481d2ab273a107512e8eee990e4b17f9"},
+        {2280000, "a7bd5383411e4a2977ff958a36d45e02241bf4b5de278afc106a8776f1f8d2c3"},
+        {2285000, "fd6fb28b25ba68d588031c705d9318babe64325de07d14f101b36dc777d5e024"},
+        {2290000, "927bce3f5094f174040bd3af49f0b5124a518a6bca47e015ca3e0bb2abd95ae6"},
+        {2295000, "40411abc0cbb9d7ef7f37ae01e0578923f02ca380662368e9a5817f01e0e6c88"},
+        {2300000, "44003c188db62f9734679549e1a65e628bf9bed9a568fc66affca65a4583a38f"},
+        {2305000, "554c9c68126959218dc28387aff4c70eb2119800b5c64a23a08144d0e9c61e47"},
+        {2310000, "3f23e8790601c2c69298bf8a8991b6cc7b0168318abff9e5ea4d3629f5c1aa03"},
+        {2315000, "ca584a7fa46fa2b14be35f0eb69e7f3df5f01337125557a1624e8075ad4811d5"},
+        {2320000, "b6223ae9127b86f5ffc149cf013f585e3603ae902096cc5f3cc26ed4679a2904"},
+        {2325000, "4c024ab3c34298c2bcb9263097ca7c96d7f4d5ae02c8780b0b7a9e742a54f81c"},
+        {2330000, "95787307d9ba580acca99e227d550900b7fa8a8aef8cc52bcce9f08683d0496e"},
+        {2335000, "fcbacf49930d3ac9adb5693dd0d99dfd687400517d209fb61d2f2cf52dcebf93"},
+        {2340000, "0b6098403f276a11180363be322a0409ff8f2d70703b1112e725575989ef89c1"}};
 } // namespace CryptoNote

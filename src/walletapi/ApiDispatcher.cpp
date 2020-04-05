@@ -239,6 +239,14 @@ ApiDispatcher::ApiDispatcher(
             "/transactions/hash/" + ApiConstants::hashRegex,
             router(&ApiDispatcher::getTransactionDetails, WalletMustBeOpen, viewWalletsAllowed))
 
+        .Get(
+            "/transactions/paymentid/" + ApiConstants::hashRegex,
+            router(&ApiDispatcher::getTransactionsByPaymentId, WalletMustBeOpen, viewWalletsAllowed))
+
+        .Get(
+            "/transactions/paymentid",
+            router(&ApiDispatcher::getTransactionsWithPaymentId, WalletMustBeOpen, viewWalletsAllowed))
+
         /* Get balance for the wallet */
         .Get("/balance", router(&ApiDispatcher::getBalance, WalletMustBeOpen, viewWalletsAllowed))
 
@@ -1552,6 +1560,56 @@ std::tuple<Error, uint16_t> ApiDispatcher::getTransactionDetails(
 
     /* Not found */
     return {SUCCESS, 404};
+}
+
+std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsByPaymentId(
+    const httplib::Request &req,
+    httplib::Response &res,
+    const nlohmann::json &body) const
+{
+    std::string paymentID = req.path.substr(std::string("/transactions/paymentid/").size());
+
+    std::vector<WalletTypes::Transaction> transactions;
+
+    for (const auto tx : m_walletBackend->getTransactions())
+    {
+        if (tx.paymentID == paymentID)
+        {
+            transactions.push_back(tx);
+        }
+    }
+
+    nlohmann::json j {{"transactions", transactions}};
+
+    publicKeysToAddresses(j);
+
+    res.set_content(j.dump(4) + "\n", "application/json");
+
+    return {SUCCESS, 200};
+}
+
+std::tuple<Error, uint16_t> ApiDispatcher::getTransactionsWithPaymentId(
+    const httplib::Request &req,
+    httplib::Response &res,
+    const nlohmann::json &body) const
+{
+    std::vector<WalletTypes::Transaction> transactions;
+
+    for (const auto tx : m_walletBackend->getTransactions())
+    {
+        if (tx.paymentID != "")
+        {
+            transactions.push_back(tx);
+        }
+    }
+
+    nlohmann::json j {{"transactions", transactions}};
+
+    publicKeysToAddresses(j);
+
+    res.set_content(j.dump(4) + "\n", "application/json");
+
+    return {SUCCESS, 200};
 }
 
 std::tuple<Error, uint16_t>

@@ -141,7 +141,7 @@ jobs:
   # Mac builds on Catalina VM
   macos_build:
     name: macOS
-    runs-on: macOS-latest
+    runs-on: macos-latest
     env:
       CC: /usr/local/opt/llvm@8/bin/clang
       CXX: /usr/local/opt/llvm@8/bin/clang++
@@ -153,6 +153,7 @@ jobs:
       # Fetch Dependencies
       - name: Dependencies
         run: |
+          brew uninstall llvm
           brew install --force boost llvm@8 ccache
           brew link --force llvm@8
           ln -s /usr/local/opt/llvm@8 /usr/local/opt/llvm
@@ -248,7 +249,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake -G "Visual Studio 16 2019" -A x64 .. -DARCH=default
+          cmake -G "Visual Studio 16 2019" -A x64 .. -DARCH=default -DBOOST_ROOT="$env:BOOST_ROOT_1_69_0"
 
       # Build for Windows
       - name: Build
@@ -256,7 +257,7 @@ jobs:
           $env:CLCACHE_DIR = "$env:GITHUB_WORKSPACE\clcache"
           $env:PATH = "$env:PATH;$env:MSBUILD_PATH"
           cd build
-          MSBuild TurtleCoin.sln /p:CLToolExe=clcache.exe /p:CLToolPath=c:\hostedtoolcache\windows\Python\3.6.8\x64\Scripts\ /p:Configuration=Release /m
+          MSBuild TurtleCoin.sln /p:CLToolExe=clcache.exe /p:CLToolPath=c:\hostedtoolcache\windows\Python\3.7.6\x64\Scripts\ /p:Configuration=Release /p:PlatformToolset=v141 /m
 
       # Test the crypto
       - name: Test Crypto
