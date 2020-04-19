@@ -28,7 +28,7 @@ namespace CryptoNote
 
         const uint64_t CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x3a40;
 
-        const uint32_t CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW = 20;
+        const uint32_t CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW = 40;
 
         const uint64_t CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT = 60 * 60 * 2;
 
