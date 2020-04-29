@@ -186,7 +186,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importWalletFro
     /* Check the filename is valid */
     if (Error error = checkNewWalletFilename(filename); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_WALLET_FILENAME, "The wallet filename is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     /* Convert the mnemonic into a private spend key */
@@ -194,7 +194,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importWalletFro
 
     if (mnemonicError)
     {
-        return {mnemonicError, nullptr};
+        return {Error(INVALID_MNEMONIC, std::string(strerror(errno))), nullptr};
     }
 
     Crypto::SecretKey privateViewKey;
@@ -204,7 +204,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importWalletFro
 
     if (Error error = validatePrivateKey(privateViewKey); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_PRIVATE_KEY, "The private key is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     /* Just defining here so it's more obvious what we're doing in the
@@ -247,17 +247,17 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importWalletFro
     /* Check the filename is valid */
     if (Error error = checkNewWalletFilename(filename); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_WALLET_FILENAME, "The wallet filename is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     if (Error error = validatePrivateKey(privateViewKey); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_PRIVATE_KEY, "The private view key is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     if (Error error = validatePrivateKey(privateSpendKey); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_PRIVATE_KEY, "The private spend key is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     /* Just defining here so it's more obvious what we're doing in the
@@ -300,19 +300,19 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::importViewWalle
     /* Check the filename is valid */
     if (Error error = checkNewWalletFilename(filename); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_WALLET_FILENAME, "The wallet filename is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     if (Error error = validatePrivateKey(privateViewKey); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_PRIVATE_KEY, "The private view key is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     const bool allowIntegratedAddresses = false;
 
     if (Error error = validateAddresses({address}, allowIntegratedAddresses); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(ADDRESS_IS_INTEGRATED, "The address is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     const std::shared_ptr<WalletBackend> wallet(new WalletBackend(
@@ -338,7 +338,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::createWallet(
     /* Check the filename is valid */
     if (Error error = checkNewWalletFilename(filename); error != SUCCESS)
     {
-        return {error, nullptr};
+        return {Error(INVALID_WALLET_FILENAME, "The wallet filename is not valid. Error: " + std::string(strerror(errno))), nullptr};
     }
 
     CryptoNote::KeyPair spendKey;
@@ -391,7 +391,8 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
     /* Check we successfully opened the file */
     if (!file)
     {
-        return {FILENAME_NON_EXISTENT, nullptr};
+        return {Error(INVALID_WALLET_FILENAME, "The filename you are attempting to open does not exist, or the wallet does not have permission to open it. Error: " 
+            + std::string(strerror(errno))), nullptr};
     }
 
     /* Read file into a buffer */
@@ -401,7 +402,22 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
        and remove it it does. If it doesn't, return an error. */
     Error error = hasMagicIdentifier(buffer, Constants::IS_A_WALLET_IDENTIFIER, NOT_A_WALLET_FILE, NOT_A_WALLET_FILE);
 
-    return {error, nullptr};
+    /* Not a WalletBackend wallet */
+    if (error)
+    {
+        /* See if it's a WalletGreen wallet, and upgrade if it is */
+        const bool isWalletGreenFile = tryUpgradeWalletFormat(filename, password, daemonHost, daemonPort);
+
+        if (isWalletGreenFile)
+        {
+            /* Then try and open again */
+            return openWallet(filename, password, daemonHost, daemonPort, daemonSSL, syncThreadCount);
+        }
+        else
+        {
+            return {Error(UNSUPPORTED_WALLET_FILE_FORMAT_VERSION, std::string(strerror(errno))), nullptr};
+        }
+    }
 
     using namespace CryptoPP;
 
@@ -469,7 +485,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
 
     if (error)
     {
-        return {error, nullptr};
+        return {Error(WRONG_PASSWORD, std::string(strerror(errno))), nullptr};
     }
 
     try
@@ -487,7 +503,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
 
         if (walletJson.Parse(decryptedData.c_str()).HasParseError())
         {
-            return {WALLET_FILE_CORRUPTED, nullptr};
+            return {Error(WALLET_FILE_CORRUPTED, "The wallet file has been corrupted. Error: " + std::string(strerror(errno))), nullptr};
         }
 
         /* Make our wallet object */
@@ -497,7 +513,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
            requires a move/copy constructor) */
         error = wallet->fromJSON(walletJson, filename, password, daemonHost, daemonPort, daemonSSL, syncThreadCount);
 
-        return {error, wallet};
+        return {Error(NOT_A_WALLET_FILE, std::string(strerror(errno))), wallet};
     }
     catch (const std::invalid_argument &e)
     {
@@ -644,7 +660,7 @@ std::tuple<Error, uint64_t, uint64_t> WalletBackend::getBalance(const std::strin
     /* Verify the address is good, and one of our subwallets */
     if (Error error = validateOurAddresses({address}, m_subWallets); error != SUCCESS)
     {
-        return {error, 0, 0};
+        return {Error(ADDRESS_NOT_VALID, std::string(strerror(errno))), 0, 0};
     }
 
     const bool takeFromAll = false;
@@ -706,7 +722,7 @@ std::tuple<Error, Crypto::Hash> WalletBackend::sendPreparedTransaction(
 
     if (it == m_preparedTransactions.end())
     {
-        return {PREPARED_TRANSACTION_NOT_FOUND, Crypto::Hash()};
+        return {Error(PREPARED_TRANSACTION_NOT_FOUND, + "Prepared Transaction not found. Error: " + std::string(strerror(errno))), Crypto::Hash()};
     }
 
     const auto preparedTransaction = it->second;
@@ -724,7 +740,7 @@ std::tuple<Error, Crypto::Hash> WalletBackend::sendPreparedTransaction(
         removePreparedTransaction(preparedTransaction.transactionHash);
     }
 
-    return {error, hash};
+    return {Error(PREPARED_TRANSACTION_NOT_FOUND, std::string(strerror(errno))), hash};
 }
 
 /* This is simply a wrapper for Transfer::sendTransactionBasic - we need to
@@ -955,7 +971,7 @@ Error WalletBackend::deleteSubWallet(const std::string address)
 
     if (Error error = validateAddresses({address}, allowIntegratedAddresses); error != SUCCESS)
     {
-        return error;
+        return Error(ADDRESS_IS_INTEGRATED, std::string(strerror(errno)));
     }
 
     return m_syncRAIIWrapper->pauseSynchronizerToRunFunction(
@@ -1026,7 +1042,7 @@ std::tuple<Error, Crypto::PublicKey, Crypto::SecretKey, uint64_t> WalletBackend:
 
     if (Error error = validateAddresses({address}, allowIntegratedAddresses); error != SUCCESS)
     {
-        return {error, Crypto::PublicKey(), Crypto::SecretKey(), 0};
+        return {Error(ADDRESS_IS_INTEGRATED, std::string(strerror(errno))), Crypto::PublicKey(), Crypto::SecretKey(), 0};
     }
 
     const auto [publicSpendKey, publicViewKey] = Utilities::addressToKeys(address);
