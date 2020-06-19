@@ -61,7 +61,9 @@ const std::string CN_TURTLE_LITE_SLOW_HASH_V1 = "ae7f864a7a2f2b07dcef253581e60a0
 
 const std::string CN_TURTLE_LITE_SLOW_HASH_V2 = "b2172ec9466e1aee70ec8572a14c233ee354582bcb93f869d429744de5726a26";
 
-const std::string CHUKWA = "c0dad0eeb9c52e92a1c3aa5b76a3cb90bd7376c28dce191ceeb1096e3a390d2e";
+const std::string CHUKWA_V1 = "c0dad0eeb9c52e92a1c3aa5b76a3cb90bd7376c28dce191ceeb1096e3a390d2e";
+
+const std::string CHUKWA_V2 = "3578c135261366a7bac407b8c0ff50f3ad96f096ec2813e9644e6e77a43f803d";
 
 const std::string CN_SOFT_SHELL_V0[] = {"5e1891a15d5d85c09baf4a3bbe33675cfa3f77229c8ad66c01779e590528d6d3",
                                         "e1239347694df77cab780b7ec8920ec6f7e48ecef1d8c368e06708c08e1455f1",
@@ -695,7 +697,8 @@ int main(int argc, char **argv)
 
         std::cout << std::endl;
 
-        TEST_HASH_FUNCTION(chukwa_slow_hash, CHUKWA);
+        TEST_HASH_FUNCTION(chukwa_slow_hash_v1, CHUKWA_V1);
+        TEST_HASH_FUNCTION(chukwa_slow_hash_v2, CHUKWA_V2);
 
         std::cout << std::endl;
 
@@ -749,7 +752,8 @@ int main(int argc, char **argv)
             BENCHMARK(cn_turtle_lite_slow_hash_v1, o_iterations_long);
             BENCHMARK(cn_turtle_lite_slow_hash_v2, o_iterations_long);
 
-            BENCHMARK(chukwa_slow_hash, o_iterations_long);
+            BENCHMARK(chukwa_slow_hash_v1, o_iterations_long);
+            BENCHMARK(chukwa_slow_hash_v2, o_iterations_long);
         }
     }
     catch (std::exception &e)

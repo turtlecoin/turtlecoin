@@ -455,7 +455,7 @@ namespace CryptoNote
     void serializeBlockHeader(BlockHeader &header, ISerializer &serializer)
     {
         serializer(header.majorVersion, "major_version");
-        if (header.majorVersion > BLOCK_MAJOR_VERSION_6)
+        if (header.majorVersion > BLOCK_MAJOR_VERSION_7)
         {
             throw std::runtime_error("Wrong major version");
         }
