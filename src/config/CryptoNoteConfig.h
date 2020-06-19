@@ -242,9 +242,11 @@ namespace CryptoNote
 
         const uint32_t UPGRADE_HEIGHT_V5 = 1200000; // Upgrade height for CN-Turtle Variant 2 switch.
 
-        const uint32_t UPGRADE_HEIGHT_V6 = 1800000; // Upgrade height for Chukwa switch.
+        const uint32_t UPGRADE_HEIGHT_V6 = 1800000; // Upgrade height for Chukwa v1 switch.
 
-        const uint32_t UPGRADE_HEIGHT_CURRENT = UPGRADE_HEIGHT_V6;
+        const uint32_t UPGRADE_HEIGHT_V7 = 3000000; // Upgrade height for Chukwa v2 switch
+
+        const uint32_t UPGRADE_HEIGHT_CURRENT = UPGRADE_HEIGHT_V7;
 
         const unsigned UPGRADE_VOTING_THRESHOLD = 90; // percent
         const uint32_t UPGRADE_VOTING_WINDOW = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY; // blocks
@@ -317,6 +319,7 @@ namespace CryptoNote
     const uint8_t BLOCK_MAJOR_VERSION_4 = 4; /* UPGRADE_HEIGHT_V4 */
     const uint8_t BLOCK_MAJOR_VERSION_5 = 5; /* UPGRADE_HEIGHT_V5 */
     const uint8_t BLOCK_MAJOR_VERSION_6 = 6; /* UPGRADE_HEIGHT_V6 */
+    const uint8_t BLOCK_MAJOR_VERSION_7 = 7; /* UPGRADE_HEIGHT_V7 */
 
     const uint8_t BLOCK_MINOR_VERSION_0 = 0;
 
@@ -329,7 +332,8 @@ namespace CryptoNote
             {BLOCK_MAJOR_VERSION_3, Crypto::cn_slow_hash_v0}, /* UPGRADE_HEIGHT_V3 */
             {BLOCK_MAJOR_VERSION_4, Crypto::cn_lite_slow_hash_v1}, /* UPGRADE_HEIGHT_V4 */
             {BLOCK_MAJOR_VERSION_5, Crypto::cn_turtle_lite_slow_hash_v2}, /* UPGRADE_HEIGHT_V5 */
-            {BLOCK_MAJOR_VERSION_6, Crypto::chukwa_slow_hash} /* UPGRADE_HEIGHT_V6 */
+            {BLOCK_MAJOR_VERSION_6, Crypto::chukwa_slow_hash_v1}, /* UPGRADE_HEIGHT_V6 */
+            {BLOCK_MAJOR_VERSION_7, Crypto::chukwa_slow_hash_v2} /* UPGRADE_HEIGHT_V7 */
     };
 
     const size_t BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT = 10000; // by default, blocks ids count in synchronizing
