@@ -29,7 +29,6 @@
 #include <logger/Logger.h>
 #include <logging/LoggerManager.h>
 #include <mnemonics/Mnemonics.h>
-#include <noderpcproxy/NodeRpcProxy.h>
 #include <utilities/Addresses.h>
 #include <utilities/Utilities.h>
 #include <walletbackend/Constants.h>
@@ -377,67 +376,6 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::createWallet(
     return {error, wallet};
 }
 
-bool WalletBackend::tryUpgradeWalletFormat(
-    const std::string filename,
-    const std::string password,
-    const std::string daemonHost,
-    const uint16_t daemonPort)
-{
-    try
-    {
-        const auto logManager = std::make_shared<Logging::LoggerManager>();
-
-        /* Currency contains our coin parameters, such as decimal places, supply */
-        const CryptoNote::Currency currency = CryptoNote::CurrencyBuilder(logManager).currency();
-
-        System::Dispatcher localDispatcher;
-        System::Dispatcher *dispatcher = &localDispatcher;
-
-        /* Our connection to turtlecoind */
-        std::unique_ptr<CryptoNote::INode> node(new CryptoNote::NodeRpcProxy(daemonHost, daemonPort, 10, logManager));
-
-        /* Save the old wallet to the backup file via simple file copy operation */
-        std::error_code backupError;
-
-        fs::path filepath = filename;
-        fs::path backupFilepath = filepath.parent_path() / "old-version-backup-" += filepath.filename();
-
-        fs::copy(filename, backupFilepath, fs::copy_options::overwrite_existing, backupError);
-
-        /* If we could not backup the file then instantly fail for safety sake */
-        if (backupError)
-        {
-            return false;
-        }
-
-        CryptoNote::WalletGreen wallet(*dispatcher, currency, *node, logManager);
-
-        /* Attempt to open the specified file as a wallet */
-        wallet.load(filename, password);
-
-        /* Cool, it worked. Upgrade to the new format. */
-        const std::string json = wallet.toNewFormatJSON();
-
-        /* We have to close the wallet before we can overwrite it */
-        wallet.shutdown();
-
-        /* Save to disk with the new format. */
-        Error error = saveWalletJSONToDisk(json, filename, password);
-
-        if (error)
-        {
-            return false;
-        }
-
-        return true;
-    }
-    /* Not a WalletGreen format. */
-    catch (const std::system_error &)
-    {
-        return false;
-    }
-}
-
 /* Opens a wallet already on disk with the given filename + password */
 std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
     const std::string filename,
@@ -463,22 +401,7 @@ std::tuple<Error, std::shared_ptr<WalletBackend>> WalletBackend::openWallet(
        and remove it it does. If it doesn't, return an error. */
     Error error = hasMagicIdentifier(buffer, Constants::IS_A_WALLET_IDENTIFIER, NOT_A_WALLET_FILE, NOT_A_WALLET_FILE);
 
-    /* Not a WalletBackend wallet */
-    if (error)
-    {
-        /* See if it's a WalletGreen wallet, and upgrade if it is */
-        const bool isWalletGreenFile = tryUpgradeWalletFormat(filename, password, daemonHost, daemonPort);
-
-        if (isWalletGreenFile)
-        {
-            /* Then try and open again */
-            return openWallet(filename, password, daemonHost, daemonPort, daemonSSL, syncThreadCount);
-        }
-        else
-        {
-            return {error, nullptr};
-        }
-    }
+    return {error, nullptr};
 
     using namespace CryptoPP;
 
