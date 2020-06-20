@@ -45,12 +45,19 @@
 #error The CryptoNight Soft Shell Parameters you supplied will exceed normal paging operations.
 #endif
 
-// Chukwa Definitions
+// Chukwa Common Definitions
 #define CHUKWA_HASHLEN 32 // The length of the resulting hash in bytes
 #define CHUKWA_SALTLEN 16 // The length of our salt in bytes
-#define CHUKWA_THREADS 1 // How many threads to use at once
-#define CHUKWA_ITERS 3 // How many iterations we perform as part of our slow-hash
-#define CHUKWA_MEMORY 512 // This value is in KiB (0.5MB)
+
+// Chukwa v1 Definitions
+#define CHUKWA_THREADS_V1 1 // How many threads to use at once
+#define CHUKWA_ITERS_V1 3 // How many iterations we perform as part of our slow-hash
+#define CHUKWA_MEMORY_V1 512 // This value is in KiB (0.5MB)
+
+// Chukwa v2 Definitions
+#define CHUKWA_THREADS_V2 1 // How many threads to use at once
+#define CHUKWA_ITERS_V2 4 // How many iterations we perform as part of our slow-hash
+#define CHUKWA_MEMORY_V2 1024 // This value is in KiB (1.00MB)
 
 namespace Crypto
 {
@@ -363,7 +370,13 @@ namespace Crypto
         cn_slow_hash(data, length, reinterpret_cast<char *>(&hash), 1, 2, 0, pagesize, scratchpad, iterations);
     }
 
-    inline void chukwa_slow_hash(const void *data, size_t length, Hash &hash)
+    inline void chukwa_slow_hash_base(
+        const void *data,
+        size_t length,
+        Hash &hash,
+        const size_t iterations,
+        const size_t memory,
+        const size_t threads)
     {
         uint8_t salt[CHUKWA_SALTLEN];
         memcpy(salt, data, sizeof(salt));
@@ -381,7 +394,17 @@ namespace Crypto
         }
 
         argon2id_hash_raw(
-            CHUKWA_ITERS, CHUKWA_MEMORY, CHUKWA_THREADS, data, length, salt, CHUKWA_SALTLEN, hash.data, CHUKWA_HASHLEN);
+            iterations, memory, threads, data, length, salt, CHUKWA_SALTLEN, hash.data, CHUKWA_HASHLEN);
+    }
+
+    inline void chukwa_slow_hash_v1(const void *data, size_t length, Hash &hash)
+    {
+        chukwa_slow_hash_base(data, length, hash, CHUKWA_ITERS_V1, CHUKWA_MEMORY_V1, CHUKWA_THREADS_V1);
+    }
+
+    inline void chukwa_slow_hash_v2(const void *data, size_t length, Hash &hash)
+    {
+        chukwa_slow_hash_base(data, length, hash, CHUKWA_ITERS_V2, CHUKWA_MEMORY_V2, CHUKWA_THREADS_V2);
     }
 
     inline void tree_hash(const Hash *hashes, size_t count, Hash &root_hash)
