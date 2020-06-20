@@ -90,7 +90,7 @@ jobs:
           cmake -DARCH=default -DCMAKE_BUILD_TYPE=Release -DSTATIC=true ..
           make -j2
           cd src
-          TARGETS="TurtleCoind miner zedwallet turtle-service cryptotest wallet-api wallet-upgrader"
+          TARGETS="TurtleCoind miner zedwallet cryptotest wallet-api wallet-upgrader"
           ${STRIP} ${TARGETS}
 
       # Test the crypto
@@ -108,7 +108,7 @@ jobs:
         run: |
           if [[ "${TAG:5:4}" == "tags" ]]; then export TAG=${TAG:10}; else export TAG=${COMMIT_SHA}; fi
           cd build/src
-          TARGETS="TurtleCoind miner zedwallet turtle-service cryptotest wallet-api wallet-upgrader"
+          TARGETS="TurtleCoind miner zedwallet cryptotest wallet-api wallet-upgrader"
           if [[ "${LABEL}" != "aarch64" ]]; then strip ${TARGETS}; fi
           rm -rf turtlecoin-${TAG}
           mkdir turtlecoin-${TAG}
@@ -191,7 +191,7 @@ jobs:
         run: |
           if [[ "${TAG:5:4}" == "tags" ]]; then export TAG=${TAG:10}; else export TAG=${COMMIT_SHA}; fi
           cd build/src
-          TARGETS="TurtleCoind miner zedwallet turtle-service cryptotest wallet-api wallet-upgrader"
+          TARGETS="TurtleCoind miner zedwallet cryptotest wallet-api wallet-upgrader"
           strip ${TARGETS}
           rm -rf turtlecoin-${TAG}
           mkdir turtlecoin-${TAG}
