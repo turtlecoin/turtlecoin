@@ -1,6 +1,6 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2018, The Karai Developers
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 // Copyright (c) 2019, The CyprusCoin Developers
 //
 // Please see the included LICENSE file for more information.
@@ -20,8 +20,8 @@
 #include "cryptonotecore/Currency.h"
 #include "cryptonotecore/DatabaseBlockchainCache.h"
 #include "cryptonotecore/DatabaseBlockchainCacheFactory.h"
-#include "cryptonotecore/MainChainStorage.h"
 #include "cryptonotecore/LevelDBWrapper.h"
+#include "cryptonotecore/MainChainStorage.h"
 #include "cryptonotecore/RocksDBWrapper.h"
 #include "cryptonoteprotocol/CryptoNoteProtocolHandler.h"
 #include "p2p/NetNode.h"
@@ -33,8 +33,8 @@
 #include <common/FileSystemShim.h>
 #include <config/CliHeader.h>
 #include <config/CryptoNoteCheckpoints.h>
-#include <logging/LoggerManager.h>
 #include <logger/Logger.h>
+#include <logging/LoggerManager.h>
 
 #if defined(WIN32)
 
@@ -243,10 +243,10 @@ int main(int argc, char *argv[])
 
         /* New logger, for now just passing through messages to old logger */
         Logger::logger.setLogCallback([&logger](
-                const std::string prettyMessage,
-                const std::string message,
-                const Logger::LogLevel level,
-                const std::vector<Logger::LogCategory> categories) {
+                                          const std::string prettyMessage,
+                                          const std::string message,
+                                          const Logger::LogLevel level,
+                                          const std::vector<Logger::LogCategory> categories) {
             Logging::Level oldLogLevel;
             std::string logColour;
 
@@ -306,8 +306,7 @@ int main(int argc, char *argv[])
             config.dbWriteBufferSizeMB,
             config.dbReadCacheSizeMB,
             config.dbMaxFileSizeMB,
-            config.enableDbCompression
-        );
+            config.enableDbCompression);
 
         /* If we were told to rewind the blockchain to a certain height
            we will remove blocks until we're back at the height specified */
@@ -315,7 +314,8 @@ int main(int argc, char *argv[])
         {
             logger(INFO) << "Rewinding blockchain to: " << config.rewindToHeight << std::endl;
 
-            std::unique_ptr<IMainChainStorage> mainChainStorage = createSwappedMainChainStorage(config.dataDirectory, currency);
+            std::unique_ptr<IMainChainStorage> mainChainStorage =
+                createSwappedMainChainStorage(config.dataDirectory, currency);
 
             mainChainStorage->rewindTo(config.rewindToHeight);
 
@@ -393,7 +393,8 @@ int main(int argc, char *argv[])
         System::Dispatcher dispatcher;
         logger(INFO) << "Initializing core...";
 
-        std::unique_ptr<IMainChainStorage> tmainChainStorage = createSwappedMainChainStorage(config.dataDirectory, currency);
+        std::unique_ptr<IMainChainStorage> tmainChainStorage =
+            createSwappedMainChainStorage(config.dataDirectory, currency);
 
         const auto ccore = std::make_shared<CryptoNote::Core>(
             currency,
@@ -402,34 +403,20 @@ int main(int argc, char *argv[])
             dispatcher,
             std::unique_ptr<IBlockchainCacheFactory>(new DatabaseBlockchainCacheFactory(*database, logger.getLogger())),
             std::move(tmainChainStorage),
-            config.transactionValidationThreads
-        );
+            config.transactionValidationThreads);
 
         ccore->load();
 
         logger(INFO) << "Core initialized OK";
 
-        const auto cprotocol = std::make_shared<CryptoNote::CryptoNoteProtocolHandler>(
-            currency,
-            dispatcher,
-            *ccore,
-            nullptr,
-            logManager
-        );
+        const auto cprotocol =
+            std::make_shared<CryptoNote::CryptoNoteProtocolHandler>(currency, dispatcher, *ccore, nullptr, logManager);
 
-        const auto p2psrv = std::make_shared<CryptoNote::NodeServer>(
-            dispatcher,
-            *cprotocol,
-            logManager
-        );
+        const auto p2psrv = std::make_shared<CryptoNote::NodeServer>(dispatcher, *cprotocol, logManager);
 
         RpcMode rpcMode = RpcMode::Default;
 
-        if (config.enableBlockExplorerDetailed)
-        {
-            rpcMode = RpcMode::AllMethodsEnabled;
-        }
-        else if (config.enableBlockExplorer)
+        if (config.enableBlockExplorer)
         {
             rpcMode = RpcMode::BlockExplorerEnabled;
         }
@@ -443,8 +430,7 @@ int main(int argc, char *argv[])
             rpcMode,
             ccore,
             p2psrv,
-            cprotocol
-        );
+            cprotocol);
 
         cprotocol->set_p2p_endpoint(&(*p2psrv));
         logger(INFO) << "Initializing p2p server...";

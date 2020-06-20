@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -37,4 +37,7 @@ class BlockchainMonitor
     std::optional<Crypto::Hash> requestLastBlockHash();
 
     std::shared_ptr<httplib::Client> m_httpClient = nullptr;
+
+    /* Stores the HTTP headers included in all Nigel requests */
+    httplib::Headers m_requestHeaders;
 };

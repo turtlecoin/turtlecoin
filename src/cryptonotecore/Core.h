@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -177,7 +177,7 @@ namespace CryptoNote
         virtual bool getPoolChangesLite(
             const Crypto::Hash &lastBlockHash,
             const std::vector<Crypto::Hash> &knownHashes,
-            std::vector<TransactionPrefixInfo> &addedTransactions,
+            std::vector<Transaction> &addedTransactions,
             std::vector<Crypto::Hash> &deletedTransactions) const override;
 
         virtual std::tuple<bool, std::string> getBlockTemplate(
@@ -223,6 +223,10 @@ namespace CryptoNote
         static WalletTypes::RawCoinbaseTransaction getRawCoinbaseTransaction(const CryptoNote::Transaction &t);
 
         static WalletTypes::RawTransaction getRawTransaction(const std::vector<uint8_t> &rawTX);
+
+        CryptoNote::RawBlock getRawBlock(uint32_t blockIndex) const;
+
+        CryptoNote::RawBlock getRawBlock(const Crypto::Hash &blockHash) const;
 
       private:
         const Currency &currency;
@@ -385,8 +389,7 @@ namespace CryptoNote
 
         void copyTransactionsToPool(IBlockchainCache *alt);
 
-        void checkAndRemoveInvalidPoolTransactions(
-            const TransactionValidatorState blockTransactionsState);
+        void checkAndRemoveInvalidPoolTransactions(const TransactionValidatorState blockTransactionsState);
 
         bool isTransactionInChain(const Crypto::Hash &txnHash);
 

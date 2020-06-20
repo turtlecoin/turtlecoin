@@ -36,17 +36,40 @@ template<typename T> const rapidjson::Value &getJsonValue(const T &j, const std:
     return val->value;
 }
 
+template<typename T> uint32_t getUintFromJSON(const T &j)
+{
+    if (!j.IsUint())
+    {
+        throw std::invalid_argument(
+            "JSON parameter is wrong type. Expected uint64_t, got " + kTypeNames[j.GetType()]);
+    }
+
+    return j.GetUint();
+}
+
+template<typename T> uint32_t getUintFromJSON(const T &j, const std::string &key)
+{
+    auto &val = getJsonValue(j, key);
+
+    return getUintFromJSON(val);
+}
+
+template<typename T> uint64_t getUint64FromJSON(const T &j)
+{
+    if (!j.IsUint64())
+    {
+        throw std::invalid_argument(
+            "JSON parameter is wrong type. Expected uint64_t, got " + kTypeNames[j.GetType()]);
+    }
+
+    return j.GetUint64();
+}
+
 template<typename T> uint64_t getUint64FromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);
 
-    if (!val.IsUint64())
-    {
-        throw std::invalid_argument(
-            "JSON parameter is wrong type. Expected uint64_t, got " + kTypeNames[val.GetType()]);
-    }
-
-    return val.GetUint64();
+    return getUint64FromJSON(val);
 }
 
 template<typename T> uint64_t getInt64FromJSON(const T &j, const std::string &key)
@@ -62,25 +85,9 @@ template<typename T> uint64_t getInt64FromJSON(const T &j, const std::string &ke
 }
 
 /**
- * Gets a string from the JSON, with a given keyname
+ * Gets a string from the JSON, with or without a given keyname
  */
-template<typename T> std::string getStringFromJSON(const T &j, const std::string &key)
-{
-    auto &val = getJsonValue(j, key);
-
-    if (!val.IsString())
-    {
-        throw std::invalid_argument("JSON parameter is wrong type. Expected String, got " + kTypeNames[val.GetType()]);
-    }
-
-    return val.GetString();
-}
-
-/**
- * Gets a string from the JSON, without a key. For example, we might have an
- * array of strings.
- */
-template<typename T> std::string getStringFromJSONString(const T &j)
+template<typename T> std::string getStringFromJSON(const T &j)
 {
     if (!j.IsString())
     {
@@ -90,38 +97,71 @@ template<typename T> std::string getStringFromJSONString(const T &j)
     return j.GetString();
 }
 
+template<typename T> std::string getStringFromJSON(const T &j, const std::string &key)
+{
+    auto &val = getJsonValue(j, key);
+
+    return getStringFromJSON(val);
+}
+
+/**
+ * Gets an Array from JSON, with or without a given keyname
+ */
+template<typename T> auto getArrayFromJSON(const T &j)
+{
+    if (!j.IsArray())
+    {
+        throw std::invalid_argument("JSON parameter is wrong type. Expected Array, got " + kTypeNames[j.GetType()]);
+    }
+
+    return j.GetArray();
+}
+
 template<typename T> auto getArrayFromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);
 
-    if (!val.IsArray())
-    {
-        throw std::invalid_argument("JSON parameter is wrong type. Expected Array, got " + kTypeNames[val.GetType()]);
-    }
+    return getArrayFromJSON(val);
 
     return val.GetArray();
+}
+
+/**
+ * Gets a JSONObject from JSON, with our without a given keyname
+ */
+template<typename T> JSONObject getObjectFromJSON(const T &j)
+{
+    if (!j.IsObject())
+    {
+        throw std::invalid_argument("JSON parameter is wrong type. Expected Object, got " + kTypeNames[j.GetType()]);
+    }
+
+    return j.Get_Object();
 }
 
 template<typename T> JSONObject getObjectFromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);
 
-    if (!val.IsObject())
+    return getObjectFromJSON(val);
+}
+
+/**
+ * Gets a boolean from JSON, with our without a given keyname
+ */
+template<typename T> bool getBoolFromJSON(const T &j)
+{
+    if (!j.IsBool())
     {
-        throw std::invalid_argument("JSON parameter is wrong type. Expected Object, got " + kTypeNames[val.GetType()]);
+        throw std::invalid_argument("JSON parameter is wrong type. Expected Bool, got " + kTypeNames[j.GetType()]);
     }
 
-    return val.Get_Object();
+    return j.GetBool();
 }
 
 template<typename T> bool getBoolFromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);
 
-    if (!val.IsBool())
-    {
-        throw std::invalid_argument("JSON parameter is wrong type. Expected Bool, got " + kTypeNames[val.GetType()]);
-    }
-
-    return val.GetBool();
+    return getBoolFromJSON(val);
 }

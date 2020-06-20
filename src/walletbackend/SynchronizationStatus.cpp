@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -59,14 +59,18 @@ void SynchronizationStatus::fromJSON(const JSONObject &j)
     for (const auto &x : getArrayFromJSON(j, "blockHashCheckpoints"))
     {
         Crypto::Hash h;
-        h.fromString(getStringFromJSONString(x));
+
+        h.fromJSON(x);
+
         m_blockHashCheckpoints.push_back(h);
     }
 
     for (const auto &x : getArrayFromJSON(j, "lastKnownBlockHashes"))
     {
         Crypto::Hash h;
-        h.fromString(getStringFromJSONString(x));
+
+        h.fromJSON(x);
+
         m_lastKnownBlockHashes.push_back(h);
     }
 

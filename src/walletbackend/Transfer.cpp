@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -846,7 +846,7 @@ namespace SendTransaction
         return destinations;
     }
 
-    std::tuple<Error, std::vector<CryptoNote::RandomOuts>> getRingParticipants(
+    std::tuple<Error, std::vector<WalletTypes::RandomOuts>> getRingParticipants(
         const uint64_t mixin,
         const std::shared_ptr<Nigel> daemon,
         const std::vector<WalletTypes::TxInputAndOwner> sources)
@@ -895,13 +895,13 @@ namespace SendTransaction
             /* Check we have at least mixin outputs for each fake out. We *may* need
                mixin+1 outs for some, in case our real output gets included. This is
                unlikely though, and so we will error out down the line instead of here. */
-            if (it->outs.size() < mixin)
+            if (it->outputs.size() < mixin)
             {
                 std::stringstream error;
 
                 error << "Failed to get enough matching outputs for amount " << amount << " ("
                       << Utilities::formatAmount(amount) << "). Requested outputs: " << requestedOuts
-                      << ", found outputs: " << it->outs.size() << ". Further explanation here: "
+                      << ", found outputs: " << it->outputs.size() << ". Further explanation here: "
                       << "https://gist.github.com/zpalmtree/80b3e80463225bcfb8f8432043cb594c";
 
                 return {Error(NOT_ENOUGH_FAKE_OUTPUTS, error.str()), fakeOuts};
@@ -923,13 +923,13 @@ namespace SendTransaction
                We could just check here instead of checking above, but then we
                might hit the length message first. Checking this way gives more
                informative errors. */
-            if (fakeOut.outs.size() < mixin)
+            if (fakeOut.outputs.size() < mixin)
             {
                 std::stringstream error;
 
                 error << "Failed to get enough matching outputs for amount " << fakeOut.amount << " ("
                       << Utilities::formatAmount(fakeOut.amount) << "). Requested outputs: " << requestedOuts
-                      << ", found outputs: " << fakeOut.outs.size() << ". Further explanation here: "
+                      << ", found outputs: " << fakeOut.outputs.size() << ". Further explanation here: "
                       << "https://gist.github.com/zpalmtree/80b3e80463225bcfb8f8432043cb594c";
 
                 return {Error(NOT_ENOUGH_FAKE_OUTPUTS, error.str()), fakeOuts};
@@ -937,8 +937,8 @@ namespace SendTransaction
 
             /* Sort the fake outputs by their indexes (don't want there to be an
                easy way to determine which output is the real one) */
-            std::sort(fakeOut.outs.begin(), fakeOut.outs.end(), [](const auto &lhs, const auto &rhs) {
-                return lhs.global_amount_index < rhs.global_amount_index;
+            std::sort(fakeOut.outputs.begin(), fakeOut.outputs.end(), [](const auto &lhs, const auto &rhs) {
+                return lhs.index < rhs.index;
             });
         }
 
@@ -994,16 +994,16 @@ namespace SendTransaction
             if (mixin != 0)
             {
                 /* Add the fake outputs to the transaction */
-                for (const auto fakeOut : fakeOuts[i].outs)
+                for (const auto fakeOut : fakeOuts[i].outputs)
                 {
                     /* This fake output is our output! Skip. */
-                    if (walletAmount.input.globalOutputIndex == fakeOut.global_amount_index)
+                    if (walletAmount.input.globalOutputIndex == fakeOut.index)
                     {
                         continue;
                     }
 
                     /* Add the fake output */
-                    obscuredInput.outputs.push_back({fakeOut.global_amount_index, fakeOut.out_key});
+                    obscuredInput.outputs.push_back({fakeOut.index, fakeOut.key});
 
                     /* Found enough fake outputs, we're done */
                     if (obscuredInput.outputs.size() >= mixin)

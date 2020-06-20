@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018-2019, The Galaxia Project Developers
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -1268,15 +1268,15 @@ namespace CryptoNote
         for (const auto &transaction : transactions)
         {
             uint64_t fee = 0;
-            auto transactionValidationResult =
-                validateTransaction(transaction, validatorState, cache, m_transactionValidationThreadPool, fee, previousBlockIndex, false);
+            auto transactionValidationResult = validateTransaction(
+                transaction, validatorState, cache, m_transactionValidationThreadPool, fee, previousBlockIndex, false);
 
             if (transactionValidationResult)
             {
                 const auto hash = transaction.getTransactionHash();
 
-                logger(Logging::DEBUGGING) << "Failed to validate transaction " << hash
-                                           << ": " << transactionValidationResult.message();
+                logger(Logging::DEBUGGING)
+                    << "Failed to validate transaction " << hash << ": " << transactionValidationResult.message();
 
                 if (transactionPool->checkIfTransactionPresent(hash))
                 {
@@ -1492,8 +1492,7 @@ namespace CryptoNote
        in the pool, there are only a subset of normal transaction validation
        tests that need to be completed to determine if the transaction can
        stay in the pool at this time. */
-    void Core::checkAndRemoveInvalidPoolTransactions(
-        const TransactionValidatorState blockTransactionsState)
+    void Core::checkAndRemoveInvalidPoolTransactions(const TransactionValidatorState blockTransactionsState)
     {
         auto &pool = *transactionPool;
 
@@ -1543,7 +1542,8 @@ namespace CryptoNote
             if (!isValid)
             {
                 pool.removeTransaction(poolTxHash);
-                notifyObservers(makeDelTransactionMessage({poolTxHash}, Messages::DeleteTransaction::Reason::NotActual));
+                notifyObservers(
+                    makeDelTransactionMessage({poolTxHash}, Messages::DeleteTransaction::Reason::NotActual));
             }
         }
     }
@@ -1874,8 +1874,14 @@ namespace CryptoNote
 
         uint64_t fee;
 
-        if (auto validationResult =
-                validateTransaction(cachedTransaction, validatorState, chainsLeaves[0], m_transactionValidationThreadPool, fee, getTopBlockIndex(), true))
+        if (auto validationResult = validateTransaction(
+                cachedTransaction,
+                validatorState,
+                chainsLeaves[0],
+                m_transactionValidationThreadPool,
+                fee,
+                getTopBlockIndex(),
+                true))
         {
             logger(Logging::DEBUGGING) << "Transaction " << transactionHash
                                        << " is not valid. Reason: " << validationResult.message();
@@ -1927,7 +1933,7 @@ namespace CryptoNote
     bool Core::getPoolChangesLite(
         const Crypto::Hash &lastBlockHash,
         const std::vector<Crypto::Hash> &knownHashes,
-        std::vector<TransactionPrefixInfo> &addedTransactions,
+        std::vector<Transaction> &addedTransactions,
         std::vector<Crypto::Hash> &deletedTransactions) const
     {
         throwIfNotInitialized();
@@ -1938,11 +1944,9 @@ namespace CryptoNote
         addedTransactions.reserve(newTransactions.size());
         for (const auto &hash : newTransactions)
         {
-            TransactionPrefixInfo transactionPrefixInfo;
-            transactionPrefixInfo.txHash = hash;
-            transactionPrefixInfo.txPrefix =
-                static_cast<const TransactionPrefix &>(transactionPool->getTransaction(hash).getTransaction());
-            addedTransactions.emplace_back(std::move(transactionPrefixInfo));
+            const auto tx = transactionPool->getTransaction(hash).getTransaction();
+
+            addedTransactions.emplace_back(std::move(tx));
         }
 
         return getTopBlockHash() == lastBlockHash;
@@ -2071,10 +2075,9 @@ namespace CryptoNote
         fillBlockTemplate(b, medianSize, currency.maxBlockCumulativeSize(height), height, transactionsSize, fee);
 
         /*
-           two-phase miner transaction generation: we don't know exact block size until we prepare block, but we don't know
-           reward until we know
-           block size, so first miner transaction generated with fake amount of money, and with phase we know think we know
-           expected block size
+           two-phase miner transaction generation: we don't know exact block size until we prepare block, but we don't
+           know reward until we know block size, so first miner transaction generated with fake amount of money, and
+           with phase we know think we know expected block size
         */
         // make blocks coin-base tx looks close to real coinbase tx to get truthful blob size
         bool r = currency.constructMinerTx(
@@ -2146,7 +2149,8 @@ namespace CryptoNote
 
                         stream << "unexpected case: cumulative_size=" << cumulativeSize
                                << " + 1 is not equal txs_cumulative_size=" << transactionsSize
-                               << " + get_object_blobsize(b.baseTransaction)=" << getObjectBinarySize(b.baseTransaction);
+                               << " + get_object_blobsize(b.baseTransaction)="
+                               << getObjectBinarySize(b.baseTransaction);
 
                         std::string error = stream.str();
 
@@ -2287,8 +2291,7 @@ namespace CryptoNote
             threadPool,
             blockIndex,
             blockMedianSize,
-            isPoolTransaction
-        );
+            isPoolTransaction);
 
         const auto result = txValidator.validate();
 
@@ -2396,7 +2399,8 @@ namespace CryptoNote
             return error::TransactionValidationError::BASE_INVALID_SIGNATURES_COUNT;
         }
 
-        const bool verifyCoinbaseOutputRecipient = previousBlockIndex + 1 >= CryptoNote::parameters::COINBASE_TRANSACTION_OUTPUT_CLAIMING_HEIGHT;
+        const bool verifyCoinbaseOutputRecipient =
+            previousBlockIndex + 1 >= CryptoNote::parameters::COINBASE_TRANSACTION_OUTPUT_CLAIMING_HEIGHT;
 
         const auto extra = Utilities::parseExtra(block.baseTransaction.extra);
 
@@ -2436,7 +2440,8 @@ namespace CryptoNote
             if (verifyCoinbaseOutputRecipient)
             {
                 Crypto::PublicKey derivedSpendKey;
-                Crypto::underive_public_key(derivation, outputIndex, boost::get<KeyOutput>(output.target).key, derivedSpendKey);
+                Crypto::underive_public_key(
+                    derivation, outputIndex, boost::get<KeyOutput>(output.target).key, derivedSpendKey);
 
                 if (derivedSpendKey != extra.recipientPublicSpendKey)
                 {
@@ -2728,6 +2733,22 @@ namespace CryptoNote
         assert(blockIndex >= segment->getStartBlockIndex() && blockIndex <= segment->getTopBlockIndex());
 
         return segment->getBlockByIndex(blockIndex);
+    }
+
+    CryptoNote::RawBlock Core::getRawBlock(uint32_t blockIndex) const
+    {
+        IBlockchainCache *chain = chainsLeaves[0];
+
+        return chain->getBlockByIndex(blockIndex);
+    }
+
+    CryptoNote::RawBlock Core::getRawBlock(const Crypto::Hash &blockHash) const
+    {
+        IBlockchainCache *chain = findSegmentContainingBlock(blockHash);
+
+        const uint32_t blockIndex = chain->getBlockIndex(blockHash);
+
+        return chain->getBlockByIndex(blockIndex);
     }
 
     // TODO: decompose these three methods
@@ -3203,7 +3224,7 @@ namespace CryptoNote
             logger(Logging::INFO) << "Failed to get block details, mid chain reorg";
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-            return getBlockDetails(blockHeight, attempt+1);
+            return getBlockDetails(blockHeight, attempt + 1);
         }
     }
 

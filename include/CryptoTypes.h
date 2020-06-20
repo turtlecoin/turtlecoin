@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <common/StringTools.h>
+#include <JsonHelper.h>
 #include <cstdint>
 #include <iterator>
 
@@ -133,6 +134,14 @@ namespace Crypto
             writer.String(Common::podToHex(data));
         }
 
+        void fromJSON(const JSONValue &j)
+        {
+            if (j.IsString())
+            {
+                fromString(j.GetString());
+            }
+        }
+
         /* Initializes the class from a json string */
         void fromString(const std::string &s)
         {
@@ -176,6 +185,14 @@ namespace Crypto
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.String(Common::podToHex(data));
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            if (j.IsString())
+            {
+                fromString(j.GetString());
+            }
         }
 
         /* Initializes the class from a json string */
@@ -225,6 +242,14 @@ namespace Crypto
             writer.String(Common::podToHex(data));
         }
 
+        void fromJSON(const JSONValue &j)
+        {
+            if (j.IsString())
+            {
+                fromString(j.GetString());
+            }
+        }
+
         /* Initializes the class from a json string */
         void fromString(const std::string &s)
         {
@@ -270,6 +295,14 @@ namespace Crypto
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.String(Common::podToHex(data));
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            if (j.IsString())
+            {
+                fromString(j.GetString());
+            }
         }
 
         /* Initializes the class from a json string */
@@ -319,6 +352,14 @@ namespace Crypto
             writer.String(Common::podToHex(data));
         }
 
+        void fromJSON(const JSONValue &j)
+        {
+            if (j.IsString())
+            {
+                fromString(j.GetString());
+            }
+        }
+
         /* Initializes the class from a json string */
         void fromString(const std::string &s)
         {
@@ -364,6 +405,14 @@ namespace Crypto
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.String(Common::podToHex(data));
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            if (j.IsString())
+            {
+                fromString(j.GetString());
+            }
         }
 
         /* Initializes the class from a json string */

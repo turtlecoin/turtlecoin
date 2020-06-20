@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -320,6 +320,40 @@ std::string Error::getErrorMessage() const
         {
             return "The amount given does not have only a single significant digit. "
                    "For example, 20000 or 100000 would be fine, but 20001 or 123456 would not.";
+        }
+        case API_BODY_REQUIRED:
+        {
+            return "This API endpoint requires the submission of a body for processing.";
+        }
+        case API_BLOCKEXPLORER_DISABLED:
+        {
+            return "This method has been disabled by the administrator. If you are the "
+                   "administrator relaunch your daemon with the --enable-blockexplorer "
+                   "command line option to access this method.";
+        }
+        case API_NODE_NOT_SYNCED:
+        {
+            return "Daemon must be synced to process this RPC method call, please retry when synced.";
+        }
+        case API_INVALID_ARGUMENT:
+        {
+            return "An argument supplied could not be properly decoded.";
+        }
+        case API_TRANSACTION_POOL_INSERT_FAILED:
+        {
+            return "Could not add transaction to the transaction pool.";
+        }
+        case API_INTERNAL_ERROR:
+        {
+            return "An internal error occurred.";
+        }
+        case API_BLOCK_NOT_ACCEPTED:
+        {
+            return "Could not add block candidate to blockchain.";
+        }
+        case API_HASH_NOT_FOUND:
+        {
+            return "The requested hash could not be found.";
         }
         /* No default case so the compiler warns us if we missed one */
     }
