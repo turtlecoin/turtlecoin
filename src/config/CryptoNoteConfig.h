@@ -100,7 +100,7 @@ namespace CryptoNote
          * - 5 TRTL vs 5.12 TRTL. You can read this as.. the fee per chunk
          * is 500 atomic units. The fee per byte is 500 / chunk size. */
         const double MINIMUM_FEE_PER_BYTE_V1 = 500.00 / FEE_PER_BYTE_CHUNK_SIZE;
-        
+
         /* Height for our first fee to byte change to take effect. */
         const uint64_t MINIMUM_FEE_PER_BYTE_V1_HEIGHT = 2200000;
 
@@ -198,6 +198,11 @@ namespace CryptoNote
         const uint64_t BLOCK_BLOB_SHUFFLE_CHECK_HEIGHT = 1600000;
 
         const uint64_t TRANSACTION_INPUT_BLOCKTIME_VALIDATION_HEIGHT = 1600000;
+
+        /* Coinbase transactions must include the recipient address + tx priv
+         * key in tx_extra to verify the outputs go to that address after this
+         * height. */
+        const uint64_t COINBASE_TRANSACTION_OUTPUT_CLAIMING_HEIGHT = 3'000'000;
 
         /* This describes how many blocks of "wiggle" room transactions have regarding
            when the outputs can be spent based on a reasonable belief that the outputs

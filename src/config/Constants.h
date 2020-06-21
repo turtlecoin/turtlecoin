@@ -197,6 +197,15 @@ namespace Constants
     /* Indicates the following data is a merge mine depth+merkle root */
     const uint8_t TX_EXTRA_MERGE_MINING_IDENTIFIER = 0x03;
 
+    /* Indicates the following data is a coinbase recipient public view key */
+    const uint8_t TX_EXTRA_RECIPIENT_PUBLIC_VIEW_KEY_IDENTIFIER = 0x04;
+
+    /* Indicates the following data is a coinbase recipient public spend key */
+    const uint8_t TX_EXTRA_RECIPIENT_PUBLIC_SPEND_KEY_IDENTIFIER = 0x05;
+
+    /* Indicates the following data is a transaction private key key */
+    const uint8_t TX_EXTRA_TRANSACTION_PRIVATE_KEY_IDENTIFIER = 0x06;
+
     /* Indicates the following data is arbitrary data in tx_extra */
     const uint8_t TX_EXTRA_ARBITRARY_DATA_IDENTIFIER = 0x7f;
 

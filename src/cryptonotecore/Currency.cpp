@@ -249,6 +249,15 @@ namespace CryptoNote
             }
         }
 
+        tx.extra.push_back(Constants::TX_EXTRA_RECIPIENT_PUBLIC_VIEW_KEY_IDENTIFIER);
+        std::copy(std::begin(publicViewKey.data), std::end(publicViewKey.data), std::back_inserter(tx.extra));
+
+        tx.extra.push_back(Constants::TX_EXTRA_RECIPIENT_PUBLIC_SPEND_KEY_IDENTIFIER);
+        std::copy(std::begin(publicSpendKey.data), std::end(publicSpendKey.data), std::back_inserter(tx.extra));
+
+        tx.extra.push_back(Constants::TX_EXTRA_TRANSACTION_PRIVATE_KEY_IDENTIFIER);
+        std::copy(std::begin(txkey.secretKey.data), std::end(txkey.secretKey.data), std::back_inserter(tx.extra));
+
         BaseInput in;
         in.blockIndex = height;
 

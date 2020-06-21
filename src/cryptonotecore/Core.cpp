@@ -2395,6 +2395,19 @@ namespace CryptoNote
             return error::TransactionValidationError::BASE_INVALID_SIGNATURES_COUNT;
         }
 
+        const bool verifyCoinbaseOutputRecipient = previousBlockIndex + 1 >= CryptoNote::parameters::COINBASE_TRANSACTION_OUTPUT_CLAIMING_HEIGHT;
+
+        const auto extra = Utilities::parseExtra(block.baseTransaction.extra);
+
+        Crypto::KeyDerivation derivation;
+
+        if (verifyCoinbaseOutputRecipient)
+        {
+            Crypto::generate_key_derivation(extra.recipientPublicViewKey, extra.transactionPrivateKey, derivation);
+        }
+
+        uint64_t outputIndex = 0;
+
         for (const auto &output : block.baseTransaction.outputs)
         {
             if (output.amount == 0)
@@ -2419,7 +2432,20 @@ namespace CryptoNote
                 return error::TransactionValidationError::OUTPUTS_AMOUNT_OVERFLOW;
             }
 
+            if (verifyCoinbaseOutputRecipient)
+            {
+                Crypto::PublicKey derivedSpendKey;
+                Crypto::underive_public_key(derivation, outputIndex, boost::get<KeyOutput>(output.target).key, derivedSpendKey);
+
+                if (derivedSpendKey != extra.recipientPublicSpendKey)
+                {
+                    return error::TransactionValidationError::MINER_OUTPUT_NOT_CLAIMED;
+                }
+            }
+
             minerReward += output.amount;
+
+            outputIndex++;
         }
 
         return error::BlockValidationError::VALIDATION_SUCCESS;

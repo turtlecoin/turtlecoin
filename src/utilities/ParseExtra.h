@@ -22,6 +22,11 @@ namespace Utilities
         std::string paymentID;
         MergedMiningTag mergedMiningTag;
         std::vector<uint8_t> extraData;
+
+        /* Coinbase transaction only */
+        Crypto::PublicKey recipientPublicViewKey;
+        Crypto::PublicKey recipientPublicSpendKey;
+        Crypto::SecretKey transactionPrivateKey;
     };
 
     std::string getPaymentIDFromExtra(const std::vector<uint8_t> &extra);

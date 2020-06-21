@@ -44,11 +44,20 @@ namespace Utilities
         bool seenExtraData = false;
         bool seenPaymentID = false;
         bool seenMergedMiningTag = false;
+        bool seenRecipientPublicViewKey = false;
+        bool seenRecipientPublicSpendKey = false;
+        bool seenTransactionPrivateKey = false;
 
         for (auto it = extra.begin(); it < extra.end(); it++)
         {
             /* Nothing else to parse. */
-            if (seenPubKey && seenPaymentID && seenMergedMiningTag && seenExtraData)
+            if (seenPubKey
+             && seenPaymentID
+             && seenMergedMiningTag
+             && seenExtraData
+             && seenRecipientPublicViewKey
+             && seenRecipientPublicSpendKey
+             && seenTransactionPrivateKey)
             {
                 break;
             }
@@ -200,6 +209,48 @@ namespace Utilities
                     /* Can continue parsing */
                     continue;
                 }
+            }
+
+            if (c == Constants::TX_EXTRA_RECIPIENT_PUBLIC_VIEW_KEY_IDENTIFIER && elementsRemaining > 32 && !seenRecipientPublicViewKey)
+            {
+                /* Copy 32 chars, beginning from the next char */
+                std::copy(it + 1, it + 1 + 32, std::begin(parsed.recipientPublicViewKey.data));
+
+                /* Advance past the public view key */
+                it += 32;
+
+                seenRecipientPublicViewKey = true;
+
+                /* And continue parsing. */
+                continue;
+            }
+
+            if (c == Constants::TX_EXTRA_RECIPIENT_PUBLIC_SPEND_KEY_IDENTIFIER && elementsRemaining > 32 && !seenRecipientPublicSpendKey)
+            {
+                /* Copy 32 chars, beginning from the next char */
+                std::copy(it + 1, it + 1 + 32, std::begin(parsed.recipientPublicSpendKey.data));
+
+                /* Advance past the public spend key */
+                it += 32;
+
+                seenRecipientPublicSpendKey = true;
+
+                /* And continue parsing. */
+                continue;
+            }
+
+            if (c == Constants::TX_EXTRA_TRANSACTION_PRIVATE_KEY_IDENTIFIER && elementsRemaining > 32 && !seenTransactionPrivateKey)
+            {
+                /* Copy 32 chars, beginning from the next char */
+                std::copy(it + 1, it + 1 + 32, std::begin(parsed.transactionPrivateKey.data));
+
+                /* Advance past the private key */
+                it += 32;
+
+                seenTransactionPrivateKey = true;
+
+                /* And continue parsing. */
+                continue;
             }
         }
 
