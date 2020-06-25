@@ -1,18 +1,18 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2018, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
 #include "BlockchainMonitor.h"
 
 #include "common/StringTools.h"
-#include "rpc/CoreRpcServerCommandsDefinitions.h"
-#include "rpc/JsonRpc.h"
 
 #include <system/EventLock.h>
 #include <system/InterruptedException.h>
 #include <system/Timer.h>
 #include <utilities/ColouredMsg.h>
+#include <version.h>
+#include <iostream>
 
 using json = nlohmann::json;
 
@@ -27,6 +27,10 @@ BlockchainMonitor::BlockchainMonitor(
     m_sleepingContext(dispatcher),
     m_httpClient(httpClient)
 {
+    std::stringstream userAgent;
+    userAgent << "SoloMiner/" << PROJECT_VERSION_LONG;
+
+    m_requestHeaders = {{"User-Agent", userAgent.str()}};
 }
 
 void BlockchainMonitor::waitBlockchainUpdate()
@@ -80,9 +84,7 @@ void BlockchainMonitor::stop()
 
 std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
 {
-    json j = {{"jsonrpc", "2.0"}, {"method", "getlastblockheader"}, {"params", {}}};
-
-    auto res = m_httpClient->Post("/json_rpc", j.dump(), "application/json");
+    auto res = m_httpClient->Get("/block/last", m_requestHeaders);
 
     if (!res)
     {
@@ -103,34 +105,24 @@ std::optional<Crypto::Hash> BlockchainMonitor::requestLastBlockHash()
         return std::nullopt;
     }
 
-    try
-    {
-        json j = json::parse(res->body);
 
-        const std::string status = j.at("result").at("status").get<std::string>();
+    rapidjson::Document jsonBody;
 
-        if (status != "OK")
-        {
-            std::stringstream stream;
-
-            stream << "Failed to get block hash from daemon. Response: " << status << std::endl;
-
-            std::cout << WarningMsg(stream.str());
-
-            return std::nullopt;
-        }
-
-        return j.at("result").at("block_header").at("hash").get<Crypto::Hash>();
-    }
-    catch (const json::exception &e)
+    if (jsonBody.Parse(res->body.c_str()).HasParseError())
     {
         std::stringstream stream;
 
         stream << "Failed to parse block hash from daemon. Received data:\n"
-               << res->body << "\nParse error: " << e.what() << std::endl;
+               << res->body << std::endl;
 
         std::cout << WarningMsg(stream.str());
 
         return std::nullopt;
     }
+
+    Crypto::Hash hash;
+
+    hash.fromJSON(getJsonValue(jsonBody, "hash"));
+
+    return hash;
 }

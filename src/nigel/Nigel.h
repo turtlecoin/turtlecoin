@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -6,11 +6,13 @@
 
 #include "WalletTypes.h"
 #include "httplib.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/document.h"
 
 #include <atomic>
 #include <config/CryptoNoteConfig.h>
 #include <logger/Logger.h>
-#include <rpc/CoreRpcServerCommandsDefinitions.h>
 #include <string>
 #include <thread>
 #include <unordered_set>
@@ -72,7 +74,7 @@ class Nigel
         std::unordered_set<Crypto::Hash> &transactionsInBlock,
         std::unordered_set<Crypto::Hash> &transactionsUnknown) const;
 
-    std::tuple<bool, std::vector<CryptoNote::RandomOuts>>
+    std::tuple<bool, std::vector<WalletTypes::RandomOuts>>
         getRandomOutsByAmounts(const std::vector<uint64_t> amounts, const uint64_t requestedOuts) const;
 
     /* {success, connectionError, errorMessage} */
@@ -94,77 +96,13 @@ class Nigel
 
     bool getFeeInfo();
 
-    template<typename F>
-    auto tryParseJSONResponse(
+    std::optional<rapidjson::Document> getJsonBody(
         const std::shared_ptr<httplib::Response> &res,
-        const std::string &failMessage,
-        const F parseFunc,
-        const bool verifyStatus = true) const -> std::optional<decltype(parseFunc(nlohmann::json()))>
+        const std::string &failMessage) const
     {
-        if (res)
-        {
-            if (res->status == 200)
-            {
-                try
-                {
-                    nlohmann::json j = nlohmann::json::parse(res->body);
+        rapidjson::Document jsonBody;
 
-                    Logger::logger.log(
-                        "Got response from daemon: " + j.dump(),
-                        Logger::TRACE,
-                        { Logger::SYNC, Logger::DAEMON }
-                    );
-
-                    if (verifyStatus)
-                    {
-                        const std::string status = j.at("status").get<std::string>();
-
-                        if (status != "OK")
-                        {
-                            Logger::logger.log(
-                                failMessage + " - Expected status \"OK\", got " + status,
-                                Logger::INFO,
-                                { Logger::SYNC, Logger::DAEMON }
-                            );
-
-                            return std::nullopt;
-                        }
-                    }
-
-                    return parseFunc(j);
-                }
-                catch (const nlohmann::json::exception &e)
-                {
-                    Logger::logger.log(
-                        failMessage + ": " + std::string(e.what()),
-                        Logger::INFO,
-                        { Logger::SYNC, Logger::DAEMON }
-                    );
-
-                    return std::nullopt;
-                }
-            }
-            else
-            {
-                std::stringstream stream;
-
-                stream << failMessage << " - got status code " << res->status;
-
-                if (res->body != "")
-                {
-                    stream << ", body: " << res->body;
-                }
-
-                Logger::logger.log(
-                    stream.str(),
-                    Logger::INFO,
-                    { Logger::SYNC, Logger::DAEMON }
-                );
-
-                return std::nullopt;
-            }
-        }
-        else
+        if (!res)
         {
             Logger::logger.log(
                 failMessage + " - failed to open socket or timed out.",
@@ -174,6 +112,41 @@ class Nigel
 
             return std::nullopt;
         }
+
+        if (res->body.empty())
+        {
+            return std::optional<rapidjson::Document>(std::move(jsonBody));
+        }
+
+        if (jsonBody.Parse(res->body.c_str()).HasParseError())
+        {
+            Logger::logger.log(
+                failMessage + ": " + res->body,
+                Logger::INFO,
+                { Logger::SYNC, Logger::DAEMON }
+            );
+
+            return std::nullopt;
+        }
+
+        if (hasMember(jsonBody, "error"))
+        {
+            const auto error = getObjectFromJSON(jsonBody, "error");
+
+            const auto message = getStringFromJSON(error, "message");
+
+            Logger::logger.log(
+                message,
+                Logger::INFO,
+                { Logger::SYNC, Logger::DAEMON }
+            );
+        }
+        else
+        {
+            Logger::logger.log("Got response from daemon: " + res->body, Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
+        }
+
+        return std::optional<rapidjson::Document>(std::move(jsonBody));
     }
 
     //////////////////////////////
@@ -208,10 +181,6 @@ class Nigel
     /* The hashrate (based on the last local block the daemon has synced) */
     std::atomic<uint64_t> m_lastKnownHashrate = 0;
 
-    /* Whether the daemon is a blockchain cache API
-       see: https://github.com/TurtlePay/blockchain-cache-api */
-    std::atomic<bool> m_isBlockchainCache = false;
-
     /* The address to send the node fee to (May be "") */
     std::string m_nodeFeeAddress;
 
@@ -229,7 +198,4 @@ class Nigel
 
     /* If the daemon is SSL */
     bool m_daemonSSL = false;
-
-    /* Whether we should use /getrawblocks instead of /getwalletsyncdata */
-    bool m_useRawBlocks = true;
 };

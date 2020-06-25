@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -1010,7 +1010,7 @@ void SubWallets::fromJSON(const JSONObject &j)
     for (const auto &x : getArrayFromJSON(j, "publicSpendKeys"))
     {
         Crypto::PublicKey key;
-        key.fromString(getStringFromJSONString(x));
+        key.fromString(getStringFromJSON(x));
         m_publicSpendKeys.push_back(key);
     }
 

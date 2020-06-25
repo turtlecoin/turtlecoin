@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -6,16 +6,14 @@
 #include <nigel/Nigel.h>
 ////////////////////////
 
+#include <CryptoNote.h>
 #include <common/CryptoNoteTools.h>
 #include <config/CryptoNoteConfig.h>
 #include <cryptonotecore/CachedBlock.h>
 #include <cryptonotecore/Core.h>
-#include <CryptoNote.h>
 #include <errors/ValidateParameters.h>
 #include <utilities/Utilities.h>
 #include <version.h>
-
-using json = nlohmann::json;
 
 ////////////////////////////////
 /*   Inline helper methods    */
@@ -85,10 +83,8 @@ void Nigel::swapNode(const std::string daemonHost, const uint16_t daemonPort, co
     m_networkBlockCount = 0;
     m_peerCount = 0;
     m_lastKnownHashrate = 0;
-    m_isBlockchainCache = false;
     m_nodeFeeAddress = "";
     m_nodeFeeAmount = 0;
-    m_useRawBlocks = true;
 
     m_daemonHost = daemonHost;
     m_daemonPort = daemonPort;
@@ -119,65 +115,77 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>, std::optional<Wallet
         const uint64_t startTimestamp,
         const bool skipCoinbaseTransactions)
 {
+    rapidjson::StringBuffer sb;
+
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+
     Logger::logger.log("Fetching blocks from the daemon", Logger::DEBUG, {Logger::SYNC, Logger::DAEMON});
 
-    json j = {{"blockHashCheckpoints", blockHashCheckpoints},
-              {"startHeight", startHeight},
-              {"startTimestamp", startTimestamp},
-              {"blockCount", m_blockCount.load()},
-              {"skipCoinbaseTransactions", skipCoinbaseTransactions}};
+    writer.StartObject();
+    {
+        writer.Key("checkpoints");
+        writer.StartArray();
+        {
+            for (const auto &hash : blockHashCheckpoints)
+            {
+                hash.toJSON(writer);
+            }
+        }
+        writer.EndArray();
 
-    const std::string endpoint = m_useRawBlocks ? "/getrawblocks" : "/getwalletsyncdata";
+        writer.Key("height");
+        writer.Uint64(startHeight);
+
+        writer.Key("timestamp");
+        writer.Uint64(startTimestamp);
+
+        writer.Key("count");
+        writer.Uint64(m_blockCount.load());
+
+        writer.Key("skipCoinbaseTransactions");
+        writer.Bool(skipCoinbaseTransactions);
+    }
+    writer.EndObject();
+
+    const std::string dump(sb.GetString(), sb.GetLength());
 
     Logger::logger.log(
-        "Sending " + endpoint + " request to daemon: " + j.dump(),
-        Logger::TRACE,
-        { Logger::SYNC, Logger::DAEMON }
-    );
+        "Sending /sync/raw request to daemon: " + dump, Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
 
-    const auto res = m_nodeClient->Post(endpoint, m_requestHeaders, j.dump(), "application/json");
+    const auto res = m_nodeClient->Post("/sync/raw", m_requestHeaders, sb.GetString(), "application/json");
 
-    /* Daemon doesn't support /getrawblocks, fall back to /getwalletsyncdata */
-    if (res && res->status == 404 && m_useRawBlocks)
+    const auto body = getJsonBody(res, "Failed to fetch blocks from daemon");
+
+    if (body)
     {
-        m_useRawBlocks = false;
-
-        return getWalletSyncData(
-            blockHashCheckpoints,
-            startHeight,
-            startTimestamp,
-            skipCoinbaseTransactions
-        );
-    }
-
-    const auto parsedResponse = tryParseJSONResponse(
-        res,
-        "Failed to fetch blocks from daemon",
-        [this, skipCoinbaseTransactions](const nlohmann::json j) {
-
-        std::vector<WalletTypes::WalletBlockInfo> items;
-
-        if (m_useRawBlocks)
+        if (!hasMember(body.value(), "error"))
         {
-            const auto rawBlocks = j.at("items").get<std::vector<CryptoNote::RawBlock>>();
+            std::vector<WalletTypes::WalletBlockInfo> items;
 
-            for (const auto &rawBlock : rawBlocks)
+            for (const auto &block : getArrayFromJSON(body.value(), "blocks"))
             {
-                CryptoNote::BlockTemplate block;
+                CryptoNote::RawBlock rawBlock;
 
-                fromBinaryArray(block, rawBlock.block);
+                rawBlock.fromJSON(block);
+
+                CryptoNote::BlockTemplate blockTemplate;
+
+                fromBinaryArray(blockTemplate, rawBlock.block);
 
                 WalletTypes::WalletBlockInfo walletBlock;
 
-                CryptoNote::CachedBlock cachedBlock(block);
+                CryptoNote::CachedBlock cachedBlock(blockTemplate);
 
                 walletBlock.blockHeight = cachedBlock.getBlockIndex();
+
                 walletBlock.blockHash = cachedBlock.getBlockHash();
-                walletBlock.blockTimestamp = block.timestamp;
+
+                walletBlock.blockTimestamp = blockTemplate.timestamp;
 
                 if (!skipCoinbaseTransactions)
                 {
-                    walletBlock.coinbaseTransaction = CryptoNote::Core::getRawCoinbaseTransaction(block.baseTransaction);
+                    walletBlock.coinbaseTransaction =
+                        CryptoNote::Core::getRawCoinbaseTransaction(blockTemplate.baseTransaction);
                 }
 
                 for (const auto &transaction : rawBlock.transactions)
@@ -187,30 +195,26 @@ std::tuple<bool, std::vector<WalletTypes::WalletBlockInfo>, std::optional<Wallet
 
                 items.push_back(walletBlock);
             }
+
+            std::optional<WalletTypes::TopBlock> topBlock;
+
+            if (hasMember(body.value(),"synced") && hasMember(body.value(),"topBlock"))
+            {
+                if (getBoolFromJSON(body.value(), "synced"))
+                {
+                    WalletTypes::TopBlock tmpTopBlock;
+
+                    tmpTopBlock.fromJSON(getJsonValue(body.value(), "topBlock"));
+
+                    topBlock = tmpTopBlock;
+                }
+            }
+
+            return {true, items, topBlock};
         }
-        else
-        {
-            items = j.at("items").get<std::vector<WalletTypes::WalletBlockInfo>>();
-        }
-
-        std::optional<WalletTypes::TopBlock> topBlock;
-
-        if (j.find("synced") != j.end() && j.find("topBlock") != j.end() && j.at("synced").get<bool>())
-        {
-            topBlock = j.at("topBlock").get<WalletTypes::TopBlock>();
-        }
-
-        return std::make_tuple(items, topBlock);
-    });
-
-    if (parsedResponse)
-    {
-        const auto [ items, topBlock ] = *parsedResponse;
-
-        return { true, items, topBlock };
     }
 
-    return { false, {}, std::nullopt };
+    return {false, {}, std::nullopt};
 }
 
 void Nigel::stop()
@@ -242,82 +246,84 @@ bool Nigel::getDaemonInfo()
 {
     Logger::logger.log("Updating daemon info", Logger::DEBUG, {Logger::SYNC, Logger::DAEMON});
 
-    Logger::logger.log(
-        "Sending /info request to daemon",
-        Logger::TRACE,
-        { Logger::SYNC, Logger::DAEMON }
-    );
+    Logger::logger.log("Sending /info request to daemon", Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
 
     auto res = m_nodeClient->Get("/info", m_requestHeaders);
 
-    const auto parsedResponse = tryParseJSONResponse(res, "Failed to update daemon info", [this](const nlohmann::json j) {
-        m_localDaemonBlockCount = j.at("height").get<uint64_t>();
+    const auto body = getJsonBody(res, "Failed to  update daemon info");
 
-        /* Height returned is one more than the current height - but we
-           don't want to overflow is the height returned is zero */
-        if (m_localDaemonBlockCount != 0)
+    if (body)
+    {
+        if (hasMember(body.value(), "height"))
         {
-            m_localDaemonBlockCount--;
+            m_localDaemonBlockCount = getUint64FromJSON(body.value(), "height");
+
+            if (m_localDaemonBlockCount != 0)
+            {
+                m_localDaemonBlockCount--;
+            }
         }
 
-        m_networkBlockCount = j.at("network_height").get<uint64_t>();
-
-        /* Height returned is one more than the current height - but we
-           don't want to overflow is the height returned is zero */
-        if (m_networkBlockCount != 0)
+        if (hasMember(body.value(), "networkHeight"))
         {
-            m_networkBlockCount--;
+            m_networkBlockCount = getUint64FromJSON(body.value(), "networkHeight");
+
+            if (m_networkBlockCount != 0)
+            {
+                m_networkBlockCount--;
+            }
         }
 
-        m_peerCount =
-            j.at("incoming_connections_count").get<uint64_t>() + j.at("outgoing_connections_count").get<uint64_t>();
-
-        m_lastKnownHashrate = j.at("difficulty").get<uint64_t>() / CryptoNote::parameters::DIFFICULTY_TARGET;
-
-        /* Look to see if the isCacheApi property exists in the response
-           and if so, set the internal value to whatever it found */
-        if (j.find("isCacheApi") != j.end())
+        if (hasMember(body.value(), "incomingConnections")
+            && hasMember(body.value(), "outgoingConnections"))
         {
-            m_isBlockchainCache = j.at("isCacheApi").get<bool>();
+            m_peerCount = getUint64FromJSON(body.value(), "incomingConnections")
+                          + getUint64FromJSON(body.value(), "outgoingConnections");
         }
 
-        return true;
-    });
+        if (hasMember(body.value(), "hashrate"))
+        {
+            m_lastKnownHashrate = getUint64FromJSON(body.value(), "hashrate");
+        }
+    }
 
-    return parsedResponse.has_value();
+    return body.has_value();
 }
 
 bool Nigel::getFeeInfo()
 {
     Logger::logger.log("Fetching fee info", Logger::DEBUG, {Logger::DAEMON});
 
-    Logger::logger.log(
-        "Sending /fee request to daemon",
-        Logger::TRACE,
-        { Logger::SYNC, Logger::DAEMON }
-    );
+    Logger::logger.log("Sending /fee request to daemon", Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
 
     auto res = m_nodeClient->Get("/fee", m_requestHeaders);
 
-    const auto parsedResponse = tryParseJSONResponse(res, "Failed to update fee info", [this](const nlohmann::json j) {
-        std::string tmpAddress = j.at("address").get<std::string>();
+    const auto body = getJsonBody(res, "Failed to update fee information");
 
-        uint32_t tmpFee = j.at("amount").get<uint32_t>();
-
-        const bool integratedAddressesAllowed = false;
-
-        Error error = validateAddresses({tmpAddress}, integratedAddressesAllowed);
-
-        if (!error)
+    if (body)
+    {
+        if (!hasMember(body.value(), "error"))
         {
-            m_nodeFeeAddress = tmpAddress;
-            m_nodeFeeAmount = tmpFee;
+            const std::string tmpAddress = getStringFromJSON(body.value(), "address");
+
+            const uint32_t tmpFee = getUintFromJSON(body.value(), "amount");
+
+            const bool integratedAddressesAllowed = false;
+
+            Error error = validateAddresses({tmpAddress}, integratedAddressesAllowed);
+
+            if (!error)
+            {
+                m_nodeFeeAddress = tmpAddress;
+
+                m_nodeFeeAmount = tmpFee;
+            }
+
+            return true;
         }
+    }
 
-        return true;
-    });
-
-    return parsedResponse.has_value();
+    return body.has_value();
 }
 
 void Nigel::backgroundRefresh()
@@ -371,75 +377,128 @@ bool Nigel::getTransactionsStatus(
     std::unordered_set<Crypto::Hash> &transactionsInBlock,
     std::unordered_set<Crypto::Hash> &transactionsUnknown) const
 {
-    json j = {{"transactionHashes", transactionHashes}};
+    rapidjson::StringBuffer sb;
 
-    Logger::logger.log(
-        "Sending /get_transactions_status request to daemon: " + j.dump(),
-        Logger::TRACE,
-        { Logger::SYNC, Logger::DAEMON }
-    );
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
 
-    auto res = m_nodeClient->Post("/get_transactions_status", m_requestHeaders, j.dump(), "application/json");
-
-    const auto parsedResponse = tryParseJSONResponse(res, "Failed to get transactions status", [&](const nlohmann::json j) {
-        transactionsInPool = j.at("transactionsInPool").get<std::unordered_set<Crypto::Hash>>();
-        transactionsInBlock = j.at("transactionsInBlock").get<std::unordered_set<Crypto::Hash>>();
-        transactionsUnknown = j.at("transactionsUnknown").get<std::unordered_set<Crypto::Hash>>();
-
-        return true;
-    });
-
-    return parsedResponse.has_value();
-}
-
-std::tuple<bool, std::vector<CryptoNote::RandomOuts>>
-    Nigel::getRandomOutsByAmounts(const std::vector<uint64_t> amounts, const uint64_t requestedOuts) const
-{
-    json j = {{"amounts", amounts}, {"outs_count", requestedOuts}};
-
-    /* The blockchain cache doesn't call it outs_count
-       it calls it mixin */
-    if (m_isBlockchainCache)
+    writer.StartArray();
     {
-        j.erase("outs_count");
-        j["mixin"] = requestedOuts;
-
-        Logger::logger.log(
-            "Sending /randomOutputs request to daemon: " + j.dump(),
-            Logger::TRACE,
-            { Logger::SYNC, Logger::DAEMON }
-        );
-
-        /* We also need to handle the request and response a bit
-           differently so we'll do this here */
-        auto res = m_nodeClient->Post("/randomOutputs", m_requestHeaders, j.dump(), "application/json");
-
-        const auto parsedResponse = tryParseJSONResponse(res, "Failed to get random outs", [](const nlohmann::json j) {
-            return j.get<std::vector<CryptoNote::RandomOuts>>();
-        }, false);
-
-        if (parsedResponse)
+        for (const auto &hash : transactionHashes)
         {
-            return {true, *parsedResponse};
+            hash.toJSON(writer);
         }
     }
-    else
+    writer.EndArray();
+
+    const std::string dump(sb.GetString(), sb.GetLength());
+
+    Logger::logger.log(
+        "Sending /transaction/status request to daemon: " + dump, Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
+
+    auto res = m_nodeClient->Post("/transaction/status", m_requestHeaders, sb.GetString(), "application/json");
+
+    const auto body = getJsonBody(res, "Failed to get transactions status");
+
+    if (body)
     {
-        Logger::logger.log(
-            "Sending /getrandom_outs request to daemon: " + j.dump(),
-            Logger::TRACE,
-            { Logger::SYNC, Logger::DAEMON }
-        );
-
-        auto res = m_nodeClient->Post("/getrandom_outs", m_requestHeaders, j.dump(), "application/json");
-
-        const auto parsedResponse = tryParseJSONResponse(res, "Failed to get random outs", [](const nlohmann::json j) {
-            return j.at("outs").get<std::vector<CryptoNote::RandomOuts>>();
-        });
-
-        if (parsedResponse)
+        if (!hasMember(body.value(), "error"))
         {
-            return {true, *parsedResponse};
+            transactionsInPool.clear();
+
+            if (hasMember(body.value(), "inPool"))
+            {
+                for (const auto &val : getArrayFromJSON(body.value(), "inPool"))
+                {
+                    Crypto::Hash hash;
+
+                    hash.fromJSON(val);
+
+                    transactionsInPool.insert(hash);
+                }
+            }
+
+            transactionsInBlock.clear();
+
+            if (hasMember(body.value(), "inBlock"))
+            {
+                for (const auto &val : getArrayFromJSON(body.value(), "inBlock"))
+                {
+                    Crypto::Hash hash;
+
+                    hash.fromJSON(val);
+
+                    transactionsInBlock.insert(hash);
+                }
+            }
+
+            transactionsUnknown.clear();
+
+            if (hasMember(body.value(), "notFound"))
+            {
+                for (const auto &val : getArrayFromJSON(body.value(), "notFound"))
+                {
+                    Crypto::Hash hash;
+
+                    hash.fromJSON(val);
+
+                    transactionsUnknown.insert(hash);
+                }
+            }
+        }
+    }
+
+    return body.has_value();
+}
+
+std::tuple<bool, std::vector<WalletTypes::RandomOuts>>
+    Nigel::getRandomOutsByAmounts(const std::vector<uint64_t> amounts, const uint64_t requestedOuts) const
+{
+    rapidjson::StringBuffer sb;
+
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+
+    writer.StartObject();
+    {
+        writer.Key("amounts");
+        writer.StartArray();
+        {
+            for (const auto &amount : amounts)
+            {
+                writer.Uint64(amount);
+            }
+        }
+        writer.EndArray();
+
+        writer.Key("count");
+        writer.Uint64(requestedOuts);
+    }
+    writer.EndObject();
+
+    const std::string dump(sb.GetString(), sb.GetLength());
+
+    Logger::logger.log(
+        "Sending /indexes/random request to daemon: " + dump, Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
+
+    auto res = m_nodeClient->Post("/indexes/random", m_requestHeaders, sb.GetString(), "application/json");
+
+    const auto body = getJsonBody(res, "Failed to get random outputs");
+
+    if (body)
+    {
+        if (!hasMember(body.value(), "error"))
+        {
+            std::vector<WalletTypes::RandomOuts> outputs;
+
+            for (const auto &randomOutput : getArrayFromJSON(body.value()))
+            {
+                WalletTypes::RandomOuts output;
+
+                output.fromJSON(randomOutput);
+
+                outputs.push_back(output);
+            }
+
+            return {true, outputs};
         }
     }
 
@@ -448,71 +507,90 @@ std::tuple<bool, std::vector<CryptoNote::RandomOuts>>
 
 std::tuple<bool, bool, std::string> Nigel::sendTransaction(const CryptoNote::Transaction tx) const
 {
-    json j = {{"tx_as_hex", Common::toHex(CryptoNote::toBinaryArray(tx))}};
+    rapidjson::StringBuffer sb;
+
+    rapidjson::Writer<rapidjson::StringBuffer> writer(sb);
+
+    writer.String(Common::toHex(CryptoNote::toBinaryArray(tx)));
+
+    const std::string dump(sb.GetString(), sb.GetLength());
 
     Logger::logger.log(
-        "Sending /sendrawtransaction request to daemon: " + j.dump(),
-        Logger::TRACE,
-        { Logger::SYNC, Logger::DAEMON }
-    );
+        "Sending /transaction request to daemon: " + dump, Logger::TRACE, {Logger::SYNC, Logger::DAEMON});
 
-    auto res = m_nodeClient->Post("/sendrawtransaction", m_requestHeaders, j.dump(), "application/json");
+    auto res = m_nodeClient->Post("/transaction", m_requestHeaders, sb.GetString(), "application/json");
 
-    bool success = false;
-    bool connectionError = true;
     std::string error;
 
-    tryParseJSONResponse(res, "Failed to send transaction", [&](const nlohmann::json j) {
+    /* If we received a 202 back, then the transaction was accepted by the daemon */
+    if (res->status == 202)
+    {
+        return {true, false, error};
+    }
+
+    bool connectionError = true;
+
+    const auto body = getJsonBody(res, "Failed to send transaction");
+
+    if (body)
+    {
         connectionError = false;
 
-        success = j.at("status").get<std::string>() == "OK";
-
-        if (j.find("error") != j.end())
+        if (hasMember(body.value(), "error"))
         {
-            error = j.at("error").get<std::string>();
+            const auto errorObject = getObjectFromJSON(body.value(), "error");
+
+            error = getStringFromJSON(errorObject, "message");
         }
+    }
 
-        return true;
-    }, false);
-
-    return {success, connectionError, error};
+    return {false, connectionError, error};
 }
 
 std::tuple<bool, std::unordered_map<Crypto::Hash, std::vector<uint64_t>>>
     Nigel::getGlobalIndexesForRange(const uint64_t startHeight, const uint64_t endHeight) const
 {
-    /* Blockchain cache API does not support this method and we
-       don't need it to because it returns the global indexes
-       with the key outputs when we get the wallet sync data */
-    if (m_isBlockchainCache)
-    {
-        return {false, {}};
-    }
-
-    json j = {{"startHeight", startHeight}, {"endHeight", endHeight}};
-
     Logger::logger.log(
-        "Sending /get_global_indexes_for_range request to daemon: " + j.dump(),
+        "Sending /indexes/" + std::to_string(startHeight) + "/" + std::to_string(endHeight) +
+            "request to daemon",
         Logger::TRACE,
-        { Logger::SYNC, Logger::DAEMON }
-    );
+        {Logger::SYNC, Logger::DAEMON});
 
-    auto res = m_nodeClient->Post("/get_global_indexes_for_range", m_requestHeaders, j.dump(), "application/json");
+    auto res = m_nodeClient->Get(
+        "/indexes" + std::to_string(startHeight) + "/" + std::to_string(endHeight),
+        m_requestHeaders);
 
     std::unordered_map<Crypto::Hash, std::vector<uint64_t>> result;
 
-    const auto parsedResponse = tryParseJSONResponse(res, "Failed to get global indexes for range", [&result](const nlohmann::json j) {
-        /* The daemon doesn't serialize the way nlohmann::json does, so
-           we can't just .get<std::unordered_map ...> */
-        nlohmann::json indexes = j.at("indexes");
+    const auto body = getJsonBody(res, "Failed to get global indexes for range");
 
-        for (const auto &index : indexes)
+    bool success = true;
+
+    if (body)
+    {
+        if (hasMember(body.value(), "error"))
         {
-            result[index.at("key").get<Crypto::Hash>()] = index.at("value").get<std::vector<uint64_t>>();
+            success = false;
         }
+        else
+        {
+            for (const auto &tx : getArrayFromJSON(body.value()))
+            {
+                Crypto::Hash hash;
 
-        return true;
-    });
+                hash.fromJSON(getJsonValue(tx, "hash"));
 
-    return {parsedResponse.has_value(), result};
+                std::vector<uint64_t> indexes;
+
+                for (const auto &index : getArrayFromJSON(tx, "indexes"))
+                {
+                    indexes.push_back(getUint64FromJSON(index));
+                }
+
+                result[hash] = indexes;
+            }
+        }
+    }
+
+    return {success, result};
 }

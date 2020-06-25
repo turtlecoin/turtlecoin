@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -172,7 +172,7 @@ namespace CryptoNote
         virtual bool getPoolChangesLite(
             const Crypto::Hash &lastBlockHash,
             const std::vector<Crypto::Hash> &knownHashes,
-            std::vector<TransactionPrefixInfo> &addedTransactions,
+            std::vector<Transaction> &addedTransactions,
             std::vector<Crypto::Hash> &deletedTransactions) const = 0;
 
         virtual std::tuple<bool, std::string> getBlockTemplate(
