@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -374,32 +374,46 @@ namespace WalletTypes
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.StartObject();
-            writer.Key("transfers");
-            writer.StartArray();
-            for (const auto &[publicKey, amount] : transfers)
             {
-                writer.StartObject();
-                writer.Key("publicKey");
-                publicKey.toJSON(writer);
-                writer.Key("amount");
-                writer.Int64(amount);
-                writer.EndObject();
+                writer.Key("transfers");
+                writer.StartArray();
+                {
+                    for (const auto &[publicKey, amount] : transfers)
+                    {
+                        writer.StartObject();
+                        {
+                            writer.Key("publicKey");
+                            publicKey.toJSON(writer);
+
+                            writer.Key("amount");
+                            writer.Int64(amount);
+                        }
+                        writer.EndObject();
+                    }
+                }
+                writer.EndArray();
+
+                writer.Key("hash");
+                hash.toJSON(writer);
+
+                writer.Key("fee");
+                writer.Uint64(fee);
+
+                writer.Key("blockHeight");
+                writer.Uint64(blockHeight);
+
+                writer.Key("timestamp");
+                writer.Uint64(timestamp);
+
+                writer.Key("paymentID");
+                writer.String(paymentID);
+
+                writer.Key("unlockTime");
+                writer.Uint64(unlockTime);
+
+                writer.Key("isCoinbaseTransaction");
+                writer.Bool(isCoinbaseTransaction);
             }
-            writer.EndArray();
-            writer.Key("hash");
-            hash.toJSON(writer);
-            writer.Key("fee");
-            writer.Uint64(fee);
-            writer.Key("blockHeight");
-            writer.Uint64(blockHeight);
-            writer.Key("timestamp");
-            writer.Uint64(timestamp);
-            writer.Key("paymentID");
-            writer.String(paymentID);
-            writer.Key("unlockTime");
-            writer.Uint64(unlockTime);
-            writer.Key("isCoinbaseTransaction");
-            writer.Bool(isCoinbaseTransaction);
             writer.EndObject();
         }
 
@@ -454,12 +468,16 @@ namespace WalletTypes
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.StartObject();
-            writer.Key("amount");
-            writer.Uint64(amount);
-            writer.Key("key");
-            key.toJSON(writer);
-            writer.Key("parentTransactionHash");
-            parentTransactionHash.toJSON(writer);
+            {
+                writer.Key("amount");
+                writer.Uint64(amount);
+
+                writer.Key("key");
+                key.toJSON(writer);
+
+                writer.Key("parentTransactionHash");
+                parentTransactionHash.toJSON(writer);
+            }
             writer.EndObject();
         }
 
@@ -467,7 +485,9 @@ namespace WalletTypes
         void fromJSON(const JSONValue &j)
         {
             amount = getUint64FromJSON(j, "amount");
+
             key.fromString(getStringFromJSON(j, "key"));
+
             parentTransactionHash.fromString(getStringFromJSON(j, "parentTransactionHash"));
         }
     };
@@ -475,7 +495,15 @@ namespace WalletTypes
     struct TopBlock
     {
         Crypto::Hash hash;
+
         uint64_t height;
+
+        void fromJSON(const JSONValue &j)
+        {
+            hash.fromString(getStringFromJSON(j, "hash"));
+
+            height = getUint64FromJSON(j, "height");
+        }
     };
 
     class FeeType
@@ -549,6 +577,75 @@ namespace WalletTypes
         uint64_t changeRequired;
         TransactionResult tx;
         Crypto::Hash transactionHash;
+    };
+
+    struct OutputEntry
+    {
+        uint32_t index;
+
+        Crypto::PublicKey key;
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("index");
+                writer.Uint(index);
+
+                writer.Key("key");
+                writer.String(Common::podToHex(key));
+            }
+            writer.EndObject();
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            index = getUintFromJSON(j, "index");
+            key.fromString(getStringFromJSON(j, "key"));
+        }
+    };
+
+    struct RandomOuts
+    {
+        uint64_t amount;
+
+        std::vector<OutputEntry> outputs;
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("amount");
+                writer.Uint64(amount);
+
+                writer.Key("outputs");
+                writer.StartArray();
+                {
+                    for (const auto &output : outputs)
+                    {
+                        output.toJSON(writer);
+                    }
+                }
+                writer.EndArray();
+            }
+            writer.EndObject();
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            amount = getUint64FromJSON(j, "amount");
+
+            outputs.clear();
+
+            for (const auto &output : getArrayFromJSON(j, "outputs"))
+            {
+                OutputEntry entry;
+
+                entry.fromJSON(output);
+
+                outputs.push_back(entry);
+            }
+        }
     };
 
     inline void to_json(nlohmann::json &j, const TopBlock &t)

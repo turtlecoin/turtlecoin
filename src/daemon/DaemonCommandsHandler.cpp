@@ -1,5 +1,5 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-// Copyright (c) 2018-2019, The TurtleCoin Developers
+// Copyright (c) 2018-2020, The TurtleCoin Developers
 //
 // Please see the included LICENSE file for more information.
 
@@ -14,7 +14,6 @@
 #include <ctime>
 #include <daemon/DaemonCommandsHandler.h>
 #include <p2p/NetNode.h>
-#include <rpc/JsonRpc.h>
 #include <serialization/SerializationTools.h>
 #include <utilities/ColouredMsg.h>
 #include <utilities/FormatTools.h>
@@ -367,7 +366,7 @@ bool DaemonCommandsHandler::status(const std::vector<std::string> &args)
         return false;
     }
 
-    const std::time_t uptime = std::time(nullptr) - getUint64FromJSON(resp, "start_time");
+    const std::time_t uptime = std::time(nullptr) - getUint64FromJSON(resp, "startTime");
 
     const uint64_t seconds = uptime;
     const uint64_t minutes = seconds / 60;
@@ -380,11 +379,11 @@ bool DaemonCommandsHandler::status(const std::vector<std::string> &args)
                                 + std::to_string(seconds % 60) + "s";
 
     const uint64_t height = getUint64FromJSON(resp, "height");
-    const uint64_t networkHeight = getUint64FromJSON(resp, "network_height");
-    const uint64_t supportedHeight = getUint64FromJSON(resp, "supported_height");
+    const uint64_t networkHeight = getUint64FromJSON(resp, "networkHeight");
+    const uint64_t supportedHeight = getUint64FromJSON(resp, "supportedHeight");
     std::vector<uint64_t> upgradeHeights;
 
-    for (const auto &height : getArrayFromJSON(resp, "upgrade_heights"))
+    for (const auto &height : getArrayFromJSON(resp, "upgradeHeights"))
     {
         upgradeHeights.push_back(height.GetUint64());
     }
@@ -397,9 +396,10 @@ bool DaemonCommandsHandler::status(const std::vector<std::string> &args)
     statusTable.push_back({"Network Height",        std::to_string(networkHeight)});
     statusTable.push_back({"Percentage Synced",     Utilities::get_sync_percentage(height, networkHeight) + "%"});
     statusTable.push_back({"Network Hashrate",      Utilities::get_mining_speed(getUint64FromJSON(resp, "hashrate"))});
-    statusTable.push_back({"Block Version",         "v" + std::to_string(getUint64FromJSON(resp, "major_version"))});
-    statusTable.push_back({"Incoming Connections",  std::to_string(getUint64FromJSON(resp, "incoming_connections_count"))});
-    statusTable.push_back({"Outgoing Connections",  std::to_string(getUint64FromJSON(resp, "outgoing_connections_count"))});
+    statusTable.push_back({"Block Version",         "v" + std::to_string(getUint64FromJSON(resp, "majorVersion"))
+                                                + "." + std::to_string(getUint64FromJSON(resp, "minorVersion"))});
+    statusTable.push_back({"Incoming Connections",  std::to_string(getUint64FromJSON(resp, "incomingConnections"))});
+    statusTable.push_back({"Outgoing Connections",  std::to_string(getUint64FromJSON(resp, "outgoingConnections"))});
     statusTable.push_back({"Uptime",                uptimeStr});
     statusTable.push_back({"Fork Status",           Utilities::get_update_status(forkStatus)});
     statusTable.push_back({"Next Fork",             Utilities::get_fork_time(networkHeight, upgradeHeights)});

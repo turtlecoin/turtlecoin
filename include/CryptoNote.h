@@ -118,22 +118,27 @@ namespace CryptoNote
         void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
         {
             writer.StartObject();
-            writer.Key("block");
-            writer.String(Common::toHex(block));
-
-            writer.Key("transactions");
-            writer.StartArray();
-            for (const auto &transaction : transactions)
             {
-                writer.String(Common::toHex(transaction));
+                writer.Key("blob");
+                writer.String(Common::toHex(block));
+
+                writer.Key("transactions");
+                writer.StartArray();
+                {
+                    for (const auto &transaction : transactions)
+                    {
+                        writer.String(Common::toHex(transaction));
+                    }
+                }
+                writer.EndArray();
             }
-            writer.EndArray();
             writer.EndObject();
         }
 
         void fromJSON(const JSONValue &j)
         {
-            block = Common::fromHex(getStringFromJSON(j, "block"));
+            block = Common::fromHex(getStringFromJSON(j, "blob"));
+
             for (const auto &tx : getArrayFromJSON(j, "transactions"))
             {
                 transactions.push_back(Common::fromHex(tx.GetString()));
