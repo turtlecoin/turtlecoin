@@ -11,6 +11,7 @@
 
 #include <config/CryptoNoteConfig.h>
 #include <config/WalletConfig.h>
+#include <cmath>
 #include <cstdio>
 #include <ctime>
 #include <iomanip>

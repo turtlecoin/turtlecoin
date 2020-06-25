@@ -8,6 +8,7 @@
 
 #include <config/CryptoNoteConfig.h>
 #include <ctime>
+#include <map>
 #include <mutex>
 #include <logger/Logger.h>
 #include <random>

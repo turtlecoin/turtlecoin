@@ -14,8 +14,6 @@
 #include <version.h>
 #include <iostream>
 
-using json = nlohmann::json;
-
 BlockchainMonitor::BlockchainMonitor(
     System::Dispatcher &dispatcher,
     const size_t pollingInterval,

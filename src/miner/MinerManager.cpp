@@ -19,8 +19,6 @@
 #include <utilities/ColouredMsg.h>
 #include <utilities/FormatTools.h>
 
-using json = nlohmann::json;
-
 namespace Miner
 {
     namespace

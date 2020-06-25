@@ -10,6 +10,7 @@
 #include <CryptoNote.h>
 #include <errors/Errors.h>
 #include <JsonHelper.h>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -19,9 +20,35 @@ namespace WalletTypes
     struct KeyOutput
     {
         Crypto::PublicKey key;
+
         uint64_t amount;
-        /* Daemon doesn't supply this, blockchain cache api does. */
+
         std::optional<uint64_t> globalOutputIndex;
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("key");
+                key.toJSON(writer);
+
+                writer.Key("amount");
+                writer.Uint64(amount);
+            }
+            writer.EndObject();
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            key.fromString(getStringFromJSON(j, "key"));
+
+            amount = getUint64FromJSON(j, "amount");
+
+            if (hasMember(j, "globalIndex"))
+            {
+                globalOutputIndex = getUint64FromJSON(j, "globalIndex");
+            }
+        }
     };
 
     /* A coinbase transaction (i.e., a miner reward, there is one of these in
@@ -50,6 +77,51 @@ namespace WalletTypes
             return keyOutputs.size() * sizeof(KeyOutput) + sizeof(keyOutputs) + sizeof(hash)
                    + sizeof(transactionPublicKey) + sizeof(unlockTime);
         }
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("outputs");
+                writer.StartArray();
+                {
+                    for (const auto &output : keyOutputs)
+                    {
+                        output.toJSON(writer);
+                    }
+                }
+                writer.EndArray();
+
+                writer.Key("hash");
+                hash.toJSON(writer);
+
+                writer.Key("txPublicKey");
+                transactionPublicKey.toJSON(writer);
+
+                writer.Key("unlockTime");
+                writer.Uint64(unlockTime);
+            }
+            writer.EndObject();
+        }
+
+        void fromJSON(const JSONValue &j) {
+            keyOutputs.clear();
+
+            for (const auto &output : getArrayFromJSON(j, "outputs"))
+            {
+                KeyOutput key;
+
+                key.fromJSON(output);
+
+                keyOutputs.push_back(key);
+            }
+
+            hash.fromString(getStringFromJSON(j, "hash"));
+
+            transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
+
+            unlockTime = getUint64FromJSON(j, "unlockTime");
+        }
     };
 
     /* A raw transaction, simply key images and amounts */
@@ -66,6 +138,77 @@ namespace WalletTypes
         {
             return paymentID.size() * sizeof(char) + sizeof(paymentID) + keyInputs.size() * sizeof(CryptoNote::KeyInput)
                    + sizeof(keyInputs) + RawCoinbaseTransaction::memoryUsage();
+        }
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("outputs");
+                writer.StartArray();
+                {
+                    for (const auto &output : keyOutputs)
+                    {
+                        output.toJSON(writer);
+                    }
+                }
+                writer.EndArray();
+
+                writer.Key("hash");
+                hash.toJSON(writer);
+
+                writer.Key("txPublicKey");
+                transactionPublicKey.toJSON(writer);
+
+                writer.Key("unlockTime");
+                writer.Uint64(unlockTime);
+
+                writer.Key("paymentID");
+                writer.String(paymentID);
+
+                writer.Key("inputs");
+                writer.StartArray();
+                {
+                    for (const auto &input : keyInputs)
+                    {
+                        input.toJSON(writer);
+                    }
+                }
+                writer.EndArray();
+            }
+            writer.EndObject();
+        }
+
+        void fromJSON(const JSONValue &j) {
+            keyOutputs.clear();
+
+            for (const auto &output : getArrayFromJSON(j, "outputs"))
+            {
+                KeyOutput key;
+
+                key.fromJSON(output);
+
+                keyOutputs.push_back(key);
+            }
+
+            hash.fromString(getStringFromJSON(j, "hash"));
+
+            transactionPublicKey.fromString(getStringFromJSON(j, "txPublicKey"));
+
+            unlockTime = getUint64FromJSON(j, "unlockTime");
+
+            paymentID = getStringFromJSON(j, "paymentID");
+
+            keyInputs.clear();
+
+            for (const auto &input : getArrayFromJSON(j, "inputs"))
+            {
+                CryptoNote::KeyInput key;
+
+                key.fromJSON(input);
+
+                keyInputs.push_back(key);
+            }
         }
     };
 
@@ -94,9 +237,73 @@ namespace WalletTypes
                 transactions.begin(), transactions.end(), sizeof(transactions), [](const auto acc, const auto item) {
                     return acc + item.memoryUsage();
                 });
+
             return coinbaseTransaction ? coinbaseTransaction->memoryUsage()
                                        : sizeof(coinbaseTransaction) + txUsage + sizeof(blockHeight) + sizeof(blockHash)
                                              + sizeof(blockTimestamp);
+        }
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("transactions");
+                writer.StartArray();
+                {
+                    for (const auto &transaction : transactions)
+                    {
+                        transaction.toJSON(writer);
+                    }
+                }
+                writer.EndArray();
+
+                writer.Key("blockHeight");
+                writer.Uint64(blockHeight);
+
+                writer.Key("blockHash");
+                blockHash.toJSON(writer);
+
+                writer.Key("blockTimestamp");
+                writer.Uint64(blockTimestamp);
+
+                if (coinbaseTransaction)
+                {
+                    const auto coinbase = coinbaseTransaction.value();
+
+                    writer.Key("coinbaseTX");
+                    coinbase.toJSON(writer);
+                }
+            }
+            writer.EndObject();
+        }
+
+        void fromJSON(const JSONValue &j)
+        {
+            transactions.clear();
+
+            for (const auto &transaction : getArrayFromJSON(j, "transactions"))
+            {
+                RawTransaction tx;
+
+                tx.fromJSON(transaction);
+
+                transactions.push_back(tx);
+            }
+
+            blockHeight = getUint64FromJSON(j, "blockHeight");
+
+            blockHash.fromString(getStringFromJSON(j, "blockHash"));
+
+            blockTimestamp = getUint64FromJSON(j, "blockTimestamp");
+
+            if (hasMember(j, "coinbaseTX"))
+            {
+                RawCoinbaseTransaction tx;
+
+                tx.fromJSON(getJsonValue(j, "coinbaseTX"));
+
+                coinbaseTransaction = tx;
+            }
         }
     };
 
@@ -196,20 +403,31 @@ namespace WalletTypes
         void fromJSON(const JSONValue &j)
         {
             keyImage.fromString(getStringFromJSON(j, "keyImage"));
+
             amount = getUint64FromJSON(j, "amount");
+
             blockHeight = getUint64FromJSON(j, "blockHeight");
+
             transactionPublicKey.fromString(getStringFromJSON(j, "transactionPublicKey"));
+
             transactionIndex = getUint64FromJSON(j, "transactionIndex");
+
             globalOutputIndex = getUint64FromJSON(j, "globalOutputIndex");
+
             key.fromString(getStringFromJSON(j, "key"));
+
             spendHeight = getUint64FromJSON(j, "spendHeight");
+
             unlockTime = getUint64FromJSON(j, "unlockTime");
+
             parentTransactionHash.fromString(getStringFromJSON(j, "parentTransactionHash"));
 
             if (j.HasMember("privateEphemeral"))
             {
                 Crypto::SecretKey tmp;
+
                 tmp.fromString(getStringFromJSON(j, "privateEphemeral"));
+
                 privateEphemeral = tmp;
             }
         }
@@ -240,8 +458,10 @@ namespace WalletTypes
     {
         /* The public spend key of the receiver of the transaction output */
         Crypto::PublicKey receiverPublicSpendKey;
+
         /* The public view key of the receiver of the transaction output */
         Crypto::PublicKey receiverPublicViewKey;
+
         /* The amount of the transaction output */
         uint64_t amount;
     };
@@ -249,6 +469,7 @@ namespace WalletTypes
     struct GlobalIndexKey
     {
         uint64_t index;
+
         Crypto::PublicKey key;
     };
 
@@ -271,6 +492,7 @@ namespace WalletTypes
 
         /* The owners keys, so we can sign the input correctly */
         Crypto::PublicKey ownerPublicSpendKey;
+
         Crypto::SecretKey ownerPrivateSpendKey;
 
         /* The key image of the input */
@@ -318,10 +540,12 @@ namespace WalletTypes
         int64_t totalAmount() const
         {
             int64_t sum = 0;
+
             for (const auto [pubKey, amount] : transfers)
             {
                 sum += amount;
             }
+
             return sum;
         }
 
@@ -423,15 +647,24 @@ namespace WalletTypes
             for (const auto &x : getArrayFromJSON(j, "transfers"))
             {
                 Crypto::PublicKey publicKey;
+
                 publicKey.fromString(getStringFromJSON(x, "publicKey"));
+
                 transfers[publicKey] = getInt64FromJSON(x, "amount");
             }
+
             hash.fromString(getStringFromJSON(j, "hash"));
+
             fee = getUint64FromJSON(j, "fee");
+
             blockHeight = getUint64FromJSON(j, "blockHeight");
+
             timestamp = getUint64FromJSON(j, "timestamp");
+
             paymentID = getStringFromJSON(j, "paymentID");
+
             unlockTime = getUint64FromJSON(j, "unlockTime");
+
             isCoinbaseTransaction = getBoolFromJSON(j, "isCoinbaseTransaction");
         }
     };
@@ -440,12 +673,16 @@ namespace WalletTypes
     {
         /* The amount of blocks the wallet has synced */
         uint64_t walletBlockCount;
+
         /* The amount of blocks the daemon we are connected to has synced */
         uint64_t localDaemonBlockCount;
+
         /* The amount of blocks the daemons on the network have */
         uint64_t networkBlockCount;
+
         /* The amount of peers the node is connected to */
         uint32_t peerCount;
+
         /* The hashrate (based on the last block the daemon has synced) */
         uint64_t lastKnownHashrate;
     };
@@ -503,6 +740,19 @@ namespace WalletTypes
             hash.fromString(getStringFromJSON(j, "hash"));
 
             height = getUint64FromJSON(j, "height");
+        }
+
+        void toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
+        {
+            writer.StartObject();
+            {
+                writer.Key("hash");
+                hash.toJSON(writer);
+
+                writer.Key("height");
+                writer.Uint64(height);
+            }
+            writer.EndObject();
         }
     };
 
@@ -571,11 +821,17 @@ namespace WalletTypes
     struct PreparedTransactionInfo
     {
         uint64_t fee;
+
         std::string paymentID;
+
         std::vector<WalletTypes::TxInputAndOwner> inputs;
+
         std::string changeAddress;
+
         uint64_t changeRequired;
+
         TransactionResult tx;
+
         Crypto::Hash transactionHash;
     };
 
@@ -593,7 +849,7 @@ namespace WalletTypes
                 writer.Uint(index);
 
                 writer.Key("key");
-                writer.String(Common::podToHex(key));
+                key.toJSON(writer);
             }
             writer.EndObject();
         }
@@ -601,6 +857,7 @@ namespace WalletTypes
         void fromJSON(const JSONValue &j)
         {
             index = getUintFromJSON(j, "index");
+
             key.fromString(getStringFromJSON(j, "key"));
         }
     };
@@ -647,131 +904,4 @@ namespace WalletTypes
             }
         }
     };
-
-    inline void to_json(nlohmann::json &j, const TopBlock &t)
-    {
-        j = {{"hash", t.hash}, {"height", t.height}};
-    }
-
-    inline void from_json(const nlohmann::json &j, TopBlock &t)
-    {
-        t.hash = j.at("hash").get<Crypto::Hash>();
-        t.height = j.at("height").get<uint64_t>();
-    }
-
-    inline void to_json(nlohmann::json &j, const WalletBlockInfo &w)
-    {
-        j = {{"transactions", w.transactions},
-             {"blockHeight", w.blockHeight},
-             {"blockHash", w.blockHash},
-             {"blockTimestamp", w.blockTimestamp}};
-        if (w.coinbaseTransaction)
-        {
-            j["coinbaseTX"] = *(w.coinbaseTransaction);
-        }
-    }
-
-    inline void from_json(const nlohmann::json &j, WalletBlockInfo &w)
-    {
-        if (j.find("coinbaseTX") != j.end())
-        {
-            w.coinbaseTransaction = j.at("coinbaseTX").get<RawCoinbaseTransaction>();
-        }
-        w.transactions = j.at("transactions").get<std::vector<RawTransaction>>();
-        w.blockHeight = j.at("blockHeight").get<uint64_t>();
-        w.blockHash = j.at("blockHash").get<Crypto::Hash>();
-        w.blockTimestamp = j.at("blockTimestamp").get<uint64_t>();
-    }
-
-    inline void to_json(nlohmann::json &j, const RawCoinbaseTransaction &r)
-    {
-        j = {{"outputs", r.keyOutputs},
-             {"hash", r.hash},
-             {"txPublicKey", r.transactionPublicKey},
-             {"unlockTime", r.unlockTime}};
-    }
-
-    inline void from_json(const nlohmann::json &j, RawCoinbaseTransaction &r)
-    {
-        r.keyOutputs = j.at("outputs").get<std::vector<KeyOutput>>();
-        r.hash = j.at("hash").get<Crypto::Hash>();
-        r.transactionPublicKey = j.at("txPublicKey").get<Crypto::PublicKey>();
-
-        /* We need to try to get the unlockTime from an integer in the json
-           however, if that fails because we're talking to a blockchain
-           cache API that encodes unlockTime as a string (due to json
-           integer encoding limits), we need to attempt this as a string */
-        try
-        {
-            r.unlockTime = j.at("unlockTime").get<uint64_t>();
-        }
-        catch (const nlohmann::json::exception &)
-        {
-            r.unlockTime = std::stoull(j.at("unlockTime").get<std::string>());
-        }
-    }
-
-    inline void to_json(nlohmann::json &j, const RawTransaction &r)
-    {
-        j = {{"outputs", r.keyOutputs},
-             {"hash", r.hash},
-             {"txPublicKey", r.transactionPublicKey},
-             {"unlockTime", r.unlockTime},
-             {"paymentID", r.paymentID},
-             {"inputs", r.keyInputs}};
-    }
-
-    inline void from_json(const nlohmann::json &j, RawTransaction &r)
-    {
-        r.keyOutputs = j.at("outputs").get<std::vector<KeyOutput>>();
-        r.hash = j.at("hash").get<Crypto::Hash>();
-        r.transactionPublicKey = j.at("txPublicKey").get<Crypto::PublicKey>();
-
-        /* We need to try to get the unlockTime from an integer in the json
-           however, if that fails because we're talking to a blockchain
-           cache API that encodes unlockTime as a string (due to json
-           integer encoding limits), we need to attempt this as a string */
-        try
-        {
-            r.unlockTime = j.at("unlockTime").get<uint64_t>();
-        }
-        catch (const nlohmann::json::exception &)
-        {
-            r.unlockTime = std::stoull(j.at("unlockTime").get<std::string>());
-        }
-        r.paymentID = j.at("paymentID").get<std::string>();
-        r.keyInputs = j.at("inputs").get<std::vector<CryptoNote::KeyInput>>();
-    }
-
-    inline void to_json(nlohmann::json &j, const KeyOutput &k)
-    {
-        j = {{"key", k.key}, {"amount", k.amount}};
-    }
-
-    inline void from_json(const nlohmann::json &j, KeyOutput &k)
-    {
-        k.key = j.at("key").get<Crypto::PublicKey>();
-        k.amount = j.at("amount").get<uint64_t>();
-
-        /* If we're talking to a daemon or blockchain cache
-           that returns the globalIndex as part of the structure
-           of a key output, then we need to load that into the
-           data structure. */
-        if (j.find("globalIndex") != j.end())
-        {
-            k.globalOutputIndex = j.at("globalIndex").get<uint64_t>();
-        }
-    }
-
-    inline void to_json(nlohmann::json &j, const UnconfirmedInput &u)
-    {
-        j = {{"amount", u.amount}, {"key", u.key}, {"parentTransactionHash", u.parentTransactionHash}};
-    }
-
-    inline void from_json(const nlohmann::json &j, UnconfirmedInput &u)
-    {
-        u.amount = j.at("amount").get<uint64_t>();
-        u.key = j.at("key").get<Crypto::PublicKey>();
-        u.parentTransactionHash = j.at("parentTransactionHash").get<Crypto::Hash>();
-    }
 }

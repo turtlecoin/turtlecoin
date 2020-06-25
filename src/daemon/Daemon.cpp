@@ -140,6 +140,12 @@ int main(int argc, char *argv[])
         {
             handleSettings(config.configFile, config);
         }
+        catch (std::invalid_argument &e)
+        {
+            std::cout
+                << std::endl << e.what() << std::endl << std::endl;
+            exit(1);
+        }
         catch (std::exception &e)
         {
             std::cout
