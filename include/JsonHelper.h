@@ -15,7 +15,7 @@ typedef rapidjson::GenericObject<
 typedef rapidjson::GenericValue<rapidjson::UTF8<char>, rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator>>
     JSONValue;
 
-static const std::string kTypeNames[] = {"Null", "False", "True", "Object", "Array", "String", "Number"};
+static const std::string kTypeNames[] = {"Null", "False", "True", "Object", "Array", "String", "Number", "Double"};
 
 template<typename T> bool hasMember(const T &j, const std::string &key)
 {
@@ -24,6 +24,9 @@ template<typename T> bool hasMember(const T &j, const std::string &key)
     return val != j.MemberEnd();
 }
 
+/**
+ * Gets a JSONValue from the JSON with a given keyname
+ */
 template<typename T> const rapidjson::Value &getJsonValue(const T &j, const std::string &key)
 {
     auto val = j.FindMember(key);
@@ -36,6 +39,9 @@ template<typename T> const rapidjson::Value &getJsonValue(const T &j, const std:
     return val->value;
 }
 
+/**
+ * Gets a uint32_t from the JSON, with or without a given keyname
+ */
 template<typename T> uint32_t getUintFromJSON(const T &j)
 {
     if (!j.IsUint())
@@ -47,6 +53,7 @@ template<typename T> uint32_t getUintFromJSON(const T &j)
     return j.GetUint();
 }
 
+
 template<typename T> uint32_t getUintFromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);
@@ -54,6 +61,30 @@ template<typename T> uint32_t getUintFromJSON(const T &j, const std::string &key
     return getUintFromJSON(val);
 }
 
+/**
+ * Gets a double from the JSON, with or without a given keyname
+ */
+template<typename T> double getDoubleFromJSON(const T &j)
+{
+    if (!j.IsDouble())
+    {
+        throw std::invalid_argument(
+            "JSON parameter is wrong type. Expected double, got " + kTypeNames[j.GetType()]);
+    }
+
+    return j.GetDouble();
+}
+
+template<typename T> double getDoubleFromJSON(const T &j, const std::string &key)
+{
+    auto &val = getJsonValue(j, key);
+
+    return getDoubleFromJSON(val);
+}
+
+/**
+ * Gets a uint64_t from the JSON, with or without a given keyname
+ */
 template<typename T> uint64_t getUint64FromJSON(const T &j)
 {
     if (!j.IsUint64())
@@ -72,6 +103,9 @@ template<typename T> uint64_t getUint64FromJSON(const T &j, const std::string &k
     return getUint64FromJSON(val);
 }
 
+/**
+ * Gets a int64_t from the JSON, with or without a given keyname
+ */
 template<typename T> uint64_t getInt64FromJSON(const T &j, const std::string &key)
 {
     auto &val = getJsonValue(j, key);

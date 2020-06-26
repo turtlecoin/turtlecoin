@@ -80,25 +80,29 @@ void SynchronizationStatus::fromJSON(const JSONObject &j)
 void SynchronizationStatus::toJSON(rapidjson::Writer<rapidjson::StringBuffer> &writer) const
 {
     writer.StartObject();
-
-    writer.Key("blockHashCheckpoints");
-    writer.StartArray();
-    for (const auto hash : m_blockHashCheckpoints)
     {
-        hash.toJSON(writer);
+        writer.Key("blockHashCheckpoints");
+        writer.StartArray();
+        {
+            for (const auto hash : m_blockHashCheckpoints)
+            {
+                hash.toJSON(writer);
+            }
+        }
+        writer.EndArray();
+
+        writer.Key("lastKnownBlockHashes");
+        writer.StartArray();
+        {
+            for (const auto hash : m_lastKnownBlockHashes)
+            {
+                hash.toJSON(writer);
+            }
+        }
+        writer.EndArray();
+
+        writer.Key("lastKnownBlockHeight");
+        writer.Uint64(m_lastKnownBlockHeight);
     }
-    writer.EndArray();
-
-    writer.Key("lastKnownBlockHashes");
-    writer.StartArray();
-    for (const auto hash : m_lastKnownBlockHashes)
-    {
-        hash.toJSON(writer);
-    }
-    writer.EndArray();
-
-    writer.Key("lastKnownBlockHeight");
-    writer.Uint64(m_lastKnownBlockHeight);
-
     writer.EndObject();
 }

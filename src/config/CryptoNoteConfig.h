@@ -10,9 +10,11 @@
 #include <crypto/hash.h>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <string>
+#include <unordered_map>
 
 namespace CryptoNote
 {

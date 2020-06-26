@@ -730,6 +730,12 @@ namespace DaemonConfig
         Document j;
         j.ParseStream(isw);
 
+        if (j.HasParseError())
+        {
+            throw std::invalid_argument(
+                "The --config-file you specified has JSON parser errors, please check the file and try again.");
+        }
+
         if (j.HasMember("data-dir"))
         {
             config.dataDirectory = j["data-dir"].GetString();

@@ -16,33 +16,6 @@ enum WalletState
     DoesntMatter,
 };
 
-/* Functions the same as body.at(key).get<T>(), but gives better error messages */
-template<typename T> T getJsonValue(const nlohmann::json &body, const std::string key)
-{
-    if (body.find(key) == body.end())
-    {
-        auto exception = json::type_error::create(304, "\nExpected json parameter '" + key + "' does not exist.");
-        throw exception;
-    }
-
-    /* Could exist, but be wrong format */
-    try
-    {
-        return body.at(key).get<T>();
-    }
-    catch (const json::exception &e)
-    {
-        std::string msg = "\nJson parameter '" + key
-                          + "' exists, but we failed to parse it.\n"
-                            "Possibly wrong type? ("
-                          + e.what() + ")";
-
-        auto exception = json::type_error::create(e.id, msg);
-
-        throw exception;
-    }
-}
-
 class ApiDispatcher
 {
   public:
@@ -72,6 +45,9 @@ class ApiDispatcher
     /* Private member functions */
     //////////////////////////////
 
+    std::optional<rapidjson::Document>
+        getJsonBody(const httplib::Request &req, httplib::Response &res, const bool bodyRequired);
+
     /* Check authentication and log, then forward on to the handler if
        applicable */
     void middleware(
@@ -79,10 +55,13 @@ class ApiDispatcher
         httplib::Response &res,
         const WalletState walletState,
         const bool viewWalletsPermitted,
+        const bool bodyRequired,
         std::function<std::tuple<Error, uint16_t>(
             const httplib::Request &req,
             httplib::Response &res,
-            const nlohmann::json &body)> handler);
+            const rapidjson::Document &body)> handler);
+
+    void failRequest(const Error error, httplib::Response &res);
 
     /* Verifies that the request has the correct X-API-KEY, and sends a 401
        if it is not. */
@@ -94,83 +73,83 @@ class ApiDispatcher
 
     /* Opens a wallet */
     std::tuple<Error, uint16_t>
-        openWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        openWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Imports a wallet using a private spend + private view key */
     std::tuple<Error, uint16_t>
-        keyImportWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        keyImportWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Imports a wallet using a mnemonic seed */
     std::tuple<Error, uint16_t>
-        seedImportWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        seedImportWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Imports a view only wallet using a private view key + address */
     std::tuple<Error, uint16_t>
-        importViewWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        importViewWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Creates a new wallet, which will be a deterministic wallet */
     std::tuple<Error, uint16_t>
-        createWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        createWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Create a new random address */
     std::tuple<Error, uint16_t>
-        createAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        createAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Imports an address with a private spend key */
     std::tuple<Error, uint16_t>
-        importAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        importAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Imports a deterministic address using a wallet index */
     std::tuple<Error, uint16_t>
-        importDeterministicAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        importDeterministicAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Imports a view only address with a public spend key */
     std::tuple<Error, uint16_t>
-        importViewAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        importViewAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Validate an address or integrated address */
     std::tuple<Error, uint16_t>
-        validateAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        validateAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Send a previously prepared transaction */
     std::tuple<Error, uint16_t>
-        sendPreparedTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        sendPreparedTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Prepare (don't send) a basic transaction */
     std::tuple<Error, uint16_t>
-        prepareBasicTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        prepareBasicTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Send a basic transaction */
     std::tuple<Error, uint16_t>
-        sendBasicTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        sendBasicTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Make a basic transaction, optionally relaying to the network */
     std::tuple<Error, uint16_t>
-        makeBasicTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body, const bool sendTransaction);
+        makeBasicTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body, const bool sendTransaction);
 
     /* Prepare (don't send) an advanced transaction */
     std::tuple<Error, uint16_t>
-        prepareAdvancedTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        prepareAdvancedTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Send an advanced transaction */
     std::tuple<Error, uint16_t>
-        sendAdvancedTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        sendAdvancedTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Make an advanced transaction, optionally relaying to the network */
     std::tuple<Error, uint16_t>
-        makeAdvancedTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body, const bool sendTransaction);
+        makeAdvancedTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body, const bool sendTransaction);
 
     /* Send a basic fusion transaction */
     std::tuple<Error, uint16_t>
-        sendBasicFusionTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        sendBasicFusionTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Send a more customizable fusion transaction */
     std::tuple<Error, uint16_t>
-        sendAdvancedFusionTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        sendAdvancedFusionTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Export wallet to file in JSON format */
     std::tuple<Error, uint16_t>
-        exportToJSON(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        exportToJSON(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /////////////////////
     /* DELETE REQUESTS */
@@ -178,13 +157,13 @@ class ApiDispatcher
 
     /* Close and save the wallet */
     std::tuple<Error, uint16_t>
-        closeWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        closeWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     std::tuple<Error, uint16_t>
-        deleteAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        deleteAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     std::tuple<Error, uint16_t>
-        deletePreparedTransaction(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        deletePreparedTransaction(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     //////////////////
     /* PUT REQUESTS */
@@ -192,15 +171,15 @@ class ApiDispatcher
 
     /* Saves the wallet (Note - interrupts syncing for a short time) */
     std::tuple<Error, uint16_t>
-        saveWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        saveWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     /* Resets and saves the wallet */
     std::tuple<Error, uint16_t>
-        resetWallet(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        resetWallet(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     /* Sets the daemon node and port */
     std::tuple<Error, uint16_t>
-        setNodeInfo(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body);
+        setNodeInfo(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body);
 
     //////////////////
     /* GET REQUESTS */
@@ -208,90 +187,90 @@ class ApiDispatcher
 
     /* Gets the node we are currently connected to, and its fee */
     std::tuple<Error, uint16_t>
-        getNodeInfo(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getNodeInfo(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     /* Gets the shared private view key */
     std::tuple<Error, uint16_t>
-        getPrivateViewKey(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getPrivateViewKey(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     /* Gets the spend keys for the given address */
     std::tuple<Error, uint16_t>
-        getSpendKeys(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getSpendKeys(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     /* Gets the mnemonic seed for the given address (if possible) */
     std::tuple<Error, uint16_t>
-        getMnemonicSeed(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getMnemonicSeed(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     /* Returns sync status, peer count, etc */
     std::tuple<Error, uint16_t>
-        getStatus(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getStatus(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getAddresses(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getAddresses(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getPrimaryAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getPrimaryAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        createIntegratedAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        createIntegratedAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getTransactions(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getTransactions(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getUnconfirmedTransactions(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getUnconfirmedTransactionsForAddress(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getTransactionsFromHeight(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getTransactionsFromHeightToHeight(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getTransactionsFromHeightWithAddress(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getTransactionsFromHeightToHeightWithAddress(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getTransactionDetails(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getTransactionDetails(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getTransactionsByPaymentId(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t> getTransactionsWithPaymentId(
         const httplib::Request &req,
         httplib::Response &res,
-        const nlohmann::json &body) const;
+        const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getBalance(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getBalance(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getBalanceForAddress(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getBalanceForAddress(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getBalances(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getBalances(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     std::tuple<Error, uint16_t>
-        getTxPrivateKey(const httplib::Request &req, httplib::Response &res, const nlohmann::json &body) const;
+        getTxPrivateKey(const httplib::Request &req, httplib::Response &res, const rapidjson::Document &body) const;
 
     //////////////////////
     /* OPTIONS REQUESTS */
@@ -306,7 +285,7 @@ class ApiDispatcher
 
     /* Extracts {host, port, ssl, filename, password}, from body */
     std::tuple<std::string, uint16_t, bool, std::string, std::string>
-        getDefaultWalletParams(const nlohmann::json body) const;
+        getDefaultWalletParams(const rapidjson::Document &body) const;
 
     /* Assert the wallet is not a view only wallet */
     bool assertIsNotViewWallet() const;
@@ -321,7 +300,8 @@ class ApiDispatcher
     bool assertWalletOpen() const;
 
     /* Converts a public spend key to an address in a transactions json */
-    void publicKeysToAddresses(nlohmann::json &j) const;
+    void publicKeysToAddresses(const WalletTypes::Transaction &transaction,
+                               rapidjson::Writer<rapidjson::StringBuffer> &writer) const;
 
     std::string hashPassword(const std::string password) const;
 
