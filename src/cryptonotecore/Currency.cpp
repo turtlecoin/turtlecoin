@@ -243,7 +243,7 @@ namespace CryptoNote
         addTransactionPublicKeyToExtra(tx.extra, txkey.publicKey);
         if (!extraNonce.empty())
         {
-            if (!addExtraNonceToTransactionExtra(tx.extra, extraNonce))
+            if (!addPoolNonceToTransactionExtra(tx.extra, extraNonce))
             {
                 return false;
             }

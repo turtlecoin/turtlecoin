@@ -85,6 +85,8 @@ namespace CryptoNote
 
     bool addExtraNonceToTransactionExtra(std::vector<uint8_t> &tx_extra, const BinaryArray &extra_nonce);
 
+    bool addPoolNonceToTransactionExtra(std::vector<uint8_t> &tx_extra, const BinaryArray &extra_nonce);
+
     void setPaymentIdToTransactionExtraNonce(BinaryArray &extra_nonce, const Crypto::Hash &payment_id);
 
     bool getPaymentIdFromTransactionExtraNonce(const BinaryArray &extra_nonce, Crypto::Hash &payment_id);
