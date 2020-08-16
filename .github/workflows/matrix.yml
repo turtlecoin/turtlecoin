@@ -155,7 +155,7 @@ jobs:
         run: |
           brew uninstall llvm
           brew install --force boost llvm@8 ccache
-          brew link --force llvm@8
+          brew link --overwrite llvm@8
           ln -s /usr/local/opt/llvm@8 /usr/local/opt/llvm
 
       - name: Retrieve ccache
