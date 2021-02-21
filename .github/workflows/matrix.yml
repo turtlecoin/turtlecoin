@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         # Add more compilers here if you need them
-        build_name: ['Ubuntu GCC 7', 'Ubuntu GCC 8', 'Ubuntu Clang 6', 'aarch64']
+        build_name: ['Ubuntu GCC 7', 'Ubuntu GCC 8', 'aarch64']
         include:
           - build_name: 'Ubuntu GCC 7'
             package_name: 'gcc-7 g++-7'
@@ -33,11 +33,6 @@ jobs:
             cxx: g++-8
             label: linux
             deployable: true
-          - build_name: 'Ubuntu Clang 6'
-            cc: clang-6.0
-            cxx: clang++-6.0
-            label: linux-clang-6
-            deployable: false
           - build_name: 'aarch64'
             label: aarch64
             deployable: true
