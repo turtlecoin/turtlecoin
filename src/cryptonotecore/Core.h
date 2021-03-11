@@ -22,6 +22,7 @@
 #include "MessageQueue.h"
 #include "TransactionValidatiorState.h"
 
+#include <cryptonotecore/ValidateTransaction.h>
 #include <WalletTypes.h>
 #include <ctime>
 #include <logging/LoggerMessage.h>
@@ -272,7 +273,7 @@ namespace CryptoNote
             std::vector<CachedTransaction> &transactions,
             uint64_t &cumulativeSize);
 
-        std::error_code validateTransaction(
+        TransactionValidationResult validateTransaction(
             const CachedTransaction &transaction,
             TransactionValidatorState &state,
             IBlockchainCache *cache,
