@@ -175,7 +175,7 @@ bool ValidateTransaction::validateTransactionInputs()
             {
                 setTransactionValidationResult(
                     CryptoNote::error::TransactionValidationError::INPUT_IDENTICAL_KEYIMAGES,
-                    "Transaction contains identical key images");
+                    "Transaction contains identical key images: " + Common::podToHex(in.keyImage));
 
                 return false;
             }
@@ -196,7 +196,7 @@ bool ValidateTransaction::validateTransactionInputs()
             {
                 setTransactionValidationResult(
                     CryptoNote::error::TransactionValidationError::INPUT_INVALID_DOMAIN_KEYIMAGES,
-                    "Transaction contains key images in an invalid domain");
+                    "Transaction contains key images in an invalid domain: " + Common::podToHex(in.keyImage));
 
                 return false;
             }
@@ -214,7 +214,7 @@ bool ValidateTransaction::validateTransactionInputs()
             {
                 setTransactionValidationResult(
                     CryptoNote::error::TransactionValidationError::INPUT_KEYIMAGE_ALREADY_SPENT,
-                    "Transaction contains key image that has already been spent");
+                    "Transaction contains key image that has already been spent: " + Common::podToHex(in.keyImage));
 
                 return false;
             }
@@ -278,7 +278,7 @@ bool ValidateTransaction::validateTransactionOutputs()
             {
                 setTransactionValidationResult(
                     CryptoNote::error::TransactionValidationError::OUTPUT_INVALID_KEY,
-                    "Transaction output has an invalid output key");
+                    "Transaction output has an invalid output key: " + Common::podToHex(boost::get<CryptoNote::KeyOutput>(output.target).key));
 
                 return false;
             }
@@ -470,7 +470,7 @@ bool ValidateTransaction::validateTransactionInputsExpensive()
             {
                 setTransactionValidationResult(
                     CryptoNote::error::TransactionValidationError::INPUT_KEYIMAGE_ALREADY_SPENT,
-                    "Transaction contains key image that has already been spent");
+                    "Transaction contains key image that has already been spent: " + Common::podToHex(in.keyImage));
 
                 return false;
             }
@@ -525,7 +525,7 @@ bool ValidateTransaction::validateTransactionInputsExpensive()
             {
                 setTransactionValidationResult(
                     CryptoNote::error::TransactionValidationError::INPUT_INVALID_SIGNATURES,
-                    "Transaction contains invalid signatures");
+                    "Transaction contains invalid signatures: " + Common::podToHex(in.keyImage));
 
                 return false;
             }

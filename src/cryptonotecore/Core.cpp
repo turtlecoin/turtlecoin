@@ -26,7 +26,6 @@
 #include <cryptonotecore/TransactionPool.h>
 #include <cryptonotecore/TransactionPoolCleaner.h>
 #include <cryptonotecore/UpgradeManager.h>
-#include <cryptonotecore/ValidateTransaction.h>
 #include <cryptonoteprotocol/CryptoNoteProtocolHandlerCommon.h>
 #include <numeric>
 #include <set>
@@ -1271,12 +1270,12 @@ namespace CryptoNote
             auto transactionValidationResult = validateTransaction(
                 transaction, validatorState, cache, m_transactionValidationThreadPool, fee, previousBlockIndex, false);
 
-            if (transactionValidationResult)
+            if (!transactionValidationResult.valid)
             {
                 const auto hash = transaction.getTransactionHash();
 
                 logger(Logging::DEBUGGING)
-                    << "Failed to validate transaction " << hash << ": " << transactionValidationResult.message();
+                    << "Failed to validate transaction " << hash << ": " << transactionValidationResult.errorMessage;
 
                 if (transactionPool->checkIfTransactionPresent(hash))
                 {
@@ -1285,7 +1284,7 @@ namespace CryptoNote
                     notifyObservers(makeDelTransactionMessage({hash}, Messages::DeleteTransaction::Reason::NotActual));
                 }
 
-                return transactionValidationResult;
+                return transactionValidationResult.errorCode;
             }
 
             cumulativeFee += fee;
@@ -1874,18 +1873,20 @@ namespace CryptoNote
 
         uint64_t fee;
 
-        if (auto validationResult = validateTransaction(
-                cachedTransaction,
-                validatorState,
-                chainsLeaves[0],
-                m_transactionValidationThreadPool,
-                fee,
-                getTopBlockIndex(),
-                true))
+        auto validationResult = validateTransaction(
+            cachedTransaction,
+            validatorState,
+            chainsLeaves[0],
+            m_transactionValidationThreadPool,
+            fee,
+            getTopBlockIndex(),
+            true);
+
+        if (!validationResult.valid)
         {
             logger(Logging::DEBUGGING) << "Transaction " << transactionHash
-                                       << " is not valid. Reason: " << validationResult.message();
-            return {false, validationResult.message()};
+                                       << " is not valid. Reason: " << validationResult.errorMessage;
+            return {false, validationResult.errorMessage};
         }
 
         return {true, ""};
@@ -2273,7 +2274,7 @@ namespace CryptoNote
         return true;
     }
 
-    std::error_code Core::validateTransaction(
+    TransactionValidationResult Core::validateTransaction(
         const CachedTransaction &cachedTransaction,
         TransactionValidatorState &state,
         IBlockchainCache *cache,
@@ -2293,11 +2294,11 @@ namespace CryptoNote
             blockMedianSize,
             isPoolTransaction);
 
-        const auto result = txValidator.validate();
+        auto result = txValidator.validate();
 
         fee = result.fee;
 
-        return result.errorCode;
+        return result;
     }
 
     uint32_t Core::findBlockchainSupplement(const std::vector<Crypto::Hash> &remoteBlockIds) const
