@@ -413,6 +413,6 @@ namespace CryptoNote
         "148.251.178.238:11897", // hv
         "45.32.138.7:11897", // extra
         "46.214.70.196:11897", // CuveeRO
-        "94.113.119.122:11897" // CuveeCZ
+        "84.242.80.251:11897" // CuveeCZ
     };
 } // namespace CryptoNote
