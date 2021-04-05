@@ -95,8 +95,8 @@ _CentOS compile instructions provided by @brandonlehmann_
 -   `sudo yum install -y epel-release centos-release-scl`
 -   `sudo yum install -y devtoolset-8 cmake cmake3 wget git openssl-devel`
 -   `sudo scl enable devtoolset-8 bash`
--   `wget https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz`
--   `tar xzvf boost_1_68_0.tar.gz && cd boost_1_68_0`
+-   `wget https://dl.bintray.com/boostorg/release/1.75.0/source/boost_1_75_0.tar.gz`
+-   `tar xzvf boost_1_75_0.tar.gz && cd boost_1_75_0`
 -   `./bootstrap.sh --prefix=/usr/local/`
 -   `./b2 -j$(nproc) -d0 install --with-system --with-filesystem --with-thread --with-date_time --with-chrono --with-regex --with-serialization --with-program_options`
 -   `cd ..`
@@ -170,9 +170,9 @@ You can build for 32-bit or 64-bit Windows. **If you're not sure, pick 64-bit.**
 -   Install Boost. Select the appropriate version for your system:
     -   [Boost 64-bit](https://bintray.com/boostorg/release/download_file?file_path=1.69.0%2Fbinaries%2Fboost_1_69_0-msvc-14.1-64.exe)
     -   [Boost 32-bit](https://bintray.com/boostorg/release/download_file?file_path=1.69.0%2Fbinaries%2Fboost_1_69_0-msvc-14.1-32.exe)
--   Install the latest full LTS version of OpenSSL (currently OpenSSL 1.1.1f). Select the appropriate version for your system:
-    -   [OpenSSL 64-bit](https://slproweb.com/download/Win64OpenSSL-1_1_1j.exe)
-    -   [OpenSSL 32-bit](https://slproweb.com/download/Win32OpenSSL-1_1_1j.exe)
+-   Install the latest full LTS version of OpenSSL (currently OpenSSL 1.1.1k). Select the appropriate version for your system:
+    -   [OpenSSL 64-bit](https://slproweb.com/download/Win64OpenSSL-1_1_1k.exe)
+    -   [OpenSSL 32-bit](https://slproweb.com/download/Win32OpenSSL-1_1_1k.exe)
 
 ##### Windows with VS2019
 
