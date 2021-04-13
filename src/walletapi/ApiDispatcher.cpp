@@ -331,7 +331,7 @@ std::optional<rapidjson::Document>
 {
     rapidjson::Document jsonBody;
 
-    if (!bodyRequired)
+    if (req.body == "")
     {
         /* Some compilers are stupid and can't figure out just `return jsonBody`
          * and we can't construct a std::optional(jsonBody) since the copy
