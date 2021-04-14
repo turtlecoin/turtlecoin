@@ -313,7 +313,12 @@ void rewind(const std::shared_ptr<WalletBackend> walletBackend)
                             "Hit enter for the default of "
                             + std::to_string(defaultRewindHeight) + " (1000 blocks ago): ";
 
-    const uint64_t scanHeight = getHeight(msg);
+    uint64_t scanHeight = getHeight(msg);
+
+    if (scanHeight == 0)
+    {
+        scanHeight = defaultRewindHeight;
+    }
 
     std::cout << std::endl
               << InformationMsg("This process may take some time to complete.") << std::endl

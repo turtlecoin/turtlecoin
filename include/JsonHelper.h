@@ -19,6 +19,11 @@ static const std::string kTypeNames[] = {"Null", "False", "True", "Object", "Arr
 
 template<typename T> bool hasMember(const T &j, const std::string &key)
 {
+    if (!j.IsObject())
+    {
+        return false;
+    }
+
     auto val = j.FindMember(key);
 
     return val != j.MemberEnd();
